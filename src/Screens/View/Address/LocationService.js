@@ -51,10 +51,8 @@ export const isWithinRadius = (coord1) => {
     // Alert.alert("Success", `We can deliver to this address within the radius.`);
     return { status: "success", distanceInKm, isWithin,coord1 };
   } else {
-    Alert.alert(
-      "Sorry",
-      `We cannot deliver to this address because your distance is ${distanceInKm} km, which is not within the ${radius / 1000} km radius.`
-    );
+       Alert.alert("Sorry!" ,`We’re unable to deliver to this address as it’s ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`)
+   
     return { status: "error", distanceInKm, isWithin, coord1 };
   }
 };

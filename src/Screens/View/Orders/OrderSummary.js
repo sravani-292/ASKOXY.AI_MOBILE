@@ -18,12 +18,9 @@ import BASE_URL from "../../../../Config";
 const {width, height} = Dimensions.get("window");
 const OrderSummaryScreen = ({ navigation, route }) => {
   console.log("Order Summary",route)
- 
-
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
-
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [address, setAddress] = useState([]);
@@ -224,9 +221,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
               <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.itemName}</Text>
                 <Text>
-                  {/* Quantity: {item.itemQuantity * item.cartQuantity + " kgs"} */}
-                  {/* Quantity :<Text>{item.itemQuantity} x {item.cartQuantity} kg </Text> */}
-                  Quantity : <Text> { item.cartQuantity} </Text>
+                 Quantity : <Text> { item.cartQuantity} </Text>
                 </Text>
                 <Text>Weight :<Text> {item.itemQuantity} kgs</Text></Text>
                 <Text>Price: <Text>{item.cartQuantity} x {item.itemPrice} </Text></Text>

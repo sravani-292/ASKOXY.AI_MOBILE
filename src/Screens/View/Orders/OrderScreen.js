@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
-// import Footer from './Footer';
+import dayjs from 'dayjs';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
 import BASE_URL,{userStage} from "../../../../Config";
@@ -22,7 +22,6 @@ const OrderScreen = () => {
   const customerId = userData.userId;
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-  // const [accessToken, setAccessToken] = useState(null);
   const navigation = useNavigation();
   
 
@@ -33,7 +32,7 @@ const OrderScreen = () => {
   );
   const getOrders = async () => {
     const data = {
-      customerId: customerId,
+      userId: customerId,
     };
     setLoading(true);
 
@@ -63,7 +62,6 @@ const OrderScreen = () => {
       }
     } catch (error) {
       // console.error('Error fetching orders:', error.response ? error.response.data : error.message);
-      // alert('Failed to fetch orders');
     } finally {
       setLoading(false);
     }
@@ -114,7 +112,8 @@ const OrderScreen = () => {
         />
       </View>
       <View style={styles.orderInfo}>
-        <Text style={styles.date}>{item?.orderDate?.slice(0, 10)}</Text>
+        {/* <Text style={styles.date}>{item?.orderDate?.slice(0, 10)}</Text> */}
+        <Text style={styles.date}>{dayjs(item?.orderDate).format('MMM DD, YYYY hh:mm:ss A')}</Text>
         <Text style={styles.orderId}>
           Order Id: <Text>{item.newOrderId}</Text>
         </Text>

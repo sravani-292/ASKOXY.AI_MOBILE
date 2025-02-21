@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -41,6 +41,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [coupenDetails, setCoupenDetails] = useState("");
   const [coupenApplied, setCoupenApplied] = useState(false);
   const [walletTotal, setWalletTotal] = useState("");
+  const [deliveryBoyFee,setDeliveryBoyFee] = useState(0);
   // wallet states
   const [useWallet, setUseWallet] = useState(false);
   const [totalSum, setTotalSum] = useState("");
@@ -55,12 +56,37 @@ const PaymentDetails = ({ navigation, route }) => {
     customer_mobile: "",
   });
   const [loading, setLoading] = useState(false);
-
-  // console.log({ customerId });
   const items = route.params?.items || [];
 
-  // console.log("Items:", items);
-  // console.log(route.params)
+
+  const totalCart = async () => {
+    try {
+      const response = await axios({
+        url:
+          userStage == "test1"
+            ? BASE_URL + "erice-service/cart/cartItemData"
+            : BASE_URL + "cart-service/cart/cartItemData",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          customerId: customerId,
+        },
+      });
+        const cartResponse = console.log("total cart",response.data);
+        // setDeliveryBoyFee(200)
+       const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
+       console.log({totalDeliveryFee});
+       
+        setDeliveryBoyFee(totalDeliveryFee)
+        
+    } catch (error) {
+      // setError("Failed to fetch cart data");
+    }
+  };
+  
   var addressDetails = route.params.address;
 
   const [selectedPaymentMode, setSelectedPaymentMode] = useState(null);
@@ -78,12 +104,10 @@ const PaymentDetails = ({ navigation, route }) => {
         0
       )
     );
-    // Alert.alert("calculatedTotal",calculatedTotal)
     console.log("calculated total", calculatedTotal);
-
     setTotalAmount(calculatedTotal);
     setGrandTotal(calculatedTotal);
-    // setBillAmount(coupenDetails+walletAmount);
+    grandTotalfunc()
   }, [items]);
 
   const handlePaymentModeSelect = (mode) => {
@@ -112,13 +136,16 @@ const PaymentDetails = ({ navigation, route }) => {
     getProfile();
     getOffers();
     getWalletAmount();
-  }, []);
+    totalCart();
+    // setDeliveryBoyFee(200);
+  }, [grandTotalAmount, deliveryBoyFee]);
 
   // get wallet amount
   const getWalletAmount = async () => {
     try {
       const response = await axios.post(
-        BASE_URL + `erice-service/cart/applyWalletAmountToCustomer`,
+        userStage=="test1"?
+        BASE_URL + `erice-service/cart/applyWalletAmountToCustomer`:BASE_URL+`order-service/applyWalletAmountToCustomer`,
         {
           customerId: customerId,
         },
@@ -131,7 +158,7 @@ const PaymentDetails = ({ navigation, route }) => {
 
       if (response.data) {
         console.log("==========useWallet=============");
-        console.log("getWalletAmount:", response.data);
+        console.log("getWalletAmount:", response);
         setWalletAmount(response.data.usableWalletAmountForOrder);
         console.log("wallet amount", walletAmount);
         setMessge(response.data.message);
@@ -160,7 +187,6 @@ const PaymentDetails = ({ navigation, route }) => {
     getWalletAmount();
 
     if (newValue) {
-      // Show alert when the checkbox is checked
       Alert.alert(
         "Wallet Amount Used",
         `You are using ${walletAmount} from your wallet.`,
@@ -213,7 +239,6 @@ const PaymentDetails = ({ navigation, route }) => {
   };
   var postData;
   const placeOrder = () => {
-    // console.log("Location Data:", addressDetails);
     console.log({ selectedPaymentMode });
     // Ensure that locationData contains the necessary data
     let wallet;
@@ -241,7 +266,7 @@ const PaymentDetails = ({ navigation, route }) => {
       walletAmount: wallet,
       couponCodeUsed: coupon,
       couponCodeValue: coupenDetails,
-      // paymentStatus:{selectedPaymentMode=="COD" ? "":"ONLINE"}
+      deliveryBoyFee:deliveryBoyFee
     };
 
     // console.log({ postData });
@@ -250,7 +275,7 @@ const PaymentDetails = ({ navigation, route }) => {
     setLoading(true);
     axios({
       method: "POST",
-      url: userStage=="test1"?BASE_URL + "erice-service/checkout/orderPlacedPaymet":BASE_URL+"order-service/orderPlacedPaymet",
+      url: userStage=="test1"?BASE_URL+"erice-service/checkout/orderPlacedPaymet":BASE_URL+"order-service/orderPlacedPaymet",
       data: postData,
       headers: {
         // 'Content-Type': 'application/json',
@@ -268,12 +293,15 @@ const PaymentDetails = ({ navigation, route }) => {
             [
               {
                 text: "OK",
-                onPress: () => navigation.navigate("My Orders"),
+                onPress: () => {
+                  setLoading(false); 
+                  navigation.navigate("My Orders");
+                },
               },
             ]
           );
-          // setLoading(false);
-          // totalCart()
+          setLoading(false);
+        
         } else {
           console.log("paymentId==================", response.data);
           setTransactionId(response.data.paymentId);
@@ -281,8 +309,8 @@ const PaymentDetails = ({ navigation, route }) => {
           console.log("==========");
           const data = {
             mid: "1152305",
-            amount: grandTotalAmount,
-            // amount: 1,
+            // amount: grandTotalAmount,
+            amount: 1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -419,7 +447,8 @@ const PaymentDetails = ({ navigation, route }) => {
     try {
       // Updated API URL and headers
       const response = await axios.get(
-        BASE_URL + "erice-service/coupons/getallcoupons",
+        userStage=="test1"?
+        BASE_URL + "erice-service/coupons/getallcoupons":BASE_URL+"order-service/getAllCoupons",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -444,7 +473,7 @@ const PaymentDetails = ({ navigation, route }) => {
     console.log("Total amount is  :", totalAmount);
 
     const response = axios
-      .post(BASE_URL + "erice-service/coupons/applycoupontocustomer", data, {
+      .post( userStage == "test1"?BASE_URL + "erice-service/coupons/applycoupontocustomer":BASE_URL+"order-service/applycoupontocustomer", data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -539,7 +568,8 @@ const PaymentDetails = ({ navigation, route }) => {
               // clearInterval(intervalId); 294182409
               axios({
                 method: "POST",
-                url: BASE_URL + "erice-service/checkout/orderPlacedPaymet",
+                url: userStage=="test1"?BASE_URL + "erice-service/checkout/orderPlacedPaymet":BASE_URL
+                +"order-service/orderPlacedPaymet",
                 data: {
                   ...postData,
                   paymentId: transactionId,
@@ -563,7 +593,8 @@ const PaymentDetails = ({ navigation, route }) => {
                       {
                         text: "OK",
                         onPress: () => {
-                          navigation.navigate("My Orders"), setLoading(false);
+                          setLoading(false); 
+                          navigation.navigate("My Orders");
                         },
                       },
                     ]
@@ -578,15 +609,13 @@ const PaymentDetails = ({ navigation, route }) => {
         })
         .catch((error) => console.log("Payment Status", error));
     }
-    // else{
-    //   clearInterval(intervalId)
-    // }
+   
   }
 
   function grandTotalfunc() {
     if (coupenApplied === true && useWallet === true) {
       // Alert.alert("Coupen and useWallet Applied",(grandTotal-billAmount))
-      setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount));
+      setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount)+deliveryBoyFee);
       console.log(
         "grans total after wallet and coupen",
         grandTotal,
@@ -596,27 +625,27 @@ const PaymentDetails = ({ navigation, route }) => {
       );
     } else if (coupenApplied === true || useWallet === true) {
       if (coupenApplied === true) {
-        setGrandTotalAmount(grandTotal - coupenDetails);
+        setGrandTotalAmount((grandTotal+deliveryBoyFee) - coupenDetails);
         // Alert.alert("Coupen Applied",grandTotal)
         console.log({ grandTotal });
 
         console.log(grandTotal - coupenDetails);
       }
       if (useWallet === true) {
-        setGrandTotalAmount(walletTotal);
+        setGrandTotalAmount(walletTotal+deliveryBoyFee);
         console.log(walletAmount);
 
         // Alert.alert("Wallet Applied",(grandTotal-walletAmount))
       }
     } else {
-      setGrandTotalAmount(totalAmount);
+      setGrandTotalAmount(totalAmount+deliveryBoyFee);
       // Alert.alert("None",totalAmount)
     }
   }
 
   useEffect(() => {
     grandTotalfunc();
-  }, [coupenApplied, useWallet, grandTotalAmount]);
+  }, [coupenApplied, useWallet, grandTotalAmount,grandTotal,deliveryBoyFee]);
 
   return (
     <View style={styles.container}>
@@ -664,7 +693,7 @@ const PaymentDetails = ({ navigation, route }) => {
             )}
           </View>
         </View>
-
+         {/* wallet amount */}
         {walletAmount > 0 ? (
           <View style={styles.walletContainer}>
             <View style={styles.walletHeader}>
@@ -745,13 +774,15 @@ const PaymentDetails = ({ navigation, route }) => {
           )}
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>Delivery Fee</Text>
-            <Text style={styles.detailsValue}>₹0.00</Text>
+            <Text style={styles.detailsValue}>+₹{deliveryBoyFee}</Text>
           </View>
           <View style={styles.divider} />
 
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabelBold}>Grand Total</Text>
+            {/* <Text style={styles.detailsValueBold}>₹{grandTotalAmount+deliveryBoyFee}</Text> */}
             <Text style={styles.detailsValueBold}>₹{grandTotalAmount}</Text>
+
           </View>
       
 
@@ -906,14 +937,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  // paymentOption: {
-  //   alignItems: "center",
-  //   padding: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ddd",
-  //   borderRadius: 8,
-  //   width: width * 0.4,
-  // },
+  
   selectedOption: {
     borderColor: "green",
     borderWidth: 2,

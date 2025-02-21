@@ -329,7 +329,8 @@ const CheckOut = ({ navigation, route }) => {
               console.log("Removing cart item with ID:", item.cartId);
 
               const response = await axios.delete(
-                BASE_URL + "erice-service/cart/remove",
+                userStage=="test1"?
+                BASE_URL + "erice-service/cart/remove":BASE_URL+"cart-service/cart/remove",
                 {
                   data: {
                     id: item.cartId,
@@ -504,48 +505,7 @@ const CheckOut = ({ navigation, route }) => {
               </View>
             </View>
 
-            {/* <TouchableOpacity
-              onPress={() => {
-                Alert.alert(
-                  "Address Confirmation",
-                  "Are you sure you want to select this address?",
-                  [
-                    {
-                      text: "Cancel",
-                      onPress: () => console.log("Selection Cancelled"),
-                      style: "cancel",
-                    },
-                    {
-                      text: "Confirm",
-                      onPress: () => {
-                        // Update the selected address only if the user confirms
-                        setSelectedAddressId(address.id);
-                        setLocationData({
-                          flatNo: address.flatNo,
-                          landMark: address.landMark,
-                          pincode: address.pincode,
-                          address: address.address,
-                          addressType: "",
-                          latitude: "",
-                          longitude: "",
-                        });
-                        console.log("Address Selected:", address);
-                      },
-                    },
-                  ]
-                );
-              }}
-            >
-              <Text
-                style={
-                  selectedAddressId === address.id
-                    ? styles.smallButton
-                    : styles.smallButton
-                }
-              >
-                {selectedAddressId === address.id ? "Selected" : "Selected"}
-              </Text>
-            </TouchableOpacity> */}
+           
           </View>
         ))
       ) : (
@@ -644,7 +604,7 @@ const CheckOut = ({ navigation, route }) => {
                                 ({Math.round(((item.priceMrp- item.itemPrice) / item.priceMrp) * 100)}% OFF)
                            </Text>
                           <Text style={styles.itemWeight}>
-                            Weight: {item.itemQuantity} {item.units}
+                            Weight: {item.weight} {item.units}
                           </Text>
                           <View style={styles.quantityContainer}>
                             <TouchableOpacity
@@ -872,14 +832,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#28a745",
-    // marginLeft:30
-    // marginTop:5,
+    
   },
   grandTotalText1: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#28a745",
-    // marginTop:0,
     marginBottom: 2,
     marginTop: 9,
   },
@@ -955,7 +913,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   quantityButton: {
-    backgroundColor: "#808080",
+    // backgroundColor: "#808080",
+    backgroundColor: "#D1D5DB",
     padding: 8,
     borderRadius: 4,
     marginHorizontal: 8,

@@ -15,7 +15,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { Dropdown } from "react-native-element-dropdown";
-import BASE_URL from "../../../../Config";
+import BASE_URL,{userStage} from "../../../../Config";
 import { TouchableOpacity, TextInput } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
@@ -45,15 +45,15 @@ const TicketHistory = ({ navigation }) => {
     setLoading(true);
     axios
       .post(
-        BASE_URL + `erice-service/writetous/getQueries`,
-        { queryStatus: queryStatus, userId: customerId },
+        userStage =="test1"?BASE_URL + `erice-service/writetous/getQueries`:BASE_URL+`writetous-service/getAllQueries`,
+        { queryStatus: queryStatus, userId: customerId,"askOxyOfers": "FREESAMPLE","projectType": "ASKOXY"},
         { headers: { Authorization: `Bearer ${token}` } }
       )
 
       .then((response) => {
-        // console.log("getQueries",response.data)
+        console.log("getQueries",response.data)
         setTickets(response.data);
-
+ 
         setLoading(false);
       })
       .catch((error) => {
@@ -71,7 +71,7 @@ const TicketHistory = ({ navigation }) => {
   const cancelTicket = (ticketId, query) => {
     setTicketId(ticketId);
     setQuery(query)
-console.log({query})
+    console.log({query})
     setRemoveModal(true);
     console.log("Cancelled id and query:", ticketId, query);
   };
@@ -98,8 +98,14 @@ console.log({query})
     };
 
     console.log(data.comments);
-    axios
-      .post(BASE_URL + `erice-service/writetous/saveData`, data, {
+    
+      // .post(BASE_URL + `erice-service/writetous/saveData`, data, {
+        axios.post(
+          userStage === "test1"
+            ? BASE_URL + "erice-service/writetous/saveData"
+            : BASE_URL + "writetous-service/saveData",
+          data
+          ,{  
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -152,26 +158,12 @@ console.log({query})
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <View style={styles.card}>
-                  {/* <View style={styles.row}>
-              <Text style={styles.label}>MobileNumber</Text>
-              <Text style={styles.value}>{item.mobileNumber}</Text>
-            </View> */}
-                  <View style={styles.row}>
-                    <Text style={styles.label}>Name</Text>
-                    <Text style={styles.value}>{item.name}</Text>
-                  </View>
-
+                 
                   <View style={styles.row}>
                     <Text style={styles.label}>Ticket Id</Text>
                     <Text style={styles.value}>{item.randomTicketId}</Text>
                   </View>
-                  {/*                 
-                  <View style={styles.row}>
-                    <Text style={styles.label}>Created On</Text>
-                    <Text style={styles.value}>
-                      {item.createdAt.split(" ")[0]}
-                    </Text>
-                  </View> */}
+                 
 
                   <View style={styles.row}>
                     <View>

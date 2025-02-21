@@ -16,7 +16,7 @@ import React, { useState,useEffect,useCallback } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
-import BASE_URL from "../../../../Config";
+import BASE_URL ,{userStage}from "../../../../Config";
 import * as DocumentPicker from "expo-document-picker";
 import { FormData } from "formdata-node";
 import Icon from "react-native-vector-icons/Ionicons"
@@ -28,17 +28,17 @@ const WriteToUs = ({navigation,route}) => {
     const accessToken = useSelector((state) => state.counter);
     const fd = new FormData();
     const [ticketId,setTicketId] = useState("")
+    // console.log("route",route.params);
 
-    useEffect(()=>{
-      console.log("route",route.params);
+    // useEffect(()=>{
       
-       if(route.params=="" || route.params==undefined || route.params==null){
-         setTicketId("")
-      }
-      else{
-        setTicketId(route.params)
-      }
-    },[])
+    //    if(route.params=="" || route.params==undefined || route.params==null){
+    //      setTicketId("")
+    //   }
+    //   else{
+    //     setTicketId(route.params)
+    //   }
+    // },[])
 
 
   const [formData, setFormData] = useState({
@@ -63,18 +63,18 @@ const WriteToUs = ({navigation,route}) => {
   );
 
   function getProfileDetails() {
-    axios.get(BASE_URL + `erice-service/user/customerProfileDetails?customerId=${accessToken.userId}`, {
+    axios.get(userStage == "test1"?BASE_URL + `erice-service/user/customerProfileDetails?customerId=${accessToken.userId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${accessToken.userId}`, {
       headers: {
         Authorization: `Bearer ${accessToken.accessToken}`,
     }
     })
     .then(function (response) {
-      console.log("customer data",response.data);
-      if(response.data.name && response.data.email && response.data.mobileNumber){
+      console.log("customer data1",response.data);
+      if(response.data.firstName && response.data.email && response.data.whatsappNumber){
       setFormData({
-        ...formData, name: response.data.name,
+        ...formData, name: `${response.data.firstName} ${response.data.lastName}`,
                     email: response.data.email,
-                    mobileNumber: response.data.mobileNumber
+                    mobileNumber: response.data.whatsappNumber
       });
     }else{
       Alert.alert(
@@ -123,15 +123,17 @@ const WriteToUs = ({navigation,route}) => {
       // Alert.alert("Success", "Your query has been submitted!");
       // console.log(formData);
       let data
-if(ticketId==""){
+if(route.params=="" || route.params==undefined){
    data =
   {
     "adminDocumentId": "",
+    "askOxyOfers": "FREESAMPLE",
     "comments": "",
     "email": formData.email,
     "id": "",
     "mobileNumber": formData.mobileNumber,
-    "projectType": "OXYRICE",
+    
+    "projectType": "ASKOXY",
     "query": formData.query,
     "queryStatus": "PENDING",
     "resolvedBy": "",
@@ -145,11 +147,12 @@ else{
  data =
   {
     "adminDocumentId": "",
+    "askOxyOfers": "FREESAMPLE",
     "comments": formData.query,
     "email": formData.email,
-    "id": ticketId.ticketId,
+    "id": route.params.ticketId,
     "mobileNumber": formData.mobileNumber,
-    "projectType": "OXYRICE",
+    "projectType": "ASKOXY",
     "query": route.params.query,
     "queryStatus": "PENDING",
     "resolvedBy": "customer",
@@ -164,7 +167,12 @@ else{
       console.log("form data query",formData.query);
       
       setFormData({...formData,loading:true})
-      axios.post(BASE_URL + `erice-service/writetous/saveData`, data, {
+        axios.post(
+          userStage === "test1"
+            ? BASE_URL + "erice-service/writetous/saveData"
+            : BASE_URL + "writetous-service/saveData",
+          data
+          ,{    
         headers: {
           Authorization: `Bearer ${accessToken.accessToken}`,
         },
@@ -174,7 +182,7 @@ else{
           Alert.alert("Success", "You have sucessfully submitted the query");
           console.log("formdataquery",formData.query);
           
-          setFormData({...formData,loading:false})
+          setFormData({...formData,loading:false,fileName:"",query:""})
 
         })
         .catch(function (error) {
@@ -193,18 +201,18 @@ else{
 
   const handleFileChange = async () => {
     
-    // console.log("Pan");
     let result = await DocumentPicker.getDocumentAsync({
       type: "*/*",
       copyToCacheDirectory: true,
       allowsEditing: false,
       aspect: [4, 4],
     })
-      .then((response) => {
+      .then(
+         (response) => {
         console.log("response",response);
         if (response.canceled == false) {
           let { name, size, uri } = response.assets[0];
-          // console.log();
+          // console.log("");
           // ------------------------/
 
           if (Platform.OS === "android" && uri[0] === "/") {
@@ -223,16 +231,16 @@ else{
             uri: uri,
             type: "application/" + fileType,
           };
-          console.log(fileToUpload.name, "...............file");
-          fd.append("multiPart", fileToUpload);
+          // console.log(fileToUpload, "...............file");
+          fd.append("file", fileToUpload);
           fd.append("fileType", "kyc");
-          console.log(fileToUpload);
+          fd.append("projectType","ASKOXY")
 
-          console.log(fd);
+          // console.log(fd);
           setFormData({...formData,uploadLoader:true})
           axios({
             method: "post",
-            url:BASE_URL+`erice-service/writetous/uploadQueryScreenShot?userId=${accessToken.userId}`,
+            url:userStage == "test1" ?BASE_URL+`erice-service/writetous/uploadQueryScreenShot?userId=${accessToken.userId}`:BASE_URL+`writetous-service/uploadQueryScreenShot?userId=${accessToken.userId}`,
             data: fd,
             headers: {
               Authorization: `Bearer ${accessToken.accessToken}`,
@@ -316,7 +324,8 @@ else{
         <Text style={{ color: "red", fontWeight: "bold", marginBottom: 5 ,alignSelf:"center"}}>Query is Mandatory</Text>
       : null}
 
-    {ticketId==""?
+    {/* {ticketId==""? */}
+    {route.params==undefined || route.params==""?
     <>
     {formData.uploadLoader==false?
       <TouchableOpacity style={styles.box} onPress={handleFileChange}>
@@ -345,21 +354,7 @@ else{
   <ActivityIndicator size={30} color="white"/>
 </View>
 }
-      {/* <Button title="Submit"  style={{color:"green"}} /> */}
-
-      {/* <View style={{ padding: 20 }}>
-        <Text>Upload a file</Text>
-        <Button title="Select and Upload File" onPress={handleFileChange} />
-        {formData.uploadStatus === "loading" && (
-          <ActivityIndicator size="large" color="#0000ff" />
-        )}
-        {formData.fileName ? (
-          <Text>Selected File: {formData.fileName}</Text>
-        ) : null}
-        {formData.uploadStatus === "uploaded" ? (
-          <Text>Upload Successful! Document ID: {formData.documentId}</Text>
-        ) : null}
-      </View> */}
+     
     </View>
   );
 };

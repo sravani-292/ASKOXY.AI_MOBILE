@@ -21,17 +21,14 @@ import Animated from "react-native-reanimated";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/Ionicons";
-import CartScreen from "../../View/ShoppingCart/CartScreen"
 const { height, width } = Dimensions.get("window");
 import { useSelector } from "react-redux";
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 import { useFocusEffect } from "@react-navigation/native";
 import { set } from "core-js/core/dict";
 
 const RiceProductDetails = ({ route, navigation }) => {
-  // console.log("rice product details",route.params.items);
-  // console.log("rice product items",route.params.item);
-  
+  // WITHOUT ZAKYA RESPONSE
   // console.log("Rice Product Details route",route.params.details.categoryName)
 
   const [items, setItems] = useState([]);
@@ -41,44 +38,42 @@ const RiceProductDetails = ({ route, navigation }) => {
   const [loadingItems, setLoadingItems] = useState({});
   const [cartData, setCartData] = useState([]);
   const [loader, setLoader] = useState(false);
+  const [isLimitedStock, setIsLimitedStock] = useState({});
+
   // const [userData, setUserData] = useState();
-const [categoryName,setCategoryName] = useState();
+  console.log("rice product details", route.params);
+
   const [error, setError] = useState();
-    
+
   useEffect(() => {
-    setItems(route.params.items);
-    setCategoryName(route.params.categoryName);
-    setCategoryIamge(route.params.categoryImage);
-    // setCartData(route.params.items)
-    // setCartCount(route.params.items.length)
+    setItems(route.params.details.itemsResponseDtoList);
+    setCategoryIamge(route.params.details.categoryLogo);
   }, []);
   const handleAdd = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemID]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await handleAddToCart(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemID]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const handleIncrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemID]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await incrementQuantity(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemID]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const handleDecrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemID]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await decrementQuantity(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemID]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
   const userData = useSelector((state) => state.counter);
 
   useFocusEffect(
     useCallback(() => {
-      if(userData){
-      fetchCartItems();
+      if (userData) {
+        fetchCartItems();
       }
-      // console.log("userData",userData);
-      
-      
+      console.log("userData", userData);
     }, [])
   );
 
@@ -89,173 +84,194 @@ const [categoryName,setCategoryName] = useState();
   const fetchCartItems = async () => {
     try {
       const response = await axios.get(
-        userStage=="test1"?BASE_URL +
-          `erice-service/cart/customersCartItems?customerId=${customerId}`:BASE_URL+`cart-service/cart/customersCartItems?customerId=${customerId}`,
+        userStage == "test1"
+          ? BASE_URL +
+              `erice-service/cart/customersCartItems?customerId=${customerId}`
+          : BASE_URL +
+              `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-        // console.log("cart data",response.data.customerCartResponseList);
-        
-      const cartData = response.data.customerCartResponseList;
-      console.log("cart data1",cartData);
-     
+      console.log("API Response:", response); // Log full response
+      const cartData = response?.data?.customerCartResponseList;
+
+      if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
+        console.error("cartData is empty or invalid:", cartData);
+        setCartData([]);
+        setCartItems({});
+        setIsLimitedStock({});
+        setCartCount(0);
+        return; // Stop execution if cartData is invalid
+      }
+
+      console.log("cartData:", cartData); // Log valid cart data
+
+      // Mapping items to their quantities
       const cartItemsMap = cartData.reduce((acc, item) => {
-
-        // acc[item.itemId] = item.cartQuantity;
-
-        // return acc;
-        // console.log("Processing item:", item);
-        if (!item.itemId || !item.cartQuantity) {
-          console.error("Missing itemId or cartQuantity in item:", item);
+        if (
+          !item.itemId ||
+          item.cartQuantity === undefined ||
+          item.quantity === undefined
+        ) {
+          console.error("Invalid item in cartData:", item);
           return acc;
         }
         acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
 
-      // console.log("cartItemsMap",cartItemsMap);
+      console.log("Cart Items Map:", cartItemsMap);
+
+      // Mapping items with limited stock (quantity = 1)
+      const limitedStockMap = cartData.reduce((acc, item) => {
+        acc[item.itemId] = item.quantity === 1;
+        return acc;
+      }, {});
+
+      console.log("Limited Stock Map:", limitedStockMap);
+
+      // Updating state
+      setCartData(cartData);
       setCartItems(cartItemsMap);
+      setIsLimitedStock(limitedStockMap);
       setCartCount(cartData.length);
-      setCartData(response.data.customerCartResponseList);
     } catch (error) {
-      setError(error.response);
-      // console.log("Error fetching cart items:", error.response);
+      console.error("Error fetching cart items:", error.response.status);
     }
   };
-
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={{ marginRight: 15 }}>
           {userData && (
-          <Pressable onPress={() => {
-              // console.log({userData});
-            navigation.navigate("My Cart")
-            }}>
-            <View style={styles.cartIconContainer}>
-              <Icon name="cart-outline" size={30} color="#FFF" />
+            <Pressable
+              onPress={() => {
+                console.log({ userData });
+                navigation.navigate("Home", { screen: "My Cart" });
+              }}
+            >
+              <View style={styles.cartIconContainer}>
+                <Icon name="cart-outline" size={30} color="#FFF" />
 
-              {cartCount > 0 && (
-                <View
-                  style={{
-                    position: "absolute",
-                    right: -8,
-                    top: -5,
-                    backgroundColor: "#FF6F00",
-                    borderRadius: 10,
-                    paddingHorizontal: 5,
-                    paddingVertical: 1,
-                  }}
-                >
-                  <Text
-                    style={{ color: "#FFF", fontSize: 12, fontWeight: "bold" }}
+                {cartCount > 0 && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      right: -8,
+                      top: -5,
+                      backgroundColor: "#FF6F00",
+                      borderRadius: 10,
+                      paddingHorizontal: 5,
+                      paddingVertical: 1,
+                    }}
                   >
-                    {cartCount}
-                  </Text>
-                </View>
-              )}
-
-            </View>
-          </Pressable>
+                    <Text
+                      style={{
+                        color: "#FFF",
+                        fontSize: 12,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {cartCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </Pressable>
           )}
         </View>
       ),
     });
   }, [navigation, cartCount]);
 
-  const UpdateCartCount = (newCount) => setCartCount(newCount);
+  // const UpdateCartCount = (newCount) => setCartCount(newCount);
   const handleAddToCart = async (item) => {
-    console.log("add to cart",item);
-    
-    if(!userData){
-      Alert.alert("Alert","Please login to continue",[{text:"OK",onPress:()=>navigation.navigate("Login")},{text:"Cancel"}])
-      return
+    console.log("add to cart", item);
+
+    if (!userData) {
+      Alert.alert("Alert", "Please login to continue", [
+        { text: "OK", onPress: () => navigation.navigate("Login") },
+        { text: "Cancel" },
+      ]);
+      return;
     }
-    const data = { customerId: customerId, itemId: item.itemID};
+    const data = { customerId: customerId, itemId: item.itemId };
     // setLoader(true)
     try {
       const response = await axios.post(
-        userStage == "test1"?BASE_URL + "erice-service/cart/add_Items_ToCart":BASE_URL+"cart-service/cart/add_Items_ToCart",
+        userStage == "test1"
+          ? BASE_URL + "erice-service/cart/add_Items_ToCart"
+          : BASE_URL + "cart-service/cart/add_Items_ToCart",
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       // setLoader(false)
-      // console.log("items added to cart", response);
-      
+      console.log("added response", response);
+
       if (response.data.errorMessage == "Item added to cart successfully") {
         Alert.alert("Success", "Item added to cart successfully");
-        setCartItems((prevCartItems) => ({
-          ...prevCartItems,
-          [item.itemID]: 1,
-        }));
-        UpdateCartCount(cartCount + 1);
+
         fetchCartItems();
       } else {
         setLoader(false);
-        // console.log("adding item to customer",response);
-        
+        console.log("adding item to customer", response);
+
         Alert.alert("Alert", response.data.errorMessage);
       }
     } catch (error) {
       setLoader(false);
-      // console.log("Error adding item to cart:", error);
+      console.error("Error adding item to cart:", error.response);
     }
   };
 
   const incrementQuantity = async (item) => {
-    console.log("incremented cart data",item);
-    
-    const newQuantity = cartItems[item.itemID] + 1;
+    // const newQuantity = cartItems[item.itemId] + 1;
     // cartItems[item.itemId] will return the cartQuantity value and then increased the cart quantity by 1
     //cartItems = { 101: 2, 102: 3 };
     //If item.itemId is 101, then cartItems[item.itemId] would return 2 (the quantity of item 101).
     //The + 1 increments the item’s current quantity by one.
     const data = {
       customerId: customerId,
-      itemId: item.itemID,
+      itemId: item.itemId,
       // quantity: newQuantity,
     };
     try {
-    const response = await axios.patch(
-        userStage== "test1"?BASE_URL+"erice-service/cart/incrementCartData":BASE_URL+"cart-service/cart/incrementCartData",
+      const response = await axios.patch(
+        userStage == "test1"
+          ? BASE_URL + "erice-service/cart/incrementCartData"
+          : BASE_URL + "cart-service/cart/incrementCartData",
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-          // console.log("incremented cart data",response);
-          
-    await  fetchCartItems();
-      // setCartItems((prevCartItems) => ({
-      //   ...prevCartItems,
-      //   [item.itemId]: newQuantity,
-      // }));
+
+      fetchCartItems();
+      console.log("incremented response", response);
     } catch (error) {
-      // console.log("Error incrementing item quantity:", error.response);
+      console.log("Error incrementing item quantity:", error);
     }
   };
 
   const decrementQuantity = async (item) => {
-    console.log("decrement item",item);
-    
-    const newQuantity = cartItems[item.itemID] - 1;
-      const cartItem = cartData.find(
-      (cartData) => cartData.itemId === item.itemID
+    const newQuantity = cartItems[item.itemId];
+    console.log("cartData type:", Array.isArray(cartData));
+    const cartItem = cartData.find(
+      (cartData) => cartData.itemId === item.itemId
     );
-    if (newQuantity === 0) {
-      setCartItems((prevCartItems) => {
-        const updatedCartItems = { ...prevCartItems };
-        delete updatedCartItems[item.itemID];
-        return updatedCartItems;
-      });
+    console.log("cart item", cartItem);
+
+    if (newQuantity === 1) {
       try {
         const response = await axios.delete(
-          userStage=="test1"?BASE_URL + "erice-service/cart/remove":BASE_URL+"cart-service/cart/remove",
+          userStage == "test1"
+            ? BASE_URL + "erice-service/cart/remove"
+            : BASE_URL + "cart-service/cart/remove",
           {
             data: {
               id: cartItem.cartId,
@@ -266,58 +282,64 @@ const [categoryName,setCategoryName] = useState();
             },
           }
         );
+        console.log("item removal", response);
 
         Alert.alert("Item removed", "Item removed from the cart");
         fetchCartItems();
       } catch (error) {
-        console.log(error.response);
+        // console.log(error.response);
       }
     } else {
       const data = {
         customerId: customerId,
-        itemId: item.itemID,
+        itemId: item.itemId,
       };
       try {
-        await axios.patch(
-          BASE_URL=="test1"?BASE_URL + "erice-service/cart/decrementCartData":BASE_URL+"cart-service/cart/decrementCartData",
+        const response = await axios.patch(
+          userStage == "test1"
+            ? BASE_URL + "erice-service/cart/decrementCartData"
+            : BASE_URL + "cart-service/cart/decrementCartData",
           data,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+
+        console.log("decremented cart data", response);
         fetchCartItems();
-        // setCartItems((prevCartItems) => ({
-        //   ...prevCartItems,
-        //   [item.itemId]: newQuantity,
-        // }));
-        // console.log("decremented cart data");
-        UpdateCartCount(cartCount - 1);
       } catch (error) {
-        // console.log("Error decrementing item quantity:", error.response);
+        console.error("Error decrementing item quantity:", error);
       }
     }
   };
 
   const renderItem = ({ item }) => {
-    const itemQuantity1 = cartItems[item.itemID] || 0;
-
+    const itemQuantity1 = cartItems[item.itemId] || 0;
+    const isLimitedStock = cartItems[item.itemId] === 1;
     return (
       <Animated.View key={item.itemId}>
         <View style={styles.productContainer}>
-          {/* <TouchableOpacity
+          {/* Show "1 item left" message above the image */}
+          {isLimitedStock[item.itemId] && (
+            <View style={styles.limitedStockBadge}>
+              <Text style={styles.limitedStockText}>1 item left</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
             onPress={() => navigation.navigate("Item Details", { item })}
           >
             <Image
               source={{ uri: item.itemImage }}
               style={styles.productImage}
             />
-          </TouchableOpacity> */}
+          </TouchableOpacity>
 
           <View>
             <Text>{item.priceMrp}</Text>
             <Text style={styles.productName}>{item.itemName}</Text>
 
-            {route.params.categoryName === "Sample Rice" ? (
+            {route.params.details.categoryName === "Sample Rice" ? (
               <Text style={styles.productPrice}> ₹ {item.itemPrice}</Text>
             ) : (
               <>
@@ -337,9 +359,9 @@ const [categoryName,setCategoryName] = useState();
             )}
 
             <Text style={styles.productWeight}>
-              {item.quantity} {item.units}
+              {item.weight} {item.units}
             </Text>
-            {itemQuantity1 > 0 ? (
+            {cartItems[item.itemId] > 0 ? (
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
                   style={styles.quantityButton}
@@ -359,15 +381,19 @@ const [categoryName,setCategoryName] = useState();
                 ) : (
                   <Text style={styles.quantityText}>{itemQuantity1}</Text>
                 )}
-                {route.params.categoryName != "Sample Rice" ? (
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    // onPress={() => incrementQuantity(item)}
-                    onPress={() => handleIncrease(item)}
-                    disabled={loadingItems[item.itemId]}
-                  >
-                    <Text style={styles.quantityButtonText}>+</Text>
-                  </TouchableOpacity>
+                {route.params.details.categoryName != "Sample Rice" ? (
+                 <TouchableOpacity
+                 style={[
+                   styles.quantityButton,
+                   (isLimitedStock[item.itemId] || item.quantity == cartItems[item.itemId]) && styles.disabledButton,
+                 ]}
+                 onPress={() => handleIncrease(item)}
+                 disabled={
+                   loadingItems[item.itemId] || isLimitedStock[item.itemId] || item.quantity == cartItems[item.itemId]
+                 }
+               >
+                 <Text style={styles.quantityButtonText}>+</Text>
+               </TouchableOpacity>
                 ) : (
                   <View
                     style={styles.quantityButton1}
@@ -382,15 +408,32 @@ const [categoryName,setCategoryName] = useState();
             ) : (
               <View>
                 {loader == false ? (
+                  // <TouchableOpacity
+                  //   style={styles.addButton}
+                  //   onPress={() => handleAdd(item)}
+                  // >
+                  //   {/* <Text style={styles.addButtonText}>Add to Cart</Text> */}
+                  //   <Text style={styles.addButtonText}>
+                  //     {loadingItems[item.itemId] ? "Adding..." : "Add to Cart"}
+                  //   </Text>
+                  // </TouchableOpacity>
                   <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => handleAdd(item)}
-                  >
-                    {/* <Text style={styles.addButtonText}>Add to Cart</Text> */}
-                    <Text style={styles.addButtonText}>
-                      {loadingItems[item.itemId] ? "Adding..." : "Add to Cart"}
-                    </Text>
-                  </TouchableOpacity>
+                  style={[
+                    styles.addButton,
+                    item.quantity === 0 ? styles.disabledButton : {}, // ✅ Corrected condition
+                  ]}
+                  onPress={() => handleAdd(item)}
+                  disabled={item.quantity === 0}
+                >
+                  <Text style={styles.addButtonText}>
+                    {item.quantity === 0
+                      ? "Out of Stock"
+                      : loadingItems[item.itemId]
+                      ? "Adding..."
+                      : "Add to Cart"}
+                  </Text>
+                </TouchableOpacity>
+                
                 ) : (
                   <View style={styles.addButton}>
                     <ActivityIndicator size="small" color="white" />
@@ -401,21 +444,17 @@ const [categoryName,setCategoryName] = useState();
           </View>
         </View>
       </Animated.View>
-      // <View>
-      //   <Text>hai</Text>
-      // </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* <Image
+      <Image
         // source={require("../../assets/Images/1.jpg")}
         source={{ uri: categoryImage }}
         style={styles.banner}
-      /> */}
-      <Text style={styles.banner}>{route.params.categoryName}</Text>
-      {route.params.categoryName == "Sample Rice" ? (
+      />
+      {route.params.details.categoryName == "Sample Rice" ? (
         <Text style={styles.noteText}>
           Note : Only one free sample is allowed per user.
         </Text>
@@ -428,7 +467,6 @@ const [categoryName,setCategoryName] = useState();
           showsVerticalScrollIndicator={false}
         />
       </ScrollView>
-      <Text>hello</Text>
     </View>
   );
 };
@@ -442,8 +480,6 @@ const styles = StyleSheet.create({
     height: 250,
     // resizeMode: "cover",
     marginVertical: 10,
-    borderColor:"#000",
-    borderWidth:2
   },
   cartIconContainer: {
     position: "relative",
@@ -549,5 +585,24 @@ const styles = StyleSheet.create({
     textDecorationLine: "line-through",
     color: "#D32F2F",
     marginRight: 5,
+  },
+  limitedStockBadge: {
+    position: "absolute",
+    top: 10,
+    left: 20,
+    backgroundColor: "red",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    zIndex: 10,
+  },
+  limitedStockText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "gray", 
+    opacity: 0.5,
   },
 });

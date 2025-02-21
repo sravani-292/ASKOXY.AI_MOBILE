@@ -261,7 +261,7 @@ const OrderDetails = () => {
       if (response.data.status === true) {
         Alert.alert("Success", response.data.message, [
           {
-            text: "OK", // On press of OK, navigate to the orders page
+            text: "OK", 
             onPress: () => {
               setIsmodelVisible(false);
               navigation.navigate("My Orders");

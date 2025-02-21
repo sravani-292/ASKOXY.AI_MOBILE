@@ -41,7 +41,8 @@ const Register = ({route}) => {
   const dispatch = useDispatch();
   const [mobileOtpSession, setMobileOtpSession] = useState("");
   const [saltSession,setSaltSession] = useState("");
-
+  const [otpGeneratedTime,setotpGeneratedTime]=useState("")
+ 
 
 useEffect(()=>{
   console.log("route",route.params)
@@ -68,7 +69,7 @@ else{
     }
     console.log("mobileNumber", formData.mobileNumber);
     let data = {
-      whatsappNumber: formData.mobileNumber,
+      whatsappNumber: "+91"+formData.mobileNumber,
       userType: "Register",
       registrationType:"whatsapp"
     };
@@ -84,6 +85,7 @@ else{
       if (response.data.mobileOtpSession) {
          setMobileOtpSession(response.data.mobileOtpSession);
          setSaltSession(response.data.salt);
+         setotpGeneratedTime(response.data.otpGeneratedTime)
         setFormData({
           ...formData,
           // showOtp: true,
@@ -129,13 +131,14 @@ else{
       console.log("log the data before sending it to api");
       
     let data = {
-      whatsappNumber: formData.mobileNumber,
+      whatsappNumber: "+91"+formData.mobileNumber,
       whatsappOtpSession: mobileOtpSession,
       whatsappOtpValue: formData.otp,
       registrationType:"whatsapp",
       primaryType: "CUSTOMER",
       userType: "Register",
       salt:saltSession,
+      expiryTime:otpGeneratedTime,
       // referrerid: formData.refCode,
     };
     console.log({ data });
@@ -155,9 +158,11 @@ else{
         }
       })
       .catch(function (error) {
-        console.log(error.response);
         setFormData({ ...formData, loading: false });
-          Alert.alert("Failed,")
+        console.error("OTP verification failed:", error);
+        setFormData({ ...formData, otp_error: false, validOtpError: true });
+        console.log(error.response);
+          // Alert.alert("Failed,")
       });
   };
 
@@ -211,7 +216,7 @@ else{
               <TextInput
                 style={styles.input}
                 mode="outlined"
-                placeholder="Enter Mobile Number"
+                placeholder="Enter whatsapp Number"
                 keyboardType="numeric"
                 dense={true}
                 // autoFocus

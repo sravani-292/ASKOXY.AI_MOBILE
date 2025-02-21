@@ -98,10 +98,7 @@ const ProfilePage = () => {
 
   const getProfile = async () => {
     console.log("profile get call response");
-//     console.log("getProfile",userStage =="test1"?
-//       `${BASE_URL} +
-//       erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
-//  )
+
      try {
       const response = await axios({
         method: "GET",
@@ -115,10 +112,8 @@ const ProfilePage = () => {
         },
         });
       
-      console.log("customerProfileDetails", response.status);
 
       if (response.status === 200) {
-        console.log("customerProfileDetails", response.data);
         setUser(response.data);
         setProfileForm({
           user_FirstName: response.data.firstName,
@@ -355,7 +350,7 @@ const ProfilePage = () => {
                 {
                   backgroundColor:
                     isProfileSaved ||
-                    (profileForm?.customer_mobile?.length || 0) === 10
+                    (profileForm?.customer_mobile?.length || 0) === 13
                       ? "#e0e0e0"
                       : "#fff",
                 },
@@ -363,14 +358,14 @@ const ProfilePage = () => {
               placeholder="Enter your mobile number"
               value={profileForm?.customer_mobile || ""}
               onChangeText={(text) => {
-                if (text.length <= 10) {
+                if (text.length <= 13) {
                   setProfileForm({ ...profileForm, customer_mobile: text });
                 }
               }}
-              maxLength={10}
+              maxLength={13}
               editable={
                 !isProfileSaved &&
-                (profileForm?.customer_mobile?.length || 0) < 10
+                (profileForm?.customer_mobile?.length || 0) < 14
               }
               disabled={true}
             />
@@ -458,17 +453,23 @@ const ProfilePage = () => {
                 <Text style={styles.optionText}>Wallet</Text>
               </TouchableOpacity>
               </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
 
               <TouchableOpacity style={[styles.btn,{backgroundColor:state?"#f44336":"#4CAF50"}]} onPress={() => navigation.navigate("Active")}>
                         <Text style={styles.optionText}>{state?"Deactivate Account":"Activate Account"}</Text>
-                    </TouchableOpacity>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btn} onPress={()=>navigation.navigate("Write To Us")}>
+                <Text style={styles.optionText}>Write To Us</Text>
+
+                </TouchableOpacity>
+                    </View>
             </View>
           </View>
         </ScrollView>
       </View>
-      <View style={{ top: -80, flex: 0.2 }}>
+      {/* <View style={{ top: -80, flex: 0.2 }}>
         <ShareLinks />
-      </View>
+      </View> */}
     </KeyboardAvoidingView>
   );
 };

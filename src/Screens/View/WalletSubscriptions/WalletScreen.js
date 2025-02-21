@@ -3,7 +3,7 @@ import { View, Text, FlatList, ActivityIndicator, StyleSheet, ScrollView, Dimens
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import BASE_URL from '../../../../Config';
+import BASE_URL,{userStage} from '../../../../Config';
 const {width,height} = Dimensions.get('window');
 const WalletPage = ({ route }) => {
   const userData = useSelector((state) => state.counter);
@@ -24,7 +24,8 @@ const WalletPage = ({ route }) => {
     const data = { customerId: customerId};
     try {
       const response = await axios.post(
-        BASE_URL +'erice-service/wallet/customerWalletData',
+        userStage=="test1"?
+        BASE_URL +'erice-service/wallet/customerWalletData':BASE_URL+"order-service/customerWalletData",
         data,
         {
           headers: {

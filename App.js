@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import allReducers from './Redux/reducers';
 import { createStore } from 'redux';
 import { LogBox, Image } from "react-native";
-import StacksScreens from "./src/Navigations/StacksScreens"
+import StacksScreens from "../ASKOXY.AI_MOBILE/src/Navigations/StacksScreens"
 LogBox.ignoreLogs(['EventEmitter.removeListener', 'ViewPropTypes', 'VirtualizedList', 'Warnings']);
 const store = createStore(
   allReducers

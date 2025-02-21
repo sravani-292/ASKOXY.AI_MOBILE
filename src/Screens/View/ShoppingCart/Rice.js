@@ -41,6 +41,8 @@ const Rice = () => {
   });
   const dispatch = useDispatch();
 
+  //////without zakya 
+
   // Request location permission when the component is focused
   useFocusEffect(
     useCallback(() => {
@@ -48,19 +50,10 @@ const Rice = () => {
       
       requestLocationPermission();
       // if(!userData){
-      checkLoginData();
+      // checkLoginData();
       // }
     }, [])
   );
-
-  const handleCategoryPress = (categoryId, categoryName, items) => {
-    navigation.navigate('Rice Product Detail', {
-      categoryId,
-      categoryName,
-      items,
-    });
-  };
-
 
   const checkLoginData = async () => {
     // console.log("userData", userData);
@@ -104,8 +97,7 @@ const Rice = () => {
 useFocusEffect(
   useCallback(() => {
     const handleBackPress = () => {
-      // if (currentScreen === 'Login') {
-        // Custom behavior for Login screen
+     
         Alert.alert(
           'Exit App',
           'Are you sure you want to exit?',
@@ -188,7 +180,7 @@ useFocusEffect(
   // Fetch categories when permission is granted
   useFocusEffect(
     useCallback(() => {
-      
+      // if (hasLocationPermission) {
         getAllCategories();
         getLocation();
         const { isWithin, distance } = isWithinRadius(user,20000);
@@ -199,17 +191,18 @@ useFocusEffect(
   );
 
 
- 
+ const getAllCategories = () => {
+  console.log("sravani");
   
-  const getAllCategories = () => {
     setLoading(true);
-    axios
-      .get(userStage=="test1"?BASE_URL + "erice-service/user/showItemsForCustomrs":BASE_URL +"product-service/getItemsList", {
+     axios
+      .get(userStage =="test1"?BASE_URL + "erice-service/user/showItemsForCustomrs":BASE_URL + "product-service/showItemsForCustomrs", {
         // headers: { Authorization: `Bearer ${token}` },
-        
       })
       .then((response) => {
-        console.log("rice",response.data);
+        console.log("rice details",response);
+        
+        console.log("rice",response.data.categoryName);
         setCategories(response.data);
         setTimeout(() => {
         setLoading(false);
@@ -223,7 +216,6 @@ useFocusEffect(
 
   if (loading) {
     return (
-        
       <View style={styles.loaderContainer}>
         <LottieView 
           source={require("../../../../assets/AnimationLoading.json")}
@@ -236,10 +228,9 @@ useFocusEffect(
   }
 
   const renderItem = ({ item, index }) => {
-    // if (!item.categoryLogo) return null;
+    // if (!item.categoryImage) return null;
 
     return (
-       
       <Animated.View
         entering={FadeInDown.delay(index * 100)
           .duration(600)
@@ -247,67 +238,60 @@ useFocusEffect(
           .damping(12)}
         style={styles.card}
       >
-        {/* <TouchableOpacity
+        <TouchableOpacity
           onPress={() =>
             navigation.navigate("Rice Product Detail", {
               details: item,
               name: item.categoryName,
-            //   image: item.categoryLogo,
+              image: item.ategoryLogo,
             })
           }
         >
           <Image
-            source={{ uri: item.categoryName }}
+            source={{ uri: item.categoryLogo}}
             style={styles.image}
             onError={() => console.log("Failed to load image")}
           />
           <Text style={styles.categoryName}>{item.categoryName}</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </Animated.View>
     );
   };
 
+  // Filter out categories without images
+  const filteredCategories = categories.filter((item) => item.categoryImage||item.categoryImage==null);
 
-// Grouping items by categoryId
-const groupedByCategory = categories.reduce((acc, item) => {
-    if (!acc[item.categoryId]) {
-      acc[item.categoryId] = { categoryName: item.categoryName, items: [] };
-    }
-    acc[item.categoryId].items.push(item);
-    return acc;
-  }, {});
-  
-//   {
-//     "A": {
-//       categoryName: "Electronics",
-//       items: [
-//         { itemId: "1", categoryId: "A", categoryName: "Electronics", name: "Smartphone", price: 5000 },
-//         { itemId: "2", categoryId: "A", categoryName: "Electronics", name: "Laptop", price: 25000 }
-//       ]
-//     },
-//     "B": {
-//       categoryName: "Clothing",
-//       items: [
-//         { itemId: "3", categoryId: "B", categoryName: "Clothing", name: "Shirt", price: 800 },
-//         { itemId: "4", categoryId: "B", categoryName: "Clothing", name: "Jeans", price: 1500 }
-//       ]
-//     }
-//   }
-  
   return (
-    <View style={styles.card}>
-      {Object.entries(groupedByCategory).map(([categoryId, { categoryName, items }]) => (
-        <TouchableOpacity
-          key={categoryId}
-          style={styles.categoryBlock}
-          onPress={() => handleCategoryPress(categoryId, categoryName, items)}
-        >
-          <Text style={styles.image}>{categoryName}</Text>
-        </TouchableOpacity>
-      ))}
+    <View style={styles.container}>
+      <SafeAreaView />
+      <ScrollView>
+        <View>
+           <View style={styles.imageView}>
+               <Image source={require("../../../../assets/container.jpg")} style={styles.imgView}/>
+               
+           </View>
+           <Text style={styles.title}>Rice Categories</Text>
+
+         {filteredCategories?
+          <FlatList
+            data={filteredCategories}
+            keyExtractor={(item) => item.categoryName}
+            renderItem={renderItem}
+            numColumns={2}
+            contentContainerStyle={styles.contentContainerStyle}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+            scrollEnabled={true}
+          />
+          :
+         <View>
+            <Text>No Data Found</Text>
+         </View>
+}
+        </View>
+        </ScrollView>
     </View>
   );
- 
 };
 
 export default Rice;

@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet, Text, View ,FlatList,Linking,Alert,TouchableOpa
 import React,{useEffect, useState} from 'react'
 const {height,width}=Dimensions.get('window')
 const TicketHistoryComments = ({route,navigation}) => {
-    console.log(route.params.details.userPendingQueries);
+    // console.log("TicketHistoryComments",route.params.details.userPendingQueries);
     const [details, setDetails] = useState([])
     
     useEffect(() => {
@@ -32,6 +32,12 @@ const TicketHistoryComments = ({route,navigation}) => {
         return (
           <View style={styles.card}>
             <Text style={styles.header}>{item.resolvedBy}</Text>
+            <View style={styles.row}>
+              <Text style={styles.left}>Ticket Id</Text>
+              <Text style={styles.right}>
+                {item.randomId}
+              </Text>
+            </View>
             <View style={styles.row}>
               <Text style={styles.left}>Query</Text>
               <Text style={styles.right}>{item.pendingComments}</Text>

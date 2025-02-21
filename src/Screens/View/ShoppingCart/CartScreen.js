@@ -1,4 +1,4 @@
- import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,13 +17,13 @@ import { COLORS } from "../../../../assets/theme/theme";
 import { Alert } from "react-native";
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 const CartScreen = () => {
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
   // console.log({userData})
-
+  // cart screen of oldoxy rice
   const navigation = useNavigation();
   const [cartData, setCartData] = useState([]);
   const [error, setError] = useState(null);
@@ -33,8 +33,9 @@ const CartScreen = () => {
   const [removalLoading, setRemovalLoading] = useState({});
   const [user, setUser] = useState({});
   const [deleteLoader, setDeleteLoader] = useState(false);
-  const [deactivateStatus, setDeactivateStatus] = useState(false);
-
+  const [isLimitedStock, setIsLimitedStock] = useState({});
+  const [cartItems, setCartItems] = useState({});
+  
   const [address, setAddress] = useState({
     email: "",
     mobileNumber: "",
@@ -42,7 +43,6 @@ const CartScreen = () => {
     alterMobileNumber: "",
   });
   const locationdata = {
-    // customerId: 4,data
     flatNo: "",
     landMark: "",
     pincode: "",
@@ -52,7 +52,6 @@ const CartScreen = () => {
     longitude: "",
     status: false,
   };
-  // const cartIds="";
 
   const addressdata = {
     addressId: "",
@@ -60,47 +59,56 @@ const CartScreen = () => {
   };
 
   const handleIncrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await increaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const handleDecrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await decreaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const handleRemove = async (item) => {
-    setRemovalLoading((prevState) => ({ ...prevState, [item.cartId]: true }));
+    setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: true }));
     await removeCartItem(item);
-    setRemovalLoading((prevState) => ({ ...prevState, [item.cartId]: false }));
+    setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
   const fetchCartData = async () => {
-    // console.log("token", {token});
-    
     setLoading(true);
     axios
       .get(
-       userStage=="test1"?BASE_URL +
-                 `erice-service/cart/customersCartItems?customerId=${customerId}`:BASE_URL+`cart-service/cart/customersCartItems?customerId=${customerId}`,
+        userStage == "test1"
+          ? BASE_URL +
+              `erice-service/cart/customersCartItems?customerId=${customerId}`
+          : BASE_URL +
+              `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
-      )
+      ) 
+      
 
       .then((response) => {
         setLoading(false);
         setCartData(response.data.customerCartResponseList);
+        console.log(response.data.customerCartResponseList);
+
         console.log("cart length", cartData.length);
+        const limitedStockMap = cartData.reduce((acc, item) => {
+          acc[item.itemId] = item.quantity === 1;
+          return acc;
+        }, {});
+        console.log("limited stock map",limitedStockMap);
+        
         setError(null);
         setLoading(false);
+        setIsLimitedStock(limitedStockMap);
       })
       .catch((error) => {
-        // console.log(error.response);
-
         setError("Failed to load cart data");
         setLoading(false);
       });
@@ -114,9 +122,24 @@ const CartScreen = () => {
     }, [])
   );
 
-  const getProfile = async () => {
-    // const mobile_No = AsyncStorage.getItem('mobileNumber');
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const fetchData = async () => {
+  //       try {
+  //         await getProfile();
+  //         await fetchCartData();
+  //         totalCart();
+  //       } catch (error) {
+  //         console.error("Error fetching data:", error);
+  //       }
+  //     };
 
+  //     fetchData();
+  //   }, [])
+  // );
+
+  const getProfile = async () => {
+    setLoading(true);
     try {
       const response = await axios({
         method: "GET",
@@ -124,26 +147,32 @@ const CartScreen = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-         url: userStage =="test1"?
-                BASE_URL +
-                `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+        url:
+          userStage == "test1"
+            ? BASE_URL +
+              `erice-service/user/customerProfileDetails?customerId=${customerId}`
+            : BASE_URL +
+              `user-service/customerProfileDetails?customerId=${customerId}`,
       });
-      // console.log(response.data);
 
       if (response.status === 200) {
+        console.log("profile", response.data);
+
         setUser(response.data);
         setAddress(response.data);
+        setLoading(false);
       }
-     
     } catch (error) {
-      // console.error(error);
-      showToast("Error loading profile");
+      console.log("Error loading profile");
     }
   };
   const totalCart = async () => {
     try {
       const response = await axios({
-        url: userStage=="test1"?BASE_URL + "erice-service/cart/cartItemData":BASE_URL+"cart-service/cart/cartItemData",
+        url:
+          userStage == "test1"
+            ? BASE_URL + "erice-service/cart/cartItemData"
+            : BASE_URL + "cart-service/cart/cartItemData",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,34 +182,27 @@ const CartScreen = () => {
           customerId: customerId,
         },
       });
+      console.log("total cart", response.data);
 
       setGrandTotal(response.data.totalSum);
-      
     } catch (error) {
-      // console.error("Error fetching cart data:", error.response);
       setError("Failed to fetch cart data");
     }
   };
-  useEffect(() => {
-    fetchCartData();
-    // totalCart();
-  }, []);
 
   const handleImagePress = (item) => {
     navigation.navigate("ItemDetails", { item });
   };
 
   const increaseCartItem = async (item) => {
-  
-
     const currentQuantity = item.cartQuantity;
-    const newQuantity = currentQuantity + 1;
 
     try {
       const response = await axios.patch(
-        BASE_URL == "test1"?BASE_URL + `erice-service/cart/incrementCartData`:BASE_URL + `cart-service/cart/incrementCartData`,
+        BASE_URL == "test1"
+          ? BASE_URL + `erice-service/cart/incrementCartData`
+          : BASE_URL + `cart-service/cart/incrementCartData`,
         {
-          // cartQuantity: newQuantity,
           customerId: customerId,
           itemId: item.itemId,
         },
@@ -190,28 +212,24 @@ const CartScreen = () => {
           },
         }
       );
+      console.log("response after increment", response);
 
       fetchCartData();
       totalCart();
       setLoading(false);
-      // console.log("Cart item quantity updated successfully:", response.data);
-    } catch (err) {
-      // console.error("Error updating cart item quantity:", err.response);
-    }
+    } catch (err) {}
   };
 
   const decreaseCartItem = async (item) => {
-    // setLoading(true)
     try {
-      // console.log("Decreasing item ID:", item.itemId);
-
       if (item.cartQuantity > 1) {
         const newQuantity = item.cartQuantity - 1;
 
         const response = await axios.patch(
-          BASE_URL=="test1"?BASE_URL + `erice-service/cart/decrementCartData`:BASE_URL+"cart-service/cart/decrementCartData",
+          BASE_URL == "test1"
+            ? BASE_URL + `erice-service/cart/decrementCartData`
+            : BASE_URL + "cart-service/cart/decrementCartData",
           {
-            // cartQuantity: newQuantity,
             customerId: customerId,
             itemId: item.itemId,
           },
@@ -222,16 +240,12 @@ const CartScreen = () => {
             },
           }
         );
-
-        // console.log("Item decremented successfully");
+        console.log("response after decrement", response.data);
 
         fetchCartData();
         totalCart();
         setLoading(false);
-        // console.log("Response data:", response.data);
       } else {
-        // If cartQuantity is 1 or less, prompt user to remove item
-        // setDeleteLoader(false)
         Alert.alert(
           "Remove Item",
           "Cart quantity is at the minimum. Do you want to remove this item from the cart?",
@@ -248,14 +262,10 @@ const CartScreen = () => {
           { cancelable: false }
         );
       }
-    } catch (error) {
-      // console.error("Failed to decrease cart item:", error);
-    }
+    } catch (error) {}
   };
 
   const removeCartItem = async (item) => {
-    
-
     Alert.alert(
       "Remove Item",
       "Are you sure you want to remove this item from your cart?",
@@ -269,10 +279,11 @@ const CartScreen = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              
               setDeleteLoader(true);
               const response = await axios.delete(
-               BASE_URL=="test1"?BASE_URL + "erice-service/cart/remove":BASE_URL + "cart-service/cart/remove",
+                BASE_URL == "test1"
+                  ? BASE_URL + "erice-service/cart/remove"
+                  : BASE_URL + "cart-service/cart/remove",
                 {
                   data: {
                     id: item.cartId,
@@ -283,19 +294,11 @@ const CartScreen = () => {
                   },
                 }
               );
-
-              // console.log("Item removed successfully", response.data);
               setDeleteLoader(false);
-              // Fetch updated cart data and total after item removal
               fetchCartData();
               totalCart();
               setLoading(false);
-            } catch (error) {
-              // console.error(
-              //   "Failed to remove cart item:",
-              //   error.response || error.message
-              // );
-            }
+            } catch (error) {}
           },
         },
       ],
@@ -307,10 +310,17 @@ const CartScreen = () => {
     // console.log("reactivate");
     const reactivate = await AsyncStorage.getItem("deactivate");
     // console.log({reactivate});
-    if(reactivate=="false"){
-      Alert.alert("Deactivated","Your account is deactivated, Are you want to reactivate your account to continue?",[{text:"Yes",onPress:()=>navigation.navigate("Write To Us")},{text:"No"}]);
+    if (reactivate == "false") {
+      Alert.alert(
+        "Deactivated",
+        "Your account is deactivated, Are you want to reactivate your account to continue?",
+        [
+          { text: "Yes", onPress: () => navigation.navigate("Write To Us") },
+          { text: "No" },
+        ]
+      );
     }
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -354,7 +364,7 @@ const CartScreen = () => {
                     <View>
                       <View style={styles.itemDetails}>
                         <Text style={styles.itemName}>{item.itemName}</Text>
-                       
+
                         <View style={styles.priceContainer}>
                           <Text style={[styles.itemPrice, styles.crossedPrice]}>
                             MRP: ₹{item.priceMrp}
@@ -362,24 +372,28 @@ const CartScreen = () => {
                           <Text style={[styles.itemPrice, styles.boldPrice]}>
                             ₹{item.itemPrice}
                           </Text>
-                         
                         </View>
-                        <Text style={{marginTop:5}}>
-                            ({Math.round(((item.priceMrp- item.itemPrice) / item.priceMrp) * 100)}% OFF)
-                          </Text>
+                        <Text style={{ marginTop: 5 }}>
+                          (
+                          {Math.round(
+                            ((item.priceMrp - item.itemPrice) / item.priceMrp) *
+                              100
+                          )}
+                          % OFF)
+                        </Text>
                         <Text style={styles.itemWeight}>
-                          Weight: {item.itemQuantity} {item.units}
+                          Weight: {item.weight} {item.units}
                         </Text>
                         <View style={styles.quantityContainer}>
                           <TouchableOpacity
                             style={styles.quantityButton}
                             onPress={() => handleDecrease(item)}
-                            disabled={loadingItems[item.cartId]}
+                            disabled={loadingItems[item.itemId]}
                           >
                             <Text style={styles.buttonText}>-</Text>
                           </TouchableOpacity>
                           {/* Show loader in the middle when loading */}
-                          {loadingItems[item.cartId] ? (
+                          {loadingItems[item.itemId] ? (
                             <ActivityIndicator
                               size="small"
                               color="#000"
@@ -390,12 +404,28 @@ const CartScreen = () => {
                               {item.cartQuantity}
                             </Text>
                           )}
+                          {isLimitedStock[item.itemId] && (
+                            <View style={styles.limitedStockBadge}>
+                              <Text style={styles.limitedStockText}>
+                                1 item left
+                              </Text>
+                            </View>
+                          )}
 
-                          {item.itemQuantity != 1 ? (
+                          {item.itemPrice != 1 ? (
                             <TouchableOpacity
-                              style={styles.quantityButton}
+                              style={[
+                                styles.quantityButton,
+                                (isLimitedStock[item.itemId] ||
+                                  item.quantity == cartItems[item.itemId]) &&
+                                  styles.disabledButton,
+                              ]}
                               onPress={() => handleIncrease(item)}
-                              disabled={loadingItems[item.cartId]}
+                              disabled={
+                                loadingItems[item.itemId] ||
+                                isLimitedStock[item.itemId] ||
+                                item.quantity == cartItems[item.itemId]
+                              }
                             >
                               <Text style={styles.buttonText}>+</Text>
                             </TouchableOpacity>
@@ -403,7 +433,7 @@ const CartScreen = () => {
                             <View
                               style={styles.quantityButton1}
                               onPress={() => handleIncrease(item)}
-                              disabled={loadingItems[item.cartId]}
+                              disabled={loadingItems[item.itemId]}
                             >
                               <Text style={styles.buttonText}>+</Text>
                             </View>
@@ -424,7 +454,6 @@ const CartScreen = () => {
                             color="#FF0000"
                           />
                         </TouchableOpacity>
-                     
                       </View>
                     </View>
                   </View>
@@ -476,15 +505,21 @@ const CartScreen = () => {
               style={styles.checkoutButton}
               onPress={() => {
                 if (
-                  (address.email.trim() == null ||
-                    address.email.trim() == "") &&
-                  (address.name.trim() == null || address.name.trim() == "") &&
-                  (address.mobileNumber.trim() !== null ||
-                    address.mobileNumber.trim() !== "") &&
-                  (address.alterMobileNumber.trim() !== null ||
-                    address.alterMobileNumber.trim() !== "")
+                  // (address.email.trim() == null ||
+                  //   address.email.trim() == "") &&
+                  // (address.name.trim() == null || address.name.trim() == "") &&
+                  // (address.mobileNumber.trim() !== null ||
+                  //   address.mobileNumber.trim() !== "") &&
+                  // (address.alterMobileNumber.trim() !== null ||
+                  //   address.alterMobileNumber.trim() !== "")
+
+                  (!address.email || address.email.trim() === "") &&
+                  (!address.firstName || address.firstName.trim() === "") &&
+                  (!address.lastName || address.lastName.trim() === "") &&
+                  //  (address.whatsappNumber && address.whatsappNumber.trim() !== "") &&
+                  (!address.alterMobileNumber ||
+                    address.alterMobileNumber.trim() === "")
                 ) {
-                  // Show alert if user profile is incomplete
                   Alert.alert(
                     "Incomplete Profile",
                     "Please fill out your profile to proceed.",
@@ -542,7 +577,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   itemImage: {
-    width: width * 0.2,
+    width: width * 0.3,
     height: height / 8,
     marginRight: 16,
     borderRadius: 8,
@@ -568,7 +603,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   quantityButton: {
-    backgroundColor: "#808080",
+    backgroundColor: "#FF6F00",
     padding: 8,
     borderRadius: 4,
     marginHorizontal: 8,
@@ -581,6 +616,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontWeight: "bold",
+    backgroundColor: "#FF6F00",
+
   },
   quantityText: {
     fontWeight: "bold",
@@ -677,7 +714,6 @@ const styles = StyleSheet.create({
     // padding: 8,
     borderRadius: 4,
     // marginHorizontal: 8,
-
   },
   loaderContainer: {
     position: "absolute",
@@ -706,6 +742,28 @@ const styles = StyleSheet.create({
   boldPrice: {
     fontWeight: "bold",
     color: "#388E3C",
+  },
+  limitedStockBadge: {
+    // position: "absolute",
+    top: 10,
+    // left: 20,
+    alignSelf: "center",
+    alignItems: "center",
+    backgroundColor: "red",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    zIndex: 10,
+    marginBottom: 20,
+  },
+  limitedStockText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "gray", // Change color when disabled
+    opacity: 0.5,
   },
 });
 

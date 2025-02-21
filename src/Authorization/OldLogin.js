@@ -71,7 +71,7 @@ const LoginPage = () => {
   );
 
   const handleResendOtp = async () => {
-    if (!isOtpSent) return; // Prevent resend if OTP is not sent yet
+    if (!isOtpSent) return; 
     setLoading(true);
     setOtp("");
     // setErrors({ ...errors, otp: "" });

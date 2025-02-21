@@ -232,7 +232,8 @@ const AddressBook = ({ route }) => {
     navigation.navigate("Checkout", { locationdata });
   }else{
     console.log("Address not saved as it is outside the radius.");
-    Alert.alert("Sorry",`We cannot deliver to this address because your distance is ${distanceInKm} km, which is not within the 20 km radius.`);
+    // Alert.alert("Sorry",`We cannot deliver to this address because your distance is ${distanceInKm} km, which is not within the 20 km radius.`);
+    Alert.alert("Sorry!" `We’re unable to deliver to this address as it’s ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`)
   }
  
     // navigation.navigate("Checkout", { locationdata });

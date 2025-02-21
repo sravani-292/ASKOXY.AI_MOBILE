@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Image, StyleSheet, View, Text, Dimensions } from "react-native";
+import React, { useEffect, useState, useCallback, use } from "react";
+import { Image, StyleSheet, View, Text, Dimensions,TouchableOpacity } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -7,10 +7,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import CustomNavigationBar from "../Components/AppBar";
 import Rice from "../Screens/View/ShoppingCart/Rice";
 import ProfilePage from "../Screens/View/PurchaseFlow/Profile";
-import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
+// import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
-console.log("OrderScreen", OrderScreen);
-
+import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import { COLORS } from "../../assets/theme/theme";
 import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -18,7 +17,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BASE_URL, { userStage } from "../../Config";
 import OfferScreen from "../Screens/View/WalletSubscriptions/OfferScreen";
-
+import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
 const { height, width } = Dimensions.get("window");
 const Tab = createBottomTabNavigator();
 
@@ -26,9 +25,7 @@ const Tabs = () => {
   const [cartCount, setCartCount] = useState(0);
   const userData = useSelector((state) => state.counter);
 
-  // useEffect(() => {
-  //   fetchCartCount();
-  // }, []);
+ 
 
   useFocusEffect(
     useCallback(() => {
@@ -53,12 +50,12 @@ const Tabs = () => {
         }
       )
       .then((response) => {
-        console.log(
-          "cart data in bottom tabs",
-          response.data.customerCartResponseList.length
-        );
-
-        setCartCount(response.data.customerCartResponseList.length);
+        console.log("cart response in bottom tabs",response);
+        if (response.data && Array.isArray(response.data.customerCartResponseList)) {
+          setCartCount(response.data.customerCartResponseList.length);
+        } else {
+          setCartCount(0); 
+        }
       })
       .catch((error) => {
         console.error("Failed to fetch cart count:", error);
@@ -79,19 +76,21 @@ const Tabs = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="Dashboard"
+      initialRouteName="Rice"
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
         tabBarShowLabel: false,
         tabBarStyle: styles.tabBar,
         header: (props) => <CustomNavigationBar {...props} />,
-        headerShown: true,
       }}
     >
       <Tab.Screen
-        name="Dashboard"
+        name="Rice"
         component={Rice}
         options={{
+          headerShown: true,
+          tabBarShowLabel: false,
+          tabBarStyle: styles.tabBar,
           tabBarIcon: ({ focused }) => (
             <View style={styles.tabIconContainer}>
               <Image
@@ -106,6 +105,8 @@ const Tabs = () => {
           ),
         }}
       />
+
+ 
 
       <Tab.Screen
         name="My Cart"
@@ -149,23 +150,7 @@ const Tabs = () => {
           ),
         }}
       />
-      {/* <Tab.Screen
-        name="Profile"
-        component={ProfilePage}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.tabIconContainer}>
-              <Image
-                source={require("../../assets/BottomTabImages/profile.png")}
-                resizeMode="contain"
-                style={[styles.tabIcon, getIconColor(focused)]}
-              />
-              <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>Profile</Text>
-
-            </View>
-          ),
-        }}
-      /> */}
+      
 
       <Tab.Screen
         name="Profile"
@@ -206,7 +191,7 @@ const Tabs = () => {
         })}
       />
 
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Write To Us"
         component={WriteToUs}
         options={{
@@ -224,7 +209,7 @@ const Tabs = () => {
             </View>
           ),
         }}
-      />
+      /> */}
     </Tab.Navigator>
   );
 };

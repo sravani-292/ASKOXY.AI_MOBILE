@@ -23,7 +23,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { AccessToken } from "../../Redux/action/index";
-import BASE_URL from "../../Config";
+import BASE_URL,{userStage} from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
 // import dynamicLinks from '@react-native-firebase/dynamic-links';
@@ -44,7 +44,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const [mobileOtpSession, setMobileOtpSession] = useState();
   const [saltSession, setSaltSession] = useState("");
-
+  const [otpGeneratedTime,setotpGeneratedTime]=useState("")
   useFocusEffect(
     useCallback(() => {
       const checkLoginData = async () => {
@@ -57,17 +57,11 @@ const Login = () => {
 
           console.log(storedmobilenumber);
 
-          // setMobileNumber(storedmobilenumber);
           setFormData({ ...formData, mobileNumber: storedmobilenumber });
           console.log("mobileNumber", formData.mobileNumber);
 
           if (loginData) {
             const user = JSON.parse(loginData);
-            // if (user.accessToken) {
-            //   dispatch(AccessToken(user));
-            //   navigation.navigate("Home");
-
-             
             
           }
         } catch (error) {
@@ -87,8 +81,7 @@ const Login = () => {
   useFocusEffect(
     useCallback(() => {
       const handleBackPress = () => {
-        // if (currentScreen === 'Login') {
-        // Custom behavior for Login screen
+        
         Alert.alert(
           "Exit",
           "Are you sure you want to exit?",
@@ -144,7 +137,7 @@ const Login = () => {
     }
     console.log("mobileNumber", formData.mobileNumber);
     let data = {
-      whatsappNumber: formData.mobileNumber,
+      whatsappNumber: "+91"+formData.mobileNumber,
       userType: "Login",
       registrationType: "whatsapp",
     };
@@ -152,6 +145,7 @@ const Login = () => {
     setFormData({ ...formData, loading: true });
     try {
       const response = await axios.post(
+        
         BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
         data
       );
@@ -159,6 +153,7 @@ const Login = () => {
 
       if (response.data.mobileOtpSession) {
         setMobileOtpSession(response.data.mobileOtpSession);
+        setotpGeneratedTime(response.data.otpGeneratedTime)
         setSaltSession(response.data.salt);
         setFormData({
           ...formData,
@@ -195,17 +190,17 @@ const Login = () => {
     setFormData({ ...formData, loading: true });
 
     let data = {
-      whatsappNumber: formData.mobileNumber,
+      whatsappNumber: "+91"+formData.mobileNumber,
       whatsappOtpSession: mobileOtpSession,
       whatsappOtpValue: formData.otp,
       userType: "Login",
       salt: saltSession,
-      // primaryType: "CUSTOMER",
+      expiryTime:otpGeneratedTime,
     };
     console.log({ data });
     axios({
       method: "post",
-      url: BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+      url: BASE_URL+`user-service/registerwithMobileAndWhatsappNumber`,
       data: data,
     })
       .then(async (response) => {
@@ -218,17 +213,13 @@ const Login = () => {
           await AsyncStorage.setItem("mobileNumber", formData.mobileNumber);
           setFormData({ ...formData, otp: "" });
           console.log("varalakshmi");
-          
-          // const fromScreen = route.params?.fromScreen;
-          //   console.log("fromScreen", fromScreen);
-            
-          // if (fromScreen) {
-          //   navigation.navigate(fromScreen);
-          // } else {
-          //   navigation.navigate("Dashboard");
-          // }
-          if (response.data.userStatus == "ACTIVE"||response.data.userStatus==null) {
-            navigation.navigate("Home");
+          if (
+            response.data.userStatus == "ACTIVE" ||
+            response.data.userStatus == null
+          ) {
+            // navigation.navigate("Home");
+            navigation.navigate("Home",{screen:"UserDashboard"});
+            // navigation.navigate("Services")
           } else {
             Alert.alert(
               "Deactivated",
@@ -245,8 +236,11 @@ const Login = () => {
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
+        console.error("OTP verification failed:", error);
+        setFormData({ ...formData, otp_error: false, validOtpError: true });
         console.log(error.response);
         if (error.response.status == 400) {
+          
           Alert.alert("Failed", "Invalid Credentials");
         }
       });
@@ -381,7 +375,7 @@ const Login = () => {
               <TextInput
                 style={styles.input}
                 mode="outlined"
-                placeholder="Enter Mobile Number"
+                placeholder="Enter Whatsapp Number"
                 keyboardType="numeric"
                 dense={true}
                 // autoFocus
@@ -453,13 +447,7 @@ const Login = () => {
                         style={{ flexDirection: "row", alignSelf: "center" }}
                       >
                         <View>
-                          {/* <TouchableOpacity style={styles.rowbtn}>
-                            <Icon
-                              name="logo-whatsapp"
-                              color="green"
-                              size={24}
-                            />
-                          </TouchableOpacity> */}
+                         
                         </View>
                         <View>
                           <TouchableOpacity
@@ -474,7 +462,6 @@ const Login = () => {
                         </View>
                       </View>
 
-                      {/* <View style={{}} /> */}
                       {/* Not yet Register */}
                       <View
                         style={{
@@ -518,7 +505,7 @@ const Login = () => {
                     mode="outlined"
                     value={formData.otp}
                     dense={true}
-                    maxLength={6}
+                    maxLength={4}
                     keyboardType="number-pad"
                     activeOutlineColor="#e87f02"
                     autoFocus

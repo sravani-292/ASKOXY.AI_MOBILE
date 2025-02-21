@@ -238,14 +238,12 @@ const OrderDetails = () => {
 
   const {
     customerName,
-    customermobilenumber,
-    granttotal,
+    customerMobile,
+    grandTotal,
     orderItems,
     deliveryFee,
-    payment,
-    flatNo,
-    landMark,
-    address,
+    paymentType,
+    orderAddress,
     pinCode,
     couponValue,
     walletAmount,
@@ -366,7 +364,7 @@ const OrderDetails = () => {
                     <Text style={styles.itemName}>{item.itemName}</Text>
                     <Text style={styles.itemDetail}>{item.quantity}</Text>
                     <Text style={styles.itemDetail}>
-                      ₹{item.price / item.quantity}
+                      ₹{item.price/item.quantity}
                     </Text>
 
                     <Text style={styles.itemDetail}>₹{item.price}</Text>
@@ -474,16 +472,16 @@ const OrderDetails = () => {
           </Text>
           <Text style={styles.detailText}>
             Mobile:{" "}
-            <Text style={styles.detailValue}>{customermobilenumber}</Text>
+            <Text style={styles.detailValue}>{customerMobile}</Text>
           </Text>
           <Text style={styles.detailText}>
-            Pincode: <Text style={styles.detailValue}>{pinCode}</Text>
+            Pincode: <Text style={styles.detailValue}>{orderAddress.pincode}</Text>
           </Text>
           <Text style={styles.detailText}>Address:</Text>
           <Text style={styles.detailValue}>
             {" "}
-            {orderDetails.flatNo}, {orderDetails.landMark},
-            {orderDetails.address}
+            {orderAddress.flatNo}, {orderAddress.landMark},
+            {orderAddress.address}
           </Text>
         </View>
 
@@ -493,13 +491,13 @@ const OrderDetails = () => {
           {/* Subtotal */}
           <View style={styles.row}>
             <Text style={styles.label}>Sub Total:</Text>
-            <Text style={styles.value}>₹{granttotal}</Text>
+            <Text style={styles.value}>₹{grandTotal}</Text>
           </View>
 
           {/* Delivery Fee */}
           <View style={styles.row}>
             <Text style={styles.label}>Delivery Fee:</Text>
-            <Text style={styles.value}>+₹0.00</Text>
+            <Text style={styles.value}>{deliveryFee}</Text>
           </View>
 
           
@@ -520,7 +518,7 @@ const OrderDetails = () => {
           {/* Payment Type */}
           <View style={styles.row}>
             <Text style={styles.label}>Payment Type:</Text>
-            <Text style={styles.value}>{payment == 2 ? "ONLINE" : "COD"}</Text>
+            <Text style={styles.value}>{paymentType == 2 ? "ONLINE" : "COD"}</Text>
           </View>
           {/* Order Status */}
           <View style={styles.row}>
@@ -531,7 +529,7 @@ const OrderDetails = () => {
           {/* Grand Total */}
           <View style={styles.grandTotalRow}>
             <Text style={styles.grandTotalLabel}>Grand Total:</Text>
-            <Text style={styles.grandTotalValue}>₹{granttotal}</Text>
+            <Text style={styles.grandTotalValue}>₹{grandTotal}</Text>
           </View>
         </View>
       </ScrollView>
@@ -844,7 +842,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ddd",
   },
   itemName: {
-    paddingLeft: 15,
+    paddingLeft:1,
     fontSize: 13,
     flex: 1.5,
     color: "#000",

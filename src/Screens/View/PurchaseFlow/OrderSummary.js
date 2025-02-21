@@ -132,32 +132,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
   };
   
 
-
-
-  // const handleContinuePress = () => {
-  //   console.log("user", user);
-  //     const orderDetails = formatOrderDetails();
-  //     Alert.alert(
-  //       "Confirm Order",
-  //       orderDetails,
-  //       [
-  //         {
-  //           text: "Cancel",
-  //           style: "cancel",
-  //         },
-  //         {
-  //           text: "Confirm",
-  //           onPress: () =>
-  //             navigation.navigate("Payment Details", {
-  //               items: cartItems,
-  //               address: address,
-  //             }),
-  //         },
-  //       ]
-  //     );
-   
-  // };
-  const handleContinuePress = () => {
+const handleContinuePress = () => {
     navigation.navigate("Payment Details", {
       items: cartItems,
       address: address,
@@ -199,10 +174,10 @@ const OrderSummaryScreen = ({ navigation, route }) => {
     <Text style={styles.flatNoText}>{address.flatNo}</Text>
   </View>
   {/* <View style={styles.addressDetailsContainer}> */}
-  <View style={{flexDirection:"row",width:width*0.8}}>
+  <View style={{flexDirection:"row",width:width*0.6,flexWrap:"wrap"}}>
     <Text style={styles.addressDetails}>{address.landMark} ,</Text>
-    <Text style={styles.addressDetails}> {address.address} ,</Text>
-    <Text style={styles.addressDetails}> {address.pincode}</Text>
+    <Text style={styles.addressDetails}>{address.address} ,</Text>
+    <Text style={styles.addressDetails}>{address.pincode}</Text>
   </View>
 </View>
 
@@ -228,7 +203,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
                   {/* Quantity :<Text>{item.itemQuantity} x {item.cartQuantity} kg </Text> */}
                   Quantity : <Text> { item.cartQuantity} </Text>
                 </Text>
-                <Text>Weight :<Text> {item.itemQuantity} kgs</Text></Text>
+                <Text>Weight :<Text> {item.weight} {item.units}</Text></Text>
                 <Text>Price: <Text>{item.cartQuantity} x {item.itemPrice} </Text></Text>
                 <Text>Total Price : ₹{item.cartQuantity  * item.itemPrice}</Text>
               </View>

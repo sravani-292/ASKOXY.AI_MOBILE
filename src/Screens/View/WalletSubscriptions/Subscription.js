@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import BASE_URL from "../../../../Config"
+import BASE_URL,{userStage} from "../../../../Config"
 import { useNavigation } from "@react-navigation/native";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
@@ -44,11 +44,11 @@ const Subscription = () => {
     customer_mobile: "",
   });
 
-  // useEffect(() => {
-  //   getSubscription()
-  //   fetchSubscriptionData();
-  //   getProfile();
-  // }, []);
+  useEffect(() => {
+    getSubscription()
+    fetchSubscriptionData();
+    getProfile();
+  }, []);
 
   useEffect(() => {
     const fetchAllDataInOrder = async () => {
@@ -72,9 +72,9 @@ const Subscription = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        url:
+        url:userStage=="test1"?
           BASE_URL +
-          `erice-service/user/customerProfileDetails?customerId=${userData.userId}`,
+          `erice-service/user/customerProfileDetails?customerId=${userData.userId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${userData.userId}`,
       });
       console.log(response.data);
 
@@ -96,8 +96,8 @@ const Subscription = () => {
     setLoading(true)
     const data = {
       url:
-        BASE_URL +
-        "erice-service/subscription-plans/getSubscriptionsDetailsForaCustomer",
+        userStage=="test1" ?BASE_URL +
+        "erice-service/subscription-plans/getSubscriptionsDetailsForaCustomer":BASE_URL+"order-service/getSubscriptionsDetailsForaCustomer",
       method: "post",
       headers: {
         "Content-Type": "application/json",
@@ -114,9 +114,9 @@ const Subscription = () => {
       console.log("get subscription", response.data);
       setStatus(response.data.status);
       setNoteResponse(response.data.message);
-      // console.log("status", status);
+      console.log("status", status);
     } catch (error) {
-      console.error("Error fetching subscription details:", error);
+      // console.error("Error fetching subscription details:", error);
     }
   };
 
@@ -124,7 +124,7 @@ const Subscription = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        BASE_URL + "erice-service/wallet/getAllPlans",
+        userStage=="test1"?BASE_URL + "erice-service/wallet/getAllPlans":BASE_URL+"order-service/getAllPlans",
         {
           headers: {
             "Content-Type": "application/json",
@@ -161,7 +161,6 @@ const Subscription = () => {
         },
         {
           text: "OK",
-          // onPress: () =>{'SubscriptionConfirmation'},
           onPress: () => SubscriptionConfirmation(plan),
         },
       ]
@@ -180,7 +179,8 @@ const Subscription = () => {
     };
     axios
       .post(
-        BASE_URL + `erice-service/wallet/userSubscriptionAmount`,
+        userStage =="test1"?
+        BASE_URL + `erice-service/wallet/userSubscriptionAmount`:BASE_URL+"order-service/userSubscriptionAmount",
         postData,
         {
           headers: {
@@ -190,7 +190,7 @@ const Subscription = () => {
       )
       .then(function (response) {
         setLoader(false);
-        console.log(response.data);
+        console.log("userSubscriptionAmount",response.data);
         if (response.data.paymentId == null && response.data.status == false) {
           //  Alert.alert(response.data.message.replace(/\. /g, '.\n') );
           Alert.alert(
@@ -209,8 +209,8 @@ const Subscription = () => {
           console.log("==========");
           const data = {
             mid: "1152305",
-            amount: details.amount,
-            // amount:1,
+            // amount: details.amount,
+            amount:1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -420,7 +420,7 @@ const Subscription = () => {
               // clearInterval(intervalId); 294182409
               axios({
                 method: "POST",
-                url: BASE_URL + "erice-service/wallet/userSubscriptionAmount",
+                url: userStage=="test1"?BASE_URL + "erice-service/wallet/userSubscriptionAmount":BASE_URL+"order-service/userSubscriptionAmount",
                 data: {
                   ...postData,
                   paymentId: transactionId,
@@ -431,16 +431,7 @@ const Subscription = () => {
                   Authorization: `Bearer ${token}`,
                 },
               })
-                // axios.post(BASE_URL+`erice-service/wallet/userSubscriptionAmount`,{
-                //     ...postData,
-                //     paymentId: transactionId,
-                //     paymentStatus: data.paymentStatus,
-
-                // },{
-                //   headers:{
-                //     Authorization:`Bearer ${token}`
-                //   }
-                // })
+                
                 .then(function (response) {
                   console.log("Order Placed with Payment API:", response);
                   setLoading(false);
@@ -468,9 +459,7 @@ const Subscription = () => {
         })
         .catch((error) => console.log("Payment Status", error.response));
     }
-    // else{
-    //   clearInterval(intervalId)
-    // }
+    
   }
 
   const renderPlan = ({ item }) => (
@@ -492,6 +481,7 @@ const Subscription = () => {
                   backgroundColor:  "#fd7e14" ,
                 },
               ]}
+              // style={styles.button}
               onPress={() => handleSubscription(item)}
               disabled={status}
               // {status==true?disabled:""}
@@ -520,7 +510,7 @@ const Subscription = () => {
           <Text style={styles.noteText}>
           <Text style={styles.noteLabel}>Note: </Text>
           {noteResponse}
-        </Text>
+          </Text>
           </View> 
           {subscriptionHistoryData.length > 0 ? (
             <FlatList
