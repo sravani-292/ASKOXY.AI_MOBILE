@@ -57,7 +57,7 @@ const ItemDetails = ({ route, navigation }) => {
           },
         }
       );
-      console.log("API Response:", response); // Log full response
+      console.log("API Response:", response); 
       const cartData = response?.data?.customerCartResponseList;
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
@@ -66,10 +66,10 @@ const ItemDetails = ({ route, navigation }) => {
         setCartItems({});
         setIsLimitedStock({});
         setCartCount(0);
-        return; // Stop execution if cartData is invalid
+        return; 
       }
 
-      console.log("cartData:", cartData); // Log valid cart data
+      console.log("cartData:", cartData); 
 
       // Mapping items to their quantities
       const cartItemsMap = cartData.reduce((acc, item) => {
@@ -406,7 +406,7 @@ const ItemDetails = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={[
                       styles.addButton,
-                      item.quantity === 0 ? styles.disabledButton : {}, // ✅ Corrected condition
+                      item.quantity === 0 ? styles.disabledButton : {}, 
                     ]}
                     onPress={() => handleAdd(item)}
                     disabled={item.quantity === 0}
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   quantityButton: {
-    backgroundColor: "#FF6F00",
+    backgroundColor: "#9333ea",
     padding: 10,
     borderRadius: 5,
     alignSelf: "center",
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   addButton: {
-    backgroundColor: "#FF6F00",
+    backgroundColor: "#9333ea",
     width: 100,
     paddingVertical: 8,
     borderRadius: 4,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   ViewButton: {
-    backgroundColor: "#FF6F00",
+    backgroundColor: "#9333ea",
     paddingVertical: 10,
     borderRadius: 5,
     marginTop: 70,
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   smallButton: {
     flex: 1,
     marginHorizontal: 10,
-    backgroundColor: "#FF6F00",
+    backgroundColor: "#9333ea",
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: "center",
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   disabledButton: {
-    backgroundColor: "gray", // Change color when disabled
+    backgroundColor: "gray", 
     opacity: 0.5,
   },
 });

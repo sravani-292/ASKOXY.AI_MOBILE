@@ -13,8 +13,10 @@ import { StyleSheet } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { COLORS } from "../../../../assets/theme/theme";
+import { COLORS } from "../../../../Redux/constants/theme";
 import { Alert } from "react-native";
+import { TouchableWithoutFeedback } from "react-native";
+
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
 import BASE_URL, { userStage } from "../../../../Config";
@@ -22,8 +24,7 @@ const CartScreen = () => {
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
-  // console.log({userData})
-  // cart screen of oldoxy rice
+
   const navigation = useNavigation();
   const [cartData, setCartData] = useState([]);
   const [error, setError] = useState(null);
@@ -35,7 +36,7 @@ const CartScreen = () => {
   const [deleteLoader, setDeleteLoader] = useState(false);
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
-  
+
   const [address, setAddress] = useState({
     email: "",
     mobileNumber: "",
@@ -89,24 +90,48 @@ const CartScreen = () => {
             Authorization: `Bearer ${token}`,
           },
         }
-      ) 
-      
+      )
 
       .then((response) => {
         setLoading(false);
-        setCartData(response.data.customerCartResponseList);
-        console.log(response.data.customerCartResponseList);
-
+        const cartData = response?.data?.customerCartResponseList;
+        if (!cartData || !Array.isArray(cartData)) {
+          setCartData([]);
+          setIsLimitedStock({});
+          setCartItems({});
+          return;
+        }
         console.log("cart length", cartData.length);
-        const limitedStockMap = cartData.reduce((acc, item) => {
-          acc[item.itemId] = item.quantity === 1;
+        const cartItemsMap = cartData.reduce((acc, item) => {
+          if (
+            !item.itemId ||
+            item.cartQuantity === undefined ||
+            item.quantity === undefined
+          ) {
+            console.error("Invalid item in cartData:", item);
+            return acc;
+          }
+          acc[item.itemId] = item.cartQuantity;
           return acc;
         }, {});
-        console.log("limited stock map",limitedStockMap);
-        
+
+        console.log("Cart Items Map:", cartItemsMap);
+        const limitedStockMap = cartData.reduce((acc, item) => {
+          if (item.quantity === 0) {
+            acc[item.itemId] = "outOfStock";
+          } else if (item.quantity === 1) {
+            acc[item.itemId] = "lowStock";
+          }
+          return acc;
+        }, {});
+        console.log("limited stock map", limitedStockMap);
+
         setError(null);
-        setLoading(false);
+
+        setCartData(cartData);
+        setCartItems(cartItemsMap);
         setIsLimitedStock(limitedStockMap);
+        setLoading(false);
       })
       .catch((error) => {
         setError("Failed to load cart data");
@@ -121,22 +146,6 @@ const CartScreen = () => {
       getProfile();
     }, [])
   );
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchData = async () => {
-  //       try {
-  //         await getProfile();
-  //         await fetchCartData();
-  //         totalCart();
-  //       } catch (error) {
-  //         console.error("Error fetching data:", error);
-  //       }
-  //     };
-
-  //     fetchData();
-  //   }, [])
-  // );
 
   const getProfile = async () => {
     setLoading(true);
@@ -160,7 +169,6 @@ const CartScreen = () => {
 
         setUser(response.data);
         setAddress(response.data);
-        setLoading(false);
       }
     } catch (error) {
       console.log("Error loading profile");
@@ -266,6 +274,8 @@ const CartScreen = () => {
   };
 
   const removeCartItem = async (item) => {
+    console.log("item to be removed", item);
+
     Alert.alert(
       "Remove Item",
       "Are you sure you want to remove this item from your cart?",
@@ -307,9 +317,7 @@ const CartScreen = () => {
   };
 
   const handleDeactivateStatus = async () => {
-    // console.log("reactivate");
     const reactivate = await AsyncStorage.getItem("deactivate");
-    // console.log({reactivate});
     if (reactivate == "false") {
       Alert.alert(
         "Deactivated",
@@ -325,7 +333,7 @@ const CartScreen = () => {
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#9333ea" />
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
       ) : cartData && cartData.length > 0 ? (
@@ -333,26 +341,44 @@ const CartScreen = () => {
           data={cartData}
           keyExtractor={(item) => item.itemId.toString()}
           renderItem={({ item }) => (
-            <View style={styles.cartItem}>
-              {removalLoading[item.cartId] ? (
+            <View
+              style={[
+                styles.cartItem,
+                item.quantity === 0 && styles.outOfStockCard,
+              ]}
+            >
+              {isLimitedStock[item.itemId] === "lowStock" && (
+                <View style={styles.limitedStockBadge}>
+                  <Text style={styles.limitedStockText}>1 item left</Text>
+                </View>
+              )}
+              {isLimitedStock[item.itemId] === "outOfStock" && (
+                <View style={styles.outOfStockContainer}>
+                  {/* Transparent overlay to block interactions on everything except the remove button */}
+                  <View style={styles.disabledOverlay} />
+
+                  <Text style={styles.outOfStockText}>Out of Stock</Text>
+
+                  <TouchableOpacity
+                    onPress={() => handleRemove(item)}
+                    style={styles.removeButton}
+                  >
+                    <Text style={styles.removeText}>Please remove it</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {removalLoading[item.itemId] ? (
                 <View style={styles.loaderContainer}>
                   <ActivityIndicator size="large" color="#000" />
                 </View>
               ) : (
                 <>
-                  {/* <Text>dcx</Text> */}
-                  {item.itemQuantity == 1 ? (
-                    <Text
-                      style={{
-                        textAlign: "center",
-                        color: "red",
-                        marginBottom: 5,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Note : Only one free sample is allowed per user.
+                  {item.itemQuantity === 1 && (
+                    <Text style={styles.noteText}>
+                      Note: Only one free sample is allowed per user.
                     </Text>
-                  ) : null}
+                  )}
                   <View style={{ flexDirection: "row" }}>
                     <View>
                       <Image
@@ -364,7 +390,6 @@ const CartScreen = () => {
                     <View>
                       <View style={styles.itemDetails}>
                         <Text style={styles.itemName}>{item.itemName}</Text>
-
                         <View style={styles.priceContainer}>
                           <Text style={[styles.itemPrice, styles.crossedPrice]}>
                             MRP: ₹{item.priceMrp}
@@ -392,7 +417,6 @@ const CartScreen = () => {
                           >
                             <Text style={styles.buttonText}>-</Text>
                           </TouchableOpacity>
-                          {/* Show loader in the middle when loading */}
                           {loadingItems[item.itemId] ? (
                             <ActivityIndicator
                               size="small"
@@ -401,49 +425,32 @@ const CartScreen = () => {
                             />
                           ) : (
                             <Text style={styles.quantityText}>
-                              {item.cartQuantity}
+                              {cartItems[item.itemId] || item.cartQuantity}
                             </Text>
                           )}
-                          {isLimitedStock[item.itemId] && (
-                            <View style={styles.limitedStockBadge}>
-                              <Text style={styles.limitedStockText}>
-                                1 item left
-                              </Text>
-                            </View>
-                          )}
+                          <TouchableOpacity
+                            style={[
+                              styles.quantityButton,
+                              cartItems[item.itemId] === item.quantity &&
+                                styles.disabledButton,
+                            ]}
+                            onPress={() => handleIncrease(item)}
+                            disabled={
+                              loadingItems[item.itemId] ||
+                              cartItems[item.itemId] === item.quantity
+                            }
+                          >
+                            <Text style={styles.buttonText}>+</Text>
+                          </TouchableOpacity>
 
-                          {item.itemPrice != 1 ? (
-                            <TouchableOpacity
-                              style={[
-                                styles.quantityButton,
-                                (isLimitedStock[item.itemId] ||
-                                  item.quantity == cartItems[item.itemId]) &&
-                                  styles.disabledButton,
-                              ]}
-                              onPress={() => handleIncrease(item)}
-                              disabled={
-                                loadingItems[item.itemId] ||
-                                isLimitedStock[item.itemId] ||
-                                item.quantity == cartItems[item.itemId]
-                              }
-                            >
-                              <Text style={styles.buttonText}>+</Text>
-                            </TouchableOpacity>
-                          ) : (
-                            <View
-                              style={styles.quantityButton1}
-                              onPress={() => handleIncrease(item)}
-                              disabled={loadingItems[item.itemId]}
-                            >
-                              <Text style={styles.buttonText}>+</Text>
-                            </View>
-                          )}
                           <Text style={styles.itemTotal}>
                             Total: ₹
-                            {(item.itemPrice * item.cartQuantity).toFixed(2)}
+                            {(
+                              item.itemPrice *
+                              (cartItems[item.itemId] || item.cartQuantity)
+                            ).toFixed(2)}
                           </Text>
                         </View>
-                        {/* {deleteLoader==false? */}
                         <TouchableOpacity
                           style={{ marginLeft: 180 }}
                           onPress={() => handleRemove(item)}
@@ -477,22 +484,17 @@ const CartScreen = () => {
             Your cart is empty
           </Text>
           <TouchableOpacity
-            style={{
-              backgroundColor: COLORS.primary,
-              paddingVertical: 10,
-              paddingHorizontal: 20,
-              borderRadius: 5,
-            }}
+            style={styles.browseButton}
             onPress={() => navigation.navigate("Dashboard")}
           >
-            <Text style={{ color: "#fff", fontSize: 16 }}>Browse Items</Text>
+            <Text style={styles.browseButtonText}>Browse Items</Text>
           </TouchableOpacity>
         </View>
       )}
       {cartData && cartData.length > 0 && (
         <>
           <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>Grand Total : ₹{grandTotal}</Text>
+            <Text style={styles.totalText}>Grand Total: ₹{grandTotal}</Text>
           </View>
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
@@ -501,24 +503,39 @@ const CartScreen = () => {
             >
               <Text style={styles.actionButtonText}>Add More</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.checkoutButton}
               onPress={() => {
-                if (
-                  // (address.email.trim() == null ||
-                  //   address.email.trim() == "") &&
-                  // (address.name.trim() == null || address.name.trim() == "") &&
-                  // (address.mobileNumber.trim() !== null ||
-                  //   address.mobileNumber.trim() !== "") &&
-                  // (address.alterMobileNumber.trim() !== null ||
-                  //   address.alterMobileNumber.trim() !== "")
+                console.log("Limited Stock Map1:", isLimitedStock);
 
-                  (!address.email || address.email.trim() === "") &&
-                  (!address.firstName || address.firstName.trim() === "") &&
-                  (!address.lastName || address.lastName.trim() === "") &&
-                  //  (address.whatsappNumber && address.whatsappNumber.trim() !== "") &&
-                  (!address.alterMobileNumber ||
-                    address.alterMobileNumber.trim() === "")
+                const outOfStockItems = cartData.filter((item) => {
+                  console.log(
+                    `Checking item: ${item.itemId}, Stock: ${
+                      isLimitedStock[item.itemId]
+                    }`
+                  );
+                  return isLimitedStock[item.itemId] === "outOfStock";
+                });
+
+                console.log("Out of Stock Items:", outOfStockItems);
+
+                if (outOfStockItems.length > 0) {
+                  Alert.alert(
+                    "🚨 Some Items Are Out of Stock!",
+                    `The following items are currently unavailable:\n\n${outOfStockItems
+                      .map((item) => `- 🛑 ${item.itemName}`)
+                      .join("\n")}\n\nPlease remove them to proceed.`,
+                    [{ text: "OK", style: "cancel" }]
+                  );
+                  return;
+                }
+
+                if (
+                  !address.email?.trim() ||
+                  !address.firstName?.trim() ||
+                  !address.lastName?.trim() ||
+                  !address.alterMobileNumber?.trim()
                 ) {
                   Alert.alert(
                     "Incomplete Profile",
@@ -530,20 +547,24 @@ const CartScreen = () => {
                       },
                     ]
                   );
-                } else {
-                  // Navigate to checkout page if profile is complete
-                  navigation.navigate("Checkout", {
-                    subtotal: cartData.reduce(
-                      (acc, item) => acc + item.priceMrp * item.cartQuantity,
-                      0
-                    ),
-                    locationdata,
-                    addressdata,
-                  });
+                  return;
                 }
+
+                // ✅ Proceed to checkout
+                navigation.navigate("Checkout", {
+                  subtotal: cartData.reduce(
+                    (acc, item) =>
+                      acc +
+                      item.priceMrp *
+                        (cartItems[item.itemId] || item.cartQuantity),
+                    0
+                  ),
+                  locationdata,
+                  addressdata,
+                });
               }}
             >
-              <Text style={styles.actionButtonText}> Checkout</Text>
+              <Text style={styles.actionButtonText}>Checkout</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -603,7 +624,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   quantityButton: {
-    backgroundColor: "#FF6F00",
+    backgroundColor: "#a593df",
     padding: 8,
     borderRadius: 4,
     marginHorizontal: 8,
@@ -614,13 +635,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginHorizontal: 8,
   },
-  buttonText: {
-    fontWeight: "bold",
-    backgroundColor: "#FF6F00",
-
-  },
   quantityText: {
     fontWeight: "bold",
+    backgroundColor: "#fff",
   },
   removeButton: {
     backgroundColor: "#EF4444",
@@ -628,6 +645,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 8,
     width: 150,
+    zIndex: 2,
+    // position:'absolute'
   },
   removeButtonText: {
     color: "#FFFFFF",
@@ -657,7 +676,7 @@ const styles = StyleSheet.create({
     marginBottom: 70,
   },
   checkoutButton: {
-    backgroundColor: "#F97316",
+    backgroundColor: COLORS.title2,
     padding: 12,
     borderRadius: 8,
     flex: 1,
@@ -673,9 +692,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderColor: "#D1D5DB",
-    // marginBottom: 10,
-    // paddingLeft: 0,
-    //  marginTop:100
     marginLeft: 0,
   },
   itemTotal: {
@@ -683,7 +699,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     // marginVertical: 4,
-    marginLeft: 10,
+    marginLeft: 2,
     marginBottom: 20,
   },
   totalText: {
@@ -708,12 +724,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   loader: {
-    // marginHorizontal: 10,
     alignSelf: "center",
-    // backgroundColor: "#808080",
-    // padding: 8,
     borderRadius: 4,
-    // marginHorizontal: 8,
   },
   loaderContainer: {
     position: "absolute",
@@ -723,7 +735,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.7)", // Optional semi-transparent background
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
     zIndex: 1,
   },
   priceContainer: {
@@ -744,9 +756,9 @@ const styles = StyleSheet.create({
     color: "#388E3C",
   },
   limitedStockBadge: {
-    // position: "absolute",
+    position: "absolute",
     top: 10,
-    // left: 20,
+    left: 30,
     alignSelf: "center",
     alignItems: "center",
     backgroundColor: "red",
@@ -762,8 +774,71 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   disabledButton: {
-    backgroundColor: "gray", // Change color when disabled
+    backgroundColor: "gray",
     opacity: 0.5,
+  },
+  outOfStockCard: {
+    opacity: 0.5,
+  },
+  outOfStockContainer: {
+    position: "relative",
+    padding: 10,
+    backgroundColor: COLORS.backgroundcolour,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  outOfStockOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  outOfStockText: {
+    color: "red",
+    position: "relative",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 5,
+    fontSize: 16,
+  },
+  browseButton: {
+    backgroundColor: COLORS.primary,
+    // padding: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginBottom: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  browseButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  outOfStockText: {
+    color: COLORS.title2,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  removeText: {
+    alignSelf: "center",
+    textAlign: "center",
+    color: "#fff",
+    zIndex: 1,
+    fontSize: 14,
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+    marginTop: 5,
+    // backgroundColor: "#000",
+    padding: 5,
+    borderRadius: 5,
+    overflow: "hidden",
   },
 });
 

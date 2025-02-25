@@ -1,309 +1,477 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Image, TouchableOpacity,StyleSheet,Dimensions,Alert} from "react-native";
+import React, { useState, useRef ,useEffect} from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  ActivityIndicator,
+  BackHandler,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { AccessToken } from "../../Redux/action";
-const {width,height} =Dimensions.get('window');
-import BASE_URL from "../../Config"
-import { COLORS } from '../../Redux/constants/theme';
+import BASE_URL,{userStage} from "../../Config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { COLORS } from "../../Redux/constants/theme";
+
+const { width, height } = Dimensions.get("window");
+
 const NewLogin = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  
-  const [loginData,setLoginData] = useState({
-    mobileNumber:"",
-    mobileNumber_Error:false,
-    validMobileNumber_Error:false,
-    otp:"",
-    otp_Error:"",
-    validOtp_Error:"",
-    loading:false,
-    showOtp:false,
-    otpSession:"",
-    otpGeneratedTime:"",
-    saltSession:"",
-  })
 
-  const handleSendOtp = async () =>{
-    console.log("sravani");
-    
-      if(loginData.mobileNumber ==""||loginData.mobileNumber== null){
-        setLoginData({...loginData,mobileNumber_Error:true})
-        return;
-      }
-      if(loginData.mobileNumber.length!=10){
-        setLoginData({...loginData,validMobileNumber_Error:true})
-        return;
-      }
-      console.log("mobileNumber",loginData.mobileNumber);
-      let data ={
-      whatsappNumber: "+91"+loginData.mobileNumber,
+  const [loginData, setLoginData] = useState({
+    mobileNumber: "",
+    mobileNumber_Error: false,
+    validMobileNumber_Error: false,
+    otp: ["", "", "", ""],
+    otp_Error: "",
+    validOtp_Error: "",
+    loading: false,
+    showOtp: false,
+    otpSession: "",
+    otpGeneratedTime: "",
+    saltSession: "",
+  });
+
+
+ useEffect(() => {
+  console.log("🔄 showOtp Updated:", loginData.showOtp);
+  setLoginData((prev) => ({ ...prev })); 
+}, [loginData.showOtp]);
+
+  
+  const otpRefs = useRef([...Array(4)].map(() => useRef(null))); 
+
+  const handleOtpChange = (text, index) => {
+    let newOtp = [...loginData.otp];
+    newOtp[index] = text.replace(/\D/g, ""); // Allow only digits
+    setLoginData((prevState) => ({ ...prevState, otp: newOtp }));
+
+    // ✅ Move to the next input if text is entered
+    if (text && index < 3 && otpRefs.current[index + 1]) {
+      otpRefs.current[index + 1].current.focus();
+    }
+  };
+
+  const handleOtpClear = (index) => {
+    let newOtp = [...loginData.otp];
+    newOtp[index] = "";
+    setLoginData((prevState) => ({ ...prevState, otp: newOtp }));
+
+    // ✅ Keep focus on the current input
+    if (otpRefs.current[index]) {
+      otpRefs.current[index].current.focus();
+    }
+  };
+
+  const handleOtpBackspace = (index) => {
+    if (index > 0 && !loginData.otp[index]) {
+      let newOtp = [...loginData.otp];
+      newOtp[index - 1] = "";
+      setLoginData((prevState) => ({ ...prevState, otp: newOtp }));
+
+      // ✅ Move focus back to previous input
+      otpRefs.current[index - 1]?.current.focus();
+    }
+  };
+  const handleSendOtp = async () => {
+    if (loginData.loading) return;
+    if (loginData.mobileNumber === "" || loginData.mobileNumber == null) {
+      setLoginData((prevState) => ({ ...prevState, mobileNumber_Error: true }));
+      return;
+    }
+    if (loginData.mobileNumber.length !== 10) {
+      setLoginData((prevState) => ({
+        ...prevState,
+        validMobileNumber_Error: true,
+      }));
+      return;
+    }
+
+    let data = {
+      whatsappNumber: "+91" + loginData.mobileNumber,
       userType: "Login",
       registrationType: "whatsapp",
+    };
+     console.log({data});
+     
+    setLoginData((prevState) => ({ ...prevState, loading: true }));
+
+    try {
+      const response = await axios.post(
+        userStage =="test1" ? BASE_URL+`erice-service/user/login-or-register`:
+        BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+        data
+      );
+      console.log("response",response);
+      
+      
+      if (response.data?.mobileOtpSession) {
+        setLoginData((prevState) => ({
+          ...prevState,
+          otpSession: response.data.mobileOtpSession,
+          otpGeneratedTime: response.data.otpGeneratedTime,
+          saltSession: response.data.salt,
+          loading: false,
+          showOtp: true, 
+        }));
+        console.log("🔄 Updated State:", {
+          otpSession: response.data.mobileOtpSession,
+          showOtp: true,
+        });
+      } else {
+        Alert.alert("Error", "Failed to send OTP. Try again.");
       }
-      console.log({data});
-      setLoginData({...loginData,loading:true})
-      try {
-        const response = await axios.post(
-          
-          BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
-          data
-        );
-        console.log("Send Otp");
-        if(response.data.mobileOtpSession){
-          setLoginData({
-            ...loginData,
-            otpSession:response.data.mobileOtpSession,
-            otpGeneratedTime:response.data.otpGeneratedTime,
-            saltSession:response.data.salt,
-            loading:false,
-            showOtp:true
-          })
-        }else{
-          Alert.alert("Error", "Failed to send OTP. Try again.")
+    } catch (error) {
+      console.log(error);
+      setLoginData((prevState) => ({ ...prevState, showOtp: false }));
+      Alert.alert("Sorry", "You are not registered, Please signup",[
+        { 
+          text: "OK", 
+          onPress: () => navigation.navigate("RegisterScreen") 
         }
-      }catch(error){
-        console.log(error);
-         setLoginData({...loginData,showOtp:false})
-         Alert.alert("Sorry", "You  are not registered,Please signup");
-        //  if(error.response.status==400){
-        //   navigation.navigate("RegisterScreen")
-        //  }
-      }finally{
-        setLoginData({...loginData,loading:false})
-      }
-  }
+      ]);
+    } finally {
+      setLoginData((prevState) => ({ ...prevState, loading: false }));
+    }
+  };
 
-
-  const handleVerifyOtp =()=>{
-    if(loginData.otp==""||loginData.otp==null){
-      setLoginData({...loginData,otp_Error:true})
+  const handleVerifyOtp = async () => {
+    if (loginData.loading) return;
+    if (loginData.otp.some((value) => value === "")) {
+      setLoginData((prevState) => ({ ...prevState, otp_Error: true }));
       return false;
     }
-    if(loginData.otp.length!=4){
-      setLoginData({...loginData,validOtp_Error:true})
-      return false;
-    }
-    setLoginData({...loginData,loading:true});
-    let data ={
-      whatsappNumber: "+91"+loginData.mobileNumber,
-      whatsappOtpSession:loginData.otpSession,
-      whatsappOtpValue:loginData.otp,
+
+    setLoginData((prevState) => ({ ...prevState, loading: true }));
+
+    let data = {
+      whatsappNumber: "+91" + loginData.mobileNumber,
+      whatsappOtpSession: loginData.otpSession,
+      whatsappOtpValue: loginData.otp.join(""),
       userType: "Login",
       salt: loginData.saltSession,
-      expiryTime:loginData.otpGeneratedTime,
+      expiryTime: loginData.otpGeneratedTime,
+    };
+
+    try {
+      const response = await axios.post(
+        userStage =="test1"?`erice-service/user/login-or-register`:
+        `${BASE_URL}user-service/registerwithMobileAndWhatsappNumber`,
+        data
+      );
+
+      if (response.data.accessToken) {
+        dispatch(AccessToken(response.data));
+        await AsyncStorage.setItem("userData", JSON.stringify(response.data));
+        await AsyncStorage.setItem("mobileNumber", loginData.mobileNumber);
+        setLoginData((prevState) => ({ ...prevState, otp: "" }));
+        setLoginData((prevState) =>({...prevState,otpSession: ""}))
+        setLoginData((prevState) =>({...prevState,showOtp:false}))
+        // if (
+        //   response.data.userStatus === "ACTIVE" ||
+        //   response.data.userStatus === null
+        // ) {
+        //   navigation.navigate("Home", { screen: "UserDashboard" });
+        // } else {
+        //   Alert.alert(
+        //     "Deactivated",
+        //     "Your account is deactivated. Do you want to reactivate your account?",
+        //     [
+        //       { text: "Yes", onPress: () => navigation.navigate("Active") },
+        //       { text: "No", onPress: () => BackHandler.exitApp() },
+        //     ]
+        //   );
+        // }
+        navigation.navigate("Home",{screen:"UserDashboard"});
+      } else {
+        Alert.alert("Error", "Invalid credentials.");
+      }
+    } catch (error) {
+      console.error("OTP verification failed:", error);
+      setLoginData((prevState) => ({
+        ...prevState,
+        otp_Error: false,
+        validOtp_Error: true,
+      }));
+      Alert.alert("Failed", "Invalid Credentials");
+    } finally {
+      setLoginData((prevState) => ({ ...prevState, loading: false }));
     }
-    console.log({data});
-     axios({
-        method: "post",
-             url: BASE_URL+`user-service/registerwithMobileAndWhatsappNumber`,
-             data: data,
-     }).then(async(response)=>{
-         console.log("response",response.data);
-         setLoginData({...loginData,loading:false,showOtp:false})
-        if(response.data.accessToken != null){
-           dispatch(AccessToken(response.data));
-           await AsyncStorage.setItem("userData", JSON.stringify(response.data));
-           await AsyncStorage.setItem("mobileNumber", loginData.mobileNumber);
-            setLoginData({...loginData,otp:""})
-            console.log("varalakshmi");
-              if (
-                        response.data.userStatus == "ACTIVE" ||
-                        response.data.userStatus == null
-                      ) {
-                        // navigation.navigate("Home");
-                        navigation.navigate("Home",{screen:"UserDashboard"});
-                      } else {
-                        Alert.alert(
-                          "Deactivated",
-                          "Your account is deactivated, Are you want to reactivate your account to continue?",
-                          [
-                            { text: "Yes", onPress: () => navigation.navigate("Active") },
-                            { text: "No", onPress: () => BackHandler.exitApp() },
-                          ]
-                        );
-                      }
-                    } else {
-                      Alert.alert("Error", "Invalid credentials.");
-                    }
-        }).catch((error)=>{
-          setLoginData({...loginData,loading:false})
-          console.error("OTP verification failed:", error);
-          setLoginData({...loginData,otp_Error:false,validOtp_Error:true})
-          console.log(error.response);
-              if(error.response.status ==400){
-                 Alert.alert("Failed", "Invalid Credentials");
-                
-              }
-        })
-  }
+  };
+
   return (
-    <View  style={styles.container} >
-        <Text>hai</Text>
-        <View style={styles.imageContainer}>
-        <Image style={styles.image}source={require("../../assets/Images/logo.png")}/>
+    <View style={styles.container}>
+      <View style={styles.imageContainer}>
+        <Image
+          style={styles.image}
+          source={require("../../assets/Images/logo.png")}
+        />
+      </View>
+
+      <View style={styles.loginContainer}>
+        <Text style={styles.title}>Login</Text>
+
+        <View style={styles.inputWrapper}>
+          <View style={styles.fixedPrefix}>
+            <Image
+              source={{
+                uri: "https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Flag_of_India.svg/1200px-Flag_of_India.svg.png",
+              }}
+              style={styles.flag}
+            />
+            <Text style={styles.countryCode}>+91</Text>
+          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter WhatsApp Number"
+            keyboardType="numeric"
+            maxLength={10}
+            onChangeText={(text) => {
+              const numericText = text.replace(/[^0-9]/g, "");
+              setLoginData({
+                ...loginData,
+                mobileNumber: numericText,
+                mobileNumber_Error: false,
+                validMobileNumber_Error: false,
+              });
+            }}
+          />
         </View>
-        <View style={styles.scrollContainer}>
-        <Text>hai</Text>
-        </View>
-        <View style={styles.loginContainer}>
-           <Text style={styles.title}>Login</Text>
-           <View style={{flexDirection:"row"}}>
-              <View style={styles.fixedPrefix}>
-                            <Image
-                              source={{
-                                uri: "https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Flag_of_India.svg/1200px-Flag_of_India.svg.png",
-                              }}
-                              style={styles.flag}
-                            />
-                            <View style={styles.divider} />
-                            <Text style={styles.countryCode}>+91</Text>
-                          </View>
-               <TextInput style={styles.inputContainer}
-                  placeholder="Enter Whatsapp Number"
-                  keyboardType="numeric"
-                  dense={true}
-                  maxLength={10}
-                  // error={loginData.mobileNumber_Error}
-                  // activeOutlineColor={
-                  //   loginData.mobileNumber_Error?"red":COLORS.title2
-                  // }
-                  // accessibilityValue={loginData.mobileNumber}
-                  // editable={({...loginData,showOtp:false})}
-                  onChangeText={(text)=>{
-                    setLoginData({
-                      ...loginData,
-                      mobileNumber:text,
-                      mobileNumber_Error:false,
-                      validMobileNumber_Error:false
-                    })
-                  }}
-               />
-               {loginData.mobileNumber_Error ?(
-                  <Text
-                  style={{
-                    color: "red",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                  }}
-                >
-                  Mobile Number is mandatory
+
+        {loginData.mobileNumber_Error && (
+          <Text style={styles.errorText}>Mobile Number is mandatory</Text>
+        )}
+        {loginData.validMobileNumber_Error && (
+          <Text style={styles.errorText}>Invalid Mobile Number</Text>
+        )}
+
+        {!loginData.showOtp && (
+          <TouchableOpacity
+            style={styles.sendOtp}
+            onPress={() => handleSendOtp()}
+            disabled={loginData.loading}
+          >
+            {loginData.loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Send OTP</Text>
+            )}
+          </TouchableOpacity>
+        )}
+
+        {loginData.showOtp && (
+          <>
+            <View style={styles.otpContainer}>
+              {Array.isArray(loginData.otp) &&
+                loginData.otp.map((value, index) => (
+                  <View key={index} style={{ position: "relative" }}>
+                    <TextInput
+                      ref={otpRefs.current[index]}
+                      style={styles.otpBox}
+                      keyboardType="numeric"
+                      maxLength={1}
+                      value={value}
+                      autoFocus={index === 0}
+                      onChangeText={(text) => handleOtpChange(text, index)}
+                      onKeyPress={({ nativeEvent }) => {
+                        if (nativeEvent.key === "Backspace") {
+                          handleOtpBackspace(index);
+                        }
+                      }}
+                    />
+                    {value !== "" && (
+                      <TouchableOpacity
+                        onPress={() => handleOtpClear(index)}
+                        style={{ position: "absolute", top: -10, right: -5 }}
+                      >
+                        {/* <Text style={{ fontSize: 18, color: "red" }}>❌</Text> */}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ))}
+            </View>
+            <View>
+              {loginData.otp_Error && (
+                <Text style={styles.errorText}>OTP is mandatory.</Text>
+              )}
+              {loginData.validOtp_Error && (
+                <Text style={styles.errorText}>
+                  Invalid OTP. Please enter a valid OTP.
                 </Text>
-               ):null}
-               {loginData.validMobileNumber_Error?(
-                   <Text
-                   style={{
-                     color: "red",
-                     fontSize: 16,
-                     fontWeight: "bold",
-                     alignSelf: "center",
-                   }}
-                 >
-                   Invalid Mobile Number
-                 </Text> 
-               ):null}
-           </View>
-           <TouchableOpacity style={styles.sendOtp} onPress={()=>handleSendOtp()}>
-           <Text>Send Otp</Text>
-           </TouchableOpacity>
-           {loginData.showOtp?(
-               <View>
-                </View>
-           ):null}
+              )}
+            </View>
+          </>
+        )}
+
+        {loginData.showOtp && (
+          <TouchableOpacity onPress={() => handleSendOtp()}>
+            <Text style={styles.resendOtp}>Resend OTP</Text>
+          </TouchableOpacity>
+        )}
+
+        {loginData.showOtp && (
+          <TouchableOpacity
+            style={styles.verifyOtp}
+            onPress={() => handleVerifyOtp()}
+          >
+            {loginData.loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Verify OTP</Text>
+            )}
+          </TouchableOpacity>
+        )}
+        <View
+          style={{
+            flexDirection: "row",
+            textAlign: "center",
+            width: width * 0.5,
+            alignSelf: "center",
+            marginTop: 10,
+            
+          }}
+        >
+          <Text style={{ color: COLORS.primary, fontSize: 16 ,marginLeft:-25}}>
+            Not yet Registered ?{" "}
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate("RegisterScreen")}
+          >
+            <Text
+              style={{
+                color: "#e87f02",
+                fontWeight: "bold",
+                fontSize: 16,
+              }}
+            >
+              {" "}
+              Register Now{" "}
+            </Text>
+          </TouchableOpacity>
         </View>
+      </View>
     </View>
-  )}
+  );
+};
 
 export default NewLogin;
 
 const styles = StyleSheet.create({
-  container:{
-    backgroundColor:"#DDDAF7",
-    flex:1,
-    borderColor:"#000",
-    height:height/2,
-    width:width,
-    borderWidth:2,
-    paddingHorizontal: 15,
-    marginVertical: 10,
+  container: {
+    flex: 1,
+    backgroundColor: "#DDDAF7",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  imageContainer:{
-    height:height/7,
-    width:width,
-    borderColor:"#000",
-    borderWidth:2
+  imageContainer: {
+    alignItems: "center",
+    marginBottom: 20,
   },
-  image:{
-     width:width*0.9,
-     height:height/9,
-     borderRadius:20
+  image: {
+    width: width * 0.5,
+    height: height * 0.15,
+    resizeMode: "contain",
   },
-  scrollContainer:{
-    marginTop:20,
-    width:width,
-    height:height/6,
-    borderColor:"#000",
-    borderWidth:2,
+  loginContainer: {
+    backgroundColor: "#fff",
+    width: width * 0.85,
+    borderRadius: 15,
+    height: height / 2.7,
+    padding: 20,
+    alignItems: "center",
+    elevation: 5,
   },
-  loginContainer:{
-    marginTop:380,
-    position:"absolute",
-    backgroundColor:"#fff",
-    height:height/2.5,
-    width:width*0.9,
-    borderRadius:20,
-    alignSelf:"center",
-    alignItems:"center"
-
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#000",
+    marginBottom: 15,
   },
-  title:{
-    fontWeight:"bold",
-    color:"#000",
-    fontSize:20,
-    marginTop:30
-   
-  },
-  inputContainer:{
-    marginTop:30,
-    width:width*0.5,
-    height:height/17,
-    borderColor:"#000",
-    borderRadius:2,
-    borderWidth:1.5,
-    padding:10
-  },
- 
- fixedPrefix: {
-  marginTop:30,
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
+    width: "88%",
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  fixedPrefix: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 10,
   },
   flag: {
     width: 24,
-    height: 18,
+    height: 16,
     resizeMode: "contain",
-    marginRight: 8,
+    marginRight: 5,
   },
   countryCode: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  input: {
+    flex: 1,
+    height: 45,
+    fontSize: 16,
     color: "#333",
-    marginRight: 10,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    marginTop: 5,
   },
   sendOtp: {
-    width: width * 0.7,
-    height: 45,
-    backgroundColor:COLORS.primary,
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    margin: 20,
-  }
-
- 
-  
-})
+    marginTop: 40,
+    backgroundColor: COLORS.title2,
+    width: width * 0.6,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+  buttonText: {
+    textAlign: "center",
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  otpContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "80%",
+    marginTop: 20,
+  },
+  otpBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    textAlign: "center",
+    fontSize: 18,
+  },
+  resendOtp: {
+    color: "orange",
+    fontWeight: "bold",
+    marginTop: 10,
+    marginLeft:200
+  },
+  verifyOtp: {
+    marginTop: 20,
+    backgroundColor: COLORS.title2,
+    width: width * 0.6,
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+  },
+});

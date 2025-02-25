@@ -64,10 +64,10 @@ import { useSelector } from "react-redux";
 import encryptEas from "../Payments/components/encryptEas";
 import decryptEas from "../Payments/components/decryptEas";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { COLORS } from "../../../../assets/theme/theme";
+import { COLORS } from "../../../../Redux/constants/theme";
 const { width, height } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/FontAwesome";
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 import { getCoordinates } from "../../../Screens/View/Address/LocationService";
 
 const CheckOut = ({ navigation, route }) => {
@@ -76,7 +76,7 @@ const CheckOut = ({ navigation, route }) => {
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
-  console.log({customerId})
+  console.log({ customerId });
 
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
@@ -102,7 +102,8 @@ const CheckOut = ({ navigation, route }) => {
   const [loadingItems, setLoadingItems] = useState({});
   const [loading, setLoading] = useState();
   const [grandStatus, setGrandStatus] = useState(false);
-
+  const [isLimitedStock, setIsLimitedStock] = useState({});
+  const [cartItems, setCartItems] = useState({});
   const [locationData, setLocationData] = useState({
     // customerId:4,
     flatNo: "",
@@ -121,12 +122,10 @@ const CheckOut = ({ navigation, route }) => {
       totalCart();
       fetchCartData();
       console.log("from my location page", route.params.locationdata);
-    
 
-      if(route.params.locationdata.status==false){
+      if (route.params.locationdata.status == false) {
         fetchOrderAddress();
-      }
-      else{
+      } else {
         setStatus(route.params.locationdata.status);
         setAddressData(route.params.locationdata);
         setLocationData({
@@ -147,23 +146,26 @@ const CheckOut = ({ navigation, route }) => {
   );
 
   const handleIncrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await increaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const handleDecrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: true }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await decreaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.cartId]: false }));
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const fetchCartData = async () => {
     setLoading(true);
     axios
       .get(
-        userStage=="test1"?BASE_URL +
-                        `erice-service/cart/customersCartItems?customerId=${customerId}`:BASE_URL+`cart-service/cart/customersCartItems?customerId=${customerId}`,
+        userStage == "test1"
+          ? BASE_URL +
+              `erice-service/cart/customersCartItems?customerId=${customerId}`
+          : BASE_URL +
+              `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -173,66 +175,180 @@ const CheckOut = ({ navigation, route }) => {
 
       .then((response) => {
         console.log("mrpprices", response.data);
+        const cartData = response?.data?.customerCartResponseList;
+        if (!cartData || !Array.isArray(cartData)) {
+          setCartData([]);
+          setIsLimitedStock({});
+          setCartItems({});
+          return;
+        }
+        const limitedStockMap = cartData.reduce((acc, item) => {
+          if (item.quantity === 0) {
+            acc[item.itemId] = "outOfStock";
+          } else if (item.quantity === 1) {
+            acc[item.itemId] = "lowStock";
+          }
+          return acc;
+        }, {});
+        console.log("limited stock map", limitedStockMap);
+        const cartItemsMap = cartData.reduce((acc, item) => {
+          if (
+            !item.itemId ||
+            item.cartQuantity === undefined ||
+            item.quantity === undefined
+          ) {
+            console.error("Invalid item in cartData:", item);
+            return acc;
+          }
+          acc[item.itemId] = item.cartQuantity;
+          return acc;
+        }, {});
 
+        console.log("Cart Items Map:", cartItemsMap);
+        console.log("limited stock map", limitedStockMap);
         setCartData(response.data.customerCartResponseList);
+        setIsLimitedStock(limitedStockMap);
+        setCartItems(cartItemsMap);
+
         setLoading(false);
       })
       .catch((error) => {
         console.log(error);
-        
+
         setError("Failed to load cart data");
       });
   };
 
-  // useEffect(()=>{
-  //   fetchOrderAddress()
-  // },[])
   let alertShown = false;
-  const handlePlaceOrder = async() => {
+  // const handlePlaceOrder = async () => {
+  //   console.log({ grandTotal });
+  //   console.log("locationdata==================================", locationData);
+  //   console.log("addresslist", addressList);
+  //   const value =
+  //     locationData.address +
+  //     "," +
+  //     locationData.landMark +
+  //     "," +
+  //     locationData.pincode;
+  //   if (
+  //     !alertShown &&
+  //     (locationData.address == "" || locationData.address == null) &&
+  //     (addressList == null || addressList.length == 0)
+  //   ) {
+  //     Alert.alert(
+  //       "Address is Mandatory",
+  //       "Please select an address / Add new address before proceeding.",
+  //       [{ text: "OK", onPress: () => navigation.navigate("Address Book") }]
+  //     );
+  //     alertShown = true;
+  //     return false;
+  //   }
+  //   if (value != null || value != "") {
+  //     const { status, isWithin, distanceInKm, coord1 } = await getCoordinates(
+  //       value
+  //     );
+  //     // console.log("results for checkout",results);
+  //     if (isWithin == true) {
+  //       console.log("within radius");
+  //       if (grandTotal == 0 || grandTotal == null) {
+  //         setGrandStatus(true);
+  //         Alert.alert(
+  //           "Sorry",
+  //           "your cart is empty. Please add some items to your cart."
+  //         );
+  //         return false;
+  //       } else {
+  //         navigation.navigate("Order Summary", { addressData: locationData });
+  //       }
+  //     } else {
+  //       console.log("not within radius");
+  //       return false;
+  //     }
+  //   }
+  // };
+
+  const handlePlaceOrder = async () => {
     console.log({ grandTotal });
     console.log("locationdata==================================", locationData);
-   console.log("addresslist",addressList);
-   const value = locationData.address + "," + locationData.landMark + "," + locationData.pincode;
-   if (!alertShown && (locationData.address == "" || locationData.address == null) &&( addressList == null||addressList.length==0)) {
-     
-    Alert.alert(
-      "Address is Mandatory",
-      "Please select an address / Add new address before proceeding.",
-      [{ text: "OK", onPress: () => navigation.navigate("Address Book") }]
+    console.log("addresslist", addressList);
+
+    // 🔴 Check if any items in the cart are out of stock
+    const outOfStockItems = cartData.filter((item) => {
+      console.log(
+        `Checking item: ${item.itemId}, Stock: ${isLimitedStock[item.itemId]}`
       );
-    alertShown = true;
-    return false
-  }
-   if(value != null || value != ""){
-    const { status,isWithin, distanceInKm,coord1 }  = await getCoordinates(value);
-  // console.log("results for checkout",results);
-  if(isWithin == true){
-    console.log("within radius");
-    if (grandTotal == 0 || grandTotal == null) {
-      setGrandStatus(true);
-      Alert.alert("Sorry", "your cart is empty. Please add some items to your cart.");
-      return false;
-    } else {
-      navigation.navigate("Order Summary", { addressData: locationData });
+      return isLimitedStock[item.itemId] === true;
+    });
+
+    console.log("Out of Stock Items:", outOfStockItems);
+
+    if (outOfStockItems.length > 0) {
+      Alert.alert(
+        "🚨 Some Items Are Out of Stock!",
+        `The following items are currently unavailable:\n\n${outOfStockItems
+          .map((item) => `- 🛑 ${item.itemName}`)
+          .join("\n")}\n\nPlease remove them to proceed.`,
+        [{ text: "OK", style: "cancel" }]
+      );
+      return; // Stop execution
     }
-  }else{
-    console.log("not within radius");
-    return false;
-  }
-}
- 
+
+    const value =
+      locationData.address +
+      "," +
+      locationData.landMark +
+      "," +
+      locationData.pincode;
+
+    if (
+      !alertShown &&
+      (locationData.address == "" || locationData.address == null) &&
+      (addressList == null || addressList.length == 0)
+    ) {
+      Alert.alert(
+        "Address is Mandatory",
+        "Please select an address / Add new address before proceeding.",
+        [{ text: "OK", onPress: () => navigation.navigate("Address Book") }]
+      );
+      alertShown = true;
+      return false;
+    }
+
+    if (value != null || value != "") {
+      const { status, isWithin, distanceInKm, coord1 } = await getCoordinates(
+        value
+      );
+
+      if (isWithin == true) {
+        console.log("within radius");
+
+        if (grandTotal == 0 || grandTotal == null) {
+          setGrandStatus(true);
+          Alert.alert(
+            "Sorry",
+            "Your cart is empty. Please add some items to your cart."
+          );
+          return false;
+        } else {
+          navigation.navigate("Order Summary", { addressData: locationData });
+        }
+      } else {
+        console.log("Not within radius");
+        return false;
+      }
+    }
   };
 
   const increaseCartItem = async (item) => {
     console.log("for incrementing");
-    
+
     const currentQuantity = item.cartQuantity;
-    // const newQuantity = currentQuantity + 1;
     try {
       const response = await axios.patch(
-        BASE_URL == "test1"?BASE_URL + `erice-service/cart/incrementCartData`:BASE_URL + `cart-service/cart/incrementCartData`,
+        BASE_URL == "test1"
+          ? BASE_URL + `erice-service/cart/incrementCartData`
+          : BASE_URL + `cart-service/cart/incrementCartData`,
         {
-          // cartQuantity: currentQuantity,
           customerId: customerId,
           itemId: item.itemId,
         },
@@ -242,8 +358,8 @@ const CheckOut = ({ navigation, route }) => {
           },
         }
       );
-   console.log("incremented cart ",response.data);
-   
+      console.log("incremented cart ", response.data);
+
       fetchCartData();
       totalCart();
       setLoading(false);
@@ -258,7 +374,9 @@ const CheckOut = ({ navigation, route }) => {
         const newQuantity = item.cartQuantity;
 
         const response = await axios.patch(
-          BASE_URL=="test1"?BASE_URL + `erice-service/cart/decrementCartData`:BASE_URL+"cart-service/cart/decrementCartData",
+          BASE_URL == "test1"
+            ? BASE_URL + `erice-service/cart/decrementCartData`
+            : BASE_URL + "cart-service/cart/decrementCartData",
           {
             // cartQuantity: newQuantity,
             customerId: customerId,
@@ -297,7 +415,7 @@ const CheckOut = ({ navigation, route }) => {
     }
   };
 
-  function handleAddress(address){
+  function handleAddress(address) {
     setSelectedAddressId(address.id);
     setLocationData({
       flatNo: address.flatNo,
@@ -329,8 +447,9 @@ const CheckOut = ({ navigation, route }) => {
               console.log("Removing cart item with ID:", item.cartId);
 
               const response = await axios.delete(
-                userStage=="test1"?
-                BASE_URL + "erice-service/cart/remove":BASE_URL+"cart-service/cart/remove",
+                userStage == "test1"
+                  ? BASE_URL + "erice-service/cart/remove"
+                  : BASE_URL + "cart-service/cart/remove",
                 {
                   data: {
                     id: item.cartId,
@@ -368,9 +487,12 @@ const CheckOut = ({ navigation, route }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-         url: userStage =="test1"?
-                BASE_URL +
-                `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+        url:
+          userStage == "test1"
+            ? BASE_URL +
+              `erice-service/user/customerProfileDetails?customerId=${customerId}`
+            : BASE_URL +
+              `user-service/customerProfileDetails?customerId=${customerId}`,
       });
       console.log(response.data);
 
@@ -391,27 +513,32 @@ const CheckOut = ({ navigation, route }) => {
   const fetchOrderAddress = async () => {
     try {
       const response = await axios({
-        url: userStage == "test1"?BASE_URL + `erice-service/user/getAllAdd?customerId=${customerId}`:BASE_URL+`user-service/getAllAdd?customerId=${customerId}`,
+        url:
+          userStage == "test1"
+            ? BASE_URL + `erice-service/user/getAllAdd?customerId=${customerId}`
+            : BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-       console.log("address response",response.data);
-       
+      console.log("address response", response.data);
+
       setAddressList(response.data);
-      response.data.slice(-1).map((address) => (
-      setSelectedAddressId(address.id),
-      setLocationData({
-        flatNo: address.flatNo,
-        landMark: address.landMark,
-        pincode: address.pincode,
-        address: address.address,
-        addressType: "",
-        latitude: "",
-        longitude: "",
-      })
-    ))
+      response.data.slice(-1).map(
+        (address) => (
+          setSelectedAddressId(address.id),
+          setLocationData({
+            flatNo: address.flatNo,
+            landMark: address.landMark,
+            pincode: address.pincode,
+            address: address.address,
+            addressType: "",
+            latitude: "",
+            longitude: "",
+          })
+        )
+      );
       console.log("address response", response.data);
     } catch (error) {
       console.error("Error fetching order address data:", error.response);
@@ -423,7 +550,10 @@ const CheckOut = ({ navigation, route }) => {
     setLoading(true);
     try {
       const response = await axios({
-        url: userStage=="test1"?BASE_URL + "erice-service/cart/cartItemData":BASE_URL+"cart-service/cart/cartItemData",
+        url:
+          userStage == "test1"
+            ? BASE_URL + "erice-service/cart/cartItemData"
+            : BASE_URL + "cart-service/cart/cartItemData",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -459,17 +589,16 @@ const CheckOut = ({ navigation, route }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Delivery Address</Text>
       <TouchableOpacity onPress={changeLocation}>
-        {addressList === undefined || addressList.length==0 || locationData == null? (
-        <Text style={styles.addButton}>+ Add Address</Text>
-      ):
-      
-      (
-      <View style ={{flexDirection:"row",marginLeft:180}}>
-        <Icon name="edit" size={18} color="#fd7e14" style={styles.icon} />
-        <Text style={styles.addButton}>Change Address</Text>
-      </View>
-      )
-      }
+        {addressList === undefined ||
+        addressList.length == 0 ||
+        locationData == null ? (
+          <Text style={styles.addButton}>+ Add Address</Text>
+        ) : (
+          <View style={{ flexDirection: "row", marginLeft: 180 }}>
+            <Icon name="edit" size={18} color="#ecb01e" style={styles.icon} />
+            <Text style={styles.addButton}>Change Address</Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       {status ? (
@@ -480,9 +609,6 @@ const CheckOut = ({ navigation, route }) => {
           <Text style={styles.addressDetail}>
             Address: {locationData.address}
           </Text>
-         {/* <TouchableOpacity style={styles.smallButton}>
-            <Text style={styles.smallButtonText}>Selected</Text>
-          </TouchableOpacity> */}
         </View>
       ) : addressList.length > 0 ? (
         addressList.slice(-1).map((address, index) => (
@@ -499,13 +625,10 @@ const CheckOut = ({ navigation, route }) => {
                 <Text style={styles.addressText}>
                   {address.flatNo}, {address.landMark},{address.pincode}
                 </Text>
-             
 
                 <Text style={styles.addressText}>{address.address}</Text>
               </View>
             </View>
-
-           
           </View>
         ))
       ) : (
@@ -556,40 +679,56 @@ const CheckOut = ({ navigation, route }) => {
             data={cartData}
             keyExtractor={(item) => item.itemId.toString()}
             renderItem={({ item }) => (
-              <View style={styles.cartItem}>
+              <View
+                style={[
+                  styles.cartItem,
+                  item.quantity === 0 && styles.outOfStockCard,
+                ]}
+              >
+                {isLimitedStock[item.itemId] === "lowStock" && (
+                  <View style={styles.limitedStockBadge}>
+                    <Text style={styles.limitedStockText}>1 item left</Text>
+                  </View>
+                )}
+                {isLimitedStock[item.itemId] === "outOfStock" && (
+                  <View style={styles.outOfStockContainer}>
+                    {/* Transparent overlay to block interactions on everything except the remove button */}
+                    <View style={styles.disabledOverlay} />
+
+                    <Text style={styles.outOfStockText}>Out of Stock</Text>
+
+                    {/* This button remains functional */}
+                    <TouchableOpacity
+                      onPress={() => handleRemove(item)}
+                      style={styles.removeButton}
+                    >
+                      <Text style={styles.removeText}>Please remove it</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
                 {removalLoading[item.itemId] ? (
                   <View style={styles.loaderContainer}>
                     <ActivityIndicator size="large" color="#000" />
                   </View>
                 ) : (
                   <>
-                    {item.itemQuantity == 1 ? (
-                      <Text
-                        style={{
-                          textAlign: "center",
-                          color: "red",
-                          marginBottom: 5,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        Note : Only one free sample is allowed per user.
+                    {item.itemQuantity === 1 && (
+                      <Text style={styles.noteText}>
+                        Note: Only one free sample is allowed per user.
                       </Text>
-                    ) : null}
-
+                    )}
                     <View style={{ flexDirection: "row" }}>
-                      <TouchableOpacity>
+                      <View>
                         <Image
                           source={{ uri: item.image }}
                           style={styles.itemImage}
                           onError={() => console.log("Failed to load image")}
                         />
-                      </TouchableOpacity>
+                      </View>
                       <View>
                         <View style={styles.itemDetails}>
                           <Text style={styles.itemName}>{item.itemName}</Text>
-                          {/* <Text style={styles.itemPrice}>
-                        Price: ₹{item.priceMrp}
-                      </Text> */}
                           <View style={styles.priceContainer}>
                             <Text
                               style={[styles.itemPrice, styles.crossedPrice]}
@@ -600,9 +739,15 @@ const CheckOut = ({ navigation, route }) => {
                               ₹{item.itemPrice}
                             </Text>
                           </View>
-                          <Text style={{marginTop:5}}>
-                                ({Math.round(((item.priceMrp- item.itemPrice) / item.priceMrp) * 100)}% OFF)
-                           </Text>
+                          <Text style={{ marginTop: 5 }}>
+                            (
+                            {Math.round(
+                              ((item.priceMrp - item.itemPrice) /
+                                item.priceMrp) *
+                                100
+                            )}
+                            % OFF)
+                          </Text>
                           <Text style={styles.itemWeight}>
                             Weight: {item.weight} {item.units}
                           </Text>
@@ -614,8 +759,6 @@ const CheckOut = ({ navigation, route }) => {
                             >
                               <Text style={styles.buttonText}>-</Text>
                             </TouchableOpacity>
-
-                            {/* Show loader in the middle when loading */}
                             {loadingItems[item.itemId] ? (
                               <ActivityIndicator
                                 size="small"
@@ -624,32 +767,42 @@ const CheckOut = ({ navigation, route }) => {
                               />
                             ) : (
                               <Text style={styles.quantityText}>
-                                {item.cartQuantity}
+                                {cartItems[item.itemId] || item.cartQuantity}
                               </Text>
                             )}
+                            <TouchableOpacity
+                              style={[
+                                styles.quantityButton,
+                                cartItems[item.itemId] === item.quantity &&
+                                  styles.disabledButton,
+                              ]}
+                              onPress={() => handleIncrease(item)}
+                              disabled={
+                                loadingItems[item.itemId] ||
+                                cartItems[item.itemId] === item.quantity
+                              }
+                            >
+                              <Text style={styles.buttonText}>+</Text>
+                            </TouchableOpacity>
 
-                            {item.itemQuantity != 1 ? (
-                              <TouchableOpacity
-                                style={styles.quantityButton}
-                                onPress={() => handleIncrease(item)}
-                                disabled={loadingItems[item.itemId]}
-                              >
-                                <Text style={styles.buttonText}>+</Text>
-                              </TouchableOpacity>
-                            ) : (
-                              <View
-                                style={styles.quantityButton1}
-                                onPress={() => handleIncrease(item)}
-                                disabled={loadingItems[item.itemId]}
-                              >
-                                <Text style={styles.buttonText}>+</Text>
-                              </View>
-                            )}
                             <Text style={styles.itemTotal}>
                               Total: ₹
-                              {(item.itemPrice* item.cartQuantity).toFixed(2)}
+                              {(
+                                item.itemPrice *
+                                (cartItems[item.itemId] || item.cartQuantity)
+                              ).toFixed(2)}
                             </Text>
                           </View>
+                          <TouchableOpacity
+                            style={{ marginLeft: 180 }}
+                            onPress={() => handleRemove(item)}
+                          >
+                            <MaterialIcons
+                              name="delete"
+                              size={23}
+                              color="#FF0000"
+                            />
+                          </TouchableOpacity>
                         </View>
                       </View>
                     </View>
@@ -718,11 +871,11 @@ const styles = StyleSheet.create({
   },
   addButton: {
     // color: '#007bff',
-    color: COLORS.primary,
+    color: "#ecb01e",
     textAlign: "right",
     fontWeight: "600",
     marginBottom: 15,
-    marginLeft:0
+    marginLeft: 0,
   },
   addressRow: {
     backgroundColor: "#ffffff",
@@ -832,7 +985,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#28a745",
-    
   },
   grandTotalText1: {
     fontSize: 20,
@@ -842,7 +994,7 @@ const styles = StyleSheet.create({
     marginTop: 9,
   },
   placeOrderButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#6b21a8",
     padding: 10,
 
     alignSelf: "center",
@@ -913,8 +1065,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   quantityButton: {
-    // backgroundColor: "#808080",
-    backgroundColor: "#D1D5DB",
+    backgroundColor: "#a593df",
     padding: 8,
     borderRadius: 4,
     marginHorizontal: 8,
@@ -968,13 +1119,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  
+
   addressContainer: {
     flex: 1,
   },
   addressText: {
-    paddingLeft:15,
-    marginLeft:5,
+    paddingLeft: 15,
+    marginLeft: 5,
     fontSize: 16,
     color: "#333",
     fontWeight: "500",
@@ -997,14 +1148,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5, // For Android shadow
+    elevation: 5,
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },
   smallButton: {
     marginTop: 10,
     marginLeft: 280,
-    backgroundColor: "#fd7e14",
+    backgroundColor: "#6b21a8",
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
@@ -1024,7 +1175,7 @@ const styles = StyleSheet.create({
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom:3,
+    marginBottom: 3,
   },
   itemPrice: {
     fontSize: 16,
@@ -1039,9 +1190,77 @@ const styles = StyleSheet.create({
     color: "#388E3C",
   },
   icon: {
-    paddingLeft:30,
+    paddingLeft: 30,
     marginRight: 5,
-    fontWeight:"bold"
+    fontWeight: "bold",
+  },
+  limitedStockBadge: {
+    position: "absolute",
+    top: 10,
+    left: 20,
+    alignSelf: "center",
+    alignItems: "center",
+    backgroundColor: "red",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    zIndex: 10,
+    marginBottom: 20,
+  },
+  limitedStockText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "gray",
+    opacity: 0.5,
+  },
+  outOfStockCard: {
+    opacity: 0.5,
+  },
+  outOfStockContainer: {
+    position: "relative",
+    padding: 10,
+    backgroundColor: COLORS.backgroundcolour,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  outOfStockOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  outOfStockText: {
+    color: "red",
+    position: "relative",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 5,
+    fontSize: 16,
+  },
+  outOfStockText: {
+    color: COLORS.title2,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  removeText: {
+    alignSelf: "center",
+    textAlign: "center",
+    color: "#fff",
+    zIndex: 1,
+    fontSize: 14,
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+    marginTop: 5,
+    padding: 5,
+    borderRadius: 5,
+    overflow: "hidden",
   },
 });
 

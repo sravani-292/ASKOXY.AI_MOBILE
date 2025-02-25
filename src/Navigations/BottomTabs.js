@@ -10,7 +10,7 @@ import ProfilePage from "../Screens/View/PurchaseFlow/Profile";
 // import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
 import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
-import { COLORS } from "../../assets/theme/theme";
+import { COLORS } from "../../Redux/constants/theme";
 import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -71,12 +71,12 @@ const Tabs = () => {
   };
 
   const getIconColor = (focused) => ({
-    tintColor: focused ? COLORS.white : "#205b0b",
+    tintColor: focused ? COLORS.title2 : "#000",
   });
 
   return (
     <Tab.Navigator
-      initialRouteName="Rice"
+      initialRouteName="UserDashboard"
       screenOptions={{
         headerShown: true,
         tabBarShowLabel: false,
@@ -85,8 +85,8 @@ const Tabs = () => {
       }}
     >
       <Tab.Screen
-        name="Rice"
-        component={Rice}
+        name="UserDashboard"
+        component={UserDashboard}
         options={{
           headerShown: true,
           tabBarShowLabel: false,
@@ -223,14 +223,17 @@ const styles = StyleSheet.create({
     width: width * 1,
     alignSelf: "center",
     // borderRadius: 20,
-    backgroundColor: "#03843b",
-    borderTopColor: "transparent",
-    shadowColor: COLORS.dark,
+    // backgroundColor: "#03843b",
+    backgroundColor:COLORS.white,
+    // borderTopColor: "transparent",
+    // shadowColor: COLORS.quantitybutton,
     shadowOffset: { height: 6, width: 0 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 3,
     alignContent: "center",
+    borderColor:"#dcdcdc",
+    borderWidth:2
   },
   tabIconContainer: {
     alignItems: "center",
@@ -239,8 +242,9 @@ const styles = StyleSheet.create({
     top: 2,
   },
   tabIcon: {
-    width: 32,
-    height: 28,
+    width: 35,
+    height: 30,
+    fontWeight:"bold"
   },
   cartBadge: {
     position: "absolute",
@@ -259,10 +263,10 @@ const styles = StyleSheet.create({
   tabLabel: {
     marginTop: 1,
     fontSize: 12,
-    color: "#ffffff",
+    color:'#000',
   },
   focusedLabel: {
-    color: COLORS.white,
+    color: COLORS.title2,
     fontWeight: "bold",
   },
   logoutButton: {

@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import BASE_URL,{userStage} from '../../../../Config';
+import { COLORS } from '../../../../Redux/constants/theme';
 const {width,height} = Dimensions.get('window');
 const WalletPage = ({ route }) => {
   const userData = useSelector((state) => state.counter);
@@ -51,7 +52,7 @@ const WalletPage = ({ route }) => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#9333ea" />
       </View>
     );
   }
@@ -117,7 +118,7 @@ const WalletPage = ({ route }) => {
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#A5BFCC', 
+    backgroundColor:COLORS.quantitybutton , 
     borderRadius: 10,
     padding: 10,
     marginBottom: 10,

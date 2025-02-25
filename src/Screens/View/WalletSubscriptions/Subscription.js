@@ -17,7 +17,7 @@ import { useNavigation } from "@react-navigation/native";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
 import { ScrollView } from "react-native-gesture-handler";
-
+import { COLORS } from "../../../../Redux/constants/theme";
 const { width, height } = Dimensions.get("window");
 
 const Subscription = () => {
@@ -478,7 +478,7 @@ const Subscription = () => {
                 styles.button,
                 {
                   opacity: status ? 0.5 : 1,
-                  backgroundColor:  "#fd7e14" ,
+                  backgroundColor:  COLORS.primary ,
                 },
               ]}
               // style={styles.button}
@@ -502,7 +502,7 @@ const Subscription = () => {
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" color="#007BFF" />
+        <ActivityIndicator size="large" color="#9333ea" />
       ) : (
         <>
           <Text style={styles.header}>Subscription Plans</Text>
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
-    marginBottom: 10, // Add spacing between plans
+    marginBottom: 10, 
   },
   title: {
     fontSize: 22,
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   button: {
-    backgroundColor: "#fd7e14",
+    backgroundColor:COLORS.quantitybutton,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,

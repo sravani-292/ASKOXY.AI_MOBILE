@@ -16,6 +16,8 @@ import { useSelector } from "react-redux";
 import { Ionicons } from "react-native-vector-icons";
 import BASE_URL,{userStage} from "../../../../Config";
 import { isWithinRadius,getCoordinates } from "./LocationService";
+import { COLORS } from "../../../../Redux/constants/theme";
+
 import { getDistance } from "geolib";
 
 const AddressBook = ({ route }) => {
@@ -500,7 +502,7 @@ const styles = StyleSheet.create({
   },
   selectedAddress: {
     borderWidth: 2,
-    borderColor: "#4caf50",
+    borderColor:COLORS.title2,
   },
   addressText: {
     fontSize: 14,
@@ -516,11 +518,11 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#03843b",
+    borderColor: COLORS.primary,
     marginRight: 10,
   },
   radioButtonSelected: {
-    backgroundColor: "#fd7e14",
+    backgroundColor: COLORS.title,
   },
   noDeliveryRow: {
     padding: 12,
@@ -531,7 +533,7 @@ const styles = StyleSheet.create({
     color: "#6c757d",
   },
   addButton: {
-    backgroundColor: "#4caf50",
+    backgroundColor: COLORS.primary,
     padding: 5,
     // paddingHorizontal: 10,
     borderRadius: 5,
@@ -577,20 +579,20 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   button: {
-    backgroundColor: "#fd7e14",
+    backgroundColor: COLORS.backgroundcolour,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 5,
   },
   buttonSelected: {
-    backgroundColor: "#28a745",
+    backgroundColor: COLORS.title2,
   },
   buttonText: {
     color: "#fff",
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor: "#4caf50",
+    backgroundColor:COLORS.title,
     paddingVertical: 8,
     borderRadius: 5,
     alignItems: "center",
@@ -607,7 +609,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
 
-    backgroundColor: "#007bff",
+    backgroundColor: COLORS.title,
     paddingVertical: 8,
     // paddingHorizontal: 16,
     borderRadius: 5,

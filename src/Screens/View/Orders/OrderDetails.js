@@ -18,6 +18,8 @@ import axios from "axios";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import Checkbox from "expo-checkbox";
+import { COLORS } from "../../../../Redux/constants/theme";
+
 import BASE_URL,{userStage} from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
@@ -964,8 +966,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-    // marginLeft:5,
-    // marginRight:25
+   
   },
   headerText1: {
     flex: 1,
@@ -1193,6 +1194,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#fff",
   },
+  heading:{
+    color:COLORS.primary
+  }
 });
 
 export default OrderDetails;

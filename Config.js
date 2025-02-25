@@ -7,7 +7,6 @@ const config=(value,value1)=>{
  }else {
 	//Test
   BASE_URL='https://meta.oxyglobal.tech/api/';
-	// BASE_URL='http://65.0.147.157:8282/api/';
 
  }
 	// console.log(BASE_URL);

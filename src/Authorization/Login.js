@@ -256,76 +256,7 @@ const Login = () => {
     messagingSenderId: "834341780860",
   };
 
-  // initializeApp(firebaseConfig);
-
-  //   useEffect(() => {
-  // 		const handleDynamicLink = async () => {
-
-  // 				const initialDynamicLink = await dynamicLinks().getInitialLink();
-  // 				if (initialDynamicLink) {
-  // 						// Handle the initial dynamic link
-  // 						console.log('Initial dynamic link:');
-  // 						console.log('Initial dynamic link1:', initialDynamicLink.url);
-  // 						// alert("initialDynamicLink....."+initialDynamicLink.url)
-  // 						const url = initialDynamicLink.url;
-  // 						const regex = /ref=([^&]+)/;
-  // 						const match = url.match(regex);
-
-  // 						if (match && match[1]) {
-  // 								const referralCode = match[1];
-  // 								// setRefCode(referralCode)
-  // 								var refCode=referralCode;
-  // 								console.log({refCode});
-  //                 navigation.navigate('RegisterScreen',{refCode:refCode})
-
-  // 								// dispatch(Refcodes(referralCode));// Output: LR1040972
-  // 						} else {
-  // 								console.log("Referral code not found in the URL.");
-  // 						}
-
-  // 				}
-
-  // 				const unsubscribe = dynamicLinks().onLink((link) => {
-  // 						// Handle the incoming dynamic link
-  // 						console.log('Incoming dynamic link2:', link.url);
-  // 						// alert("unsubscribe......"+link.url)
-  // 						const url = link.url;
-  // 						const regex = /ref=([^&]+)/;
-  // 						const match = url.match(regex);
-
-  // 						if (match && match[1]) {
-  // 								const referralCode = match[1];
-  // 								// setRefCode(referralCode)
-  // 								var refCode=referralCode;
-  // 								console.log({refCode});
-  //                 navigation.navigate('RegisterScreen',{refCode:refCode})
-  // 						} else {
-  // 								console.log("Referral code not found in the URL.");
-  // 						}
-
-  // 				});
-
-  // 				// Handle app URL scheme deep links
-  // 				Linking.addEventListener('url', (event) => {
-  // 						handleOpenURL(event.url);
-  // 						// alert("event.........."+event.url)
-  // 				});
-
-  // 				return () => {
-  // 						unsubscribe();
-  // 						Linking.removeEventListener('url', handleOpenURL);
-  // 				};
-  // 		};
-
-  // 		handleDynamicLink();
-  // }, []);
-
-  // const handleOpenURL = (url) => {
-  // 		// Handle app URL scheme deep links
-  // 		console.log('App URL scheme deep link:');
-  // 		console.log('App URL scheme deep link:', url);
-  // };
-
+ 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#fff" }}

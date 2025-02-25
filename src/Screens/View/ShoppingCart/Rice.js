@@ -180,7 +180,6 @@ useFocusEffect(
   // Fetch categories when permission is granted
   useFocusEffect(
     useCallback(() => {
-      // if (hasLocationPermission) {
         getAllCategories();
         getLocation();
         const { isWithin, distance } = isWithinRadius(user,20000);

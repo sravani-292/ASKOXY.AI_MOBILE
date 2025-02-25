@@ -7,14 +7,18 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Dimensions
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import dayjs from 'dayjs';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { COLORS } from "../../../../Redux/constants/theme";
+
 import { useSelector } from "react-redux";
 import BASE_URL,{userStage} from "../../../../Config";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
+const { width, height } = Dimensions.get("window");
 
 const OrderScreen = () => {
   const userData = useSelector((state) => state.counter);
@@ -67,8 +71,35 @@ const OrderScreen = () => {
     }
   };
 
+  // const getOrderStatusText = (orderStatus) => {
+  //   // console.log("order status",orderStatus);
+  //   const statusNumber = Number(orderStatus);
+  //   switch (statusNumber) {
+  //     case 0:
+  //       return "Incomplete";
+  //     case 1:
+  //       return "Placed";
+  //     case 2:
+  //       return "Accepted";
+  //     case 3:
+  //       return "Assigned";
+  //     case 4:
+  //       return "Delivered";
+  //     case 5:
+  //       return "Rejected";
+  //     case 6:
+  //       return "Cancelled";
+  //     default:
+  //       return "Unknown";
+  //   }
+  // };
+
+
   const getOrderStatusText = (orderStatus) => {
-    // console.log("order status",orderStatus);
+    if (orderStatus === "PickedUp") {
+      return "PickedUp"; 
+    }
+  
     const statusNumber = Number(orderStatus);
     switch (statusNumber) {
       case 0:
@@ -89,6 +120,7 @@ const OrderScreen = () => {
         return "Unknown";
     }
   };
+  
 
   useEffect(() => {
     getOrders();
@@ -98,6 +130,8 @@ const OrderScreen = () => {
    const orderDetails = (item) => {
     console.log("sravaniOrders", item.orderId);
     const status = getOrderStatusText(item.orderStatus); 
+    console.log({status});
+    
     navigation.navigate("Order Details", { order_id: item.orderId, status, new_Order_Id:item.newOrderId }); 
   };
 
@@ -209,9 +243,10 @@ const styles = StyleSheet.create({
     // paddingBottom:100
   },
   imageContainer: {
-    backgroundColor: "#c3ead6",
+    backgroundColor: COLORS.quantitybutton,
     borderRadius: 7,
     padding: 10,
+    width:width*0.2,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
@@ -239,7 +274,7 @@ const styles = StyleSheet.create({
   },
   paymentType: {
     fontSize: 15,
-    color: "#06a855",
+    color: COLORS.title2,
   },
   paymentPending: {
     color: "red",

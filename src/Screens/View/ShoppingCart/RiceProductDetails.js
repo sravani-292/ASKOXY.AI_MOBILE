@@ -77,7 +77,7 @@ const RiceProductDetails = ({ route, navigation }) => {
     }, [])
   );
 
-  //
+  
   const token = userData?.accessToken;
   const customerId = userData?.userId;
 
@@ -95,7 +95,7 @@ const RiceProductDetails = ({ route, navigation }) => {
           },
         }
       );
-      console.log("API Response:", response); // Log full response
+      console.log("API Response:", response); 
       const cartData = response?.data?.customerCartResponseList;
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
@@ -104,10 +104,10 @@ const RiceProductDetails = ({ route, navigation }) => {
         setCartItems({});
         setIsLimitedStock({});
         setCartCount(0);
-        return; // Stop execution if cartData is invalid
+        return; 
       }
 
-      console.log("cartData:", cartData); // Log valid cart data
+      console.log("cartData:", cartData); 
 
       // Mapping items to their quantities
       const cartItemsMap = cartData.reduce((acc, item) => {
@@ -187,7 +187,6 @@ const RiceProductDetails = ({ route, navigation }) => {
     });
   }, [navigation, cartCount]);
 
-  // const UpdateCartCount = (newCount) => setCartCount(newCount);
   const handleAddToCart = async (item) => {
     console.log("add to cart", item);
 

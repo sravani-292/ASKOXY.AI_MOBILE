@@ -19,6 +19,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import BASE_URL ,{userStage}from "../../../../Config";
 import * as DocumentPicker from "expo-document-picker";
 import { FormData } from "formdata-node";
+import { COLORS } from "../../../../Redux/constants/theme";
 import Icon from "react-native-vector-icons/Ionicons"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
     
   },
   submitbtn:{
-    backgroundColor:"green",
+    backgroundColor:COLORS.primary,
     width:width*0.8,
     alignSelf:"center",
     padding:10,
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
     borderRadius:10
   },
   btn:{
-    backgroundColor:"green",
+    backgroundColor:COLORS.primary,
     width:"auto",
     padding:5,
     alignSelf:"flex-end",

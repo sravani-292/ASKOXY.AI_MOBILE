@@ -16,6 +16,8 @@ import { useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL,{userStage} from "../../../../Config";
 const {width, height} = Dimensions.get("window");
+import { COLORS } from "../../../../Redux/constants/theme"
+
 const OrderSummaryScreen = ({ navigation, route }) => {
   console.log("Order Summary",route)
  
@@ -183,7 +185,7 @@ const handleContinuePress = () => {
 
 
       {loading ? (
-        <ActivityIndicator size="large" color="#fd7e14" style={styles.loader} />
+        <ActivityIndicator size="large" color="#6b21a8" style={styles.loader} />
       ) : (
         <FlatList
           data={cartItems}
@@ -226,9 +228,9 @@ const handleContinuePress = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
   progressTracker: { flexDirection: "row", justifyContent: "space-around" },
-  activeStep: { fontWeight: "bold", color: "#fd7e14" },
+  activeStep: { fontWeight: "bold", color: COLORS.title2 },
 
-  changeText: { color: "blue", marginTop: 8 },
+  changeText: { color: COLORS.title2, marginTop: 8 },
   loader: { marginVertical: 20 },
   cartItem: {
     flexDirection: "row",
@@ -244,7 +246,7 @@ const styles = StyleSheet.create({
   continueButton: {
     padding: 16,
     // backgroundColor: "blue",
-    backgroundColor: "#fd7e14",
+    backgroundColor: COLORS.title2,
     alignItems: "center",
     marginTop: 16,
   },
@@ -267,12 +269,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   completedStep: {
-    backgroundColor: "green",
+    backgroundColor: COLORS.title,
   },
   activeStepCircle: {
-    backgroundColor: "#fd7e14",
+    backgroundColor: COLORS.title2,
     borderWidth: 2,
-    borderColor: "#fd7e14",
+    borderColor: COLORS.primary,
   },
   stepNumber: {
     color: "#fff",

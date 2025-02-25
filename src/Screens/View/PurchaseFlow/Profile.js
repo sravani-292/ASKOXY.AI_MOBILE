@@ -35,6 +35,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import BASE_URL,{userStage} from "../../../../Config";
 import ShareLinks from "../../../../src/Screens/View/Referral Links/ShareLinks";
 import { set } from "core-js/core/dict";
+import { COLORS } from "../../../../Redux/constants/theme";
 
 const ProfilePage = () => {
   const userData = useSelector((state) => state.counter);
@@ -408,7 +409,7 @@ const ProfilePage = () => {
             </TouchableOpacity> */}
             <TouchableOpacity
               style={{
-                backgroundColor: "#007bff",
+                backgroundColor: COLORS.primary,
                 padding: 10,
                 borderRadius: 5,
                 alignItems: "center",
@@ -455,7 +456,7 @@ const ProfilePage = () => {
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
 
-              <TouchableOpacity style={[styles.btn,{backgroundColor:state?"#f44336":"#4CAF50"}]} onPress={() => navigation.navigate("Active")}>
+              <TouchableOpacity style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]} onPress={() => navigation.navigate("Active")}>
                         <Text style={styles.optionText}>{state?"Deactivate Account":"Activate Account"}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.btn} onPress={()=>navigation.navigate("Write To Us")}>
@@ -509,7 +510,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   saveButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: COLORS.primary,
     padding: 15,
     borderRadius: 10,
     alignItems: "center",
@@ -544,7 +545,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     minWidth: 155,
     height: 50,
-    backgroundColor: "#4CAF50",
+    backgroundColor: COLORS.title,
   },
 
   optionText: {
@@ -591,7 +592,7 @@ const styles = StyleSheet.create({
   optionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#4CAF50",
+    backgroundColor: COLORS.title,
     borderRadius: 8,
     marginBottom: 10,
     shadowColor: "#000",

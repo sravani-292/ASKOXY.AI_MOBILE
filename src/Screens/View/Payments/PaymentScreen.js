@@ -20,7 +20,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
-import { COLORS } from "../../../../assets/theme/theme";
+import { COLORS } from "../../../../Redux/constants/theme"
 import BASE_URL,{userStage}from "../../../../Config";
 import { err } from "react-native-svg";
 import Icon from "react-native-vector-icons/Ionicons";
@@ -28,6 +28,7 @@ const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
   console.log("payment screen", route.params);
+    // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
@@ -46,10 +47,11 @@ const PaymentDetails = ({ navigation, route }) => {
   const [useWallet, setUseWallet] = useState(false);
   const [totalSum, setTotalSum] = useState("");
   const [walletAmount, setWalletAmount] = useState();
-  const [billAmount, setBillAmount] = useState();
   const [status, setStatus] = useState();
+  const [totalGstSum,setTotalGstSum] =useState();
   const [grandTotalAmount, setGrandTotalAmount] = useState();
   const [message, setMessge] = useState();
+  const [cartData,setCartData] = useState();
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -75,11 +77,13 @@ const PaymentDetails = ({ navigation, route }) => {
           customerId: customerId,
         },
       });
-        const cartResponse = console.log("total cart",response.data);
+        const cartResponse = response.data.cartResponseList;
+        console.log("cart response",cartResponse);
+         setCartData(cartResponse);
         // setDeliveryBoyFee(200)
        const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
-       console.log({totalDeliveryFee});
-       
+        console.log({totalDeliveryFee});
+        setTotalGstSum(response.data.totalGstSum)
         setDeliveryBoyFee(totalDeliveryFee)
         
     } catch (error) {
@@ -126,10 +130,56 @@ const PaymentDetails = ({ navigation, route }) => {
   const confirmPayment = () => {
     if (selectedPaymentMode == null || selectedPaymentMode == "") {
       Alert.alert("Please select payment method");
+      return
     } else {
-      placeOrder();
+      handleOrderConfirmation();
     }
-    // Alert.alert("payment have to be done")
+  };
+
+  const validateCartBeforeCheckout = (cartItems) => {
+    let insufficientStockItems = [];
+
+    cartItems.forEach(item => {
+        if (item.cartItemQuantity > item.quantity) {
+            insufficientStockItems.push(
+                `${item.itemName}: Only ${item.quantity} left, but you added ${item.cartItemQuantity}`
+            );
+        }
+    });
+
+    if (insufficientStockItems.length > 0) {
+        alert("Some items in your cart have insufficient stock:\n" + insufficientStockItems.join("\n"));
+        return false; 
+    }
+
+    return true; 
+};
+
+  const handleOrderConfirmation = () => {
+    const zeroQuantityItems = cartData
+      .filter(item => item.quantity === 0)
+      .map(item => item.itemName); 
+  
+    if (zeroQuantityItems.length > 0) {
+      
+      const itemNames = zeroQuantityItems.join(", ");
+      Alert.alert(
+        "Sorry for the inconvenience",
+        `We noticed that the following items in your cart have zero quantity: ${itemNames}. 
+      
+         Please update or remove them before proceeding with your order.`,
+        [
+          { text: "OK", onPress: () => navigation.navigate("CartScreen") } 
+        ]
+      );
+      return; 
+    }
+    else if(!validateCartBeforeCheckout){
+      return;
+    }
+    else{
+    placeOrder();
+    }
   };
 
   useEffect(() => {
@@ -226,7 +276,6 @@ const PaymentDetails = ({ navigation, route }) => {
 
       if (response.status === 200) {
         // console.log(response.data);
-        // setUser(response.data);
         setProfileForm({
           customer_name: response.data.name,
           customer_email: response.data.email,
@@ -239,8 +288,10 @@ const PaymentDetails = ({ navigation, route }) => {
   };
   var postData;
   const placeOrder = () => {
+    if(loading==true){
+      return;
+    }
     console.log({ selectedPaymentMode });
-    // Ensure that locationData contains the necessary data
     let wallet;
     if (useWallet) {
       wallet = walletAmount;
@@ -284,7 +335,19 @@ const PaymentDetails = ({ navigation, route }) => {
     })
       .then((response) => {
         console.log("Order Placed Response:", response.data);
-
+        if (response.data.status) {
+          Alert.alert(
+            "Sorry",
+            response.data.status,
+            [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("Home",{screen:"My Cart"}), 
+              },
+            ]
+          );
+          return;
+        }
         // Handle COD or other payment types here
         if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
           Alert.alert(
@@ -339,9 +402,7 @@ const PaymentDetails = ({ navigation, route }) => {
           getepayPortal(data);
         }
 
-        // setTimeout(() => {
-        //   setLoading(false);
-        // }, 7000);
+        
       })
       .catch((error) => {
         console.error("Order Placement Error:", error.response);
@@ -615,7 +676,7 @@ const PaymentDetails = ({ navigation, route }) => {
   function grandTotalfunc() {
     if (coupenApplied === true && useWallet === true) {
       // Alert.alert("Coupen and useWallet Applied",(grandTotal-billAmount))
-      setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount)+deliveryBoyFee);
+      setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount)+deliveryBoyFee+totalGstSum);
       console.log(
         "grans total after wallet and coupen",
         grandTotal,
@@ -625,27 +686,27 @@ const PaymentDetails = ({ navigation, route }) => {
       );
     } else if (coupenApplied === true || useWallet === true) {
       if (coupenApplied === true) {
-        setGrandTotalAmount((grandTotal+deliveryBoyFee) - coupenDetails);
+        setGrandTotalAmount((grandTotal+deliveryBoyFee+totalGstSum) - coupenDetails);
         // Alert.alert("Coupen Applied",grandTotal)
         console.log({ grandTotal });
 
         console.log(grandTotal - coupenDetails);
       }
       if (useWallet === true) {
-        setGrandTotalAmount(walletTotal+deliveryBoyFee);
+        setGrandTotalAmount(walletTotal+deliveryBoyFee+totalGstSum);
         console.log(walletAmount);
 
         // Alert.alert("Wallet Applied",(grandTotal-walletAmount))
       }
     } else {
-      setGrandTotalAmount(totalAmount+deliveryBoyFee);
+      setGrandTotalAmount(totalAmount+deliveryBoyFee+totalGstSum);
       // Alert.alert("None",totalAmount)
     }
   }
 
   useEffect(() => {
     grandTotalfunc();
-  }, [coupenApplied, useWallet, grandTotalAmount,grandTotal,deliveryBoyFee]);
+  }, [coupenApplied, useWallet, grandTotalAmount,grandTotal,deliveryBoyFee,totalGstSum]);
 
   return (
     <View style={styles.container}>
@@ -730,7 +791,7 @@ const PaymentDetails = ({ navigation, route }) => {
             <FontAwesome5
               name="credit-card"
               size={24}
-              color={selectedPaymentMode === "ONLINE" ? "green" : "black"}
+              color={selectedPaymentMode === "ONLINE" ? COLORS.backgroundcolour : "black"}
             />
             <Text style={styles.optionText}>Online Payment</Text>
           </TouchableOpacity>
@@ -745,7 +806,7 @@ const PaymentDetails = ({ navigation, route }) => {
             <MaterialIcons
               name="delivery-dining"
               size={24}
-              color={selectedPaymentMode === "COD" ? "green" : "black"}
+              color={selectedPaymentMode === "COD" ? COLORS.backgroundcolour : "black"}
             />
             <Text style={styles.optionText}>Cash on Delivery</Text>
           </TouchableOpacity>
@@ -880,10 +941,10 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 15,
   },
-  selectedOption: { borderColor: "green", backgroundColor: "#e6f7ff" },
+  selectedOption: { borderColor:COLORS.title2, backgroundColor: "#e6f7ff" },
   optionText: { fontSize: 16, marginTop: 8 },
   confirmButton: {
-    backgroundColor: "#fd7e14",
+    backgroundColor:COLORS.title,
     padding: 16,
     alignItems: "center",
     borderRadius: 8,
@@ -918,7 +979,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   applyButton: {
-    backgroundColor: "#fd7e14",
+    backgroundColor: COLORS.title,
     paddingVertical: 8,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -939,7 +1000,7 @@ const styles = StyleSheet.create({
   },
   
   selectedOption: {
-    borderColor: "green",
+    borderColor: COLORS.title2,
     borderWidth: 2,
   },
   optionText: {
@@ -992,7 +1053,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   confirmButton: {
-    backgroundColor: "#28a745",
+    backgroundColor: COLORS.primary,
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
@@ -1001,7 +1062,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginTop: 10,
     padding: 10,
-    backgroundColor: "#f0f8ff",
+    backgroundColor: COLORS.backgroundcolour,
     borderRadius: 8,
   },
   couponText: {
@@ -1084,7 +1145,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   highlight: {
-    color: "#00bfff",
+    color: COLORS.primary,
     fontWeight: "bold",
   },
 });

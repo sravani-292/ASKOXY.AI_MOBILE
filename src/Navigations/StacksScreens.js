@@ -4,8 +4,10 @@ import { StyleSheet, Text, View } from "react-native";
 
 // Screens imports
 import Services from "../Screens/View/Dashboard/Services"
-import Login from "../Authorization/Login";
-import Register from "../Authorization/Register";
+// import Login from "../Authorization/Login";
+import Login from "../Authorization/NewLogin"
+// import Register from "../Authorization/Register";
+import Register from "../Authorization/NewRegister";
 import Dashboard from "../Authorization/Dashboard";
 import LoginWithPassword from "../Authorization/LoginWithPassword";
 import Refund from "../Screens/View/Payments/Refund";
@@ -36,12 +38,15 @@ import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
 import ChatGpt from "../Authorization/NewLogin";
 import CartScreen from "../Screens/View/ShoppingCart/CartScreen1";
 import DashboardStack from "../Screens/View/Dashboard/DashboardStack";
+import LinearGradient from "react-native-linear-gradient";
+import { COLORS } from "../../Redux/constants/theme";
+
 export default function StacksScreens() {
   const Stack = createStackNavigator();
   return (
     
     <Stack.Navigator
-      initialRouteName="Dashboard"
+      initialRouteName="Login"
       screenOptions={{
         headerShown: true,
         headerTintColor: "white",
@@ -49,7 +54,7 @@ export default function StacksScreens() {
         headerMode: "float",
         headerShown: true,
         headerStyle: {
-          backgroundColor: "#03843b",
+          backgroundColor:COLORS.primary,
         },
       }}
     >
@@ -106,9 +111,9 @@ export default function StacksScreens() {
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
       <Stack.Screen name="Item Details" component={ItemDetails}  />
       <Stack.Screen name="Refund" component={Refund} />
-      <Stack.Screen name="UserDashboard" component={UserDashboard} />
+      <Stack.Screen name="Dashboard" component={UserDashboard} />
       <Stack.Screen name="Write To Us" component={WriteToUs}/>
-      <Stack.Screen name="Dashboard" component={Rice}/>
+      {/* <Stack.Screen name="Dashboard" component={Rice}/> */}
       <Stack.Screen name="LandingPage" component={UserDashboard}/>
       <Stack.Screen name="ChatGpt" component={ChatGpt}/>
 
