@@ -203,7 +203,6 @@ const CartScreen = () => {
   };
 
   const increaseCartItem = async (item) => {
-    const currentQuantity = item.cartQuantity;
 
     try {
       const response = await axios.patch(
@@ -231,7 +230,6 @@ const CartScreen = () => {
   const decreaseCartItem = async (item) => {
     try {
       if (item.cartQuantity > 1) {
-        const newQuantity = item.cartQuantity - 1;
 
         const response = await axios.patch(
           BASE_URL == "test1"
