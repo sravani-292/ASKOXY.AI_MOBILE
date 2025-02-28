@@ -90,36 +90,36 @@ const Rice = () => {
     }
   }
   }
-  const currentScreen = useNavigationState(
-    (state) => state.routes[state.index]?.name
-  );
+//   const currentScreen = useNavigationState(
+//     (state) => state.routes[state.index]?.name
+//   );
 
-useFocusEffect(
-  useCallback(() => {
-    const handleBackPress = () => {
+// useFocusEffect(
+//   useCallback(() => {
+//     const handleBackPress = () => {
      
-        Alert.alert(
-          'Exit App',
-          'Are you sure you want to exit?',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'OK', onPress: () => BackHandler.exitApp() },
-          ],
-          { cancelable: false }
-        )
+//         Alert.alert(
+//           'Exit App',
+//           'Are you sure you want to exit?',
+//           [
+//             { text: 'Cancel', style: 'cancel' },
+//             { text: 'OK', onPress: () => BackHandler.exitApp() },
+//           ],
+//           { cancelable: false }
+//         )
 
-      return true;
-    };
+//       return true;
+//     };
 
-    // Add BackHandler event listener
-    BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+//     // Add BackHandler event listener
+//     BackHandler.addEventListener('hardwareBackPress', handleBackPress);
 
-    // Cleanup
-    return () => {
-      BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
-    };
-  }, [currentScreen])
-)
+//     // Cleanup
+//     return () => {
+//       BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
+//     };
+//   }, [currentScreen])
+// )
 
 
 

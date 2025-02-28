@@ -15,6 +15,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { useNavigation } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
+import { COLORS } from "../../../../Redux/constants/theme";
 import Icon from "react-native-vector-icons/Ionicons";
 import BASE_URL, { userStage } from "../../../../Config";
 
@@ -103,6 +104,13 @@ const ItemDetails = ({ route, navigation }) => {
     } catch (error) {
       console.error("Error fetching cart items:", error.response.status);
     }
+  };
+
+  const handleAdd = async (item) => {
+    console.log("handle add", { item });
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
+    await handleAddToCart(item);
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
   const handleRemove = async (item) => {
@@ -411,7 +419,7 @@ const ItemDetails = ({ route, navigation }) => {
                     onPress={() => handleAdd(item)}
                     disabled={item.quantity === 0}
                   >
-                    <Text style={styles.addButtonText}>
+                    <Text style={styles.addbuttontext}>
                       {item.quantity === 0
                         ? "Out of Stock"
                         : loadingItems[item.itemId]

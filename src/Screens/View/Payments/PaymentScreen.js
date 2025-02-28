@@ -37,7 +37,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [couponCode, setCouponCode] = useState("");
   const [paymentId, setPaymentId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
-  const [totalAmount, setTotalAmount] = useState("");
+  // const [totalAmount, setTotalAmount] = useState("");
   const [grandTotal, setGrandTotal] = useState("");
   const [coupenDetails, setCoupenDetails] = useState("");
   const [coupenApplied, setCoupenApplied] = useState(false);
@@ -50,8 +50,11 @@ const PaymentDetails = ({ navigation, route }) => {
   const [status, setStatus] = useState();
   const [totalGstSum,setTotalGstSum] =useState();
   const [grandTotalAmount, setGrandTotalAmount] = useState();
+  const [subTotal,setSubTotal] = useState()
   const [message, setMessge] = useState();
   const [cartData,setCartData] = useState();
+  const [usedWalletAmount,setUsedWalletAmount] = useState();
+  const [afterWallet,setAfterWallet]=useState();
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -77,15 +80,16 @@ const PaymentDetails = ({ navigation, route }) => {
           customerId: customerId,
         },
       });
+       console.log("cart",response.data);
+       
         const cartResponse = response.data.cartResponseList;
         console.log("cart response",cartResponse);
          setCartData(cartResponse);
-        // setDeliveryBoyFee(200)
        const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
         console.log({totalDeliveryFee});
         setTotalGstSum(response.data.totalGstSum)
         setDeliveryBoyFee(totalDeliveryFee)
-        
+        setGrandTotal(response.data.totalSumWithGstSum)
     } catch (error) {
       // setError("Failed to fetch cart data");
     }
@@ -109,8 +113,8 @@ const PaymentDetails = ({ navigation, route }) => {
       )
     );
     console.log("calculated total", calculatedTotal);
-    setTotalAmount(calculatedTotal);
-    setGrandTotal(calculatedTotal);
+    // setTotalAmount(calculatedTotal);
+    setSubTotal(calculatedTotal);
     grandTotalfunc()
   }, [items]);
 
@@ -136,7 +140,7 @@ const PaymentDetails = ({ navigation, route }) => {
     }
   };
 
-  const validateCartBeforeCheckout = (cartItems) => {
+  const validateCartBeforeCheckout = (cartItems, navigation) => {
     let insufficientStockItems = [];
 
     cartItems.forEach(item => {
@@ -148,14 +152,27 @@ const PaymentDetails = ({ navigation, route }) => {
     });
 
     if (insufficientStockItems.length > 0) {
-        alert("Some items in your cart have insufficient stock:\n" + insufficientStockItems.join("\n"));
+        Alert.alert(
+            "Insufficient Stock",
+            "Some items in your cart have insufficient stock:\n" + insufficientStockItems.join("\n"),
+            [
+                { text: "OK", onPress: () => {  navigation.navigate("Home",{screen:"My Cart"}) }}
+            ]
+        );
         return false; 
     }
 
     return true; 
 };
 
+
   const handleOrderConfirmation = () => {
+    console.log("Cart Data payment :", cartData); 
+    
+    if (!cartData || cartData.length === 0) {
+        console.log("cartData is empty or undefined");
+        return;
+    }
     const zeroQuantityItems = cartData
       .filter(item => item.quantity === 0)
       .map(item => item.itemName); 
@@ -169,12 +186,13 @@ const PaymentDetails = ({ navigation, route }) => {
       
          Please update or remove them before proceeding with your order.`,
         [
-          { text: "OK", onPress: () => navigation.navigate("CartScreen") } 
+          {  onPress: () =>  navigation.navigate("Home",{screen:"My Cart"}), 
+           } 
         ]
       );
       return; 
     }
-    else if(!validateCartBeforeCheckout){
+    else if(!validateCartBeforeCheckout(cartData)){
       return;
     }
     else{
@@ -208,14 +226,14 @@ const PaymentDetails = ({ navigation, route }) => {
 
       if (response.data) {
         console.log("==========useWallet=============");
-        console.log("getWalletAmount:", response);
+        console.log("getWalletAmount:", response.data);
         setWalletAmount(response.data.usableWalletAmountForOrder);
         console.log("wallet amount", walletAmount);
         setMessge(response.data.message);
         setTotalSum(response.data.totalSum);
         setStatus();
         setWalletTotal(
-          response.data.totalSum - response.data.usableWalletAmountForOrder
+          grandTotal - response.data.usableWalletAmountForOrder
         );
         console.log("wallet total", walletTotal);
         console.log("==========useWallet=============");
@@ -247,7 +265,6 @@ const PaymentDetails = ({ navigation, route }) => {
         ]
       );
     } else {
-      // Show alert when the checkbox is unchecked
       Alert.alert(
         "Wallet Amount Deselected",
         `You have removed the usage of ${walletAmount} from your wallet.`,
@@ -314,10 +331,11 @@ const PaymentDetails = ({ navigation, route }) => {
       landMark: addressDetails.landMark,
       orderStatus: selectedPaymentMode,
       pincode: addressDetails.pincode,
-      walletAmount: wallet,
+      walletAmount: usedWalletAmount,
       couponCodeUsed: coupon,
       couponCodeValue: coupenDetails,
-      deliveryBoyFee:deliveryBoyFee
+      deliveryBoyFee:deliveryBoyFee,
+      subTotal:subTotal
     };
 
     // console.log({ postData });
@@ -474,7 +492,7 @@ const PaymentDetails = ({ navigation, route }) => {
         // paymentID = data.paymentId
         Alert.alert(
           "Cart Summary",
-          `The total amount for your cart is ₹${totalAmount.toFixed(
+          `The total amount for your cart is ₹${grandTotalAmount.toFixed(
             2
           )}. Please proceed to checkout to complete your purchase.`,
           [
@@ -517,7 +535,6 @@ const PaymentDetails = ({ navigation, route }) => {
         }
       );
       if (response.data) {
-        // console.log("coupen code", response.data);
         setLoading(false);
       }
     } catch (error) {
@@ -529,9 +546,9 @@ const PaymentDetails = ({ navigation, route }) => {
     const data = {
       couponCode: couponCode.toUpperCase(),
       customerId: customerId,
-      subTotal: totalAmount,
+      subTotal: subTotal,
     };
-    console.log("Total amount is  :", totalAmount);
+    console.log("Total amount is  :", subTotal);
 
     const response = axios
       .post( userStage == "test1"?BASE_URL + "erice-service/coupons/applycoupontocustomer":BASE_URL+"order-service/applycoupontocustomer", data, {
@@ -673,36 +690,74 @@ const PaymentDetails = ({ navigation, route }) => {
    
   }
 
+  // function grandTotalfunc() {
+  //   if (coupenApplied === true && useWallet === true) {
+  //     // Alert.alert("Coupen and useWallet Applied",(grandTotal-billAmount))
+  //     setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount)+deliveryBoyFee+totalGstSum);
+  //     console.log(
+  //       "grans total after wallet and coupen",
+  //       grandTotal,
+  //       coupenDetails,
+  //       walletAmount,
+  //       grandTotal - (coupenDetails + walletAmount)
+  //     );
+  //   } else if (coupenApplied === true || useWallet === true) {
+  //     if (coupenApplied === true) {
+  //       setGrandTotalAmount((grandTotal+deliveryBoyFee) - coupenDetails);
+  //       // Alert.alert("Coupen Applied",grandTotal)
+  //       console.log({ grandTotal });
+
+  //       console.log(grandTotal - coupenDetails);
+  //     }
+  //     if (useWallet === true) {
+  //       console.log("wal;let",walletTotal);
+        
+  //       setGrandTotalAmount(walletTotal+deliveryBoyFee);
+  //       console.log(walletAmount);
+
+  //       // Alert.alert("Wallet Applied",(grandTotal-walletAmount))
+  //     }
+  //   } else {
+  //     setGrandTotalAmount(subTotal+deliveryBoyFee+totalGstSum);
+  //     // Alert.alert("None",totalAmount)
+  //   }
+  // }
+
+
   function grandTotalfunc() {
-    if (coupenApplied === true && useWallet === true) {
-      // Alert.alert("Coupen and useWallet Applied",(grandTotal-billAmount))
-      setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount)+deliveryBoyFee+totalGstSum);
-      console.log(
-        "grans total after wallet and coupen",
-        grandTotal,
-        coupenDetails,
-        walletAmount,
-        grandTotal - (coupenDetails + walletAmount)
-      );
-    } else if (coupenApplied === true || useWallet === true) {
-      if (coupenApplied === true) {
-        setGrandTotalAmount((grandTotal+deliveryBoyFee+totalGstSum) - coupenDetails);
-        // Alert.alert("Coupen Applied",grandTotal)
-        console.log({ grandTotal });
+    let total = grandTotal + deliveryBoyFee; // Start with total including delivery fee
+    let usedWallet = 0; // Track how much wallet is actually used
 
-        console.log(grandTotal - coupenDetails);
-      }
-      if (useWallet === true) {
-        setGrandTotalAmount(walletTotal+deliveryBoyFee+totalGstSum);
-        console.log(walletAmount);
-
-        // Alert.alert("Wallet Applied",(grandTotal-walletAmount))
-      }
-    } else {
-      setGrandTotalAmount(totalAmount+deliveryBoyFee+totalGstSum);
-      // Alert.alert("None",totalAmount)
+    if (coupenApplied) {
+        total -= coupenDetails;
     }
-  }
+
+    if (useWallet && walletAmount > 0) {  // Process only if user has wallet balance
+        if (walletAmount >= total) {
+            usedWallet = total;  // Use only what's needed
+            total = 0;  
+        } else {
+            usedWallet = walletAmount; // Use full wallet balance
+            total -= walletAmount;
+        }
+    }
+
+    // Ensure total is never negative
+    total = Math.max(0, total);
+
+    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
+    setUsedWalletAmount(usedWallet);  // Store how much wallet is used
+    setGrandTotalAmount(total);
+
+    if(total === 0){
+      console.log("Get all Values",{total});
+      
+      setSelectedPaymentMode('COD');
+    }
+
+    console.log("Used Wallet:", usedWallet);
+    console.log("Final Grand Total:", total);
+}
 
   useEffect(() => {
     grandTotalfunc();
@@ -818,7 +873,7 @@ const PaymentDetails = ({ navigation, route }) => {
           <Text style={styles.detailsHeader}>Payment Details</Text>
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>Sub Total</Text>
-            <Text style={styles.detailsValue}>₹{totalAmount}</Text>
+            <Text style={styles.detailsValue}>₹{subTotal}</Text>
           </View>
 
           {coupenApplied == true && (
@@ -830,12 +885,16 @@ const PaymentDetails = ({ navigation, route }) => {
           {useWallet == true && (
             <View style={styles.paymentRow}>
               <Text style={styles.detailsLabel}>from Wallet</Text>
-              <Text style={styles.detailsValue}>-₹{walletAmount}</Text>
+              <Text style={styles.detailsValue}>-₹{usedWalletAmount}</Text>
             </View>
           )}
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>Delivery Fee</Text>
             <Text style={styles.detailsValue}>+₹{deliveryBoyFee}</Text>
+          </View>
+          <View style={styles.paymentRow}>
+            <Text style={styles.detailsLabel}>GST</Text>
+            <Text style={styles.detailsValue}>+₹{totalGstSum}</Text>
           </View>
           <View style={styles.divider} />
 
@@ -920,7 +979,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
-    elevation: 6, // Shadow for Android
+    elevation: 6, 
   },
   paymentOption: {
     alignItems: "center",
@@ -941,7 +1000,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 15,
   },
-  selectedOption: { borderColor:COLORS.title2, backgroundColor: "#e6f7ff" },
+  selectedOption: { borderColor:COLORS.services, backgroundColor: "#e6f7ff" },
   optionText: { fontSize: 16, marginTop: 8 },
   confirmButton: {
     backgroundColor:COLORS.title,
@@ -1000,7 +1059,7 @@ const styles = StyleSheet.create({
   },
   
   selectedOption: {
-    borderColor: COLORS.title2,
+    borderColor: COLORS.services,
     borderWidth: 2,
   },
   optionText: {
@@ -1053,7 +1112,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   confirmButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.services,
     padding: 15,
     borderRadius: 8,
     alignItems: "center",
@@ -1145,7 +1204,7 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   highlight: {
-    color: COLORS.primary,
+    color: COLORS.services,
     fontWeight: "bold",
   },
 });

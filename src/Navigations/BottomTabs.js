@@ -34,8 +34,8 @@ const Tabs = () => {
   );
 
   const fetchCartCount = () => {
-    const token = userData.accessToken;
-    const customerId = userData.userId;
+    const token = userData?.accessToken;
+    const customerId = userData?.userId;
     axios
       .get(
         userStage == "test1"
@@ -71,7 +71,7 @@ const Tabs = () => {
   };
 
   const getIconColor = (focused) => ({
-    tintColor: focused ? COLORS.title2 : "#000",
+    tintColor: focused ? COLORS.services : "#000",
   });
 
   return (
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     color:'#000',
   },
   focusedLabel: {
-    color: COLORS.title2,
+    color: COLORS.services,
     fontWeight: "bold",
   },
   logoutButton: {

@@ -10,6 +10,7 @@ export const COLORS={
     white:'#fff',
     backgroundcolour:"#a593df",
     headerGradient: ['#7e22ce', '#9333ea'],
+    services:'#4B0082'
 }
 export const SIZES ={
     h1:28,

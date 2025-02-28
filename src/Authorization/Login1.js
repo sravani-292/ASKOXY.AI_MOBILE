@@ -39,15 +39,12 @@ const Login = () => {
     validOtpError: false,
     loading: false,
   });
-  console.log({userStage})
   const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [mobileOtpSession, setMobileOtpSession] = useState();
   const [saltSession, setSaltSession] = useState("");
-  const [otpGeneratedTime, setOtpGeneratedTime] = useState('')
-  const[message,setMessage]=useState(false)
-
+  const [otpGeneratedTime,setotpGeneratedTime]=useState("")
   useFocusEffect(
     useCallback(() => {
       const checkLoginData = async () => {
@@ -60,17 +57,11 @@ const Login = () => {
 
           console.log(storedmobilenumber);
 
-          // setMobileNumber(storedmobilenumber);
           setFormData({ ...formData, mobileNumber: storedmobilenumber });
           console.log("mobileNumber", formData.mobileNumber);
 
           if (loginData) {
             const user = JSON.parse(loginData);
-            // if (user.accessToken) {
-            //   dispatch(AccessToken(user));
-            //   navigation.navigate("Home");
-
-             
             
           }
         } catch (error) {
@@ -90,8 +81,7 @@ const Login = () => {
   useFocusEffect(
     useCallback(() => {
       const handleBackPress = () => {
-        // if (currentScreen === 'Login') {
-        // Custom behavior for Login screen
+        
         Alert.alert(
           "Exit",
           "Are you sure you want to exit?",
@@ -147,7 +137,7 @@ const Login = () => {
     }
     console.log("mobileNumber", formData.mobileNumber);
     let data = {
-      whatsappNumber: "+91" + formData.mobileNumber,
+      whatsappNumber: "+91"+formData.mobileNumber,
       userType: "Login",
       registrationType: "whatsapp",
     };
@@ -155,20 +145,19 @@ const Login = () => {
     setFormData({ ...formData, loading: true });
     try {
       const response = await axios.post(
-        userStage != "test"
-          ? BASE_URL + `auth-service/auth/registerwithMobile`
-          : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+        
+        BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
         data
       );
       console.log("Send Otp", response.data);
 
       if (response.data.mobileOtpSession) {
-        setMessage(true)
         setMobileOtpSession(response.data.mobileOtpSession);
+        setotpGeneratedTime(response.data.otpGeneratedTime)
         setSaltSession(response.data.salt);
-        setOtpGeneratedTime(response.data.otpGeneratedTime);
         setFormData({
           ...formData,
+
           loading: false,
         });
         setShowOtp(true);
@@ -201,22 +190,17 @@ const Login = () => {
     setFormData({ ...formData, loading: true });
 
     let data = {
-      whatsappNumber: "+91" + formData.mobileNumber,
+      whatsappNumber: "+91"+formData.mobileNumber,
       whatsappOtpSession: mobileOtpSession,
       whatsappOtpValue: formData.otp,
       userType: "Login",
       salt: saltSession,
-      expiryTime: otpGeneratedTime,
-      registrationType: "whatsapp"
-
-      // primaryType: "CUSTOMER",
+      expiryTime:otpGeneratedTime,
     };
     console.log({ data });
     axios({
       method: "post",
-      url: userStage != "test"
-          ? BASE_URL + `auth-service/auth/registerwithMobile`
-          : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+      url: BASE_URL+`user-service/registerwithMobileAndWhatsappNumber`,
       data: data,
     })
       .then(async (response) => {
@@ -224,14 +208,18 @@ const Login = () => {
         setFormData({ ...formData, loading: false });
         setShowOtp(false);
         if (response.data.accessToken != null) {
-          if(response.data.primaryType=="CUSTOMER"){
           dispatch(AccessToken(response.data));
           await AsyncStorage.setItem("userData", JSON.stringify(response.data));
           await AsyncStorage.setItem("mobileNumber", formData.mobileNumber);
           setFormData({ ...formData, otp: "" });
-          
-          if (response.data.userStatus == "ACTIVE"||response.data.userStatus==null) {
-            navigation.navigate("Service Screen");
+          console.log("varalakshmi");
+          if (
+            response.data.userStatus == "ACTIVE" ||
+            response.data.userStatus == null
+          ) {
+            // navigation.navigate("Home");
+            navigation.navigate("Home",{screen:"UserDashboard"});
+            // navigation.navigate("Services")
           } else {
             Alert.alert(
               "Deactivated",
@@ -242,22 +230,18 @@ const Login = () => {
               ]
             );
           }
-        } 
-        else{
-          Alert.alert(
-            "Failed",
-            `You have logged in as ${response.data.primaryType} , Please login as CUSTOMER`
-          );
-        }
-      }else {
+        } else {
           Alert.alert("Error", "Invalid credentials.");
         }
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
+        console.error("OTP verification failed:", error);
+        setFormData({ ...formData, otp_error: false, validOtpError: true });
         console.log(error.response);
         if (error.response.status == 500) {
-          Alert.alert("Failed", "Invalid OTP");
+          
+          Alert.alert("Failed", "Invalid Credentials");
         }
       });
   };
@@ -272,76 +256,7 @@ const Login = () => {
     messagingSenderId: "834341780860",
   };
 
-  // initializeApp(firebaseConfig);
-
-  //   useEffect(() => {
-  // 		const handleDynamicLink = async () => {
-
-  // 				const initialDynamicLink = await dynamicLinks().getInitialLink();
-  // 				if (initialDynamicLink) {
-  // 						// Handle the initial dynamic link
-  // 						console.log('Initial dynamic link:');
-  // 						console.log('Initial dynamic link1:', initialDynamicLink.url);
-  // 						// alert("initialDynamicLink....."+initialDynamicLink.url)
-  // 						const url = initialDynamicLink.url;
-  // 						const regex = /ref=([^&]+)/;
-  // 						const match = url.match(regex);
-
-  // 						if (match && match[1]) {
-  // 								const referralCode = match[1];
-  // 								// setRefCode(referralCode)
-  // 								var refCode=referralCode;
-  // 								console.log({refCode});
-  //                 navigation.navigate('RegisterScreen',{refCode:refCode})
-
-  // 								// dispatch(Refcodes(referralCode));// Output: LR1040972
-  // 						} else {
-  // 								console.log("Referral code not found in the URL.");
-  // 						}
-
-  // 				}
-
-  // 				const unsubscribe = dynamicLinks().onLink((link) => {
-  // 						// Handle the incoming dynamic link
-  // 						console.log('Incoming dynamic link2:', link.url);
-  // 						// alert("unsubscribe......"+link.url)
-  // 						const url = link.url;
-  // 						const regex = /ref=([^&]+)/;
-  // 						const match = url.match(regex);
-
-  // 						if (match && match[1]) {
-  // 								const referralCode = match[1];
-  // 								// setRefCode(referralCode)
-  // 								var refCode=referralCode;
-  // 								console.log({refCode});
-  //                 navigation.navigate('RegisterScreen',{refCode:refCode})
-  // 						} else {
-  // 								console.log("Referral code not found in the URL.");
-  // 						}
-
-  // 				});
-
-  // 				// Handle app URL scheme deep links
-  // 				Linking.addEventListener('url', (event) => {
-  // 						handleOpenURL(event.url);
-  // 						// alert("event.........."+event.url)
-  // 				});
-
-  // 				return () => {
-  // 						unsubscribe();
-  // 						Linking.removeEventListener('url', handleOpenURL);
-  // 				};
-  // 		};
-
-  // 		handleDynamicLink();
-  // }, []);
-
-  // const handleOpenURL = (url) => {
-  // 		// Handle app URL scheme deep links
-  // 		console.log('App URL scheme deep link:');
-  // 		console.log('App URL scheme deep link:', url);
-  // };
-
+ 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#fff" }}
@@ -382,12 +297,12 @@ const Login = () => {
 
           {/* Login Section */}
           <View style={styles.logingreenView}>
-            {/* <Image
+            <Image
               source={require("../../assets/Images/rice.png")}
               style={styles.riceImage}
-            /> */}
+            />
             <Text style={styles.loginTxt}>Login</Text>
-            <View style={{ marginTop: 10 }}>
+            <View style={{ marginTop: 130 }}>
               <TextInput
                 style={styles.input}
                 mode="outlined"
@@ -397,7 +312,7 @@ const Login = () => {
                 // autoFocus
                 error={formData.mobileNumber_error}
                 activeOutlineColor={
-                  formData.mobileNumber_error ? "red" : "#f9b91a"
+                  formData.mobileNumber_error ? "red" : "#e87f02"
                 }
                 value={formData.mobileNumber}
                 maxLength={10}
@@ -420,7 +335,7 @@ const Login = () => {
                     alignSelf: "center",
                   }}
                 >
-                  Whatsapp Number is mandatory
+                  Mobile Number is mandatory
                 </Text>
               ) : null}
 
@@ -433,20 +348,7 @@ const Login = () => {
                     alignSelf: "center",
                   }}
                 >
-                  Invalid Whatsapp Number
-                </Text>
-              ) : null}
-              {message ? (
-                <Text
-                  style={{
-                    color: "white",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                    margin:10
-                  }}
-                >
-                  OTP sent to the Whatsapp Number
+                  Invalid Mobile Number
                 </Text>
               ) : null}
 
@@ -476,13 +378,7 @@ const Login = () => {
                         style={{ flexDirection: "row", alignSelf: "center" }}
                       >
                         <View>
-                          {/* <TouchableOpacity style={styles.rowbtn}>
-                            <Icon
-                              name="logo-whatsapp"
-                              color="green"
-                              size={24}
-                            />
-                          </TouchableOpacity> */}
+                         
                         </View>
                         <View>
                           <TouchableOpacity
@@ -492,16 +388,11 @@ const Login = () => {
                             }
                           >
                             {/* <Text>Email</Text> */}
-                            <Icon
-                              name="mail-outline"
-                              color="#f9b91a"
-                              size={24}
-                            />
+                            <Icon name="mail-outline" color="green" size={24} />
                           </TouchableOpacity>
                         </View>
                       </View>
 
-                      {/* <View style={{}} /> */}
                       {/* Not yet Register */}
                       <View
                         style={{
@@ -520,7 +411,7 @@ const Login = () => {
                         >
                           <Text
                             style={{
-                              color: "#f9b91a",
+                              color: "#e87f02",
                               fontWeight: "bold",
                               fontSize: 16,
                             }}
@@ -549,7 +440,7 @@ const Login = () => {
                     keyboardType="number-pad"
                     activeOutlineColor="#e87f02"
                     autoFocus
-                    onChangeText={(text) => {setMessage(false),
+                    onChangeText={(text) => {
                       setFormData({
                         ...formData,
                         otp: text,
@@ -585,7 +476,7 @@ const Login = () => {
                   ) : null}
                   <View style={{ alignSelf: "flex-end", marginRight: 50 }}>
                     <TouchableOpacity onPress={() => handleSendOtp()}>
-                      <Text style={{ color: "#f9b91a", fontWeight: "bold" }}>
+                      <Text style={{ color: "orange", fontWeight: "bold" }}>
                         Resend Otp
                       </Text>
                     </TouchableOpacity>
@@ -619,23 +510,22 @@ export default Login;
 
 const styles = StyleSheet.create({
   orangeImage: {
-    height: 170,
-    width: 170,
+    height: 150,
+    width: 150,
     marginBottom: -20,
   },
   oxyricelogo: {
-    // flex:1,
-    width: 220,
-    height: 60,
-    // resizeMode: "center",
-    marginRight: width / 8,
+    width: 200,
+    height: 100,
+    resizeMode: "contain",
+    marginRight: width / 6,
   },
   oxylogoView: {
     height: 1,
   },
   greenImage: {
-    height: 120,
-    width: 70,
+    height: 100,
+    width: 50,
   },
   riceImage: {
     height: 180,
@@ -645,17 +535,15 @@ const styles = StyleSheet.create({
   },
   logingreenView: {
     flex: 2,
-    backgroundColor: "#3d2a71",
+    backgroundColor: "#008001",
     borderTopLeftRadius: 30,
-      borderTopRightRadius: 30,
-
     // height: height/2,
   },
   loginTxt: {
     color: "white",
     fontWeight: "500",
     fontSize: 25,
-    margin: 20,
+    margin: -70,
     alignSelf: "center",
   },
   input1: {
@@ -701,7 +589,7 @@ const styles = StyleSheet.create({
   otpbtn: {
     width: width * 0.8,
     height: 45,
-    backgroundColor: "#f9b91a",
+    backgroundColor: "#e87f02",
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",

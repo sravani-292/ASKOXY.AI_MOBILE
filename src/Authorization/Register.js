@@ -42,7 +42,8 @@ const Register = ({route}) => {
   const [mobileOtpSession, setMobileOtpSession] = useState("");
   const [saltSession,setSaltSession] = useState("");
   const [otpGeneratedTime,setotpGeneratedTime]=useState("")
- 
+
+
 
 useEffect(()=>{
   console.log("route",route.params)
@@ -86,6 +87,7 @@ else{
          setMobileOtpSession(response.data.mobileOtpSession);
          setSaltSession(response.data.salt);
          setotpGeneratedTime(response.data.otpGeneratedTime)
+
         setFormData({
           ...formData,
           // showOtp: true,
@@ -139,6 +141,7 @@ else{
       userType: "Register",
       salt:saltSession,
       expiryTime:otpGeneratedTime,
+
       // referrerid: formData.refCode,
     };
     console.log({ data });
@@ -158,11 +161,9 @@ else{
         }
       })
       .catch(function (error) {
-        setFormData({ ...formData, loading: false });
-        console.error("OTP verification failed:", error);
-        setFormData({ ...formData, otp_error: false, validOtpError: true });
         console.log(error.response);
-          // Alert.alert("Failed,")
+        setFormData({ ...formData, loading: false });
+          Alert.alert("Failed","Invalid OTP")
       });
   };
 
@@ -206,23 +207,22 @@ else{
 
           {/* Login Section */}
           <View style={styles.logingreenView}>
-            <Image
+            {/* <Image
               source={require("../../assets/Images/rice.png")}
               style={styles.riceImage}
-            />
+            /> */}
             <Text style={styles.loginTxt}>Register</Text>
-            <View style={{ marginTop: 130 }}>
-            
+            <View style={{ marginTop: 10 }}>
               <TextInput
                 style={styles.input}
                 mode="outlined"
-                placeholder="Enter whatsapp Number"
+                placeholder="Enter Mobile Number"
                 keyboardType="numeric"
                 dense={true}
                 // autoFocus
                 error={formData.mobileNumber_error}
                 activeOutlineColor={
-                  formData.mobileNumber_error ? "red" : "#e87f02"
+                  formData.mobileNumber_error ? "red" : "#f9b91a"
                 }
                 value={formData.mobileNumber}
                 maxLength={10}
@@ -286,9 +286,7 @@ else{
                       <View
                         style={{ flexDirection: "row", alignSelf: "center" }}
                       >
-                        <View>
-                          
-                        </View>
+                        <View></View>
                         <View>
                           <TouchableOpacity
                             style={styles.rowbtn}
@@ -297,7 +295,11 @@ else{
                             }
                           >
                             {/* <Text>Email</Text> */}
-                            <Icon name="mail-outline" color="green" size={24} />
+                            <Icon
+                              name="mail-outline"
+                              color="#f9b91a"
+                              size={24}
+                            />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -321,7 +323,7 @@ else{
                         >
                           <Text
                             style={{
-                              color: "#e87f02",
+                              color: "#f9b91a",
                               fontWeight: "bold",
                               fontSize: 16,
                             }}
@@ -346,9 +348,9 @@ else{
                     mode="outlined"
                     value={formData.otp}
                     dense={true}
-                    maxLength={6}
+                    maxLength={4}
                     keyboardType="number-pad"
-                    activeOutlineColor="#e87f02"
+                    activeOutlineColor="#f9b91a"
                     autoFocus
                     onChangeText={(text) => {
                       setFormData({
@@ -411,22 +413,22 @@ export default Register;
 
 const styles = StyleSheet.create({
   orangeImage: {
-    height: 150,
-    width: 150,
+    height: 170,
+    width: 170,
     marginBottom: -20,
   },
   oxyricelogo: {
-    width: 200,
-    height: 100,
-    resizeMode: "contain",
-    marginRight: width / 6,
+    width: 220,
+    height: 60,
+    // resizeMode: "contain",
+    marginRight: width / 8,
   },
   oxylogoView: {
     height: 1,
   },
   greenImage: {
-    height: 100,
-    width: 50,
+    height: 120,
+    width: 70,
   },
   riceImage: {
     height: 180,
@@ -436,19 +438,21 @@ const styles = StyleSheet.create({
   },
   logingreenView: {
     flex: 2,
-    backgroundColor: "#008001",
+    backgroundColor: "#3d2a71",
     borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+
     // height: height/2,
   },
   loginTxt: {
     color: "white",
     fontWeight: "500",
     fontSize: 25,
-    margin: -70,
+    margin: 20,
     alignSelf: "center",
   },
   input1: {
-    borderColor: "orange",
+    borderColor: "#f9b91a",
     width: width * 0.8,
     alignSelf: "center",
     height: 45,
@@ -458,7 +462,7 @@ const styles = StyleSheet.create({
   input: {
     height: 45,
     borderWidth: 1,
-    borderColor: "orange",
+    borderColor: "#f9b91a",
     borderRadius: 5,
     paddingLeft: width * 0.22, // Add padding to accommodate prefix
     fontSize: 16,
@@ -490,7 +494,7 @@ const styles = StyleSheet.create({
   otpbtn: {
     width: width * 0.8,
     height: 45,
-    backgroundColor: "#e87f02",
+    backgroundColor: "#f9b91a",
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",

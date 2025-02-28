@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   },
   selectedAddress: {
     borderWidth: 2,
-    borderColor:COLORS.title2,
+    borderColor:COLORS.services,
   },
   addressText: {
     fontSize: 14,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.services,
     marginRight: 10,
   },
   radioButtonSelected: {
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
     color: "#6c757d",
   },
   addButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.services,
     padding: 5,
     // paddingHorizontal: 10,
     borderRadius: 5,
@@ -585,7 +585,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   buttonSelected: {
-    backgroundColor: COLORS.title2,
+    backgroundColor: COLORS.services,
   },
   buttonText: {
     color: "#fff",

@@ -1195,7 +1195,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   heading:{
-    color:COLORS.primary
+    color:COLORS.services
   }
 });
 

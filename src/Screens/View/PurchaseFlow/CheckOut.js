@@ -655,7 +655,7 @@ const CheckOut = ({ navigation, route }) => {
             </Text>
             <TouchableOpacity
               style={{
-                backgroundColor: COLORS.primary,
+                backgroundColor: COLORS.services,
                 paddingVertical: 10,
                 paddingHorizontal: 20,
                 borderRadius: 5,
@@ -699,7 +699,7 @@ const CheckOut = ({ navigation, route }) => {
 
                     {/* This button remains functional */}
                     <TouchableOpacity
-                      onPress={() => handleRemove(item)}
+                      onPress={() => removeCartItem(item)}
                       style={styles.removeButton}
                     >
                       <Text style={styles.removeText}>Please remove it</Text>
@@ -795,7 +795,7 @@ const CheckOut = ({ navigation, route }) => {
                           </View>
                           <TouchableOpacity
                             style={{ marginLeft: 180 }}
-                            onPress={() => handleRemove(item)}
+                            onPress={() => removeCartItem(item)}
                           >
                             <MaterialIcons
                               name="delete"
@@ -994,7 +994,7 @@ const styles = StyleSheet.create({
     marginTop: 9,
   },
   placeOrderButton: {
-    backgroundColor: "#6b21a8",
+    backgroundColor: COLORS.services,
     padding: 10,
 
     alignSelf: "center",
@@ -1043,6 +1043,9 @@ const styles = StyleSheet.create({
     height: 80,
     marginRight: 16,
     borderRadius: 8,
+    // justifyContent:"center",
+    // alignSelf:"center"
+    marginTop:20
   },
   itemDetails: {
     flex: 1,
@@ -1155,7 +1158,7 @@ const styles = StyleSheet.create({
   smallButton: {
     marginTop: 10,
     marginLeft: 280,
-    backgroundColor: "#6b21a8",
+    backgroundColor: COLORS.services,
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 5,
@@ -1245,7 +1248,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   outOfStockText: {
-    color: COLORS.title2,
+    color: COLORS.services,
     fontSize: 14,
     fontWeight: "bold",
   },

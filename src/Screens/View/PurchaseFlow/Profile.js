@@ -326,8 +326,9 @@ const ProfilePage = () => {
               style={styles.input}
               placeholder="Enter your e-mail "
               keyboardType="email-address"
+              autoCapitalize="none"  
+              autoCorrect={false} 
               value={profileForm?.customer_email || ""}
-              // editable={profileForm.customer_email==null?true:false}
               onChangeText={(text) => {
                 if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
                   setProfileForm({ ...profileForm, customer_email: text });
@@ -409,7 +410,7 @@ const ProfilePage = () => {
             </TouchableOpacity> */}
             <TouchableOpacity
               style={{
-                backgroundColor: COLORS.primary,
+                backgroundColor: COLORS.services,
                 padding: 10,
                 borderRadius: 5,
                 alignItems: "center",
@@ -510,7 +511,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   saveButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.services,
     padding: 15,
     borderRadius: 10,
     alignItems: "center",

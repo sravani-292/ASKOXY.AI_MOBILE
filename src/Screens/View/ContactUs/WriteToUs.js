@@ -115,10 +115,10 @@ const WriteToUs = ({navigation,route}) => {
         Alert.alert("Error", "Invalid email format!");
         return;
       }
-      if (!/^\d{10}$/.test(mobileNumber)) {
-        Alert.alert("Error", "Mobile number must be 10 digits!");
-        return;
-      }
+      // if (!/^\d{13}$/.test(mobileNumber)) {
+      //   Alert.alert("Error", "Mobile number must be 10 digits!");
+      //   return;
+      // }
 
       // Success
       // Alert.alert("Success", "Your query has been submitted!");
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     
   },
   submitbtn:{
-    backgroundColor:COLORS.primary,
+    backgroundColor:COLORS.services,
     width:width*0.8,
     alignSelf:"center",
     padding:10,
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     borderRadius:10
   },
   btn:{
-    backgroundColor:COLORS.primary,
+    backgroundColor:COLORS.services,
     width:"auto",
     padding:5,
     alignSelf:"flex-end",

@@ -228,9 +228,9 @@ const handleContinuePress = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
   progressTracker: { flexDirection: "row", justifyContent: "space-around" },
-  activeStep: { fontWeight: "bold", color: COLORS.title2 },
+  activeStep: { fontWeight: "bold", color: COLORS.services },
 
-  changeText: { color: COLORS.title2, marginTop: 8 },
+  changeText: { color: COLORS.services, marginTop: 8 },
   loader: { marginVertical: 20 },
   cartItem: {
     flexDirection: "row",
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   continueButton: {
     padding: 16,
     // backgroundColor: "blue",
-    backgroundColor: COLORS.title2,
+    backgroundColor: COLORS.services,
     alignItems: "center",
     marginTop: 16,
   },
@@ -272,9 +272,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.title,
   },
   activeStepCircle: {
-    backgroundColor: COLORS.title2,
+    backgroundColor: COLORS.services,
     borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.services,
   },
   stepNumber: {
     color: "#fff",

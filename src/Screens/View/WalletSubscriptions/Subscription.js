@@ -478,7 +478,7 @@ const Subscription = () => {
                 styles.button,
                 {
                   opacity: status ? 0.5 : 1,
-                  backgroundColor:  COLORS.primary ,
+                  backgroundColor:  COLORS.services ,
                 },
               ]}
               // style={styles.button}

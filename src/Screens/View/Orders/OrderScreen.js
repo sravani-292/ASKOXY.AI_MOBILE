@@ -7,16 +7,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  Dimensions
+  Dimensions,
+  RefreshControl,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
-import dayjs from 'dayjs';
+import dayjs from "dayjs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { COLORS } from "../../../../Redux/constants/theme";
 
 import { useSelector } from "react-redux";
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 const { width, height } = Dimensions.get("window");
 
@@ -27,13 +28,17 @@ const OrderScreen = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
-  
 
   useFocusEffect(
     useCallback(() => {
       getOrders();
     }, [])
   );
+
+  const onRefresh = () => {
+    getOrders();
+  };
+
   const getOrders = async () => {
     const data = {
       userId: customerId,
@@ -42,7 +47,9 @@ const OrderScreen = () => {
 
     try {
       const response = await axios.post(
-       userStage=="test1"?BASE_URL + "erice-service/order/getAllOrders_customerId":BASE_URL+"order-service/getAllOrders_customerId",
+        userStage == "test1"
+          ? BASE_URL + "erice-service/order/getAllOrders_customerId"
+          : BASE_URL + "order-service/getAllOrders_customerId",
         data,
         {
           headers: {
@@ -57,10 +64,8 @@ const OrderScreen = () => {
       if (response.data) {
         setOrders(response.data);
         response.data.forEach((item) => {
-          console.log(item.newOrderId,item.orderStatus);
-      });
-      
-        
+          console.log(item.newOrderId, item.orderStatus);
+        });
       } else {
         alert("No orders found!");
       }
@@ -94,12 +99,11 @@ const OrderScreen = () => {
   //   }
   // };
 
-
   const getOrderStatusText = (orderStatus) => {
     if (orderStatus === "PickedUp") {
-      return "PickedUp"; 
+      return "PickedUp";
     }
-  
+
     const statusNumber = Number(orderStatus);
     switch (statusNumber) {
       case 0:
@@ -120,25 +124,30 @@ const OrderScreen = () => {
         return "Unknown";
     }
   };
-  
 
   useEffect(() => {
     getOrders();
   }, []);
 
   // Navigate to order details page
-   const orderDetails = (item) => {
+  const orderDetails = (item) => {
     console.log("sravaniOrders", item.orderId);
-    const status = getOrderStatusText(item.orderStatus); 
-    console.log({status});
-    
-    navigation.navigate("Order Details", { order_id: item.orderId, status, new_Order_Id:item.newOrderId }); 
+    const status = getOrderStatusText(item.orderStatus);
+    console.log({ status });
+
+    navigation.navigate("Order Details", {
+      order_id: item.orderId,
+      status,
+      new_Order_Id: item.newOrderId,
+    });
   };
 
   // Render each order
   const renderOrder = ({ item }) => (
-    
-    <TouchableOpacity style={styles.orderList} onPress={()=>orderDetails(item)}>
+    <TouchableOpacity
+      style={styles.orderList}
+      onPress={() => orderDetails(item)}
+    >
       <View style={styles.imageContainer}>
         <Image
           source={require("../../../../assets/tick.png")}
@@ -147,7 +156,9 @@ const OrderScreen = () => {
       </View>
       <View style={styles.orderInfo}>
         {/* <Text style={styles.date}>{item?.orderDate?.slice(0, 10)}</Text> */}
-        <Text style={styles.date}>{dayjs(item?.orderDate).format('MMM DD, YYYY hh:mm:ss A')}</Text>
+        <Text style={styles.date}>
+          {dayjs(item?.orderDate).format("MMM DD, YYYY hh:mm:ss A")}
+        </Text>
         <Text style={styles.orderId}>
           Order Id: <Text>{item.newOrderId}</Text>
         </Text>
@@ -177,21 +188,26 @@ const OrderScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+      }
+    >
       {orders.length === 0 ? (
         <Text style={styles.noOrdersText}>No orders found!</Text>
       ) : (
         <>
-        <FlatList
-          data={orders}
-          renderItem={renderOrder}
-          keyExtractor={(item) => item.orderId.toString()}
-          contentContainerStyle={styles.orderview}
-          showsVerticalScrollIndicator={false} 
-          showsHorizontalScrollIndicator={false} 
-        />
-      
-      {/* <View style={styles.footer}>
+          <FlatList
+            data={orders}
+            renderItem={renderOrder}
+            keyExtractor={(item) => item.orderId.toString()}
+            contentContainerStyle={styles.orderview}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          />
+
+          {/* <View style={styles.footer}>
       <TouchableOpacity
         style={styles.footerButton}
         onPress={() => navigation.navigate("My Cancelled Item Details")}
@@ -205,10 +221,9 @@ const OrderScreen = () => {
         <Text style={styles.footerButtonText}>Exchanged Items</Text>
       </TouchableOpacity>
     </View> */}
-    </>
-    )}
+        </>
+      )}
     </View>
-
   );
 };
 
@@ -246,7 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.quantitybutton,
     borderRadius: 7,
     padding: 10,
-    width:width*0.2,
+    width: width * 0.2,
     justifyContent: "center",
     alignItems: "center",
     marginRight: 15,
@@ -274,7 +289,7 @@ const styles = StyleSheet.create({
   },
   paymentType: {
     fontSize: 15,
-    color: COLORS.title2,
+    color: COLORS.services,
   },
   paymentPending: {
     color: "red",
@@ -288,7 +303,7 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   footer: {
-    marginBottom:50,
+    marginBottom: 50,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",

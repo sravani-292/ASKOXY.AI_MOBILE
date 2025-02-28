@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   BackHandler,
+  RefreshControl,
 } from "react-native";
 import React, {
   useEffect,
@@ -29,6 +30,15 @@ import { useNavigationState } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "@expo/vector-icons";
+
+// const MyComponent = () => {
+//   return (
+//     <Ionicons name="cart-outline" size={120} color="#DADADA" />
+//   );
+// };
+
+
 import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
 
@@ -45,6 +55,9 @@ const UserDashboard = () => {
   const [loader, setLoader] = useState(false);
   const [seletedState, setSelectedState] = useState(null);
   const [isLimitedStock, setIsLimitedStock] = useState({});
+  const [removalLoading, setRemovalLoading] = useState({});
+  const [searchText, setSearchText] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
@@ -77,7 +90,7 @@ const UserDashboard = () => {
   );
 
   const handleAdd = async (item) => {
-    console.log("handle add", { item });
+    // console.log("handle add", { item });
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await handleAddToCart(item);
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
@@ -92,10 +105,17 @@ const UserDashboard = () => {
   const handleDecrease = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await decrementQuantity(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
+    setTimeout(() => {
+      setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
+    }, 5000);
   };
-  const userData = useSelector((state) => state.counter);
+  const handleRemove = async (item) => {
+    setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: true }));
+    await removeItem(item);
+    setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: false }));
+  };
 
+  const userData = useSelector((state) => state.counter);
   useFocusEffect(
     useCallback(() => {
       if (userData) {
@@ -104,6 +124,9 @@ const UserDashboard = () => {
     }, [])
   );
 
+  const onRefresh = () => {
+    getAllCategories();
+  };
   const token = userData?.accessToken;
   const customerId = userData?.userId;
 
@@ -121,7 +144,6 @@ const UserDashboard = () => {
           },
         }
       );
-      console.log("API Response:", response);
       const cartData = response?.data?.customerCartResponseList;
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
@@ -133,7 +155,7 @@ const UserDashboard = () => {
         return;
       }
 
-      console.log("cartData:", cartData);
+      // console.log("cartData:", cartData);
 
       // Mapping items to their quantities
       const cartItemsMap = cartData.reduce((acc, item) => {
@@ -149,23 +171,31 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
-      console.log("Cart Items Map:", cartItemsMap);
+      // console.log("Cart Items Map:", cartItemsMap);
 
       // Mapping items with limited stock (quantity = 1)
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
           acc[item.itemId] = "outOfStock";
-        } else if (item.quantity === 1) {
+        } else if (item.quantity <= 5) {
           acc[item.itemId] = "lowStock";
         }
         return acc;
       }, {});
-      console.log("limited stock map", limitedStockMap);
-      // Updating state
-      setCartData(cartData);
-      setCartItems(cartItemsMap);
-      setIsLimitedStock(limitedStockMap);
+      // console.log("limited stock map", limitedStockMap);
+      // setCartData(cartData);
+      // setCartItems(cartItemsMap);
+      // setIsLimitedStock(limitedStockMap);
+      // setCartCount(cartData.length);
+
+      setCartData([...cartData]);
+      setCartItems({ ...cartItemsMap });
+      setIsLimitedStock({ ...limitedStockMap });
       setCartCount(cartData.length);
+      setLoadingItems((prevState) => ({
+        ...prevState,
+        [cartData.itemId]: false,
+      }));
     } catch (error) {
       console.error("Error fetching cart items:", error.response.status);
     }
@@ -173,7 +203,6 @@ const UserDashboard = () => {
 
   const UpdateCartCount = (newCount) => setCartCount(newCount);
   const handleAddToCart = async (item) => {
-    console.log("add to cart", item.itemId);
 
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
@@ -183,7 +212,7 @@ const UserDashboard = () => {
       return;
     }
     const data = { customerId: customerId, itemId: item.itemId };
-    console.log({ data });
+    // console.log({ data });
 
     try {
       const response = await axios.post(
@@ -195,8 +224,7 @@ const UserDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("added items",response);
-      
+
       if (response.data.errorMessage == "Item added to cart successfully") {
         Alert.alert("Success", "Item added to cart successfully");
 
@@ -211,7 +239,6 @@ const UserDashboard = () => {
   };
 
   const incrementQuantity = async (item) => {
-    console.log("incremented cart data", item);
 
     const data = {
       customerId: customerId,
@@ -232,34 +259,43 @@ const UserDashboard = () => {
     } catch (error) {}
   };
 
+  const removeItem = async (item) => {
+    const newQuantity = cartItems[item.itemId];
+    const cartItem = cartData.find(
+      (cartData) => cartData.itemId === item.itemId
+    );
+    try {
+      const response = await axios.delete(
+        userStage == "test1"
+          ? BASE_URL + "erice-service/cart/remove"
+          : BASE_URL + "cart-service/cart/remove",
+        {
+          data: {
+            id: cartItem.cartId,
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      // console.log("removal response", response);
+
+      fetchCartItems();
+      Alert.alert("Item removed", "Item removed from the cart");
+    } catch (error) {
+      console.log(error.response);
+    }
+  };
   const decrementQuantity = async (item) => {
     const newQuantity = cartItems[item.itemId];
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    console.log("cart item", cartItem);
+    // console.log("cart item", cartItem);
 
     if (newQuantity === 1) {
-      try {
-        const response = await axios.delete(
-          userStage == "test1"
-            ? BASE_URL + "erice-service/cart/remove"
-            : BASE_URL + "cart-service/cart/remove",
-          {
-            data: {
-              id: cartItem.cartId,
-            },
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        fetchCartItems();
-        Alert.alert("Item removed", "Item removed from the cart");
-      } catch (error) {
-        console.log(error.response);
-      }
+      handleRemove(item);
     } else {
       const data = {
         customerId: customerId,
@@ -295,7 +331,7 @@ const UserDashboard = () => {
           : BASE_URL + "product-service/showItemsForCustomrs"
       )
       .then((response) => {
-        console.log("rice main page", response.data);
+        // console.log("rice main page", response.data);
         setCategories(response.data);
         setSelectedCategory("All CATEGORIES");
 
@@ -353,42 +389,165 @@ const UserDashboard = () => {
     return <View style={styles.footer} />;
   }
 
+  // const filterItemsBySearch = (searchText) => {
+  //   if (!searchText.trim()) {
+  //     // If search text is empty, show items based on selected category
+  //     if (selectedCategory === "All CATEGORIES") {
+  //       const allItems = categories.flatMap(
+  //         (category) => category.itemsResponseDtoList || []
+  //       );
+  //       setFilteredItems(allItems);
+  //     } else {
+  //       const filtered = categories
+  //         .filter(
+  //           (cat) =>
+  //             cat.categoryName.trim().toLowerCase() ===
+  //             selectedCategory.trim().toLowerCase()
+  //         )
+  //         .flatMap((cat) => cat.itemsResponseDtoList || []);
+  //       setFilteredItems(filtered);
+  //     }
+  //   } else {
+  //     // If search text exists, filter ALL items regardless of category
+  //     const searchQuery = searchText.toLowerCase().trim();
+
+  //     // Get ALL items from all categories
+  //     const allItems = categories.flatMap(
+  //       (category) => category.itemsResponseDtoList || []
+  //     );
+
+  //     // Filter all items by name
+  //     const searchResults = allItems.filter((item) =>
+  //       item.itemName.toLowerCase().includes(searchQuery)
+  //     );
+
+  //     // Set filtered results
+  //     setFilteredItems(searchResults);
+  //   }
+  // };
+
+  const filterItemsBySearch = (searchText) => {
+    if (!searchText.trim()) {
+      if (selectedCategory === "All CATEGORIES") {
+        const allItems = categories.flatMap(
+          (category) => category.itemsResponseDtoList || []
+        );
+        setFilteredItems(allItems);
+      } else {
+        const filtered = categories
+          .filter(
+            (cat) =>
+              cat.categoryName.trim().toLowerCase() ===
+              selectedCategory.trim().toLowerCase()
+          )
+          .flatMap((cat) => cat.itemsResponseDtoList || []);
+        setFilteredItems(filtered);
+      }
+    } else {
+      // Convert search text to lowercase, trim spaces
+      let normalizedSearchText = searchText.toLowerCase().trim();
+  
+      // Handle variations of weight units (e.g., "10kgs" → "10 kgs")
+      normalizedSearchText = normalizedSearchText
+        .replace(/(\d+)(kgs|kg)/g, "$1 kgs") // Normalize "10kg" and "10kgs" to "10 kgs"
+        .replace(/\s+/g, " "); // Remove extra spaces
+  
+      // Split search input into words
+      const searchWords = normalizedSearchText.split(" ");
+  
+      // Define packaging-related keywords
+      const packagingKeywords = ["bag", "bags", "packet", "pack", "sack", "sacks", "kg", "kgs"];
+  
+      // Get all items from all categories
+      const allItems = categories.flatMap(
+        (category) => category.itemsResponseDtoList || []
+      );
+  
+      // Filter items based on name, weight, or packaging type
+      const searchResults = allItems.filter((item) => {
+        const itemName = item.itemName.toLowerCase();
+        const itemWeight = item.weight ? item.weight.toString().toLowerCase() : "";
+        const itemUnits = item.units ? item.units.toLowerCase() : "";
+  
+        // Normalize item weight + units (e.g., "10kg" → "10 kgs" and "10 kg")
+        const combinedWeightUnit = `${itemWeight} ${itemUnits}`.trim();
+        const normalizedItemName = itemName.replace(/(\d+)(kgs|kg)/g, "$1 kgs");
+  
+        // Create a combined searchable text
+        const searchableText = `${normalizedItemName} ${itemWeight} ${itemUnits} ${combinedWeightUnit} ${packagingKeywords.join(" ")}`.trim();
+  
+        // Check if all words in search input exist in searchable text
+        return searchWords.every((word) => searchableText.includes(word));
+      });
+  
+      // Set filtered results
+      setFilteredItems(searchResults);
+    }
+  };
+  
+  
+
+  // Modify the handleClearText function
+  const handleClearText = () => {
+    setSearchText("");
+    if (selectedCategory === "All CATEGORIES") {
+      const allItems = categories.flatMap(
+        (category) => category.itemsResponseDtoList || []
+      );
+      setFilteredItems(allItems);
+    } else {
+      const filtered = categories
+        .filter(
+          (cat) =>
+            cat.categoryName.trim().toLowerCase() ===
+            selectedCategory.trim().toLowerCase()
+        )
+        .flatMap((cat) => cat.itemsResponseDtoList || []);
+      setFilteredItems(filtered);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <View style={{ padding: 10 }}>
-        {/* Search Bar */}
         <View
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
-            alignItems: "center",
+            // alignItems: "center",
             width: width * 0.8,
           }}
         >
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <TextInput
-              placeholder="Search for items..."
-              style={{
-                padding: 10,
-                marginLeft: 15,
-                borderWidth: 1,
-                borderRadius: 20,
-                marginBottom: 10,
-                width: width * 0.8,
-              }}
-            />
-            {/* <Icon
+          <View style={styles.searchContainer}>
+            <Icon
               name="search"
               size={20}
-              color="gray"
-              style={{ marginRight: 20 }}
-            /> */}
+              color="#757575"
+              style={styles.searchIcon}
+            />
+
+            <TextInput
+              placeholder="Search for items..."
+              value={searchText}
+              onChangeText={(text) => {
+                setSearchText(text);
+                filterItemsBySearch(text);
+              }}
+              style={styles.input}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              returnKeyType="search"
+              clearButtonMode="never"
+            />
+
+            {searchText.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClearText}
+                style={styles.clearButton}
+              >
+                <Icon name="close-circle" size={20} color="#757575" />
+              </TouchableOpacity>
+            )}
           </View>
 
           {userData != null && cartCount > 0 && (
@@ -406,7 +565,7 @@ const UserDashboard = () => {
                       marginBottom: 20,
                       right: -4,
                       top: -5,
-                      backgroundColor: COLORS.primary,
+                      backgroundColor: COLORS.services,
                       borderRadius: 10,
                       paddingHorizontal: 5,
                       paddingVertical: 1,
@@ -464,7 +623,7 @@ const UserDashboard = () => {
                       },
                     ]}
                   >
-                    All CATEGORIES
+                    ALL ITEMS
                   </Text>
                 </TouchableOpacity>
                 {categories.map((category, index) => (
@@ -506,12 +665,23 @@ const UserDashboard = () => {
           showsVerticalScrollIndicator={false}
           // ListFooterComponentStyle={styles.footer}
           ListFooterComponent={footer}
+          ListEmptyComponent={() => (
+            <View style={styles.emptyContainer}>
+              {/* <Ionicons name="cart-outline" size={120} color="#DADADA" /> */}
+              <Text style={styles.emptyText}>No Items Found</Text>
+             
+            </View>
+          )}
           renderItem={({ item }) => (
             <View style={styles.itemCard}>
               <View style={styles.imageContainer}>
                 {isLimitedStock[item.itemId] == "lowStock" && (
                   <View style={styles.limitedStockBadge}>
-                    <Text style={styles.limitedStockText}>1 item left</Text>
+                    <Text style={styles.limitedStockText}>
+                      {item.quantity > 1
+                        ? `${item.quantity} items left`
+                        : `${item.quantity} item left`}
+                    </Text>
                   </View>
                 )}
                 <TouchableOpacity
@@ -559,23 +729,20 @@ const UserDashboard = () => {
                       </Text>
                     )}
 
-                   <TouchableOpacity
+                    <TouchableOpacity
                       style={[
-                        // styles.quantityButton,
-                        // cartItems[item.itemId] === item.quantity &&
-                        //   styles.disabledButton,
-                          cartItems[item.itemId] === item.quantity?
-                          styles.disabledButton:styles.quantityButton,
+                        cartItems[item.itemId] === item.quantity
+                          ? styles.disabledButton
+                          : styles.quantityButton,
                       ]}
                       onPress={() => handleIncrease(item)}
                       disabled={
                         loadingItems[item.itemId] ||
-                        cartItems[item.itemId]  === item.quantity
+                        cartItems[item.itemId] === item.quantity
                       }
                     >
                       <Text style={styles.buttonText}>+</Text>
-                    </TouchableOpacity> 
-                   
+                    </TouchableOpacity>
                   </View>
                 ) : (
                   <View>
@@ -591,8 +758,10 @@ const UserDashboard = () => {
                         <Text style={styles.addButtonText}>
                           {item.quantity === 0
                             ? "Out of Stock"
-                            : loadingItems[item.itemId]
-                            ? "Adding..."
+                            : removalLoading[item.itemId]
+                            ? "Removing"
+                            : loadingItems[item.itemId] 
+                            ? "Adding"
                             : "Add to Cart"}
                         </Text>
                       </TouchableOpacity>
@@ -606,6 +775,9 @@ const UserDashboard = () => {
               </View>
             </View>
           )}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+          }
         />
       </View>
     </SafeAreaView>
@@ -680,7 +852,7 @@ const styles = StyleSheet.create({
   newPrice: {
     fontSize: 15,
     fontWeight: "bold",
-    color: COLORS.primary,
+    color: COLORS.services,
     marginLeft: -25,
   },
   oldPrice: {
@@ -791,6 +963,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 40,
     height: 40,
+    marginLeft:15,
+    marginTop:8
   },
   cartBadge: {
     position: "absolute",
@@ -810,4 +984,31 @@ const styles = StyleSheet.create({
     marginBottom: 100,
     marginTop: 150,
   },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    width:width*0.8,
+    height:60
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  clearButton: {
+    position: "absolute",
+    right: 10, 
+  },
+  input: {
+    flex: 1, 
+    fontSize: 16,
+    color: "#000",
+    paddingVertical: 8, 
+  },
+  emptyText:{
+    textAlign:"center",
+    alignSelf:"center",
+    alignItems:"center"
+  }
 });
