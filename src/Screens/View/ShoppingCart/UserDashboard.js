@@ -32,11 +32,6 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ionicons } from "@expo/vector-icons";
 
-// const MyComponent = () => {
-//   return (
-//     <Ionicons name="cart-outline" size={120} color="#DADADA" />
-//   );
-// };
 
 
 import { COLORS } from "../../../../Redux/constants/theme";
@@ -58,36 +53,36 @@ const UserDashboard = () => {
   const [removalLoading, setRemovalLoading] = useState({});
   const [searchText, setSearchText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [user,setUser] = useState();
 
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const handleBackPress = () => {
-        Alert.alert(
-          "Exit App",
-          "Are you sure you want to exit?",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "OK", onPress: () => BackHandler.exitApp() },
-          ],
-          { cancelable: false }
-        );
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     const handleBackPress = () => {
+  //       Alert.alert(
+  //         "Exit App",
+  //         "Are you sure you want to exit?",
+  //         [
+  //           { text: "Cancel", style: "cancel" },
+  //           { text: "OK", onPress: () => BackHandler.exitApp() },
+  //         ],
+  //         { cancelable: false }
+  //       );
 
-        return true;
-      };
+  //       return true;
+  //     };
 
-      // Add BackHandler event listener
-      BackHandler.addEventListener("hardwareBackPress", handleBackPress);
+  //     // Add BackHandler event listener
+  //     BackHandler.addEventListener("hardwareBackPress", handleBackPress);
 
-      // Cleanup
-      return () => {
-        BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-      };
-    }, [currentScreen])
-  );
+  //     return () => {
+  //       BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
+  //     };
+  //   }, [currentScreen])
+  // );
 
   const handleAdd = async (item) => {
     // console.log("handle add", { item });
@@ -155,9 +150,7 @@ const UserDashboard = () => {
         return;
       }
 
-      // console.log("cartData:", cartData);
-
-      // Mapping items to their quantities
+     
       const cartItemsMap = cartData.reduce((acc, item) => {
         if (
           !item.itemId ||
@@ -171,9 +164,7 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
-      // console.log("Cart Items Map:", cartItemsMap);
-
-      // Mapping items with limited stock (quantity = 1)
+      
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
           acc[item.itemId] = "outOfStock";
@@ -182,11 +173,7 @@ const UserDashboard = () => {
         }
         return acc;
       }, {});
-      // console.log("limited stock map", limitedStockMap);
-      // setCartData(cartData);
-      // setCartItems(cartItemsMap);
-      // setIsLimitedStock(limitedStockMap);
-      // setCartCount(cartData.length);
+      
 
       setCartData([...cartData]);
       setCartItems({ ...cartItemsMap });
@@ -203,11 +190,21 @@ const UserDashboard = () => {
 
   const UpdateCartCount = (newCount) => setCartCount(newCount);
   const handleAddToCart = async (item) => {
-
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
         { text: "Cancel" },
+        { text: "OK", onPress: () => navigation.navigate("Login") },
+       
+      ]);
+      return;
+    }
+    else if(!user){
+      console.log("user",user);
+      
+      Alert.alert("Alert", "Please Complete Your  Profile", [
+        { text: "Cancel" },
+        { text: "OK", onPress: () => navigation.navigate("Home",{screen:"Profile"}) },
+        
       ]);
       return;
     }
@@ -239,7 +236,6 @@ const UserDashboard = () => {
   };
 
   const incrementQuantity = async (item) => {
-
     const data = {
       customerId: customerId,
       itemId: item.itemId,
@@ -279,7 +275,6 @@ const UserDashboard = () => {
           },
         }
       );
-      // console.log("removal response", response);
 
       fetchCartItems();
       Alert.alert("Item removed", "Item removed from the cart");
@@ -292,7 +287,6 @@ const UserDashboard = () => {
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    // console.log("cart item", cartItem);
 
     if (newQuantity === 1) {
       handleRemove(item);
@@ -318,8 +312,38 @@ const UserDashboard = () => {
     }
   };
 
+
+  const getProfile = async () => {
+    console.log("profile get call response");
+
+     try {
+      const response = await axios({
+        method: "GET",
+        url: userStage =="test1"?
+        BASE_URL +
+        `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+   
+        headers: {
+          // "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        });
+      
+
+      if (response.status === 200) {
+        console.log("user data",response);
+        
+        setUser(response.data);
+       
+      }
+    } catch (error) {
+      console.error("ERROR",error);
+      showToast("Error loading profile");
+    }
+  };
   useEffect(() => {
     getAllCategories();
+    getProfile();
   }, []);
 
   const getAllCategories = () => {
@@ -389,43 +413,6 @@ const UserDashboard = () => {
     return <View style={styles.footer} />;
   }
 
-  // const filterItemsBySearch = (searchText) => {
-  //   if (!searchText.trim()) {
-  //     // If search text is empty, show items based on selected category
-  //     if (selectedCategory === "All CATEGORIES") {
-  //       const allItems = categories.flatMap(
-  //         (category) => category.itemsResponseDtoList || []
-  //       );
-  //       setFilteredItems(allItems);
-  //     } else {
-  //       const filtered = categories
-  //         .filter(
-  //           (cat) =>
-  //             cat.categoryName.trim().toLowerCase() ===
-  //             selectedCategory.trim().toLowerCase()
-  //         )
-  //         .flatMap((cat) => cat.itemsResponseDtoList || []);
-  //       setFilteredItems(filtered);
-  //     }
-  //   } else {
-  //     // If search text exists, filter ALL items regardless of category
-  //     const searchQuery = searchText.toLowerCase().trim();
-
-  //     // Get ALL items from all categories
-  //     const allItems = categories.flatMap(
-  //       (category) => category.itemsResponseDtoList || []
-  //     );
-
-  //     // Filter all items by name
-  //     const searchResults = allItems.filter((item) =>
-  //       item.itemName.toLowerCase().includes(searchQuery)
-  //     );
-
-  //     // Set filtered results
-  //     setFilteredItems(searchResults);
-  //   }
-  // };
-
   const filterItemsBySearch = (searchText) => {
     if (!searchText.trim()) {
       if (selectedCategory === "All CATEGORIES") {
@@ -444,48 +431,58 @@ const UserDashboard = () => {
         setFilteredItems(filtered);
       }
     } else {
-      // Convert search text to lowercase, trim spaces
       let normalizedSearchText = searchText.toLowerCase().trim();
-  
-      // Handle variations of weight units (e.g., "10kgs" → "10 kgs")
+
       normalizedSearchText = normalizedSearchText
-        .replace(/(\d+)(kgs|kg)/g, "$1 kgs") // Normalize "10kg" and "10kgs" to "10 kgs"
-        .replace(/\s+/g, " "); // Remove extra spaces
-  
+        .replace(/(\d+)(kgs|kg)/g, "$1 kgs") 
+        .replace(/\s+/g, " "); 
+
       // Split search input into words
       const searchWords = normalizedSearchText.split(" ");
-  
+
       // Define packaging-related keywords
-      const packagingKeywords = ["bag", "bags", "packet", "pack", "sack", "sacks", "kg", "kgs"];
-  
+      const packagingKeywords = [
+        "bag",
+        "bags",
+        "packet",
+        "pack",
+        "sack",
+        "sacks",
+        "kg",
+        "kgs",
+      ];
+
       // Get all items from all categories
       const allItems = categories.flatMap(
         (category) => category.itemsResponseDtoList || []
       );
-  
+
       // Filter items based on name, weight, or packaging type
       const searchResults = allItems.filter((item) => {
         const itemName = item.itemName.toLowerCase();
-        const itemWeight = item.weight ? item.weight.toString().toLowerCase() : "";
+        const itemWeight = item.weight
+          ? item.weight.toString().toLowerCase()
+          : "";
         const itemUnits = item.units ? item.units.toLowerCase() : "";
-  
+
         // Normalize item weight + units (e.g., "10kg" → "10 kgs" and "10 kg")
         const combinedWeightUnit = `${itemWeight} ${itemUnits}`.trim();
         const normalizedItemName = itemName.replace(/(\d+)(kgs|kg)/g, "$1 kgs");
-  
+
         // Create a combined searchable text
-        const searchableText = `${normalizedItemName} ${itemWeight} ${itemUnits} ${combinedWeightUnit} ${packagingKeywords.join(" ")}`.trim();
-  
+        const searchableText =
+          `${normalizedItemName} ${itemWeight} ${itemUnits} ${combinedWeightUnit} ${packagingKeywords.join(
+            " "
+          )}`.trim();
+
         // Check if all words in search input exist in searchable text
         return searchWords.every((word) => searchableText.includes(word));
       });
-  
+
       // Set filtered results
       setFilteredItems(searchResults);
     }
   };
-  
-  
 
   // Modify the handleClearText function
   const handleClearText = () => {
@@ -514,11 +511,15 @@ const UserDashboard = () => {
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
-            // alignItems: "center",
             width: width * 0.8,
           }}
         >
-          <View style={styles.searchContainer}>
+          <View
+            style={[
+              styles.searchContainer,
+              cartData == null ? styles.fullWidth : styles.reducedWidth,
+            ]}
+          >
             <Icon
               name="search"
               size={20}
@@ -669,7 +670,6 @@ const UserDashboard = () => {
             <View style={styles.emptyContainer}>
               {/* <Ionicons name="cart-outline" size={120} color="#DADADA" /> */}
               <Text style={styles.emptyText}>No Items Found</Text>
-             
             </View>
           )}
           renderItem={({ item }) => (
@@ -695,9 +695,9 @@ const UserDashboard = () => {
               </View>
 
               {/* Product Details */}
-              <View style={{ height: height / 40 }}>
-                <Text style={styles.itemName}>{item.itemName}</Text>
-              </View>
+              {/* <View style={{ height: height / 5,marginBottom:5 }}> */}
+              <Text style={styles.itemName}>{item.itemName}</Text>
+              {/* </View> */}
               <View style={styles.priceContainer}>
                 <Text style={styles.newPrice}>₹{item.itemPrice}</Text>
                 <Text style={styles.oldPrice}>₹{item.itemMrp}</Text>
@@ -760,11 +760,34 @@ const UserDashboard = () => {
                             ? "Out of Stock"
                             : removalLoading[item.itemId]
                             ? "Removing"
-                            : loadingItems[item.itemId] 
+                            : loadingItems[item.itemId]
                             ? "Adding"
                             : "Add to Cart"}
                         </Text>
                       </TouchableOpacity>
+                      // <TouchableOpacity
+                      //   style={[
+                      //     styles.addButton,
+                      //     (removalLoading[item.itemId] ||
+                      //       loadingItems[item.itemId]) &&
+                      //       styles.disabledButton,
+                      //   ]}
+                      //   onPress={() => handleAddToCart(item)}
+                      //   disabled={
+                      //     removalLoading[item.itemId] ||
+                      //     loadingItems[item.itemId]
+                      //   } // Disable when loading
+                      // >
+                      //   <Text style={styles.addButtonText}>
+                      //     {item.quantity === 0
+                      //       ? "Out of Stock"
+                      //       : removalLoading[item.itemId]
+                      //       ? "Removing"
+                      //       : loadingItems[item.itemId]
+                      //       ? "Adding"
+                      //       : "Add to Cart"}
+                      //   </Text>
+                      // </TouchableOpacity>
                     ) : (
                       <View style={styles.addButton}>
                         <ActivityIndicator size="small" color="white" />
@@ -788,7 +811,7 @@ export default UserDashboard;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 15,
+    padding: 5,
     backgroundColor: COLORS.backgroundcolour,
     height: "auto",
   },
@@ -837,10 +860,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   itemName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 5,
+    height: 40,
   },
   priceContainer: {
     // width:width/2,
@@ -863,18 +887,19 @@ const styles = StyleSheet.create({
   },
 
   itemWeight: {
-    marginLeft: 10,
+    marginLeft: -20,
     fontSize: 13,
     color: "#757575",
   },
   addButton: {
     backgroundColor: "#6b21a8",
     paddingVertical: 5,
-    paddingHorizontal: 5,
-    marginLeft: 5,
-    marginRight: 5,
+    paddingHorizontal: 7,
+    marginLeft: 8,
+    // marginRight: 5,
     borderRadius: 5,
-    marginLeft: 40,
+
+    width: width * 0.25,
   },
 
   addButtonText: {
@@ -963,8 +988,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 40,
     height: 40,
-    marginLeft:15,
-    marginTop:8
+    marginLeft: 15,
+    marginTop: 8,
   },
   cartBadge: {
     position: "absolute",
@@ -990,25 +1015,31 @@ const styles = StyleSheet.create({
     backgroundColor: "#F5F5F5",
     borderRadius: 20,
     paddingHorizontal: 10,
-    width:width*0.8,
-    height:60
+    // width:width*0.8,
+    height: 60,
   },
   searchIcon: {
     marginRight: 8,
   },
   clearButton: {
     position: "absolute",
-    right: 10, 
+    right: 10,
   },
   input: {
-    flex: 1, 
+    flex: 1,
     fontSize: 16,
     color: "#000",
-    paddingVertical: 8, 
+    paddingVertical: 8,
   },
-  emptyText:{
-    textAlign:"center",
-    alignSelf:"center",
-    alignItems:"center"
-  }
+  emptyText: {
+    textAlign: "center",
+    alignSelf: "center",
+    alignItems: "center",
+  },
+  fullWidth: {
+    width: width * 0.9,
+  },
+  reducedWidth: {
+    width: width * 0.8,
+  },
 });

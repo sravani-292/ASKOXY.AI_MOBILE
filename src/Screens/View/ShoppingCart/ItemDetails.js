@@ -27,7 +27,7 @@ const ItemDetails = ({ route, navigation }) => {
   const userData = useSelector((state) => state.counter);
   const token = userData?.accessToken;
   const customerId = userData?.userId;
-
+  const [user, setUser] = useState();
   const [cartData, setCartData] = useState([]);
   const [cartItems, setCartItems] = useState({});
   const [cartCount, setCartCount] = useState(0);
@@ -58,7 +58,7 @@ const ItemDetails = ({ route, navigation }) => {
           },
         }
       );
-      console.log("API Response:", response); 
+      console.log("API Response:", response);
       const cartData = response?.data?.customerCartResponseList;
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
@@ -67,10 +67,10 @@ const ItemDetails = ({ route, navigation }) => {
         setCartItems({});
         setIsLimitedStock({});
         setCartCount(0);
-        return; 
+        return;
       }
 
-      console.log("cartData:", cartData); 
+      console.log("cartData:", cartData);
 
       // Mapping items to their quantities
       const cartItemsMap = cartData.reduce((acc, item) => {
@@ -89,11 +89,18 @@ const ItemDetails = ({ route, navigation }) => {
       console.log("Cart Items Map:", cartItemsMap);
 
       // Mapping items with limited stock (quantity = 1)
+      // const limitedStockMap = cartData.reduce((acc, item) => {
+      //   acc[item.itemId] = item.quantity === 1;
+      //   return acc;
+      // }, {});
       const limitedStockMap = cartData.reduce((acc, item) => {
-        acc[item.itemId] = item.quantity === 1;
+        if (item.quantity === 0) {
+          acc[item.itemId] = "outOfStock";
+        } else if (item.quantity <= 5) {
+          acc[item.itemId] = "lowStock";
+        }
         return acc;
       }, {});
-
       console.log("Limited Stock Map:", limitedStockMap);
 
       // Updating state
@@ -286,12 +293,48 @@ const ItemDetails = ({ route, navigation }) => {
     );
   };
 
+  const getProfile = async () => {
+    console.log("profile get call response");
+
+    try {
+      const response = await axios({
+        method: "GET",
+        url:
+          userStage == "test1"
+            ? BASE_URL +
+              `erice-service/user/customerProfileDetails?customerId=${customerId}`
+            : BASE_URL +
+              `user-service/customerProfileDetails?customerId=${customerId}`,
+
+        headers: {
+          // "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 200) {
+        setUser(response.data);
+      }
+    } catch (error) {
+      console.error("ERROR", error);
+      showToast("Error loading profile");
+    }
+  };
   const handleAddToCart = async (item) => {
     console.log("Adding item to cart:", item);
 
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
+        { text: "Cancel" },
+      ]);
+      return;
+    } else if (!user) {
+      Alert.alert("Alert", "Please Complete Your Profile", [
+        {
+          text: "OK",
+          onPress: () => navigation.navigate("Home", { screen: "Profile" }),
+        },
         { text: "Cancel" },
       ]);
       return;
@@ -326,12 +369,10 @@ const ItemDetails = ({ route, navigation }) => {
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, padding: 5 }}
       >
-        {item.purchaseDescription && (
+        {item.itemDescription && (
           <View style={styles.descriptionCard}>
             <Text style={styles.descriptionLabel}>Description:</Text>
-            <Text style={styles.descriptionText}>
-              {item.purchaseDescription}
-            </Text>
+            <Text style={styles.descriptionText}>{item.itemDescription}</Text>
           </View>
         )}
 
@@ -357,9 +398,13 @@ const ItemDetails = ({ route, navigation }) => {
             <Text style={{ alignSelf: "center", alignItems: "center" }}>
               {item.itemQuantity1}
             </Text>
-            {isLimitedStock[item.itemId] && (
+            {isLimitedStock[item.itemId] == "lowStock" && (
               <View style={styles.limitedStockBadge}>
-                <Text style={styles.limitedStockText}>1 item left</Text>
+                <Text style={styles.limitedStockText}>
+                  {item.quantity > 1
+                    ? `${item.quantity} items left`
+                    : `${item.quantity} item left`}
+                </Text>
               </View>
             )}
           </View>
@@ -393,19 +438,17 @@ const ItemDetails = ({ route, navigation }) => {
                 {/* Increase Button */}
                 <TouchableOpacity
                   style={[
-                    styles.quantityButton,
-                    (isLimitedStock[item.itemId] ||
-                      item.quantity == cartItems[item.itemId]) &&
-                      styles.disabledButton,
+                    cartItems[item.itemId] === item.quantity
+                      ? styles.disabledButton
+                      : styles.quantityButton,
                   ]}
                   onPress={() => handleIncrease(item)}
                   disabled={
                     loadingItems[item.itemId] ||
-                    isLimitedStock[item.itemId] ||
-                    item.quantity == cartItems[item.itemId]
+                    cartItems[item.itemId] === item.quantity
                   }
                 >
-                  <Text style={styles.quantityButtonText}>+</Text>
+                  <Text style={styles.buttonText}>+</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -414,7 +457,7 @@ const ItemDetails = ({ route, navigation }) => {
                   <TouchableOpacity
                     style={[
                       styles.addButton,
-                      item.quantity === 0 ? styles.disabledButton : {}, 
+                      item.quantity === 0 ? styles.disabledButton : {},
                     ]}
                     onPress={() => handleAdd(item)}
                     disabled={item.quantity === 0}
@@ -540,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   quantityButton: {
-    backgroundColor: "#9333ea",
+    backgroundColor: COLORS.services,
     padding: 10,
     borderRadius: 5,
     alignSelf: "center",
@@ -563,7 +606,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   addButton: {
-    backgroundColor: "#9333ea",
+    backgroundColor: COLORS.services,
     width: 100,
     paddingVertical: 8,
     borderRadius: 4,
@@ -577,7 +620,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   ViewButton: {
-    backgroundColor: "#9333ea",
+    backgroundColor: COLORS.services,
     paddingVertical: 10,
     borderRadius: 5,
     marginTop: 70,
@@ -601,7 +644,7 @@ const styles = StyleSheet.create({
   smallButton: {
     flex: 1,
     marginHorizontal: 10,
-    backgroundColor: "#9333ea",
+    backgroundColor: COLORS.services,
     paddingVertical: 12,
     borderRadius: 5,
     alignItems: "center",
@@ -672,7 +715,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   disabledButton: {
-    backgroundColor: "gray", 
+    backgroundColor: "gray",
     opacity: 0.5,
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+    alignItems: "center",
   },
 });

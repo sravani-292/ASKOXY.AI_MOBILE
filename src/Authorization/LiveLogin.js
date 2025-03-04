@@ -152,7 +152,7 @@ const Login = () => {
     setFormData({ ...formData, loading: true });
     try {
       const response = await axios.post(
-        userStage=="test1"?
+        userStage=="test"?
         BASE_URL + `erice-service/user/login-or-register`:null,
         data
       );
@@ -207,7 +207,7 @@ const Login = () => {
     console.log({ data });
     axios({
       method: "post",
-      url:  userStage =="test1" ?BASE_URL + `erice-service/user/login-or-register`:null,
+      url:  userStage =="test" ?BASE_URL + `erice-service/user/login-or-register`:null,
       data: data,
     })
       .then(async(response) => {
@@ -224,7 +224,7 @@ const Login = () => {
             setFormData({...formData,otp:""})
         if (response.data.userStatus == "ACTIVE") {
 
-            navigation.navigate("Home");
+            navigation.navigate("UserDashboard");
          } else {
             Alert.alert("Deactivated","Your account is deactivated, Are you want to reactivate your account to continue?",[{text:"Yes",onPress:()=>navigation.navigate("Active")},{text:"No",onPress:()=>BackHandler.exitApp()}]);
           }

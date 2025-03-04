@@ -15,11 +15,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { Dropdown } from "react-native-element-dropdown";
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 import { TouchableOpacity, TextInput } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 
-const {height,width}=Dimensions.get('window')
+const { height, width } = Dimensions.get("window");
 
 const TicketHistory = ({ navigation }) => {
   const [queryStatus, setQueryStatus] = useState("PENDING");
@@ -35,7 +35,8 @@ const TicketHistory = ({ navigation }) => {
   const customerId = userData.userId;
   const [removeModal, setRemoveModal] = useState(false);
   const [comments, setComments] = useState();
-  const [comments_error, setComments_error] = useState(false)
+  const [comments_error, setComments_error] = useState(false);
+  const [yesLoader, setYesLoader] = useState(false);
   // const[details,setDetails]=useState('')
   useEffect(() => {
     fetchTickets();
@@ -45,15 +46,22 @@ const TicketHistory = ({ navigation }) => {
     setLoading(true);
     axios
       .post(
-        userStage =="test1"?BASE_URL + `erice-service/writetous/getQueries`:BASE_URL+`writetous-service/getAllQueries`,
-        { queryStatus: queryStatus, userId: customerId,"askOxyOfers": "FREESAMPLE","projectType": "ASKOXY"},
+        userStage == "test1"
+          ? BASE_URL + `erice-service/writetous/getQueries`
+          : BASE_URL + `writetous-service/getAllQueries`,
+        {
+          queryStatus: queryStatus,
+          userId: customerId,
+          askOxyOfers: "FREESAMPLE",
+          projectType: "ASKOXY",
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       )
 
       .then((response) => {
-        console.log("getQueries",response.data)
+        console.log("getQueries", response.data);
         setTickets(response.data);
- 
+
         setLoading(false);
       })
       .catch((error) => {
@@ -70,16 +78,16 @@ const TicketHistory = ({ navigation }) => {
 
   const cancelTicket = (ticketId, query) => {
     setTicketId(ticketId);
-    setQuery(query)
-    console.log({query})
+    setQuery(query);
+    console.log({ query });
     setRemoveModal(true);
     console.log("Cancelled id and query:", ticketId, query);
   };
 
   const cancelTicketConfirm = (ticketId, query) => {
-    if(comments=="" || comments==null){
-      setComments_error(true)
-      return false
+    if (comments == "" || comments == null) {
+      setComments_error(true);
+      return false;
     }
     const data = {
       adminDocumentId: "",
@@ -97,26 +105,31 @@ const TicketHistory = ({ navigation }) => {
       userId: customerId,
     };
 
-    console.log(data.comments);
-    
-      // .post(BASE_URL + `erice-service/writetous/saveData`, data, {
-        axios.post(
-          userStage === "test1"
-            ? BASE_URL + "erice-service/writetous/saveData"
-            : BASE_URL + "writetous-service/saveData",
-          data
-          ,{  
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+    console.log(data);
+    setYesLoader(true);
+    axios
+      .post(
+        userStage === "test1"
+          ? BASE_URL + "erice-service/writetous/saveData"
+          : BASE_URL + "writetous-service/saveData",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       .then((response) => {
         console.log("Sravani", response.data);
         setComments("");
         setRemoveModal(false);
+        fetchTickets();
+        setYesLoader(false);
+      })
+      .catch((error) => {
+        console.log(error.response);
+        setYesLoader(false);
       });
-
-    fetchTickets();
   };
   const openFile = (url) => {
     const fileExtension = url.split(".").pop().toLowerCase();
@@ -153,17 +166,15 @@ const TicketHistory = ({ navigation }) => {
         <>
           {tickets && tickets.length > 0 ? (
             <FlatList
-            showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
               data={tickets}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => (
                 <View style={styles.card}>
-                 
                   <View style={styles.row}>
                     <Text style={styles.label}>Ticket Id</Text>
                     <Text style={styles.value}>{item.randomTicketId}</Text>
                   </View>
-                 
 
                   <View style={styles.row}>
                     <View>
@@ -208,7 +219,7 @@ const TicketHistory = ({ navigation }) => {
                         </View>
                       </View>
                     </>
-                 ) : null} 
+                  ) : null}
 
                   {item.userQueryDocumentStatus?.fileName != null ? (
                     <View style={styles.row}>
@@ -348,8 +359,6 @@ const TicketHistory = ({ navigation }) => {
 
               {/* Action Buttons */}
               <View style={styles.buttonContainer}>
-              
-
                 <TouchableOpacity
                   style={styles.submitbtn1}
                   onPress={() => {
@@ -357,15 +366,24 @@ const TicketHistory = ({ navigation }) => {
                     setComments("");
                   }}
                 >
-                  <Text style={{color:"white"}}>No</Text>
+                  <Text style={{ color: "white" }}>No</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.submitbtn}
-                  onPress={() => cancelTicketConfirm(ticketId, query)}
-                >
-                  <Text style={{color:"white"}}>yes</Text>
-                </TouchableOpacity>
+                {yesLoader == false ? (
+                  <TouchableOpacity
+                    style={styles.submitbtn}
+                    onPress={() => cancelTicketConfirm(ticketId, query)}
+                  >
+                    <Text style={{ color: "white" }}>yes</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View
+                    style={styles.submitbtn}
+                    // onPress={() => cancelTicketConfirm(ticketId, query)}
+                  >
+                    <ActivityIndicator size={20} color="white"/>
+                  </View>
+                )}
               </View>
             </View>
           </View>
@@ -394,10 +412,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     borderColor: "gray",
-    backgroundColor:"white",
+    backgroundColor: "white",
     padding: 10,
     width: "50%",
-    marginLeft: 150,
+    alignSelf: "flex-end",
   },
   card: {
     borderWidth: 1,
@@ -412,7 +430,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     margin: 8,
-    
+
     // bottomBorderColor: "black",
     // borderBottomWidth: 0.5,
     // margin: 5,
@@ -425,20 +443,19 @@ const styles = StyleSheet.create({
     // borderBottomWidth: 0.5,
     margin: 8,
   },
-  value1:{
-    width:width*0.4,
-    color:"#074799"
+  value1: {
+    width: width * 0.4,
+    color: "#074799",
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginLeft:10,
-    width:width*0.25,
+    marginLeft: 10,
+    width: width * 0.25,
     // alignSelf:"flex-start"
-
   },
-  label1:{
+  label1: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
@@ -463,10 +480,10 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 16,
     color: "#555",
-    alignItems:"flex-end",
-    marginLeft:15,
-    width:width*0.4,
-    justifyContent:"flex-end"
+    alignItems: "flex-end",
+    marginLeft: 15,
+    width: width * 0.4,
+    justifyContent: "flex-end",
   },
   emptyText: {
     // flex:1,
@@ -498,7 +515,7 @@ const styles = StyleSheet.create({
     // height:height*0.7
   },
   modalContent: {
-    width: 300,
+    width: width * 0.8,
     height: 350,
     backgroundColor: "white",
     borderRadius: 10,

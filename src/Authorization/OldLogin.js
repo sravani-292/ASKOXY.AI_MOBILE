@@ -468,17 +468,7 @@ const styles = StyleSheet.create({
     marginRight: 5, // Space between country code and input field
     color: "#333", // Dark color for the country code
   },
-  // mobileInputContainer: {
-  //   flexDirection: "row", // Aligning children in a row
-  //   alignItems: "center", // Centering vertically
-  //   width: "100%", // Full width
-  //   height: 50, // Adjust the height of the input
-  //   borderWidth: 1, // Border width
-  //   borderColor: "#CCC", // Light gray border
-  //   borderRadius: 8, // Rounded corners
-  //   backgroundColor: "#FFF", // White background for the input field
-  //   marginBottom: 10, // Space below the input field
-  // },
+  
   mobileInputContainer: {
     flexDirection: "row",
     alignItems: "center",

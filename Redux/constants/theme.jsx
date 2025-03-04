@@ -7,8 +7,10 @@ export const COLORS={
     title:'#ecb01e',
     title2:'#6b21a8',
     quantitybutton:'#f6ebfb',
+    // quantitybutton:'#4B0082',
     white:'#fff',
     backgroundcolour:"#a593df",
+    // backgroundcolour:'#4B0082',
     headerGradient: ['#7e22ce', '#9333ea'],
     services:'#4B0082'
 }

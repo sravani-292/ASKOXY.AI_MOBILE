@@ -11,12 +11,9 @@ import ProfilePage from "../Screens/View/PurchaseFlow/Profile";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
 import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import { COLORS } from "../../Redux/constants/theme";
-import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BASE_URL, { userStage } from "../../Config";
-import OfferScreen from "../Screens/View/WalletSubscriptions/OfferScreen";
 import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
 const { height, width } = Dimensions.get("window");
 const Tab = createBottomTabNavigator();
@@ -50,7 +47,7 @@ const Tabs = () => {
         }
       )
       .then((response) => {
-        console.log("cart response in bottom tabs",response);
+        // console.log("cart response in bottom tabs",response);
         if (response.data && Array.isArray(response.data.customerCartResponseList)) {
           setCartCount(response.data.customerCartResponseList.length);
         } else {
@@ -85,7 +82,7 @@ const Tabs = () => {
       }}
     >
       <Tab.Screen
-        name="UserDashboard"
+        name="User Dashboard"
         component={UserDashboard}
         options={{
           headerShown: true,

@@ -1,118 +1,117 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, Alert, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect ,useCallback} from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  FlatList,
+  Dimensions,
+  Linking,
+  ActivityIndicator,
+} from "react-native";
+import { useSelector } from "react-redux";
+import axios from "axios";
+import BASE_URL,{userStage} from "../../../../Config"
+import { useNavigation } from "@react-navigation/native";
+import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
+import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
+import { ScrollView } from "react-native-gesture-handler";
+import { COLORS } from "../../../../Redux/constants/theme";
+import { useFocusEffect } from '@react-navigation/native'
+import Ionicons from "react-native-vector-icons/Ionicons"
+
+const { width, height } = Dimensions.get("window");
+
 
 const SubscriptionHistory = () => {
-  const [user, setUser] = useState(null);
-  const [waitingLoader, setWaitingLoader] = useState(false);
-  const navigation = useNavigation();
+ const userData = useSelector((state) => state.counter);
+  // console.log({userData})
+  const customerId = userData.userId;
+
+  const token = userData.accessToken;
+
+const[details,setDetails]=useState([])
 
 
-const SubscriptionPage = () => {
-    const navigation = useNavigation();
-  
-    const handleSubscribe = () => {
-      Alert.alert('Sign Up', 'Sign Up Button Pressed', [
-        { text: 'OK', onPress: () => navigation.navigate('Subscription') },
-      ]);
-    };
-
-  return (
-    <View style={styles.container}>
-      <Text>Subscription Page</Text>
-      <Button title="Subscribe" onPress={handleSubscribe} />
-    </View>
-  );
-};
-  useEffect(() => {
-    getProfile();
-    return () => {
-      // clearInterval(instamojoInterval);
-    };
-  }, []);
-
-  const getProfile = async () => {
-    // Simulate an API call
-    setWaitingLoader(true);
-    setTimeout(() => {
-      setUser({ customer_id: '123' });
-      setWaitingLoader(false);
-    }, 2000);
-  };
-
-  const getSubscription = async (status, plan_id) => {
-    if (user) {
-      if (status === '1') {
-        setWaitingLoader(true);
-        // Simulate API call
-        setTimeout(() => {
-          setWaitingLoader(false);
-          // Navigate to payment page or handle payment
-          Alert.alert('Subscription', 'Redirecting to payment');
-        }, 2000);
-      } else {
-        Alert.alert('Subscription', 'The plan is inactive now');
-      }
-    } else {
-      login();
-    }
-  };
-
-  const login = () => {
-    // Simulate login logic
-    Alert.alert('Login', 'Open login modal');
-    // Assuming user is logged in, fetch the profile again
-    getProfile();
-  };
-
-  const exitAndGoHome = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Dashboard' }], // Adjust to the home route name
-    });
-  };
-
-  if (waitingLoader) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Please complete the payment</Text>
-        <Button title="Exit and Go Home" onPress={exitAndGoHome} />
-      </View>
-    );
+  const getSubscription = async () => {
+    // setLoading(true)
+   axios({
+    method: "post",
+    url: userStage=="test1" ?BASE_URL +
+    "erice-service/subscription-plans/getSubscriptionsDetailsForaCustomer":BASE_URL+`order-service/getallsubscriptionsforacustomer?customerId=${customerId}`,
+    headers: {
+    Authorization: `Bearer ${token}`,
+    },
+   
+   })
+   .then((response)=>{
+    console.log("response",response.data)
+    setDetails(response.data)
+   })
+   .catch((error)=>{
+    console.log(error.response)
+   })
+    
   }
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.data}>
-        <Text>Pay 10,000 & Get 15,000</Text>
-        <Text>Instant Credit in Wallet</Text>
-        <Text>Per Month Limit: ₹2000</Text>
-        <Button title="Subscribe" onPress={() => getSubscription('1', 'plan_1')} />
-      </View>
-      {/* Repeat for other subscription plans */}
-    </ScrollView>
-  );
-};
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  data: {
-    padding: 10,
-    textAlign: 'center',
-    borderRadius: 10,
-    marginTop: 20,
-    backgroundColor: '#e1eef4',
-    borderColor: '#26a9e0',
-    borderWidth: 1,
-  },
-});
+  useFocusEffect(
+    useCallback(()=>{
+      getSubscription();
+    },[])
+  )
+
+
+
+  const renderItem = ({ item }) => (
+    <View style={styles.card}>
+      {/* Plan Amount & Icon */}
+      <View style={styles.row}>
+        <Ionicons name="card-outline" size={24} color="#9333ea" />
+        <Text style={styles.planAmount}>Plan Amount: INR {item.amount}</Text>
+      </View>
+
+      {/* Wallet & Usage Info */}
+      <Text style={styles.walletText}>Wallet Balance: <Text style={styles.walletText}> INR {item.getAmount} </Text>|| Usage Limit: INR {item.limitAmount}</Text>
+
+      {/* Date & Transaction ID */}
+      <Text style={styles.dateText}>📅 {item.transcationDate}</Text>
+
+      {/* Footer: Status & Transaction ID */}
+      <View style={styles.footer}>
+        <View style={styles.statusContainer}>
+          <Text style={styles.statusText}>{item.paymentStatus}</Text>
+        </View>
+        <Text style={styles.transactionId}>Transaction ID: {item.id}</Text>
+      </View>
+    </View>
+  );
+  return (
+    
+    <View>
+      <FlatList
+        data={details}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContainer}
+      />
+    </View>
+  )
+}
 
 export default SubscriptionHistory;
+
+const styles = StyleSheet.create({
+  listContainer: { paddingBottom: 10 },
+  card: { backgroundColor: "#f9f9f9", padding: 15, borderRadius: 10, marginBottom: 10, elevation: 2 },
+  row: { flexDirection: "row", alignItems: "center", marginBottom: 5 },
+  planAmount: { fontSize: 18, fontWeight: "bold", marginLeft: 10 },
+  walletText: { fontSize: 16, color: "#444", marginBottom: 5 },
+  dateText: { fontSize: 12, color: "gray" },
+  footer: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  statusContainer: { backgroundColor: "#d1fae5", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 5 },
+  statusText: { color: "#059669", fontWeight: "bold" },
+  transactionId: { fontSize: 12, color: "#555",width:width*0.7 },
+
+})

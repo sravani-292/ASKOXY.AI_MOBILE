@@ -76,28 +76,7 @@ const OrderScreen = () => {
     }
   };
 
-  // const getOrderStatusText = (orderStatus) => {
-  //   // console.log("order status",orderStatus);
-  //   const statusNumber = Number(orderStatus);
-  //   switch (statusNumber) {
-  //     case 0:
-  //       return "Incomplete";
-  //     case 1:
-  //       return "Placed";
-  //     case 2:
-  //       return "Accepted";
-  //     case 3:
-  //       return "Assigned";
-  //     case 4:
-  //       return "Delivered";
-  //     case 5:
-  //       return "Rejected";
-  //     case 6:
-  //       return "Cancelled";
-  //     default:
-  //       return "Unknown";
-  //   }
-  // };
+  
 
   const getOrderStatusText = (orderStatus) => {
     if (orderStatus === "PickedUp") {

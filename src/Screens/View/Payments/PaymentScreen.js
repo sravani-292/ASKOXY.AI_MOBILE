@@ -27,7 +27,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
-  console.log("payment screen", route.params);
+  // console.log("payment screen", route.params);
     // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
@@ -36,7 +36,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [transactionId, setTransactionId] = useState();
   const [couponCode, setCouponCode] = useState("");
   const [paymentId, setPaymentId] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState("1");
   // const [totalAmount, setTotalAmount] = useState("");
   const [grandTotal, setGrandTotal] = useState("");
   const [coupenDetails, setCoupenDetails] = useState("");
@@ -80,13 +80,13 @@ const PaymentDetails = ({ navigation, route }) => {
           customerId: customerId,
         },
       });
-       console.log("cart",response.data);
+      //  console.log("cart",response.data);
        
         const cartResponse = response.data.cartResponseList;
-        console.log("cart response",cartResponse);
+        // console.log("cart response",cartResponse);
          setCartData(cartResponse);
        const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
-        console.log({totalDeliveryFee});
+        // console.log({totalDeliveryFee});
         setTotalGstSum(response.data.totalGstSum)
         setDeliveryBoyFee(totalDeliveryFee)
         setGrandTotal(response.data.totalSumWithGstSum)
@@ -112,7 +112,7 @@ const PaymentDetails = ({ navigation, route }) => {
         0
       )
     );
-    console.log("calculated total", calculatedTotal);
+    // console.log("calculated total", calculatedTotal);
     // setTotalAmount(calculatedTotal);
     setSubTotal(calculatedTotal);
     grandTotalfunc()
@@ -120,14 +120,14 @@ const PaymentDetails = ({ navigation, route }) => {
 
   const handlePaymentModeSelect = (mode) => {
     setSelectedPaymentMode(mode);
-    console.log({ mode });
+    // console.log({ mode });
   };
 
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
     // setTotalAmount(calculatedTotal);
-    console.log("coupen removed");
+    // console.log("coupen removed");
     Alert.alert("coupen removed successfully");
   };
 
@@ -167,10 +167,10 @@ const PaymentDetails = ({ navigation, route }) => {
 
 
   const handleOrderConfirmation = () => {
-    console.log("Cart Data payment :", cartData); 
+    // console.log("Cart Data payment :", cartData); 
     
     if (!cartData || cartData.length === 0) {
-        console.log("cartData is empty or undefined");
+        // console.log("cartData is empty or undefined");
         return;
     }
     const zeroQuantityItems = cartData
@@ -225,18 +225,18 @@ const PaymentDetails = ({ navigation, route }) => {
       );
 
       if (response.data) {
-        console.log("==========useWallet=============");
-        console.log("getWalletAmount:", response.data);
+        // console.log("==========useWallet=============");
+        // console.log("getWalletAmount:", response.data);
         setWalletAmount(response.data.usableWalletAmountForOrder);
-        console.log("wallet amount", walletAmount);
+        // console.log("wallet amount", walletAmount);
         setMessge(response.data.message);
         setTotalSum(response.data.totalSum);
         setStatus();
         setWalletTotal(
           grandTotal - response.data.usableWalletAmountForOrder
         );
-        console.log("wallet total", walletTotal);
-        console.log("==========useWallet=============");
+        // console.log("wallet total", walletTotal);
+        // console.log("==========useWallet=============");
       }
     } catch (error) {
       console.error(
@@ -250,7 +250,7 @@ const PaymentDetails = ({ navigation, route }) => {
   // Handle checkbox toggle
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-    console.log({ newValue });
+    // console.log({ newValue });
     setUseWallet(newValue);
     getWalletAmount();
 
@@ -289,7 +289,7 @@ const PaymentDetails = ({ navigation, route }) => {
                         BASE_URL +
                         `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
       });
-      console.log(response.data);
+      // console.log(response.data);
 
       if (response.status === 200) {
         // console.log(response.data);
@@ -304,11 +304,13 @@ const PaymentDetails = ({ navigation, route }) => {
     }
   };
   var postData;
+
+
   const placeOrder = () => {
     if(loading==true){
       return;
     }
-    console.log({ selectedPaymentMode });
+    // console.log({ selectedPaymentMode });
     let wallet;
     if (useWallet) {
       wallet = walletAmount;
@@ -335,11 +337,12 @@ const PaymentDetails = ({ navigation, route }) => {
       couponCodeUsed: coupon,
       couponCodeValue: coupenDetails,
       deliveryBoyFee:deliveryBoyFee,
-      subTotal:subTotal
+      subTotal:subTotal,
+      gstAmount:totalGstSum
     };
 
     // console.log({ postData });
-    console.log("postdata", postData);
+    // console.log("postdata", postData);
 
     setLoading(true);
     axios({
@@ -381,13 +384,13 @@ const PaymentDetails = ({ navigation, route }) => {
               },
             ]
           );
-          setLoading(false);
+          // setLoading(false);
         
         } else {
           console.log("paymentId==================", response.data);
           setTransactionId(response.data.paymentId);
           // onlinePaymentFunc()
-          console.log("==========");
+          // console.log("==========");
           const data = {
             mid: "1152305",
             // amount: grandTotalAmount,
@@ -416,7 +419,7 @@ const PaymentDetails = ({ navigation, route }) => {
             txnNote: "Rice Order In Live",
             vpa: "Getepay.merchant129014@icici",
           };
-          console.log({ data });
+          // console.log({ data });
           getepayPortal(data);
         }
 
@@ -434,14 +437,13 @@ const PaymentDetails = ({ navigation, route }) => {
     if (
       paymentStatus == "PENDING" ||
       paymentStatus == "" ||
-      paymentStatus == null
+      paymentStatus == null || paymentStatus == "INITIATED"
     ) {
       const data = setInterval(() => {
         Requery(paymentId);
       }, 4000);
       return () => clearInterval(data);
     } else {
-      // setLoading(false)
     }
   }, [paymentStatus, paymentId]);
 
@@ -483,11 +485,6 @@ const PaymentDetails = ({ navigation, route }) => {
         console.log("===getepayPortal data======");
         console.log(data);
         data = JSON.parse(data);
-        // console.log("Payment process",data);
-        // localStorage.setItem("paymentId",data.paymentId)
-        // console.log(data.paymentId);
-        // console.log(data.qrIntent)
-        // window.location.href = data.qrIntent;
         setPaymentId(data.paymentId);
         // paymentID = data.paymentId
         Alert.alert(
@@ -496,13 +493,6 @@ const PaymentDetails = ({ navigation, route }) => {
             2
           )}. Please proceed to checkout to complete your purchase.`,
           [
-            // {
-            //   text: "yes",
-            //   onPress: () => {
-            //     Linking.openURL(data.qrIntent);
-            //     Requery(data.paymentId);
-            //   },
-            // },
             {
               text: "No",
               onPress: () => {},
@@ -512,13 +502,15 @@ const PaymentDetails = ({ navigation, route }) => {
               onPress: () => {
                 Linking.openURL(data.qrIntent);
                 Requery(data.paymentId);
+                setPaymentStatus(null)
               },
             },
           ]
         );
       })
-      .catch((error) => console.log("getepayPortal", error.response));
-    setLoading(false);
+      .catch((error) =>{ console.log("getepayPortal", error.response)
+        setLoading(false)
+      });
   };
 
   const getOffers = async () => {
@@ -539,6 +531,7 @@ const PaymentDetails = ({ navigation, route }) => {
       }
     } catch (error) {
       console.log(error.response);
+      setLoading(false);
     }
   };
   //for applying coupen
@@ -548,7 +541,7 @@ const PaymentDetails = ({ navigation, route }) => {
       customerId: customerId,
       subTotal: subTotal,
     };
-    console.log("Total amount is  :", subTotal);
+    // console.log("Total amount is  :", subTotal);
 
     const response = axios
       .post( userStage == "test1"?BASE_URL + "erice-service/coupons/applycoupontocustomer":BASE_URL+"order-service/applycoupontocustomer", data, {
@@ -557,13 +550,13 @@ const PaymentDetails = ({ navigation, route }) => {
         },
       })
       .then((response) => {
-        console.log("coupen applied", response.data);
+        // console.log("coupen applied", response.data);
         const { discount, grandTotal } = response.data;
         // setGrandTotal(grandTotal);
         setCoupenDetails(discount);
         Alert.alert(response.data.message);
         setCoupenApplied(response.data.couponApplied);
-        console.log("coupenapplied state", response.data.couponApplied);
+        // console.log("coupenapplied state", response.data.couponApplied);
       })
       .catch((error) => {
         console.log("error", error.response);
@@ -571,11 +564,13 @@ const PaymentDetails = ({ navigation, route }) => {
   };
 
   function Requery(paymentId) {
-    setLoading(false);
+    console.log("requery");
+    
+    // setLoading(true);
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
-      paymentStatus === null
+      paymentStatus === null || paymentStatus === "INITIATED"
     ) {
       // console.log("Before.....",paymentId)
 
@@ -641,7 +636,7 @@ const PaymentDetails = ({ navigation, route }) => {
             console.log(data.paymentStatus);
             if (
               data.paymentStatus == "SUCCESS" ||
-              data.paymentStatus == "FAILURE"
+              data.paymentStatus == "FAILED"
             ) {
               // clearInterval(intervalId); 294182409
               axios({
@@ -663,7 +658,6 @@ const PaymentDetails = ({ navigation, route }) => {
                     "Order Placed with Payment API:",
                     secondResponse.data
                   );
-                  // setLoading(false);
                   Alert.alert(
                     "Order Confirmed!",
                     "Your order has been placed successfully . Thank you for shopping with us!",
@@ -680,12 +674,16 @@ const PaymentDetails = ({ navigation, route }) => {
                 })
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
+                  setLoading(false)
                 });
             } else {
+              setLoading(false)
             }
           }
         })
-        .catch((error) => console.log("Payment Status", error));
+        .catch((error) => {console.log("Payment Status", error)
+          setLoading(false)
+        });
     }
    
   }
@@ -750,13 +748,13 @@ const PaymentDetails = ({ navigation, route }) => {
     setGrandTotalAmount(total);
 
     if(total === 0){
-      console.log("Get all Values",{total});
+      // console.log("Get all Values",{total});
       
       setSelectedPaymentMode('COD');
     }
 
-    console.log("Used Wallet:", usedWallet);
-    console.log("Final Grand Total:", total);
+    // console.log("Used Wallet:", usedWallet);
+    // console.log("Final Grand Total:", total);
 }
 
   useEffect(() => {

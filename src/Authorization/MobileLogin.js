@@ -19,10 +19,10 @@ import { AccessToken } from "../../Redux/action";
 import BASE_URL,{userStage} from "../../Config";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { COLORS } from "../../Redux/constants/theme";
-
+import Icon from "react-native-vector-icons/FontAwesome";
 const { width, height } = Dimensions.get("window");
 
-const NewLogin = () => {
+const MobileLogin = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
@@ -30,7 +30,7 @@ const NewLogin = () => {
     mobileNumber: "",
     mobileNumber_Error: false,
     validMobileNumber_Error: false,
-    otp: ["", "", "", ""],
+    otp: ["", "", "", "","","",],
     otp_Error: "",
     validOtp_Error: "",
     loading: false,
@@ -47,7 +47,7 @@ const NewLogin = () => {
 }, [loginData.showOtp]);
 
   
-  const otpRefs = useRef([...Array(4)].map(() => useRef(null))); 
+  const otpRefs = useRef([...Array(6)].map(() => useRef(null))); 
 
   const handleOtpChange = (text, index) => {
     let newOtp = [...loginData.otp];
@@ -55,7 +55,7 @@ const NewLogin = () => {
     setLoginData((prevState) => ({ ...prevState, otp: newOtp }));
 
     // ✅ Move to the next input if text is entered
-    if (text && index < 3 && otpRefs.current[index + 1]) {
+    if (text && index < 5 && otpRefs.current[index + 1]) {
       otpRefs.current[index + 1].current.focus();
     }
   };
@@ -96,9 +96,9 @@ const NewLogin = () => {
     }
 
     let data = {
-      mobileNumber: "+91" + loginData.mobileNumber,
+      whatsappNumber: "+91" + loginData.mobileNumber,
       userType: "Login",
-      registrationType: "whatsapp",
+      registrationType: "sms",
     };
      console.log({data});
      
@@ -106,7 +106,7 @@ const NewLogin = () => {
 
     try {
       const response = await axios.post(
-        userStage =="test" ? BASE_URL+`erice-service/user/login-or-register`:
+        userStage =="test" ? BASE_URL+`user-service/registerwithMobileAndWhatsappNumber`:
         BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
         data
       );
@@ -117,8 +117,8 @@ const NewLogin = () => {
         setLoginData((prevState) => ({
           ...prevState,
           otpSession: response.data.mobileOtpSession,
-          // otpGeneratedTime: response.data.otpGeneratedTime,
-          // saltSession: response.data.salt,
+          otpGeneratedTime: response.data.otpGeneratedTime,
+          saltSession: response.data.salt,
           loading: false,
           showOtp: true, 
         }));
@@ -153,12 +153,12 @@ const NewLogin = () => {
     setLoginData((prevState) => ({ ...prevState, loading: true }));
 
     let data = {
-      mobileNumber: "+91" + loginData.mobileNumber,
-      mobileOtpSession: loginData.otpSession,
-      mobileOtpValue: loginData.otp.join(""),
+      whatsappNumber: "+91" + loginData.mobileNumber,
+      whatsappOtpSession: loginData.otpSession,
+      whatsappOtpValue: loginData.otp.join(""),
       userType: "Login",
-      // salt: loginData.saltSession,
-      // expiryTime: loginData.otpGeneratedTime,
+      salt: loginData.saltSession,
+      expiryTime: loginData.otpGeneratedTime,
     };
 
     try {
@@ -175,21 +175,7 @@ const NewLogin = () => {
         setLoginData((prevState) => ({ ...prevState, otp: "" }));
         setLoginData((prevState) =>({...prevState,otpSession: ""}))
         setLoginData((prevState) =>({...prevState,showOtp:false}))
-        // if (
-        //   response.data.userStatus === "ACTIVE" ||
-        //   response.data.userStatus === null
-        // ) {
-        //   navigation.navigate("Home", { screen: "UserDashboard" });
-        // } else {
-        //   Alert.alert(
-        //     "Deactivated",
-        //     "Your account is deactivated. Do you want to reactivate your account?",
-        //     [
-        //       { text: "Yes", onPress: () => navigation.navigate("Active") },
-        //       { text: "No", onPress: () => BackHandler.exitApp() },
-        //     ]
-        //   );
-        // }
+       
         navigation.navigate("Home",{screen:"UserDashboard"});
       } else {
         Alert.alert("Error", "Invalid credentials.");
@@ -217,7 +203,7 @@ const NewLogin = () => {
       </View>
 
       <View style={styles.loginContainer}>
-        <Text style={styles.title}>Login</Text>
+        <Text style={styles.title}>Mobile Login</Text>
 
         <View style={styles.inputWrapper}>
           <View style={styles.fixedPrefix}>
@@ -231,7 +217,7 @@ const NewLogin = () => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder="Enter WhatsApp Number"
+            placeholder="Enter Mobile Number"
             keyboardType="numeric"
             maxLength={10}
             onChangeText={(text) => {
@@ -335,18 +321,17 @@ const NewLogin = () => {
             textAlign: "center",
             width: width * 0.5,
             alignSelf: "center",
-            marginTop: 10,
+            marginTop: 20,
             
           }}
         >
-          <Text style={{ color: COLORS.primary, fontSize: 16 ,marginLeft:-25}}>
-            Not yet Registered ?{" "}
-          </Text>
+          <View>
           <TouchableOpacity
             onPress={() => navigation.navigate("RegisterScreen")}
           >
             <Text
               style={{
+                marginLeft:-50,
                 color: "#e87f02",
                 fontWeight: "bold",
                 fontSize: 16,
@@ -355,14 +340,21 @@ const NewLogin = () => {
               {" "}
               Register Now{" "}
             </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+            </View>
+            <View style={{marginLeft:80,flexDirection:"row"}}>
+           <Icon name="whatsapp" size={22} color="#25D366" style={{ marginRight: 8 }} />
+           <TouchableOpacity onPress={()=>navigation.navigate("Login")}>
+           <Text> Login</Text>
+           </TouchableOpacity>
+            </View>
         </View>
       </View>
     </View>
   );
 };
 
-export default NewLogin;
+export default MobileLogin;
 
 const styles = StyleSheet.create({
   container: {

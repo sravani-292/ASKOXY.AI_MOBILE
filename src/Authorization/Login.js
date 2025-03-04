@@ -15,6 +15,11 @@ import {
 } from "react-native";
 import axios from "axios";
 import { TextInput } from "react-native-paper";
+import { StatusBar } from 'expo-status-bar';
+// import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "react-native-vector-icons/Ionicons"
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
+import PhoneInput from "react-native-phone-number-input";
 import {
   useNavigation,
   useFocusEffect,
@@ -23,9 +28,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { AccessToken } from "../../Redux/action/index";
-import BASE_URL,{userStage} from "../../Config";
+import BASE_URL, { userStage } from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
+import Feather from "react-native-vector-icons/Feather";
 // import dynamicLinks from '@react-native-firebase/dynamic-links';
 // import { initializeApp } from '@react-native-firebase/app';
 
@@ -39,14 +45,50 @@ const Login = () => {
     validOtpError: false,
     loading: false,
   });
-  console.log({userStage})
+  console.log({ BASE_URL });
   const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [mobileOtpSession, setMobileOtpSession] = useState();
   const [saltSession, setSaltSession] = useState("");
-  const [otpGeneratedTime, setOtpGeneratedTime] = useState('')
-  const[message,setMessage]=useState(false)
+  const [otpGeneratedTime, setOtpGeneratedTime] = useState("");
+  const [message, setMessage] = useState(false);
+
+  const [authMethod, setAuthMethod] = useState('whatsapp'); // 'whatsapp' or 'sms'
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const[whatsappNumber,setWhatsappNumber]=useState('')
+  const[whatsappNumber_Error,setWhatsappNumber_Error]=useState(false)
+  const[phoneNumber_Error,setPhoneNumber_Error]=useState(false)
+  const[errorNumberInput,seterrorNumberInput]=useState(false)
+  const[validError,setValidError]=useState(false)
+  const [countryCode, setcountryCode] = useState('91');
+  const [otpSent, setOtpSent] = useState(false);
+const[loading,setLoading]=useState(false)
+const [isValidPhone, setIsValidPhone] = useState(false); // Boolean state for validity
+const[errorMessage,setErrorMessage]=useState(false)
+const[otpError,setOtpError]=useState(false)
+
+
+ 
+
+  // Handle OTP verification
+  const handleVerifyOTP = () => {
+    if (!otp) {
+      alert('Please enter the OTP');
+      return;
+    }
+
+    setLoading(true);
+    
+    // Simulate API call to verify OTP
+    setTimeout(() => {
+      setLoading(false);
+      // Navigate to main app or home screen after successful verification
+      alert('Login successful!');
+      // navigation.navigate('Home');
+    }, 1500);
+  };
+
 
   useFocusEffect(
     useCallback(() => {
@@ -69,9 +111,6 @@ const Login = () => {
             // if (user.accessToken) {
             //   dispatch(AccessToken(user));
             //   navigation.navigate("Home");
-
-             
-            
           }
         } catch (error) {
           console.error("Error fetching login data", error.response);
@@ -137,127 +176,176 @@ const Login = () => {
   };
 
   const handleSendOtp = async () => {
-    if (formData.mobileNumber == "" || formData.mobileNumber == null) {
-      setFormData({ ...formData, mobileNumber_error: true });
-      return;
+    // console.log("sdmbv",authMethod,countryCode,whatsappNumber)
+    if(authMethod === 'whatsapp'){
+      if (whatsappNumber == "" || whatsappNumber == null) {
+        // console.log("djtcg")
+        setWhatsappNumber_Error(true)      
+        return false;
+      }
     }
-    if (formData.mobileNumber.length != 10) {
-      setFormData({ ...formData, validMobileNumber_error: true });
-      return;
-    }
-    console.log("mobileNumber", formData.mobileNumber);
-    let data = {
-      whatsappNumber: "+91" + formData.mobileNumber,
-      userType: "Login",
-      registrationType: "whatsapp",
-    };
-    console.log({ data });
-    setFormData({ ...formData, loading: true });
-    try {
-      const response = await axios.post(
-        userStage != "test"
-          ? BASE_URL + `auth-service/auth/registerwithMobile`
-          : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
-        data
-      );
-      console.log("Send Otp", response.data);
+    else{
+      if(phoneNumber == "" || phoneNumber == null){
+        setPhoneNumber_Error(true)
+        return false;
+      }
+      if(phoneNumber.length !=10){
+        setValidError(true)
+        return false;
+      }
 
+    }
+    let data
+      data = authMethod === 'whatsapp' 
+      ? {  countryCode:"+"+countryCode,whatsappNumber,userType: "Login", registrationType: "whatsapp" }
+      : { countryCode: "+91", mobileNumber: phoneNumber, userType: "Login", registrationType: "sms" };
+    console.log({data})
+    setFormData({...formData,loading:true})
+    axios({
+      method:"post",
+      url: userStage != "test"
+      ? BASE_URL + `auth-service/auth/registerwithMobile`
+      : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+      data:data
+    })
+    .then((response)=>{
+      console.log("response",response.data)
+      setFormData({
+        ...formData,
+        loading: false,
+      });
       if (response.data.mobileOtpSession) {
-        setMessage(true)
+        setMessage(true);
         setMobileOtpSession(response.data.mobileOtpSession);
         setSaltSession(response.data.salt);
         setOtpGeneratedTime(response.data.otpGeneratedTime);
-        setFormData({
-          ...formData,
-          loading: false,
-        });
-        setShowOtp(true);
-      } else {
-        Alert.alert("Error", "Failed to send OTP. Try again.");
+       
+        setOtpSent(true)
       }
-    } catch (error) {
-      console.log(error.response);
-      setShowOtp(false);
-      Alert.alert("Sorry", "You  are not registered,Please signup");
+      else{
+        Alert,alert("Failed","Failed to send OTP.Try again")
+      }
+      
+  })
+  .catch((error)=>{
+    console.log("error",error.response)
+    setOtpSent(false);
+    setFormData({
+      ...formData,
+      loading: false,
+    });
+    Alert.alert("Sorry", "You  are not registered,Please signup",[{
+      text:"ok",onPress:()=>navigation.navigate("RegisterScreen")
+    }]);
+    // if (error.response.status == 400) {
+    //   navigation.navigate(userStage == "test1" ? "Register1" : "Register");
+    // }
+  })
 
-      if (error.response.status == 400) {
-        navigation.navigate("RegisterScreen");
-      }
-    } finally {
-      setFormData({ ...formData, loading: false });
-    }
+
   };
 
   const handleVerifyOtp = () => {
     if (formData.otp == "" || formData.otp == null) {
-      setFormData({ ...formData, otp_error: true });
-      return false;
+      setOtpError(true) 
+    return false;
     }
+    if(authMethod === 'whatsapp'){
     if (formData.otp.length != 4) {
       setFormData({ ...formData, validOtpError: true });
       return false;
     }
+  }else{
+    if (formData.otp.length != 6) {
+      setFormData({ ...formData, validOtpError: true });
+      return false;
+    }
+  }
     //  setLoading(true);
     setFormData({ ...formData, loading: true });
-
-    let data = {
-      whatsappNumber: "+91" + formData.mobileNumber,
-      whatsappOtpSession: mobileOtpSession,
-      whatsappOtpValue: formData.otp,
+let data
+if(authMethod=="whatsapp"){
+  data = {
+    countryCode: "+"+countryCode,
+    whatsappNumber: whatsappNumber,
+    whatsappOtpSession: mobileOtpSession,
+    whatsappOtpValue: formData.otp,
+    userType: "Login",
+    salt: saltSession,
+    expiryTime: otpGeneratedTime,
+    registrationType: "whatsapp",
+    // primaryType: "DELIVERYBOY",
+  };
+}else{
+     data = {
+       countryCode: "+91",
+      mobileNumber:  formData.mobileNumber,
+      mobileOtpSession: mobileOtpSession,
+      mobileOtpValue: formData.otp,
       userType: "Login",
       salt: saltSession,
       expiryTime: otpGeneratedTime,
-      registrationType: "whatsapp"
-
-      // primaryType: "CUSTOMER",
+      registrationType: "mobile",
+      // primaryType: "DELIVERYBOY",
     };
+  }
     console.log({ data });
     axios({
       method: "post",
-      url: userStage != "test"
+      url:
+        userStage != "test"
           ? BASE_URL + `auth-service/auth/registerwithMobile`
           : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
       data: data,
     })
       .then(async (response) => {
         console.log("response", response.data);
-        setFormData({ ...formData, loading: false });
-        setShowOtp(false);
-        if (response.data.accessToken != null) {
-          if(response.data.primaryType=="CUSTOMER"){
-          dispatch(AccessToken(response.data));
-          await AsyncStorage.setItem("userData", JSON.stringify(response.data));
-          await AsyncStorage.setItem("mobileNumber", formData.mobileNumber);
-          setFormData({ ...formData, otp: "" });
-          
-          if (response.data.userStatus == "ACTIVE"||response.data.userStatus==null) {
-            navigation.navigate("Service Screen");
+        setFormData({ ...formData, loading: false, otp: "" });
+        if (response.data.primaryType == "CUSTOMER") {
+          if (response.data.accessToken != null) {
+            setOtpSent(false);
+            dispatch(AccessToken(response.data));
+            // await AsyncStorage.setItem(
+            //   "userData",
+            //   JSON.stringify(response.data)
+            // );
+            // await AsyncStorage.setItem("mobileNumber", formData.mobileNumber);
+            // setFormData({ ...formData, otp: "" });
+
+            if (
+              response.data.userStatus == "ACTIVE" ||
+              response.data.userStatus == null
+            ) {
+              navigation.navigate("Service Screen");
+            } else {
+              Alert.alert(
+                "Deactivated",
+                "Your account is deactivated, Are you want to reactivate your account to continue?",
+                [
+                  { text: "Yes", onPress: () => navigation.navigate("Active") },
+                  { text: "No", onPress: () => BackHandler.exitApp() },
+                ]
+              );
+            }
           } else {
-            Alert.alert(
-              "Deactivated",
-              "Your account is deactivated, Are you want to reactivate your account to continue?",
-              [
-                { text: "Yes", onPress: () => navigation.navigate("Active") },
-                { text: "No", onPress: () => BackHandler.exitApp() },
-              ]
-            );
+            Alert.alert("Error", "Invalid credentials.");
           }
-        } 
-        else{
+        } else {
           Alert.alert(
             "Failed",
-            `You have logged in as ${response.data.primaryType} , Please login as CUSTOMER`
+            `You have logged in as ${response.data.primaryType} , Please login as Customer`
           );
-        }
-      }else {
-          Alert.alert("Error", "Invalid credentials.");
+          
         }
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
         console.log(error.response);
-        if (error.response.status == 500) {
-          Alert.alert("Failed", "Invalid OTP");
+        if (error.response.status == 409) {
+          Alert.alert("Failed", error.response.data.message);
+        }
+        if (error.response.status == 400) {
+          Alert.alert("Failed", "Invalid Credentials");
         }
       });
   };
@@ -272,75 +360,33 @@ const Login = () => {
     messagingSenderId: "834341780860",
   };
 
-  // initializeApp(firebaseConfig);
+  const handlePhoneNumberChange = (value) => {
+    // console.log({value})
+    setValidError(false)
+    seterrorNumberInput(false)
+    setWhatsappNumber_Error(false)
+    try {
+      setWhatsappNumber(value);
+  
+       console.log({value})
+      const callingCode = phoneInput.getCallingCode(value);
+      console.log(callingCode);
+      setcountryCode(callingCode);
+      const isValid = /^[0-9]*$/.test(value);
+      if (isValid) {
+        setErrorMessage(""); // Clear the error if input is valid
+        setWhatsappNumber(value);
+      } else {
+        setErrorMessage(true);
+        return 
+      }
+    
+    } catch (error) {
+      // Handle any parsing errors
+    }
+  };
 
-  //   useEffect(() => {
-  // 		const handleDynamicLink = async () => {
-
-  // 				const initialDynamicLink = await dynamicLinks().getInitialLink();
-  // 				if (initialDynamicLink) {
-  // 						// Handle the initial dynamic link
-  // 						console.log('Initial dynamic link:');
-  // 						console.log('Initial dynamic link1:', initialDynamicLink.url);
-  // 						// alert("initialDynamicLink....."+initialDynamicLink.url)
-  // 						const url = initialDynamicLink.url;
-  // 						const regex = /ref=([^&]+)/;
-  // 						const match = url.match(regex);
-
-  // 						if (match && match[1]) {
-  // 								const referralCode = match[1];
-  // 								// setRefCode(referralCode)
-  // 								var refCode=referralCode;
-  // 								console.log({refCode});
-  //                 navigation.navigate('RegisterScreen',{refCode:refCode})
-
-  // 								// dispatch(Refcodes(referralCode));// Output: LR1040972
-  // 						} else {
-  // 								console.log("Referral code not found in the URL.");
-  // 						}
-
-  // 				}
-
-  // 				const unsubscribe = dynamicLinks().onLink((link) => {
-  // 						// Handle the incoming dynamic link
-  // 						console.log('Incoming dynamic link2:', link.url);
-  // 						// alert("unsubscribe......"+link.url)
-  // 						const url = link.url;
-  // 						const regex = /ref=([^&]+)/;
-  // 						const match = url.match(regex);
-
-  // 						if (match && match[1]) {
-  // 								const referralCode = match[1];
-  // 								// setRefCode(referralCode)
-  // 								var refCode=referralCode;
-  // 								console.log({refCode});
-  //                 navigation.navigate('RegisterScreen',{refCode:refCode})
-  // 						} else {
-  // 								console.log("Referral code not found in the URL.");
-  // 						}
-
-  // 				});
-
-  // 				// Handle app URL scheme deep links
-  // 				Linking.addEventListener('url', (event) => {
-  // 						handleOpenURL(event.url);
-  // 						// alert("event.........."+event.url)
-  // 				});
-
-  // 				return () => {
-  // 						unsubscribe();
-  // 						Linking.removeEventListener('url', handleOpenURL);
-  // 				};
-  // 		};
-
-  // 		handleDynamicLink();
-  // }, []);
-
-  // const handleOpenURL = (url) => {
-  // 		// Handle app URL scheme deep links
-  // 		console.log('App URL scheme deep link:');
-  // 		console.log('App URL scheme deep link:', url);
-  // };
+  
 
   return (
     <KeyboardAvoidingView
@@ -383,231 +429,164 @@ const Login = () => {
           {/* Login Section */}
           <View style={styles.logingreenView}>
             {/* <Image
-              source={require("../../assets/Images/rice.png")}
+              source={require("../assets/Images/rice.png")}
               style={styles.riceImage}
             /> */}
             <Text style={styles.loginTxt}>Login</Text>
-            <View style={{ marginTop: 10 }}>
-              <TextInput
-                style={styles.input}
-                mode="outlined"
-                placeholder="Enter Whatsapp Number"
-                keyboardType="numeric"
-                dense={true}
-                // autoFocus
-                error={formData.mobileNumber_error}
-                activeOutlineColor={
-                  formData.mobileNumber_error ? "red" : "#f9b91a"
-                }
-                value={formData.mobileNumber}
-                maxLength={10}
-                editable={!showOtp}
-                onChangeText={(text) => {
-                  setFormData({
-                    ...formData,
-                    mobileNumber: text,
-                    mobileNumber_error: false,
-                    validMobileNumber_error: false,
-                  });
-                }}
-              />
-              {formData.mobileNumber_error ? (
-                <Text
-                  style={{
-                    color: "red",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                  }}
-                >
-                  Whatsapp Number is mandatory
-                </Text>
-              ) : null}
 
-              {formData.validMobileNumber_error ? (
-                <Text
-                  style={{
-                    color: "red",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                  }}
-                >
-                  Invalid Whatsapp Number
-                </Text>
-              ) : null}
-              {message ? (
-                <Text
-                  style={{
-                    color: "white",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                    margin:10
-                  }}
-                >
-                  OTP sent to the Whatsapp Number
-                </Text>
-              ) : null}
-
-              {/* Fixed Indian flag and +91 prefix */}
-              <View style={styles.fixedPrefix}>
-                <Image
-                  source={{
-                    uri: "https://upload.wikimedia.org/wikipedia/en/thumb/4/41/Flag_of_India.svg/1200px-Flag_of_India.svg.png",
-                  }}
-                  style={styles.flag}
-                />
-                <View style={styles.divider} />
-                <Text style={styles.countryCode}>+91</Text>
-              </View>
-
-              {showOtp == false ? (
-                <View>
-                  {formData.loading == false ? (
-                    <View>
-                      <TouchableOpacity
-                        style={styles.otpbtn}
-                        onPress={() => handleSendOtp()}
-                      >
-                        <Text style={styles.Otptxt}>Send OTP</Text>
-                      </TouchableOpacity>
-                      <View
-                        style={{ flexDirection: "row", alignSelf: "center" }}
-                      >
-                        <View>
-                          {/* <TouchableOpacity style={styles.rowbtn}>
-                            <Icon
-                              name="logo-whatsapp"
-                              color="green"
-                              size={24}
-                            />
-                          </TouchableOpacity> */}
-                        </View>
-                        <View>
-                          <TouchableOpacity
-                            style={styles.rowbtn}
-                            onPress={() =>
-                              navigation.navigate("LoginWithPassword")
-                            }
-                          >
-                            {/* <Text>Email</Text> */}
-                            <Icon
-                              name="mail-outline"
-                              color="#f9b91a"
-                              size={24}
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-
-                      {/* <View style={{}} /> */}
-                      {/* Not yet Register */}
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          textAlign: "center",
-                          width: width * 0.5,
-                          alignSelf: "center",
-                          marginTop: 10,
-                        }}
-                      >
-                        <Text style={{ color: "white", fontSize: 16 }}>
-                          Not yet Registered ?{" "}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => navigation.navigate("RegisterScreen")}
-                        >
-                          <Text
-                            style={{
-                              color: "#f9b91a",
-                              fontWeight: "bold",
-                              fontSize: 16,
-                            }}
-                          >
-                            {" "}
-                            Register{" "}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.otpbtn}>
-                      <ActivityIndicator size="small" color="#fff" />
-                    </View>
-                  )}
+            <View style={styles.authMethodContainer}>
+              <TouchableOpacity 
+                style={[styles.authMethodButton, authMethod === 'whatsapp' && styles.activeAuthMethod]}
+                onPress={() => {setAuthMethod('whatsapp'),setOtpSent(false),setWhatsappNumber(''),setWhatsappNumber_Error(false),setPhoneNumber(''),setPhoneNumber_Error(false),setFormData({...formData,loading:false,otp:""})} }
+                // disabled={otpSent}
+              >
+                <Ionicons name="logo-whatsapp" size={20} color={authMethod === 'whatsapp' ? '#3d2a71' : '#fff'} />
+                <Text style={[styles.authMethodText, authMethod === 'whatsapp' && styles.activeAuthMethodText]}>WhatsApp</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.authMethodButton, authMethod === 'sms' && styles.activeAuthMethod]}
+                onPress={() => {setAuthMethod('sms'),setOtpSent(false),setWhatsappNumber(''),setWhatsappNumber_Error(false),setPhoneNumber_Error(false),setPhoneNumber(''),setFormData({...formData,loading:false,otp:""})}}
+                // disabled={otpSent}
+              >
+                <Ionicons name="chatbubble-outline" size={20} color={authMethod === 'sms' ? '#3d2a71' : '#fff'} />
+                <Text style={[styles.authMethodText, authMethod === 'sms' && styles.activeAuthMethodText]}>SMS</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Phone Number Input */}
+            <View style={styles.inputContainer}>
+              {/* <Text style={styles.inputLabel}>Phone Number</Text> */}
+              {authMethod === 'whatsapp' ? (
+                <View style={styles.phoneInputContainer}>
+                
+                   <PhoneInput
+            placeholder="Whatsapp Number"
+              containerStyle={styles.input1}
+              textInputStyle={styles.phonestyle}
+              codeTextStyle={styles.phonestyle1}
+              ref={(ref) => (phoneInput = ref)}
+              defaultValue={whatsappNumber}
+              defaultCode="IN"
+              layout="first"              
+              onChangeText={handlePhoneNumberChange}
+            />
+                
+                  
+                  
                 </View>
               ) : (
-                <View>
-                  <TextInput
-                    style={styles.input1}
-                    placeholder="Enter OTP"
-                    mode="outlined"
-                    value={formData.otp}
-                    dense={true}
-                    maxLength={4}
-                    keyboardType="number-pad"
-                    activeOutlineColor="#e87f02"
-                    autoFocus
-                    onChangeText={(text) => {setMessage(false),
-                      setFormData({
-                        ...formData,
-                        otp: text,
-                        otp_error: false,
-                      });
-                    }}
-                  />
+                <TextInput
+                  style={[styles.input, otpSent && styles.disabledInput]}
+                  placeholder="Enter your phone number"
+                  keyboardType="numeric"
+                  value={phoneNumber}
+                  onChangeText={(text)=>{setPhoneNumber(text.replace(/[ \-.,]/g, "")),setPhoneNumber_Error(false),setValidError(false)}}
+                  editable={!otpSent}
+                  maxLength={10}
+                />
+              )}
+            </View>
 
-                  {formData.otp_error ? (
-                    <Text
-                      style={{
-                        color: "red",
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        alignSelf: "center",
-                      }}
-                    >
-                      OTP is mandatory
-                    </Text>
-                  ) : null}
+            {whatsappNumber_Error && (
+              <Text style={{ color: "red", alignSelf:"center" }}>
+                Please enter the whatsapp number
+              </Text>
+            )}
 
-                  {formData.validOtpError ? (
-                    <Text
-                      style={{
-                        color: "red",
-                        fontSize: 16,
-                        fontWeight: "bold",
-                        alignSelf: "center",
-                      }}
-                    >
-                      Invalid OTP
-                    </Text>
-                  ) : null}
-                  <View style={{ alignSelf: "flex-end", marginRight: 50 }}>
-                    <TouchableOpacity onPress={() => handleSendOtp()}>
-                      <Text style={{ color: "#f9b91a", fontWeight: "bold" }}>
-                        Resend Otp
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+{phoneNumber_Error && (
+              <Text style={{ color: "red", alignSelf:"center" }}>
+                Please enter the Mobile number
+              </Text>
+            )}
+            {validError && (
+              <Text style={{ color: "red", alignSelf:"center" }}>
+                Invalid Mobile Number
+              </Text>
+            )}
 
-                  {formData.loading == false ? (
-                    <>
-                      <TouchableOpacity
-                        style={styles.otpbtn}
-                        onPress={() => handleVerifyOtp()}
-                      >
-                        <Text style={styles.Otptxt}>Verify OTP</Text>
-                      </TouchableOpacity>
-                    </>
+            {errorMessage && (
+              <Text style={{ color: "red", alignSelf:"center" }}>Please enter numbers only. Special characters are not allowed.</Text>
+            )}
+
+
+            
+            {/* OTP Input (shown only after OTP is sent) */}
+            {otpSent && (
+              <View style={styles.inputContainer}>
+                {/* <Text style={styles.inputLabel}>Enter OTP</Text> */}
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter OTP code"
+                  keyboardType="number-pad"
+                  value={formData.otp}
+                  onChangeText={(numeric)=>{setFormData({ ...formData, otp: numeric,validOtpError:false }),setOtpError(false)}}
+                  maxLength={authMethod === 'whatsapp' ? 4 : 6}
+                />
+              </View>
+            )}
+
+ {otpError&&(
+              <Text style={{ color: "red", alignSelf:"center" }}>Please enter OTP</Text>
+            )}
+            {formData.validOtpError&&(
+              <Text style={{ color: "red", alignSelf:"center" }}>Invalid OTP</Text>
+            )}
+
+<TouchableOpacity 
+                    style={styles.resendButton} 
+                    onPress={()=>handleSendOtp()}
+                    disabled={loading}
+                  >
+                    <Text style={styles.resendText}>Resend OTP</Text>
+                  </TouchableOpacity>
+            
+            {/* Action Buttons */}
+            <View style={styles.buttonContainer}>
+              {!otpSent ? (
+                <>
+                <TouchableOpacity 
+                  style={styles.submitButton} 
+                  onPress={()=>handleSendOtp()}
+                  disabled={loading}
+                >
+                  {formData.loading ? (
+                    <ActivityIndicator color="#fff" />
                   ) : (
-                    <View style={styles.otpbtn}>
-                      <ActivityIndicator size="small" color="#fff" />
-                    </View>
+                    <Text style={styles.submitText}>Send OTP</Text>
                   )}
+                </TouchableOpacity>
+                </>
+              ) : (
+                <View style={styles.otpButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.verifyButton} 
+                    onPress={()=>handleVerifyOtp()}
+                    disabled={loading}
+                  >
+                    {formData.loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.submitText}>Verify OTP</Text>
+                    )}
+                  </TouchableOpacity>
+                  
+                
                 </View>
               )}
             </View>
+            
+            <TouchableOpacity style={styles.emailbtn} onPress={()=>navigation.navigate('LoginWithPassword')}>
+              <MaterialCommunityIcons name="email" size={30}/>
+            </TouchableOpacity>
+            {/* Register Link */}
+            <View style={styles.linkContainer}>
+              <Text style={styles.linkText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => {navigation.navigate('RegisterScreen'),setOtpSent(false),setWhatsappNumber(''),setPhoneNumber_Error(''),setFormData({...formData,loading:false,otp:""})}}>
+                <Text style={styles.linkButtonText}>Register</Text>
+              </TouchableOpacity>
+            </View>
+
+
           </View>
         </View>
       </ScrollView>
@@ -647,8 +626,8 @@ const styles = StyleSheet.create({
     flex: 2,
     backgroundColor: "#3d2a71",
     borderTopLeftRadius: 30,
-      borderTopRightRadius: 30,
-
+    borderTopRightRadius: 30,
+    marginTop:height/-15
     // height: height/2,
   },
   loginTxt: {
@@ -658,70 +637,163 @@ const styles = StyleSheet.create({
     margin: 20,
     alignSelf: "center",
   },
-  input1: {
-    borderColor: "orange",
-    width: width * 0.8,
-    alignSelf: "center",
-    height: 45,
-    paddingLeft: 10,
-    margin: 10,
+  authMethodContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    justifyContent: 'space-evenly',
+  },
+  authMethodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#fff',
+    width:width*0.4,
+  },
+  activeAuthMethod: {
+    backgroundColor: '#fff',
+  },
+  authMethodText: {
+    marginLeft: 8,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  activeAuthMethodText: {
+    color: '#3d2a71',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 6,
   },
   input: {
-    height: 45,
-    borderWidth: 1,
-    borderColor: "orange",
-    borderRadius: 5,
-    paddingLeft: width * 0.22, // Add padding to accommodate prefix
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    // paddingVertical: 12,
     fontSize: 16,
+    // marginTop: 10,
+    width:width/1.2,
     alignSelf: "center",
-    width: width * 0.8,
+    height: 45,
   },
-  fixedPrefix: {
-    position: "absolute",
-    left: width / 7,
-    top: 13,
-    flexDirection: "row",
-    alignItems: "center",
+  disabledInput: {
+    backgroundColor: '#e8e8e8',
+    color: '#888',
   },
-  flag: {
-    width: 24,
-    height: 16,
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:"center"
+  },
+  countryCodeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginRight: 10,
+  },
+  countryCodeText: {
+    fontSize: 16,
     marginRight: 5,
+    color: '#3d2a71',
+    fontWeight: '600',
   },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: "#ccc",
-    marginHorizontal: 8,
-  },
-  countryCode: {
+  phoneInput: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     fontSize: 16,
-    fontWeight: "bold",
   },
-  otpbtn: {
-    width: width * 0.8,
+  buttonContainer: {
+    marginVertical: 15,
+  },
+  submitButton: {
+    backgroundColor: '#f9b91a', // Orange color
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    width:width/1.2,
+    alignSelf:"center"
+  },
+  submitText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  otpButtonsContainer: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  verifyButton: {
+    backgroundColor: '#f9b91a', // Orange color
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    width:width/1.2,
+    alignSelf:"center"
+  },
+  resendButton: {
+    borderWidth: 1,
+    borderColor: '#3d2a71',
+    borderRadius: 10,
+    marginHorizontal:30,
+    // paddingVertical: 12,
+    alignItems: 'flex-end',
+  },
+  resendText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  linkText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  linkButtonText: {
+    color: '#f9b91a',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  phonestyle:{
+    width:'100%',
+    height:39,
+  },
+  phonestyle1:{
+    height:20,
+  },
+  input1: {
+    marginTop: 10,
+    width:width/1.2,
+    alignSelf: "center",
     height: 45,
-    backgroundColor: "#f9b91a",
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    margin: 20,
+    elevation:4,
+    backgroundColor:"white",
+    borderColor:"black"
   },
-  Otptxt: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  rowbtn: {
-    //   width: width * 0.35,
-    // height: 45,
-    padding: 5,
-    backgroundColor: "white",
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    margin: 10,
-  },
+  emailbtn:{
+    backgroundColor:"white",
+    padding:5,
+    width:40,
+    height:40,
+    alignSelf:"center",
+    alignItems:"center"
+  }
 });

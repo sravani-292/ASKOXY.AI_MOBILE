@@ -11,142 +11,211 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  BackHandler,
 } from "react-native";
 import axios from "axios";
 import { TextInput } from "react-native-paper";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { StatusBar } from 'expo-status-bar';
+// import { Ionicons } from '@expo/vector-icons';
+import Ionicons from "react-native-vector-icons/Ionicons"
+import FontAwesome from "react-native-vector-icons/FontAwesome"
+import PhoneInput from "react-native-phone-number-input";
+import {
+  useNavigation,
+  useFocusEffect,
+  useNavigationState,
+} from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch } from "react-redux";
 import { AccessToken } from "../../Redux/action/index";
-import BASE_URL from "../../Config";
-import Icon from "react-native-vector-icons/Ionicons";
-import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
-
+import BASE_URL, { userStage } from "../../Config";
 const { height, width } = Dimensions.get("window");
+import Icon from "react-native-vector-icons/Ionicons";
+import Feather from "react-native-vector-icons/Feather";
+// import dynamicLinks from '@react-native-firebase/dynamic-links';
+// import { initializeApp } from '@react-native-firebase/app';
 
-const LoginWithPassword = () => {
+const Register = () => {
   const [formData, setFormData] = useState({
-    email: "",
-    email_error: false,
-    validemail_error: false,
-    validNumber_error: false,
-    password: "",
-    password_error: false,
-    // showOtp: false,
+    mobileNumber: "",
+    mobileNumber_error: false,
+    validMobileNumber_error: false,
+    otp: "",
+    otp_error: false,
+    validOtpError: false,
     loading: false,
+    password:'',
+    password_error:false
   });
+  console.log({ BASE_URL });
   const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const[secureText,setSecureText]=useState(true)
+  const [mobileOtpSession, setMobileOtpSession] = useState();
+  const [saltSession, setSaltSession] = useState("");
+  const [otpGeneratedTime, setOtpGeneratedTime] = useState("");
+  const [message, setMessage] = useState(false);
+  const [authMethod, setAuthMethod] = useState('whatsapp'); // 'whatsapp' or 'sms'
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const[whatsappNumber,setWhatsappNumber]=useState('')
+  const[whatsappNumber_Error,setWhatsappNumber_Error]=useState(false)
+  const[phoneNumber_Error,setPhoneNumber_Error]=useState(false)
+  const[errorNumberInput,seterrorNumberInput]=useState(false)
+  const[validError,setValidError]=useState(false)
+  const [countryCode, setcountryCode] = useState('91');
+  const [otpSent, setOtpSent] = useState(false);
+  const [countryPickerVisible, setCountryPickerVisible] = useState(false);
+const[loading,setLoading]=useState(false)
+const[secureText,setSecureText]=useState(true)
 
   const toggleSecureText=()=>{
     setSecureText(!secureText)
   }
 
-  const handleLogin = async () => {
-  
 
-    if (formData.email == "" || formData.email == null) {
-      setFormData({ ...formData, email_error: true });
-      return false;
-    }
-    if (
-      formData.email.includes("@") ||
-      formData.email.includes(".com") ||
-      formData.email.includes(".in")
-    ) {
-      const emailRegex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
-      if (emailRegex.test(formData.email==false)) {
-        setFormData({ ...formData, validemail_error: true });
-        return false;
-      }
-      if (formData.password == "" || formData.password == null) {
-        setFormData({ ...formData, password_error: true });
-        return false;
-      }
 
-      //   setLoading(true);
-      setFormData({ ...formData, loading: true });
-     
-      var data = {
-        email: formData.email.replace(/\s+/g, ''),
-        password: formData.password.replace(/\s+/g,''),
+  useFocusEffect(
+    useCallback(() => {
+      const checkLoginData = async () => {
+        console.log("expo");
+
+        try {
+          const loginData = await AsyncStorage.getItem("userData");
+          const storedmobilenumber = await AsyncStorage.getItem("mobileNumber");
+          console.log("logindata", loginData);
+
+          console.log(storedmobilenumber);
+
+          // setMobileNumber(storedmobilenumber);
+          setFormData({ ...formData, mobileNumber: storedmobilenumber });
+          console.log("mobileNumber", formData.mobileNumber);
+
+          if (loginData) {
+            const user = JSON.parse(loginData);
+            // if (user.accessToken) {
+            //   dispatch(AccessToken(user));
+            //   navigation.navigate("Home");
+          }
+        } catch (error) {
+          console.error("Error fetching login data", error.response);
+        }
       };
 
-      console.log({data})
-      axios({
-        method: "post",
-        url: `${BASE_URL}erice-service/user/userEmailPassword`,
-        data: data,
-      })
-        .then(function (response) {
-          console.log("userEmailPassword",response.data);
-          setFormData({ ...formData, loading: false });
-          if (response.data.accessToken) {
-            // await AsyncStorage.setItem("accessToken", response.data.token);
-            if (response.data.primaryType == "CUSTOMER") {
+      checkLoginData();
+      // getVersion();
+    }, [])
+  );
 
-            dispatch(AccessToken(response.data));
-            Alert.alert("Success", response.data.status);
-            navigation.navigate("Home")
-          } 
-            else {
-              Alert.alert("Error",`You have logged in as ${response.data.primaryType} , Please login as Customer`);
-            }
-          } else {
-            Alert.alert("Error", "Invalid credentials. Please try again.");
-          }
-        })
-        .catch(function (error) {
-          console.log(error.response);
-          setFormData({ ...formData, loading: false });
-          Alert.alert("Error", error.response.data.error);
-        });
-    } else {
-      if (!isNaN(formData.email)) {
-        console.log("mobile number");
-        if (formData.email.length != 10) {
-          setFormData({ ...formData, validNumber_error: true });
-          return false;
-        }
-        setFormData({ ...formData, loading: true });
+  const currentScreen = useNavigationState(
+    (state) => state.routes[state.index]?.name
+  );
 
-        if (formData.password == "admin") {
-          axios({
-            method: "post",
-            url: BASE_URL + `erice-service/user/adminLoginWithUserMobile`,
-            data: {
-              mobileNumber: formData.email,
-            },
-          })
-            .then(function (response) {
-              console.log(response.data);
-              setFormData({ ...formData, loading: false });
+  useFocusEffect(
+    useCallback(() => {
+      const handleBackPress = () => {
+        // if (currentScreen === 'Login') {
+        // Custom behavior for Login screen
+        Alert.alert(
+          "Exit",
+          "Are you sure you want to exit?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "OK", onPress: () => BackHandler.exitApp() },
+          ],
+          { cancelable: false }
+        );
 
-              dispatch(AccessToken(response.data));
-              if (response.data.userStatus == "ACTIVE" || response.data.userStatus == null) {
-              
-                  navigation.navigate("Home");
-                } else {
-                  Alert.alert("Deactivated","Your account is deactivated, Are you want to reactivate your account to continue?",[{text:"Yes",onPress:()=>navigation.navigate("Active")},{text:"No",onPress:()=>BackHandler.exitApp()}]);
-                }
-              // Alert.alert("Success", response.data.status);
-              // navigation.navigate("Home");
-            })
-            .catch(function (error) {
-              console.log(error.response);
-              setFormData({ ...formData, loading: false });
-              Alert.alert("Failed", error.response.data.error);
-            });
-        } else {
-          Alert.alert("Failed", "Please enter a valid password.");
-        }
-      } else {
-        Alert.alert("Failed", "Please enter a valid email or Mobile Number.");
-      }
+        return true;
+      };
+
+      // Add BackHandler event listener
+      BackHandler.addEventListener("hardwareBackPress", handleBackPress);
+
+      // Cleanup
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
+      };
+    }, [currentScreen])
+  );
+
+
+ 
+  const handlePhoneNumberChange = (value) => {
+    console.log({value})
+    setValidError(false)
+    seterrorNumberInput(false)
+    setWhatsappNumber_Error(false)
+    try {
+      setWhatsappNumber(value);
+    //   if(value.length>13 || value.length<10){
+    //     setValidError(true)
+    //     return false;
+    // }
+       console.log({value})
+      const callingCode = phoneInput.getCallingCode(value);
+      console.log({callingCode});
+      setcountryCode(callingCode);
+      // setWhatsappNumber(value)
+      // console.log(countryCode)
+    } catch (error) {
+      // Handle any parsing errors
     }
   };
+
+  function handlePasswordfunc(){
+    console.log({countryCode})
+    var Number=countryCode+whatsappNumber
+if(authMethod=="whatsapp"){
+    if(whatsappNumber=="" || whatsappNumber == null){
+      alert("Please enter Whatsapp Number")
+      return false
+    }
+  }else{
+    if(phoneNumber=="" || phoneNumber == null){
+      alert("Please enter Mobile Number")
+      return false
+    }
+  }
+
+    console.log( BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?"+"+Number:phoneNumber}`
+    )
+    if(formData.password=="@$k0xy"){
+    axios({
+      method:"post",
+      url:userStage=="test1"?BASE_URL+``:BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?"+"+Number:phoneNumber}`
+    })
+    .then((response)=>{
+      console.log(response.data)
+      
+      if (response.data.primaryType == "CUSTOMER") {
+        if (response.data.accessToken != null) {
+          dispatch(AccessToken(response.data));
+          // await AsyncStorage.setItem(
+          //   "userData",
+          //   JSON.stringify(response.data)
+          // );
+          navigation.navigate('Home')
+        }
+      else{
+         Alert.alert(
+                    "Failed",
+                    `You have logged in as ${response.data.primaryType} , Please login as Customer`
+                  );
+      }
+      }
+    })
+    .catch((error)=>{
+      console.log(error.response)
+      Alert.alert("Failed",error.response)
+    })
+    }
+    else{
+    Alert.alert("Failed","Password is incorrect")
+    return false
+    }
+  }
+
+  
 
   return (
     <KeyboardAvoidingView
@@ -188,71 +257,78 @@ const LoginWithPassword = () => {
 
           {/* Login Section */}
           <View style={styles.logingreenView}>
-            <Image
-              source={require("../../assets/Images/rice.png")}
+            {/* <Image
+              source={require("../assets/Images/rice.png")}
               style={styles.riceImage}
+            /> */}
+            <Text style={styles.loginTxt}>Login with Password</Text>
+
+            <View style={styles.authMethodContainer}>
+              <TouchableOpacity 
+                style={[styles.authMethodButton, authMethod === 'whatsapp' && styles.activeAuthMethod]}
+                onPress={() => {setAuthMethod('whatsapp'),setOtpSent(false),setWhatsappNumber(''),setPhoneNumber_Error('')} }
+                // disabled={otpSent}
+              >
+                <Ionicons name="logo-whatsapp" size={20} color={authMethod === 'whatsapp' ? '#3d2a71' : '#fff'} />
+                <Text style={[styles.authMethodText, authMethod === 'whatsapp' && styles.activeAuthMethodText]}>WhatsApp</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.authMethodButton, authMethod === 'sms' && styles.activeAuthMethod]}
+                onPress={() => {setAuthMethod('sms'),setOtpSent(false),setWhatsappNumber(''),setWhatsappNumber('')}}
+                // disabled={otpSent}
+              >
+                <Ionicons name="chatbubble-outline" size={20} color={authMethod === 'sms' ? '#3d2a71' : '#fff'} />
+                <Text style={[styles.authMethodText, authMethod === 'sms' && styles.activeAuthMethodText]}>SMS</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {/* Phone Number Input */}
+            <View style={styles.inputContainer}>
+              {/* <Text style={styles.inputLabel}>Phone Number</Text> */}
+              {authMethod === 'whatsapp' ? (
+                <View style={styles.phoneInputContainer}>
+                
+                   <PhoneInput
+            placeholder="Whatsapp Number"
+              containerStyle={styles.input1}
+              textInputStyle={styles.phonestyle}
+              codeTextStyle={styles.phonestyle1}
+              ref={(ref) => (phoneInput = ref)}
+              defaultValue={whatsappNumber}
+              defaultCode="IN"
+              layout="first"              
+              onChangeText={handlePhoneNumberChange}
             />
-            <Text style={styles.loginTxt}>Login</Text>
-            <View style={{ marginTop: 130 }}>
-              <TextInput
-                style={styles.input1}
-                placeholder="Enter Email"
-                mode="outlined"
-                value={formData.email.trim(' ')}
-                dense={true}
-                // autoFocus
-                activeOutlineColor="#e87f02"
-                onChangeText={(text) => {
-                  setFormData({
-                    ...formData,
-                    email: text,
-                    email_error: false,
-                    validemail_error: false,
-                    validNumber_error: false,
-                  });
-                }}
-              />
+                
+                  
+                  
+                </View>
+              ) : (
+                <TextInput
+                  style={[styles.input, otpSent && styles.disabledInput]}
+                  placeholder="Enter your phone number"
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={(text)=>{setPhoneNumber(text),setPhoneNumber_Error(false)}}
+                  editable={!otpSent}
+                />
+              )}
+            </View>
 
-              {formData.email_error ? (
-                <Text
-                  style={{
-                    color: "red",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                  }}
-                >
-                  Email is mandatory
-                </Text>
-              ) : null}
+            {whatsappNumber_Error && (
+              <Text style={{ color: "red", alignSelf:"center" }}>
+                Please enter the whatsapp number
+              </Text>
+            )}
 
-              {formData.validemail_error ? (
-                <Text
-                  style={{
-                    color: "red",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                  }}
-                >
-                  Invalid Email
-                </Text>
-              ) : null}
+{phoneNumber_Error && (
+              <Text style={{ color: "red", alignSelf:"center" }}>
+                Please enter the Mobile number
+              </Text>
+            )}
+            
 
-              {formData.validNumber_error ? (
-                <Text
-                  style={{
-                    color: "red",
-                    fontSize: 16,
-                    fontWeight: "bold",
-                    alignSelf: "center",
-                  }}
-                >
-                  Invalid Mobile Number
-                </Text>
-              ) : null}
-
-              <TextInput
+            <TextInput
                 style={styles.input1}
                 placeholder="Enter Password"
                 mode="outlined"
@@ -287,67 +363,35 @@ const LoginWithPassword = () => {
                 </Text>
               ) : null}
 
-              {formData.loading == false ? (
-                <TouchableOpacity
-                  style={styles.otpbtn}
-                  onPress={() => handleLogin()}
-                >
-                  <Text style={styles.Otptxt}>Login</Text>
-                </TouchableOpacity>
-              ) : (
-                <View style={styles.otpbtn}>
-                  <ActivityIndicator size="small" color="#fff" />
-                </View>
-              )}
 
-              <View style={{ flexDirection: "row", alignSelf: "center" }}>
-                <View>
-                  {/* <TouchableOpacity style={styles.rowbtn}>
-                        <Icon
-                        name="logo-whatsapp"
-                        color="green"
-                        size={24}
-                        />
-                    </TouchableOpacity> */}
-                </View>
-                <View>
-                  <TouchableOpacity
-                    style={styles.rowbtn}
-                    onPress={() => navigation.navigate("Login")}
+
+            <View style={styles.otpButtonsContainer}>
+                  <TouchableOpacity 
+                    style={styles.verifyButton} 
+                    onPress={()=>handlePasswordfunc()}
+                    disabled={loading}
                   >
-                    {/* <Text>Email</Text> */}
-                    <FontAwesome5 name="phone-alt" color="green" size={24} />
+                    {loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.submitText}>Submit</Text>
+                    )}
                   </TouchableOpacity>
+                  
+                
                 </View>
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  textAlign: "center",
-                  width: width * 0.5,
-                  alignSelf: "center",
-                  marginTop: 10,
-                }}
-              >
-                <Text style={{ color: "white", fontSize: 16 }}>
-                  Not yet Registered ?{" "}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate("RegisterScreen")}
-                >
-                  <Text
-                    style={{
-                      color: "#e87f02",
-                      fontWeight: "bold",
-                      fontSize: 16,
-                    }}
-                  >
-                    {" "}
-                    Register{" "}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            <TouchableOpacity style={styles.phonebtn} onPress={()=>navigation.navigate('Login')}>
+              <FontAwesome name="mobile" size={30}/>
+            </TouchableOpacity>
+            {/* Register Link */}
+            <View style={styles.linkContainer}>
+              <Text style={styles.linkText}>Already Registered ? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.linkButtonText}>Login</Text>
+              </TouchableOpacity>
             </View>
+
+
           </View>
         </View>
       </ScrollView>
@@ -355,26 +399,27 @@ const LoginWithPassword = () => {
   );
 };
 
-export default LoginWithPassword;
+export default Register;
 
 const styles = StyleSheet.create({
   orangeImage: {
-    height: 150,
-    width: 150,
+    height: 170,
+    width: 170,
     marginBottom: -20,
   },
   oxyricelogo: {
-    width: 200,
-    height: 100,
-    resizeMode: "contain",
-    marginRight: width / 6,
+    // flex:1,
+    width: 220,
+    height: 60,
+    // resizeMode: "center",
+    marginRight: width / 8,
   },
   oxylogoView: {
     height: 1,
   },
   greenImage: {
-    height: 100,
-    width: 50,
+    height: 120,
+    width: 70,
   },
   riceImage: {
     height: 180,
@@ -384,81 +429,179 @@ const styles = StyleSheet.create({
   },
   logingreenView: {
     flex: 2,
-    backgroundColor: "#008001",
+    backgroundColor: "#3d2a71",
     borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+
     // height: height/2,
   },
+  phonebtn:{
+    backgroundColor:"white",
+    padding:5,
+    width:40,
+    height:40,
+    alignSelf:"center",
+    alignItems:"center",
+    margin:20
+  },
+
   loginTxt: {
     color: "white",
     fontWeight: "500",
     fontSize: 25,
-    margin: -70,
+    margin: 20,
     alignSelf: "center",
   },
-  input1: {
-    borderColor: "orange",
-    width: width * 0.8,
-    alignSelf: "center",
-    height: 45,
-    paddingLeft: 10,
-    margin: 10,
+  authMethodContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    justifyContent: 'space-evenly',
+  },
+  authMethodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#fff',
+    width:width*0.4,
+  },
+  activeAuthMethod: {
+    backgroundColor: '#fff',
+  },
+  authMethodText: {
+    marginLeft: 8,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  activeAuthMethodText: {
+    color: '#3d2a71',
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 6,
   },
   input: {
-    height: 45,
-    borderWidth: 1,
-    borderColor: "orange",
-    borderRadius: 5,
-    paddingLeft: width * 0.22, // Add padding to accommodate prefix
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    // paddingVertical: 12,
     fontSize: 16,
+    // marginTop: 10,
+    width:width/1.2,
     alignSelf: "center",
-    width: width * 0.8,
+    height: 45,
   },
-  fixedPrefix: {
-    position: "absolute",
-    left: width / 7,
-    top: 13,
-    flexDirection: "row",
-    alignItems: "center",
+  disabledInput: {
+    backgroundColor: '#e8e8e8',
+    color: '#888',
   },
-  flag: {
-    width: 24,
-    height: 16,
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:"center"
+  },
+  countryCodeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginRight: 10,
+  },
+  countryCodeText: {
+    fontSize: 16,
     marginRight: 5,
+    color: '#3d2a71',
+    fontWeight: '600',
   },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: "#ccc",
-    marginHorizontal: 8,
-  },
-  countryCode: {
+  phoneInput: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     fontSize: 16,
-    fontWeight: "bold",
   },
-  otpbtn: {
-    width: width * 0.8,
+  buttonContainer: {
+    marginVertical: 15,
+  },
+  submitButton: {
+    backgroundColor: '#f9b91a', // Orange color
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    width:width/1.2,
+    alignSelf:"center"
+  },
+  submitText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  otpButtonsContainer: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  verifyButton: {
+    backgroundColor: '#f9b91a', // Orange color
+    borderRadius: 10,
+    paddingVertical: 15,
+    alignItems: 'center',
+    width:width/1.2,
+    alignSelf:"center",
+    marginTop:20
+  },
+  resendButton: {
+    borderWidth: 1,
+    borderColor: '#3d2a71',
+    borderRadius: 10,
+    marginHorizontal:30,
+    // paddingVertical: 12,
+    alignItems: 'flex-end',
+  },
+  resendText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  linkText: {
+    color: 'white',
+    fontSize: 14,
+  },
+  linkButtonText: {
+    color: '#f9b91a',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  phonestyle:{
+    width:'100%',
+    height:39,
+  },
+  phonestyle1:{
+    height:20,
+  },
+  input1: {
+    marginTop: 10,
+    width:width/1.2,
+    alignSelf: "center",
     height: 45,
-    backgroundColor: "#e87f02",
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    margin: 20,
-  },
-  Otptxt: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  rowbtn: {
-    //   width: width * 0.35,
-    //   height: 45,
-    padding: 5,
-    backgroundColor: "white",
-    borderRadius: 5,
-    justifyContent: "center",
-    alignItems: "center",
-    alignSelf: "center",
-    margin: 10,
+    elevation:4,
+    backgroundColor:"white",
+    borderColor:"black"
   },
 });

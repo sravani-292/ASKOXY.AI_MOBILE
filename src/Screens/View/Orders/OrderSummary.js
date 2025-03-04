@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
   },
-  itemImage: { width: 60, height: 60, marginRight: 16, borderRadius: 8 },
+  itemImage: { width: 100, height: 60, marginRight: 16, borderRadius: 8 },
   itemDetails: { flex: 1, justifyContent: "center" },
   itemName: { fontWeight: "bold", marginBottom: 4 },
   continueButton: {

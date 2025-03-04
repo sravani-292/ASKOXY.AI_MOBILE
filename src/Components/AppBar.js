@@ -58,7 +58,7 @@ export default function CustomNavigationBar({
     <Appbar.Header>
       {/* {back ?  */}
 						{/* <Appbar.Action icon="menu" onPress={() =>navigation.dispatch(DrawerActions.toggleDrawer())} /> */}
-						{/* <Appbar.BackAction onPress={navigation.goBack} /> */}
+						<Appbar.BackAction onPress={navigation.goBack} />
 						 {/* : null} */}
       <Appbar.Content title={title} />
       {!back ? (

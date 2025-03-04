@@ -32,10 +32,19 @@ export default function FreeAIAndGenAI({navigation}) {
   const [loading, setLoading] = useState(false);
 
   function trainingfunc() {
+
+    if (userData == null) {
+      Alert.alert("Alert", "Please login to continue", [
+        { text: "OK", onPress: () => navigation.navigate("Login") },
+        { text: "Cancel" },
+      ]);
+      return;
+    } else {
     const url = "https://sites.google.com/view/globalecommercemarketplace/home";
     Linking.openURL(url).catch((err) => {
       console.error("Error opening URL:", err);
     });
+  }
   }
 
   function interestedfunc() {

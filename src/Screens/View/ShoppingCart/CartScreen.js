@@ -132,7 +132,6 @@ const CartScreen = () => {
           setCartItems({});
           return;
         }
-        // console.log("cart length", cartData.length);
         const cartItemsMap = cartData.reduce((acc, item) => {
           if (
             !item.itemId ||
@@ -146,7 +145,6 @@ const CartScreen = () => {
           return acc;
         }, {});
 
-        // console.log("Cart Items Map:", cartItemsMap);
         const limitedStockMap = cartData.reduce((acc, item) => {
           if (item.quantity === 0) {
             acc[item.itemId] = "outOfStock";
@@ -155,7 +153,6 @@ const CartScreen = () => {
           }
           return acc;
         }, {});
-        // console.log("limited stock map", limitedStockMap);
 
         setError(null);
 
@@ -178,7 +175,6 @@ const CartScreen = () => {
     useCallback(() => {
       fetchCartData();
       totalCart();
-      // getProfile();
     }, [])
   );
 
@@ -196,7 +192,6 @@ const CartScreen = () => {
       );
 
       if (response.status === 200) {
-        // console.log("Profile data:", response.data);
 
         if (!response.data.email) {
           Alert.alert(
@@ -239,7 +234,6 @@ const CartScreen = () => {
           customerId: customerId,
         },
       });
-      // console.log("total cart", response.data);
 
       setGrandTotal(response.data.totalSum);
     } catch (error) {
@@ -397,8 +391,7 @@ const CartScreen = () => {
         );
       }
     });
-    // console.log("varam cart items");
-    //  console.log({insufficientStockItems});
+   
 
     if (insufficientStockItems.length > 0) {
       Alert.alert(
@@ -417,24 +410,6 @@ const CartScreen = () => {
       return false;
     }
 
-    // if (
-    //   !address.email?.trim() ||
-    //   !address.firstName?.trim() ||
-    //   !address.lastName?.trim() ||
-    //   !address.alterMobileNumber?.trim()
-    // ) {
-    //   Alert.alert(
-    //     "Incomplete Profile",
-    //     "Please fill out your profile to proceed.",
-    //     [
-    //       {
-    //         text: "OK",
-    //         onPress: () => navigation.navigate("Profile"),
-    //       },
-    //     ]
-    //   );
-    //   return;
-    // }
 
     // ✅ Proceed to checkout
     navigation.navigate("Checkout", {
@@ -568,7 +543,8 @@ const CartScreen = () => {
                             </TouchableOpacity>
 
                             <Text style={styles.itemTotal}>
-                              Total: ₹
+                              {/* Total: */}
+                               ₹
                               {(
                                 item.itemPrice *
                                 (cartItems[item.itemId] || item.cartQuantity)
@@ -578,7 +554,7 @@ const CartScreen = () => {
                         )}
                         {isLimitedStock[item.itemId] !== "outOfStock" && (
                           <TouchableOpacity
-                            style={{ marginLeft: 180 }}
+                            style={{ marginLeft: 100 }}
                             onPress={() => handleRemove(item)}
                           >
                             <MaterialIcons
@@ -667,10 +643,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   itemImage: {
+    marginLeft:5,
     width: width * 0.3,
-    height: height / 8,
-    marginRight: 16,
-    borderRadius: 8,
+    height: height / 7,
+    marginRight: 10,
+    borderRadius: 20,
   },
   itemDetails: {
     flex: 1,
@@ -706,7 +683,7 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontWeight: "bold",
-    backgroundColor: "#fff",
+    backgroundColor:"white",
   },
   removeButton: {
     backgroundColor: "#D32F2F",
@@ -767,9 +744,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    // marginVertical: 4,
     marginLeft: 2,
     marginBottom: 20,
+    width:width/3,
+    marginTop:15
   },
   totalText: {
     fontSize: 18,

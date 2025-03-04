@@ -3,12 +3,11 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 // Screens imports
-import Services from "../Screens/View/Dashboard/Services"
-import Login from "../Authorization/Login";
+import Services from "../Dashboard/Services"
 // import Login from "../Authorization/NewLogin"
+import Login from "../Authorization/Login";
 import Register from "../Authorization/Register";
-// import Register from "../Authorization/NewRegister";
-import Dashboard from "../Authorization/Dashboard";
+import About from "../Screens/View/PurchaseFlow/About"
 import LoginWithPassword from "../Authorization/LoginWithPassword";
 import Refund from "../Screens/View/Payments/Refund";
 import Activated from "../Authorization/Activated";
@@ -18,8 +17,8 @@ import RiceProductDetails from "../Screens/View/ShoppingCart/RiceProductDetails"
 import ProductView from "../Components/productsDesign/ProductView";
 import WalletPage from "../Screens/View/WalletSubscriptions/WalletScreen";
 import AddressBook from "../Screens/View/Address/AddressBook";
-import Subscription from "../Screens/View/WalletSubscriptions/Subscription";
-import SubscriptionHistory from "../Screens/View/WalletSubscriptions/SubscriptionHistory";
+// import Subscription from "../Screens/View/WalletSubscriptions/Subscription";
+// import SubscriptionHistory from "../Screens/View/WalletSubscriptions/SubscriptionHistory";
 import CheckOut from "../Screens/View/PurchaseFlow/CheckOut";
 import Rice from "../Screens/View/ShoppingCart/Rice";
 import MyLocationPage from "../Screens/View/Address/MyLocationPage";
@@ -32,7 +31,7 @@ import TicketHistoryComments from "../Screens/View/ContactUs/TicketHistoryCommen
 import ItemDetails from "../Screens/View/ShoppingCart/ItemDetails";
 import UserCancelledOrderDetails from "../Screens/View/Orders/UserCancelledOrderDetails";
 import UserExchangeOrderDetails from "../Screens/View/Orders/UserExchangeOrderDetails";
-import ContainerPolicy from "../Screens/View/Dashboard/FreeContainer";
+import ContainerPolicy from "../Dashboard/FreeContainer";
 import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
 import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
 import ChatGpt from "../Authorization/NewLogin";
@@ -40,8 +39,8 @@ import CartScreen from "../Screens/View/ShoppingCart/CartScreen1";
 import DashboardStack from "../Screens/View/Dashboard/DashboardStack";
 import LinearGradient from "react-native-linear-gradient";
 import { COLORS } from "../../Redux/constants/theme";
-
-
+import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory"
+import Main from "../Screens/View/WalletSubscriptions/Main";
 
 
 import Rudraksha from "../Dashboard/Rudraksha";
@@ -70,8 +69,8 @@ export default function StacksScreens() {
     
     <Stack.Navigator
       // initialRouteName="Crypto Currency"
-            initialRouteName="Service Screen"
-
+      // initialRouteName="Login"
+      initialRouteName ="Service Screen"
       screenOptions={{
         headerShown: true,
         headerTintColor: "white",
@@ -88,6 +87,12 @@ export default function StacksScreens() {
         component={Login}
         options={{ headerShown: false }}
       />
+      {/* <Stack.Screen
+      name="mobileLogin"
+      component={MobileLogin}
+      options={{ headerShown: false }}
+      /> */}
+
       <Stack.Screen name="Active" component={Activated} />
       <Stack.Screen
         name="LoginWithPassword"
@@ -120,11 +125,13 @@ export default function StacksScreens() {
       <Stack.Screen name="Services" component={Services}/>
       <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
-      <Stack.Screen name="Subscription" component={Subscription} />
+      <Stack.Screen name="Subscription" component={Main}/>
+      {/* <Stack.Screen name="Subscription" component={Subscription} />
       <Stack.Screen
         name="Subscription History"
         component={SubscriptionHistory}
-      />
+      /> */}
+      <Stack.Screen name="About Us" component={About}/>
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
       <Stack.Screen name="Checkout" component={CheckOut} />
@@ -140,8 +147,7 @@ export default function StacksScreens() {
       <Stack.Screen name="Write To Us" component={WriteToUs}/>
       <Stack.Screen name="Rice Products" component={Rice}/>
       <Stack.Screen name="ChatGpt" component={ChatGpt}/>
-
-      {/* <Stack.Screen name="My Cart" component={CartScreen}/> */}
+      <Stack.Screen name="Referral History" component={ReferralHistory}/>
 
       <Stack.Screen
         name="My Cancelled Item Details"
@@ -159,14 +165,14 @@ export default function StacksScreens() {
         name="FREE RUDRAKSHA"
         component={Rudraksha}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, // Sets header background color
+          headerStyle: { backgroundColor: "#3d2a71" }, 
         }}
       />
       <Stack.Screen
         name="FREE AI & GEN AI"
         component={FreeAIAndGenAI}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, // Sets header background color
+          headerStyle: { backgroundColor: "#3d2a71" }, 
         }}
       />
       {/* <Stack.Screen

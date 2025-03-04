@@ -20,7 +20,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { COLORS } from "../../../../Redux/constants/theme";
 const { width, height } = Dimensions.get("window");
 
-const Subscription = () => {
+const Subscription = () => { 
   const userData = useSelector((state) => state.counter);
   // console.log({userData})
   const customerId = userData.userId;

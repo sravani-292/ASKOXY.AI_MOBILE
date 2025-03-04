@@ -78,7 +78,7 @@ const OrderDetails = () => {
 
     axios({
       method: "post",
-      url: BASE_URL + "erice-service/checkout/submitfeedback",
+      url: userStage=="test1"?BASE_URL + "erice-service/checkout/submitfeedback":BASE_URL+"order-service/submitfeedback",
       data: data,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -91,22 +91,22 @@ const OrderDetails = () => {
         // navigation.navigate("Home");
       })
       .catch((error) => {
-        console.log(error.response);
+        console.log(error);
         Alert.alert("Error", "Failed to submit feedback.");
       });
   };
 
-  // useEffect(() => {
-  //   // handleSubmit()
-  //   feedbackGet();
-  // }, []);
+  useEffect(() => {
+    // handleSubmit()
+    feedbackGet();
+  }, []);
 
   const feedbackGet = async () => {
     axios({
       method: "get",
-      url:
+      url:userStage=="test1"?
         BASE_URL +
-        `erice-service/checkout/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
+        `erice-service/checkout/feedback?feedbackUserId=${customerId}&orderid=${order_id}`: BASE_URL+`order-service/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -116,7 +116,7 @@ const OrderDetails = () => {
         setOrderFeedback(response.data);
       })
       .catch((error) => {
-        console.log(error.response);
+        console.log("error",error.response);
       });
   };
 
@@ -139,13 +139,15 @@ const OrderDetails = () => {
     try {
       const response = await axios(data);
       // Update order data
+      console.log("order data",response.data);
+      
       setOrderData(response.data);
 
-      const orderStatus = response.data[0].orderstatus;
+      const orderStatus = response.data[0].orderStatus;
       setOrderStatus(orderStatus);
-      console.log("order status", orderStatus);
+      // console.log("order status", orderStatus);
 
-      console.log("Fetched order details:", response.data);
+      // console.log("Fetched order details:", response.data);
     } catch (error) {
       // console.error("Error fetching order details:", error.response);
     }
@@ -205,7 +207,7 @@ const OrderDetails = () => {
       data: data,
     })
       .then((res) => {
-        console.log(" exchange response", res);
+        // console.log(" exchange response", res);
         Alert.alert("Success", res.data.type, [
           {
             text: "OK",
@@ -249,7 +251,9 @@ const OrderDetails = () => {
     pinCode,
     couponValue,
     walletAmount,
-    subtotal,
+    subTotal,
+    gstAmount,
+    discountAmount
   } = orderDetails;
   // console.log("Order details",orderDetails);
 
@@ -295,7 +299,7 @@ const OrderDetails = () => {
       refundDtoList: result,
     };
 
-    console.log({ data });
+    // console.log({ data });
 
     axios({
       url: `${BASE_URL}erice-service/order/user_cancel_orderBasedOnItemId`,
@@ -307,7 +311,7 @@ const OrderDetails = () => {
       data: data,
     })
       .then((res) => {
-        console.log("response", res.data);
+        // console.log("response", res.data);
         Alert.alert("Success", res.data.message, [
           {
             text: "OK",
@@ -319,7 +323,7 @@ const OrderDetails = () => {
         setLoading(false);
       })
       .catch((err) => {
-        console.log("error cancel", err.response);
+        // console.log("error cancel", err.response);
       });
   };
 
@@ -493,15 +497,19 @@ const OrderDetails = () => {
           {/* Subtotal */}
           <View style={styles.row}>
             <Text style={styles.label}>Sub Total:</Text>
-            <Text style={styles.value}>₹{grandTotal}</Text>
+            <Text style={styles.value}>₹{subTotal}</Text>
           </View>
 
           {/* Delivery Fee */}
           <View style={styles.row}>
             <Text style={styles.label}>Delivery Fee:</Text>
-            <Text style={styles.value}>{deliveryFee}</Text>
+            <Text style={styles.value}>+{deliveryFee}</Text>
           </View>
-
+          {/* Gst */}
+          <View style={styles.row}>
+            <Text style={styles.label}>GST:</Text>
+            <Text style={styles.value}>+{gstAmount}</Text>
+          </View>
           
           {/* coupen value */}
           {(couponValue != null && couponValue !=0) && (
@@ -515,6 +523,12 @@ const OrderDetails = () => {
             <View style={styles.row}>
               <Text style={styles.label}>Wallet Amount:</Text>
               <Text style={styles.value}>-₹{walletAmount}</Text>
+            </View>
+          )}
+            {(discountAmount != null && discountAmount!=0)&& (
+            <View style={styles.row}>
+              <Text style={styles.label}>Coupon Applied:</Text>
+              <Text style={styles.value}>-₹{discountAmount}</Text>
             </View>
           )}
           {/* Payment Type */}
@@ -546,7 +560,7 @@ const OrderDetails = () => {
 
       {/* // yesterday changes */}
 
-      <View
+      {/* <View
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
@@ -616,7 +630,7 @@ const OrderDetails = () => {
         >
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {isModalVisible && (
         <Modal visible={isModalVisible} transparent animationType="slide">

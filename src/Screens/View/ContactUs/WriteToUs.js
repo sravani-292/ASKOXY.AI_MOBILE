@@ -29,7 +29,7 @@ const WriteToUs = ({navigation,route}) => {
     const accessToken = useSelector((state) => state.counter);
     const fd = new FormData();
     const [ticketId,setTicketId] = useState("")
-    // console.log("route",route.params);
+    // console.log("route",accessToken);
 
     // useEffect(()=>{
       
@@ -71,7 +71,7 @@ const WriteToUs = ({navigation,route}) => {
     })
     .then(function (response) {
       console.log("customer data1",response.data);
-      if(response.data.firstName && response.data.email && response.data.whatsappNumber){
+      if(response.data.whatsappVerified==true){
       setFormData({
         ...formData, name: `${response.data.firstName} ${response.data.lastName}`,
                     email: response.data.email,
@@ -180,7 +180,9 @@ else{
       })
         .then(function (response) {
           console.log(response.data)
-          Alert.alert("Success", "You have sucessfully submitted the query");
+          Alert.alert("Success", "You have sucessfully submitted the query",[{
+            text:"ok",onPress:()=>navigation.navigate('Ticket History')
+          }]);
           console.log("formdataquery",formData.query);
           
           setFormData({...formData,loading:false,fileName:"",query:""})

@@ -1,101 +1,7 @@
-// import { View, Text, Dimensions, FlatList, StyleSheet } from "react-native";
-// import React from "react";
-// import Icon from "react-native-vector-icons/Ionicons";
-// const { height, width } = Dimensions.get("window");
-
-// const ServiceScreen = () => {
-//   const data = [
-//     {
-//       id: 1,
-//       title: "Services",
-//       icon: "settings",
-//       image: require("../assets/cash.png"),
-//     },
-//     {
-//       id: 2,
-//       title: "Products",
-//       icon: "settings",
-//     },
-//     {
-//       id: 3,
-//       title: "Free GPTs",
-//       icon: "settings",
-//     },
-//     {
-//       id: 4,
-//       title: "Cryptocurrency",
-//       icon: "settings",
-//     },
-//   ];
-
-//   function footer() {
-//     return (
-//       <View style={{ alignSelf: "center" }}>
-//         <Text></Text>
-//       </View>
-//     );
-//   }
-
-//   const renderItem = ({ item }) => {
-//     // console.log(item.id)
-//     return (
-//       <View style={{alignItems:"center",justifyContent:"center",alignSelf:"center"}}>
-//         <View style={styles.roundBackground}></View>
-//         <Text>{item.title}</Text>
-//       </View>
-//     );
-//   };
-
-//   return (
-//     <View>
-//       <View style={{ backgroundColor: "white", padding: 40 }}>
-//         <Text>ServiceScreen</Text>
-//       </View>
-//       <View style={{ backgroundColor: "yellow",height:100}}>
-//         <FlatList
-//           data={data}
-//           renderItem={renderItem}
-//           ListFooterComponent={footer}
-//           ListFooterComponentStyle={styles.footerStyle}
-//           horizontal={true}
-//         />
-//       </View>
-//     </View>
-//   );
-// };
-
-// export default ServiceScreen;
-
-// const styles = StyleSheet.create({
-//   footerStyle: {
-//     // marginTop: 50,
-//   },
-//   roundBackground: {
-//     backgroundColor: "red",
-//     height: 40,
-//     width: 40,
-//     borderRadius: 100,
-//     alignItems: "center",
-//     justifyContent: "center",
-//     alignSelf:"center",
-//     margin:10,    
-//     elevation: 5,
-//   },
-//   roundBackground1: {
-//     backgroundColor: "red",
-//     height: height * 0.2,
-//     width: width * 0.4,
-//     borderRadius: 10,
-//     alignItems: "center",
-//     justifyContent: "center",
-//     margin: 10,
-//     elevation: 5,
-//   },
-// });
 
 
 import React,{useState,useEffect,useCallback} from "react";
-import { View, Text, Image, TextInput, FlatList, TouchableOpacity,
+import { View, Text, Image, TextInput, FlatList, TouchableOpacity,ScrollView,
           BackHandler, Dimensions ,StyleSheet,Alert} from "react-native";
 import { Ionicons, FontAwesome,AntDesign } from "@expo/vector-icons";
 import axios from "axios";
@@ -239,6 +145,7 @@ useFocusEffect(
   };
 
   function getRiceCategories(){
+    setLoading(true)
     axios({
       method: "get",
       url:
@@ -247,10 +154,12 @@ useFocusEffect(
           : null,
     })
     .then((response) => {
+      setLoading(false)
       console.log(response.data)
       setGetCategories(response.data)
     })
     .catch((error) => {
+      setLoading(false)
       console.log(error.response)
   })
   }
@@ -264,7 +173,8 @@ useEffect(()=>{
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fff", padding: 5 }}>
-    
+      {loading==false?
+    <>
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", marginTop: 50,marginBottom:15,padding:10 }}>
         
@@ -273,27 +183,15 @@ useEffect(()=>{
           style={{ width: 150, height: 50, marginRight: 10,marginBottom:-5 }}
         />
 {userData!=null?
-        <AntDesign name="logout" size={30} color="black" style={{ marginLeft: "auto" }} />:null}
+        <TouchableOpacity onPress={()=>navigation.navigate("Login")}  style={{ marginLeft: "auto" }}>
+          <AntDesign name="logout" size={30} color="black" />
+        </TouchableOpacity>
+        
+        :null}
 
       </View>
 
-      {/* Search Bar */}
-      {/* <View
-        style={{
-          flexDirection: "row",
-          alignItems: "center",
-          backgroundColor: "#F5F5F5",
-          borderRadius: 10,
-          padding: 10,
-          paddingVertical: 8,
-          marginBottom: 15,
-        }}
-      >
-        <Ionicons name="search-outline" size={20} color="gray" />
-        <TextInput placeholder="Search Service or Rice" style={{ flex: 1, marginLeft: 8 }} />
-        <Ionicons name="options-outline" size={20} color="gray" />
-      </View> */}
-{loading==false?
+<ScrollView>
       <>
       <FlatList
         data={images}
@@ -414,6 +312,8 @@ useEffect(()=>{
           </View>
         )}
       />
+</>
+</ScrollView>
 </>
 :
 <View style={styles.loaderContainer}>
