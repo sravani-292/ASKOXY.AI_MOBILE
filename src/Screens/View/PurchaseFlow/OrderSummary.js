@@ -45,8 +45,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
     setLoading(true)
     try {
       const response = await fetch(
-        userStage=="test1"?BASE_URL +
-                        `erice-service/cart/customersCartItems?customerId=${customerId}`:BASE_URL+`cart-service/cart/customersCartItems?customerId=${customerId}`,
+      BASE_URL+`cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           method: "GET",
           headers: {
@@ -79,9 +78,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        url: userStage =="test1"?
-                       BASE_URL +
-                       `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+        url: BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
       });
       // console.log(response.data);
 

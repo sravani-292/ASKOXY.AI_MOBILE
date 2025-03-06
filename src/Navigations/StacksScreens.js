@@ -17,8 +17,6 @@ import RiceProductDetails from "../Screens/View/ShoppingCart/RiceProductDetails"
 import ProductView from "../Components/productsDesign/ProductView";
 import WalletPage from "../Screens/View/WalletSubscriptions/WalletScreen";
 import AddressBook from "../Screens/View/Address/AddressBook";
-// import Subscription from "../Screens/View/WalletSubscriptions/Subscription";
-// import SubscriptionHistory from "../Screens/View/WalletSubscriptions/SubscriptionHistory";
 import CheckOut from "../Screens/View/PurchaseFlow/CheckOut";
 import Rice from "../Screens/View/ShoppingCart/Rice";
 import MyLocationPage from "../Screens/View/Address/MyLocationPage";

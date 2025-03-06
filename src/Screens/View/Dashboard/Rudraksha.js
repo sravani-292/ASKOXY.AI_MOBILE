@@ -66,9 +66,10 @@ const Rudraksha = ({ navigation }) => {
     axios({
       method: "post",
       url:
-        userStage == "test"
-          ? BASE_URL + "marketing-service/campgin/rudhrakshaDistribution"
-          : BASE_URL + "auth-service/auth/rudhrakshaDistribution",
+        // userStage == "test"
+        //   ? BASE_URL + "marketing-service/campgin/rudhrakshaDistribution"
+        //   :
+           BASE_URL + "auth-service/auth/rudhrakshaDistribution",
 
       data: data,
     })
@@ -94,9 +95,10 @@ const Rudraksha = ({ navigation }) => {
     axios({
       method: "post",
       url:
-        userStage == "test"
-          ? BASE_URL + "marketing-service/campgin/rudhrakshaDistribution"
-          : BASE_URL + "auth-service/auth/rudhrakshaDistribution",
+        // userStage == "test"
+        //   ? BASE_URL + "marketing-service/campgin/rudhrakshaDistribution"
+        //   : 
+          BASE_URL + "auth-service/auth/rudhrakshaDistribution",
       data: {
         userId: userData.userId,
         deliveryType: value,

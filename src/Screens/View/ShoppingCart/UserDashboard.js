@@ -32,8 +32,6 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ionicons } from "@expo/vector-icons";
 
-
-
 import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
 
@@ -53,36 +51,11 @@ const UserDashboard = () => {
   const [removalLoading, setRemovalLoading] = useState({});
   const [searchText, setSearchText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [user,setUser] = useState();
+  const [user, setUser] = useState();
 
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
   );
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const handleBackPress = () => {
-  //       Alert.alert(
-  //         "Exit App",
-  //         "Are you sure you want to exit?",
-  //         [
-  //           { text: "Cancel", style: "cancel" },
-  //           { text: "OK", onPress: () => BackHandler.exitApp() },
-  //         ],
-  //         { cancelable: false }
-  //       );
-
-  //       return true;
-  //     };
-
-  //     // Add BackHandler event listener
-  //     BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-
-  //     return () => {
-  //       BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-  //     };
-  //   }, [currentScreen])
-  // );
 
   const handleAdd = async (item) => {
     // console.log("handle add", { item });
@@ -111,6 +84,9 @@ const UserDashboard = () => {
   };
 
   const userData = useSelector((state) => state.counter);
+  const token = userData?.accessToken;
+  const customerId = userData?.userId;
+
   useFocusEffect(
     useCallback(() => {
       if (userData) {
@@ -122,25 +98,26 @@ const UserDashboard = () => {
   const onRefresh = () => {
     getAllCategories();
   };
-  const token = userData?.accessToken;
-  const customerId = userData?.userId;
 
   const fetchCartItems = async () => {
+    console.log("sravani cart items");
+    
     try {
       const response = await axios.get(
-        userStage == "test1"
-          ? BASE_URL +
-              `erice-service/cart/customersCartItems?customerId=${customerId}`
-          : BASE_URL +
-              `cart-service/cart/customersCartItems?customerId=${customerId}`,
+        BASE_URL +
+          `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
+      // console.log("cart response",response.data.customerCartResponseList);
+      
       const cartData = response?.data?.customerCartResponseList;
+       const totalCartCount = cartData.reduce((total, item) => total + item.cartQuantity, 0);
 
+         console.log("Total items in cart:", totalCartCount);
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
         console.error("cartData is empty or invalid:", cartData);
         setCartData([]);
@@ -150,7 +127,6 @@ const UserDashboard = () => {
         return;
       }
 
-     
       const cartItemsMap = cartData.reduce((acc, item) => {
         if (
           !item.itemId ||
@@ -164,7 +140,6 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
-      
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
           acc[item.itemId] = "outOfStock";
@@ -173,12 +148,11 @@ const UserDashboard = () => {
         }
         return acc;
       }, {});
-      
 
       setCartData([...cartData]);
       setCartItems({ ...cartItemsMap });
       setIsLimitedStock({ ...limitedStockMap });
-      setCartCount(cartData.length);
+      setCartCount(totalCartCount);
       setLoadingItems((prevState) => ({
         ...prevState,
         [cartData.itemId]: false,
@@ -194,33 +168,32 @@ const UserDashboard = () => {
       Alert.alert("Alert", "Please login to continue", [
         { text: "Cancel" },
         { text: "OK", onPress: () => navigation.navigate("Login") },
-       
       ]);
       return;
     }
-    else if(!user){
-      console.log("user",user);
-      
-      Alert.alert("Alert", "Please Complete Your  Profile", [
-        { text: "Cancel" },
-        { text: "OK", onPress: () => navigation.navigate("Home",{screen:"Profile"}) },
-        
-      ]);
-      return;
-    }
+    // else if(!user){
+    //   console.log("user",user);
+
+    //   Alert.alert("Alert", "Please Complete Your  Profile", [
+    //     { text: "Cancel" },
+    //     { text: "OK", onPress: () => navigation.navigate("Home",{screen:"Profile"}) },
+
+    //   ]);
+    //   return;
+    // }
     const data = { customerId: customerId, itemId: item.itemId };
     // console.log({ data });
 
     try {
       const response = await axios.post(
-        userStage == "test1"
-          ? BASE_URL + "erice-service/cart/add_Items_ToCart"
-          : BASE_URL + "cart-service/cart/add_Items_ToCart",
+        BASE_URL + "cart-service/cart/add_Items_ToCart",
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      console.log("added data", response.data);
 
       if (response.data.errorMessage == "Item added to cart successfully") {
         Alert.alert("Success", "Item added to cart successfully");
@@ -242,9 +215,7 @@ const UserDashboard = () => {
     };
     try {
       const response = await axios.patch(
-        userStage == "test1"
-          ? BASE_URL + "erice-service/cart/incrementCartData"
-          : BASE_URL + "cart-service/cart/incrementCartData",
+        BASE_URL + "cart-service/cart/incrementCartData",
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -262,9 +233,7 @@ const UserDashboard = () => {
     );
     try {
       const response = await axios.delete(
-        userStage == "test1"
-          ? BASE_URL + "erice-service/cart/remove"
-          : BASE_URL + "cart-service/cart/remove",
+        BASE_URL + "cart-service/cart/remove",
         {
           data: {
             id: cartItem.cartId,
@@ -297,9 +266,7 @@ const UserDashboard = () => {
       };
       try {
         await axios.patch(
-          userStage == "test1"
-            ? BASE_URL + "erice-service/cart/decrementCartData"
-            : BASE_URL + "cart-service/cart/decrementCartData",
+          BASE_URL + "cart-service/cart/decrementCartData",
           data,
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -312,54 +279,47 @@ const UserDashboard = () => {
     }
   };
 
-
   const getProfile = async () => {
     console.log("profile get call response");
 
-     try {
+    try {
       const response = await axios({
         method: "GET",
-        url: userStage =="test1"?
-        BASE_URL +
-        `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
-   
+        url:
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
           // "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        });
-      
-
+      });
       if (response.status === 200) {
-        console.log("user data",response);
-        
+      console.log("user data", response);
         setUser(response.data);
-       
-      }
+       }
     } catch (error) {
-      console.error("ERROR",error);
-      showToast("Error loading profile");
+      console.error("ERROR", error.response);
     }
   };
+
   useEffect(() => {
-    getAllCategories();
-    getProfile();
+    const fetchData = async () => {
+      // await getProfile();
+      getAllCategories();
+    };
+
+    fetchData();
   }, []);
 
   const getAllCategories = () => {
+    console.log("hai");
+
     setLoading(true);
     axios
-      .get(
-        userStage === "test1"
-          ? BASE_URL + "erice-service/user/showItemsForCustomrs"
-          : BASE_URL + "product-service/showItemsForCustomrs"
-      )
+      .get(BASE_URL + "product-service/showItemsForCustomrs")
       .then((response) => {
-        // console.log("rice main page", response.data);
         setCategories(response.data);
         setSelectedCategory("All CATEGORIES");
-
-        // Extract all items from each category
         const allItems = response.data.flatMap(
           (category) => category.itemsResponseDtoList || []
         );
@@ -367,10 +327,11 @@ const UserDashboard = () => {
 
         setTimeout(() => {
           setLoading(false);
-        }, 1000);
+        }, 1500);
       })
       .catch((error) => {
-        console.log(error.response);
+        console.log(error);
+
         setLoading(false);
       });
   };
@@ -434,8 +395,8 @@ const UserDashboard = () => {
       let normalizedSearchText = searchText.toLowerCase().trim();
 
       normalizedSearchText = normalizedSearchText
-        .replace(/(\d+)(kgs|kg)/g, "$1 kgs") 
-        .replace(/\s+/g, " "); 
+        .replace(/(\d+)(kgs|kg)/g, "$1 kgs")
+        .replace(/\s+/g, " ");
 
       // Split search input into words
       const searchWords = normalizedSearchText.split(" ");
@@ -668,13 +629,23 @@ const UserDashboard = () => {
           ListFooterComponent={footer}
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
-              {/* <Ionicons name="cart-outline" size={120} color="#DADADA" /> */}
               <Text style={styles.emptyText}>No Items Found</Text>
             </View>
           )}
           renderItem={({ item }) => (
             <View style={styles.itemCard}>
               <View style={styles.imageContainer}>
+                {/* Discount Badge */}
+                {item.itemMrp > item.itemPrice && (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountText}>
+                      {Math.round(
+                        ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
+                      )}
+                      % OFF
+                    </Text>
+                  </View>
+                )}
                 {isLimitedStock[item.itemId] == "lowStock" && (
                   <View style={styles.limitedStockBadge}>
                     <Text style={styles.limitedStockText}>
@@ -694,10 +665,8 @@ const UserDashboard = () => {
                 </TouchableOpacity>
               </View>
 
-              {/* Product Details */}
-              {/* <View style={{ height: height / 5,marginBottom:5 }}> */}
               <Text style={styles.itemName}>{item.itemName}</Text>
-              {/* </View> */}
+
               <View style={styles.priceContainer}>
                 <Text style={styles.newPrice}>₹{item.itemPrice}</Text>
                 <Text style={styles.oldPrice}>₹{item.itemMrp}</Text>
@@ -765,6 +734,7 @@ const UserDashboard = () => {
                             : "Add to Cart"}
                         </Text>
                       </TouchableOpacity>
+                    ) : (
                       // <TouchableOpacity
                       //   style={[
                       //     styles.addButton,
@@ -788,7 +758,6 @@ const UserDashboard = () => {
                       //       : "Add to Cart"}
                       //   </Text>
                       // </TouchableOpacity>
-                    ) : (
                       <View style={styles.addButton}>
                         <ActivityIndicator size="small" color="white" />
                       </View>
@@ -836,7 +805,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "#fff",
     marginHorizontal: 5,
-    // alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -867,7 +835,6 @@ const styles = StyleSheet.create({
     height: 40,
   },
   priceContainer: {
-    // width:width/2,
     marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
@@ -882,21 +849,20 @@ const styles = StyleSheet.create({
   oldPrice: {
     marginLeft: 40,
     fontSize: 15,
-    color: "#757575",
+    color: "#5e606c",
     textDecorationLine: "line-through",
   },
 
   itemWeight: {
-    marginLeft: -20,
+    marginLeft: 13,
     fontSize: 13,
     color: "#757575",
   },
   addButton: {
     backgroundColor: "#6b21a8",
     paddingVertical: 5,
-    paddingHorizontal: 7,
-    marginLeft: 8,
-    // marginRight: 5,
+    paddingHorizontal: 5,
+    marginLeft: 5,
     borderRadius: 5,
 
     width: width * 0.25,
@@ -905,7 +871,6 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#fff",
     fontSize: 14,
-    // fontWeight: "bold",
     alignSelf: "center",
     alignItems: "center",
   },
@@ -926,22 +891,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     marginLeft: 30,
+    paddingRight: 5,
   },
   quantityButton: {
     backgroundColor: "#a593df",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 3,
     borderRadius: 4,
   },
-  quantityButton1: {
-    backgroundColor: "#f6ebfb",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 4,
-  },
+  
   quantityButtonText: {
     color: "#000",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
   },
   quantityText: {
@@ -978,7 +939,7 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: "gray",
     opacity: 0.5,
-    paddingHorizontal: 10,
+    paddingHorizontal: 5,
     paddingVertical: 4,
     borderRadius: 4,
   },
@@ -1042,4 +1003,26 @@ const styles = StyleSheet.create({
   reducedWidth: {
     width: width * 0.8,
   },
+  discountBadge: {
+    position: "absolute",
+    // top: 1,
+    bottom:1,
+    // left: 5, 
+    right:20,
+    backgroundColor: "#ffa600",
+    width: 40,   
+    height: 40,
+    borderRadius: 20, 
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2, 
+  },
+  
+  discountText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
+    textAlign: "center",
+  },
+  
 });

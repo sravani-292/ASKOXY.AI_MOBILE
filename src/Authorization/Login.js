@@ -45,7 +45,7 @@ const Login = () => {
     validOtpError: false,
     loading: false,
   });
-  console.log({ BASE_URL });
+  // console.log({ BASE_URL });
   const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -54,7 +54,7 @@ const Login = () => {
   const [otpGeneratedTime, setOtpGeneratedTime] = useState("");
   const [message, setMessage] = useState(false);
 
-  const [authMethod, setAuthMethod] = useState('whatsapp'); // 'whatsapp' or 'sms'
+  const [authMethod, setAuthMethod] = useState('whatsapp'); 
   const [phoneNumber, setPhoneNumber] = useState('');
   const[whatsappNumber,setWhatsappNumber]=useState('')
   const[whatsappNumber_Error,setWhatsappNumber_Error]=useState(false)
@@ -64,7 +64,7 @@ const Login = () => {
   const [countryCode, setcountryCode] = useState('91');
   const [otpSent, setOtpSent] = useState(false);
 const[loading,setLoading]=useState(false)
-const [isValidPhone, setIsValidPhone] = useState(false); // Boolean state for validity
+const [isValidPhone, setIsValidPhone] = useState(false); 
 const[errorMessage,setErrorMessage]=useState(false)
 const[otpError,setOtpError]=useState(false)
 
@@ -203,13 +203,12 @@ const[otpError,setOtpError]=useState(false)
     setFormData({...formData,loading:true})
     axios({
       method:"post",
-      url: userStage != "test"
-      ? BASE_URL + `auth-service/auth/registerwithMobile`
-      : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+      url: 
+      BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
       data:data
     })
     .then((response)=>{
-      console.log("response",response.data)
+      console.log("response",response)
       setFormData({
         ...formData,
         loading: false,
@@ -279,7 +278,7 @@ if(authMethod=="whatsapp"){
 }else{
      data = {
        countryCode: "+91",
-      mobileNumber:  formData.mobileNumber,
+      mobileNumber:  phoneNumber,
       mobileOtpSession: mobileOtpSession,
       mobileOtpValue: formData.otp,
       userType: "Login",
@@ -289,17 +288,17 @@ if(authMethod=="whatsapp"){
       // primaryType: "DELIVERYBOY",
     };
   }
-    console.log({ data });
+    // console.log({ data });
+    console.log("otp verification data",data);
+    
     axios({
       method: "post",
       url:
-        userStage != "test"
-          ? BASE_URL + `auth-service/auth/registerwithMobile`
-          : BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+        BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
       data: data,
     })
       .then(async (response) => {
-        console.log("response", response.data);
+        console.log("response", response);
         setFormData({ ...formData, loading: false, otp: "" });
         if (response.data.primaryType == "CUSTOMER") {
           if (response.data.accessToken != null) {
@@ -368,9 +367,9 @@ if(authMethod=="whatsapp"){
     try {
       setWhatsappNumber(value);
   
-       console.log({value})
+      //  console.log({value})
       const callingCode = phoneInput.getCallingCode(value);
-      console.log(callingCode);
+      // console.log(callingCode);
       setcountryCode(callingCode);
       const isValid = /^[0-9]*$/.test(value);
       if (isValid) {
@@ -428,10 +427,7 @@ if(authMethod=="whatsapp"){
 
           {/* Login Section */}
           <View style={styles.logingreenView}>
-            {/* <Image
-              source={require("../assets/Images/rice.png")}
-              style={styles.riceImage}
-            /> */}
+           
             <Text style={styles.loginTxt}>Login</Text>
 
             <View style={styles.authMethodContainer}>
@@ -452,15 +448,15 @@ if(authMethod=="whatsapp"){
                 <Text style={[styles.authMethodText, authMethod === 'sms' && styles.activeAuthMethodText]}>SMS</Text>
               </TouchableOpacity>
             </View>
-            
+            {(authMethod === 'whatsapp'&& otpSent)&&(
+              <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your whatsapp number</Text>
+            )}
             {/* Phone Number Input */}
             <View style={styles.inputContainer}>
-              {/* <Text style={styles.inputLabel}>Phone Number</Text> */}
               {authMethod === 'whatsapp' ? (
-                <View style={styles.phoneInputContainer}>
-                
-                   <PhoneInput
-            placeholder="Whatsapp Number"
+            <View style={styles.phoneInputContainer}>
+              <PhoneInput
+              placeholder="Whatsapp Number"
               containerStyle={styles.input1}
               textInputStyle={styles.phonestyle}
               codeTextStyle={styles.phonestyle1}
@@ -470,11 +466,13 @@ if(authMethod=="whatsapp"){
               layout="first"              
               onChangeText={handlePhoneNumberChange}
             />
-                
-                  
-                  
-                </View>
+            
+             </View>
               ) : (
+                <>
+                {(authMethod === 'sms'&& otpSent)&&(
+                  <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your Mobile number</Text>
+                )}
                 <TextInput
                   style={[styles.input, otpSent && styles.disabledInput]}
                   placeholder="Enter your phone number"
@@ -484,6 +482,7 @@ if(authMethod=="whatsapp"){
                   editable={!otpSent}
                   maxLength={10}
                 />
+                </>
               )}
             </View>
 
@@ -493,7 +492,7 @@ if(authMethod=="whatsapp"){
               </Text>
             )}
 
-{phoneNumber_Error && (
+         {phoneNumber_Error && (
               <Text style={{ color: "red", alignSelf:"center" }}>
                 Please enter the Mobile number
               </Text>

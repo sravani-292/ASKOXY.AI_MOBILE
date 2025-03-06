@@ -35,10 +35,7 @@ const Tabs = () => {
     const customerId = userData?.userId;
     axios
       .get(
-        userStage == "test1"
-          ? BASE_URL +
-              `erice-service/cart/customersCartItems?customerId=${customerId}`
-          : BASE_URL +
+        BASE_URL +
               `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
@@ -49,7 +46,9 @@ const Tabs = () => {
       .then((response) => {
         // console.log("cart response in bottom tabs",response);
         if (response.data && Array.isArray(response.data.customerCartResponseList)) {
-          setCartCount(response.data.customerCartResponseList.length);
+          const cartData = response?.data?.customerCartResponseList;
+          const totalCartCount = cartData.reduce((total, item) => total + item.cartQuantity, 0);
+          setCartCount(totalCartCount);
         } else {
           setCartCount(0); 
         }

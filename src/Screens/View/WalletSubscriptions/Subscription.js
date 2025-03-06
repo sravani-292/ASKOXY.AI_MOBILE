@@ -72,9 +72,7 @@ const Subscription = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        url:userStage=="test1"?
-          BASE_URL +
-          `erice-service/user/customerProfileDetails?customerId=${userData.userId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${userData.userId}`,
+        url:BASE_URL+`user-service/customerProfileDetails?customerId=${userData.userId}`,
       });
       console.log(response.data);
 
@@ -96,8 +94,7 @@ const Subscription = () => {
     setLoading(true)
     const data = {
       url:
-        userStage=="test1" ?BASE_URL +
-        "erice-service/subscription-plans/getSubscriptionsDetailsForaCustomer":BASE_URL+"order-service/getSubscriptionsDetailsForaCustomer",
+        BASE_URL+"order-service/getSubscriptionsDetailsForaCustomer",
       method: "post",
       headers: {
         "Content-Type": "application/json",
@@ -111,7 +108,7 @@ const Subscription = () => {
     try {
       const response = await axios(data);
       setLoading(false)
-      console.log("get subscription", response.data);
+      console.log("get subscription", response);
       setStatus(response.data.status);
       setNoteResponse(response.data.message);
       console.log("status", status);
@@ -124,7 +121,7 @@ const Subscription = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        userStage=="test1"?BASE_URL + "erice-service/wallet/getAllPlans":BASE_URL+"order-service/getAllPlans",
+       BASE_URL+"order-service/getAllPlans",
         {
           headers: {
             "Content-Type": "application/json",
@@ -134,7 +131,7 @@ const Subscription = () => {
       );
 
       if (response.data) {
-        console.log("subscription", response.data);
+        console.log("subscription", response);
         // Alert.alert(response.data.message)
         setLoading(false);
         setSubscriptionHistoryData(response.data);
@@ -179,8 +176,7 @@ const Subscription = () => {
     };
     axios
       .post(
-        userStage =="test1"?
-        BASE_URL + `erice-service/wallet/userSubscriptionAmount`:BASE_URL+"order-service/userSubscriptionAmount",
+        BASE_URL+"order-service/userSubscriptionAmount",
         postData,
         {
           headers: {
@@ -420,7 +416,7 @@ const Subscription = () => {
               // clearInterval(intervalId); 294182409
               axios({
                 method: "POST",
-                url: userStage=="test1"?BASE_URL + "erice-service/wallet/userSubscriptionAmount":BASE_URL+"order-service/userSubscriptionAmount",
+                url: BASE_URL+"order-service/userSubscriptionAmount",
                 data: {
                   ...postData,
                   paymentId: transactionId,
@@ -506,12 +502,14 @@ const Subscription = () => {
       ) : (
         <>
           <Text style={styles.header}>Subscription Plans</Text>
+          {noteResponse &&(
           <View style={styles.noteContainer}>
           <Text style={styles.noteText}>
           <Text style={styles.noteLabel}>Note: </Text>
           {noteResponse}
           </Text>
           </View> 
+          )}
           {subscriptionHistoryData.length > 0 ? (
             <FlatList
               data={subscriptionHistoryData}

@@ -87,9 +87,10 @@ const Services = () => {
       axios({
         method: "get",
         url:
-          userStage == "test"
-            ? BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
-            : null,
+          // userStage == "test"
+          //   ? 
+            BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
+            // : null,
       })
         .then((response) => {
           console.log("response", response.data);

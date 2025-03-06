@@ -161,10 +161,7 @@ const CheckOut = ({ navigation, route }) => {
     setLoading(true);
     axios
       .get(
-        userStage == "test1"
-          ? BASE_URL +
-              `erice-service/cart/customersCartItems?customerId=${customerId}`
-          : BASE_URL +
+         BASE_URL +
               `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
@@ -185,7 +182,7 @@ const CheckOut = ({ navigation, route }) => {
         const limitedStockMap = cartData.reduce((acc, item) => {
           if (item.quantity === 0) {
             acc[item.itemId] = "outOfStock";
-          } else if (item.quantity === 1) {
+          } else if (item.quantity <= 5) {
             acc[item.itemId] = "lowStock";
           }
           return acc;
@@ -345,9 +342,7 @@ const CheckOut = ({ navigation, route }) => {
     const currentQuantity = item.cartQuantity;
     try {
       const response = await axios.patch(
-        BASE_URL == "test1"
-          ? BASE_URL + `erice-service/cart/incrementCartData`
-          : BASE_URL + `cart-service/cart/incrementCartData`,
+         BASE_URL + `cart-service/cart/incrementCartData`,
         {
           customerId: customerId,
           itemId: item.itemId,
@@ -374,9 +369,7 @@ const CheckOut = ({ navigation, route }) => {
         const newQuantity = item.cartQuantity;
 
         const response = await axios.patch(
-          BASE_URL == "test1"
-            ? BASE_URL + `erice-service/cart/decrementCartData`
-            : BASE_URL + "cart-service/cart/decrementCartData",
+           BASE_URL + "cart-service/cart/decrementCartData",
           {
             // cartQuantity: newQuantity,
             customerId: customerId,
@@ -447,9 +440,7 @@ const CheckOut = ({ navigation, route }) => {
               console.log("Removing cart item with ID:", item.cartId);
 
               const response = await axios.delete(
-                userStage == "test1"
-                  ? BASE_URL + "erice-service/cart/remove"
-                  : BASE_URL + "cart-service/cart/remove",
+                 BASE_URL + "cart-service/cart/remove",
                 {
                   data: {
                     id: item.cartId,
@@ -488,10 +479,7 @@ const CheckOut = ({ navigation, route }) => {
           Authorization: `Bearer ${token}`,
         },
         url:
-          userStage == "test1"
-            ? BASE_URL +
-              `erice-service/user/customerProfileDetails?customerId=${customerId}`
-            : BASE_URL +
+           BASE_URL +
               `user-service/customerProfileDetails?customerId=${customerId}`,
       });
       console.log(response.data);
@@ -514,9 +502,7 @@ const CheckOut = ({ navigation, route }) => {
     try {
       const response = await axios({
         url:
-          userStage == "test1"
-            ? BASE_URL + `erice-service/user/getAllAdd?customerId=${customerId}`
-            : BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
+          BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -551,9 +537,7 @@ const CheckOut = ({ navigation, route }) => {
     try {
       const response = await axios({
         url:
-          userStage == "test1"
-            ? BASE_URL + "erice-service/cart/cartItemData"
-            : BASE_URL + "cart-service/cart/cartItemData",
+           BASE_URL + "cart-service/cart/cartItemData",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -679,17 +663,24 @@ const CheckOut = ({ navigation, route }) => {
             data={cartData}
             keyExtractor={(item) => item.itemId.toString()}
             renderItem={({ item }) => (
+             
+              
               <View
                 style={[
                   styles.cartItem,
                   item.quantity === 0 && styles.outOfStockCard,
                 ]}
               >
-                {isLimitedStock[item.itemId] === "lowStock" && (
-                  <View style={styles.limitedStockBadge}>
-                    <Text style={styles.limitedStockText}>1 item left</Text>
-                  </View>
-                )}
+                 {isLimitedStock[item.itemId] == "lowStock" && (
+                <View style={styles.limitedStockBadge}>
+                  <Text style={styles.limitedStockText}>
+                    {item.quantity > 1
+                      ? `${item.quantity} items left`
+                      : `${item.quantity} item left`}
+                  </Text>
+                </View>
+              )}
+               
                 {isLimitedStock[item.itemId] === "outOfStock" && (
                   <View style={styles.outOfStockContainer}>
                     {/* Transparent overlay to block interactions on everything except the remove button */}

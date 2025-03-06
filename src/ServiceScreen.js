@@ -3,7 +3,7 @@
 import React,{useState,useEffect,useCallback} from "react";
 import { View, Text, Image, TextInput, FlatList, TouchableOpacity,ScrollView,
           BackHandler, Dimensions ,StyleSheet,Alert} from "react-native";
-import { Ionicons, FontAwesome,AntDesign } from "@expo/vector-icons";
+import { Ionicons, FontAwesome,MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch,useSelector } from "react-redux";
@@ -13,7 +13,6 @@ const{height,width}=Dimensions.get('window')
 import { useNavigationState } from '@react-navigation/native';
 import { ActivityIndicator } from "react-native-paper";
 import LottieView from "lottie-react-native";
-
 
 const services = [
   { id: "1", name: "Free Rudraksha", image: require("../assets/tick.png"),screen:"FREE RUDRAKSHA" },
@@ -29,8 +28,8 @@ const services = [
 ];
 
 const images = [
-  require("../assets/ricecard1.png"),
-  require("../assets/ricecard2.png"),
+  require("../assets/Images/r1.png"),
+  require("../assets/Images/r2.png"),
 ];
 
 const ComboRice = [
@@ -110,9 +109,8 @@ useFocusEffect(
     axios({
       method: "get",
       url:
-        userStage == "test"
-          ? BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
-          : null,
+        BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
+         
     })
       .then((response) => {
         // console.log("response", response.data);
@@ -149,9 +147,8 @@ useFocusEffect(
     axios({
       method: "get",
       url:
-        userStage == "test"
-          ? BASE_URL + "product-service/showItemsForCustomrs"
-          : null,
+         BASE_URL + "product-service/showItemsForCustomrs"
+          
     })
     .then((response) => {
       setLoading(false)
@@ -184,7 +181,7 @@ useEffect(()=>{
         />
 {userData!=null?
         <TouchableOpacity onPress={()=>navigation.navigate("Login")}  style={{ marginLeft: "auto" }}>
-          <AntDesign name="logout" size={30} color="black" />
+          <MaterialCommunityIcons name="logout" size={25} color="#5e606c" />
         </TouchableOpacity>
         
         :null}
@@ -203,8 +200,7 @@ useEffect(()=>{
         renderItem={({ item }) => (
           <View style={styles.imageContainer}>
           <Image source={item} style={{ width:"97%",height: "42%", }} />
-
-          </View>
+         </View>
         )}
       />
 
@@ -222,6 +218,7 @@ useEffect(()=>{
       </View>
 
       {/* Car Brands Horizontal List */}
+      {data!=null||data!=""&&(
       <View style={{marginBottom:10,height:180,}}>
       <FlatList
         data={data}
@@ -266,6 +263,9 @@ useEffect(()=>{
         )}
       />
       </View>
+      
+      )}
+
 
       {/* Popular Categories List */}
       <View style={{ flexDirection: "row", justifyContent: "space-between",padding:10 }}>
@@ -345,10 +345,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   imageContainer: {
-    width:width/1,
+    width:width*1,
     justifyContent: "center",
     alignItems: "center",
-    height:240,
+    height:350,
     top:-50
   },
   image: {

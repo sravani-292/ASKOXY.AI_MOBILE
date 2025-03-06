@@ -33,13 +33,12 @@ const SubscriptionHistory = () => {
 
 const[details,setDetails]=useState([])
 
-
+const[loading,setLoading]=useState(false)
   const getSubscription = async () => {
-    // setLoading(true)
+    setLoading(true)
    axios({
     method: "post",
-    url: userStage=="test1" ?BASE_URL +
-    "erice-service/subscription-plans/getSubscriptionsDetailsForaCustomer":BASE_URL+`order-service/getallsubscriptionsforacustomer?customerId=${customerId}`,
+    url: BASE_URL+`order-service/getallsubscriptionsforacustomer?customerId=${customerId}`,
     headers: {
     Authorization: `Bearer ${token}`,
     },
@@ -47,9 +46,11 @@ const[details,setDetails]=useState([])
    })
    .then((response)=>{
     console.log("response",response.data)
+    setLoading(false)
     setDetails(response.data)
    })
    .catch((error)=>{
+    setLoading(false)
     console.log(error.response)
    })
     
@@ -90,12 +91,26 @@ const[details,setDetails]=useState([])
   return (
     
     <View>
+      {loading==false?
+      <>
+      {details!=="" || details != []?
       <FlatList
         data={details}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}
       />
+      :
+      <View style={{marginTop:20,alignSelf:"center"}}>
+        <Text>No data found</Text>
+      </View>
+      }
+      </>
+      :
+      <View style={{marginTop:20,alignSelf:"center"}}>
+        <ActivityIndicator size={30} color="#3d2a71"/>
+      </View>
+      }
     </View>
   )
 }

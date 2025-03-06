@@ -46,9 +46,7 @@ const TicketHistory = ({ navigation }) => {
     setLoading(true);
     axios
       .post(
-        userStage == "test1"
-          ? BASE_URL + `erice-service/writetous/getQueries`
-          : BASE_URL + `writetous-service/getAllQueries`,
+         BASE_URL + `writetous-service/getAllQueries`,
         {
           queryStatus: queryStatus,
           userId: customerId,
@@ -109,9 +107,7 @@ const TicketHistory = ({ navigation }) => {
     setYesLoader(true);
     axios
       .post(
-        userStage === "test1"
-          ? BASE_URL + "erice-service/writetous/saveData"
-          : BASE_URL + "writetous-service/saveData",
+        BASE_URL + "writetous-service/saveData",
         data,
         {
           headers: {

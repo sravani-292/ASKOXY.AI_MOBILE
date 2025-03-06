@@ -108,7 +108,7 @@ const AddressBook = ({ route }) => {
     setLoading(true);
     try {
       const response = await axios({
-        url: userStage=="test1"?BASE_URL + `erice-service/user/getAllAdd?customerId=${customerId}`:BASE_URL+`user-service/getAllAdd?customerId=${customerId}`,
+        url: BASE_URL+`user-service/getAllAdd?customerId=${customerId}`,
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -155,7 +155,7 @@ const AddressBook = ({ route }) => {
       try {
         const data = {
           method: "post",
-          url: userStage=="test1"?BASE_URL + "erice-service/user/addAddress":BASE_URL+"user-service/addAddress",
+          url: BASE_URL+"user-service/addAddress",
           headers: {
             Authorization: `Bearer ${token}`,
           },

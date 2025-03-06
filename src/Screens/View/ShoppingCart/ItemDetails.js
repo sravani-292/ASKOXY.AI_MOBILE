@@ -18,8 +18,7 @@ const { width, height } = Dimensions.get("window");
 import { COLORS } from "../../../../Redux/constants/theme";
 import Icon from "react-native-vector-icons/Ionicons";
 import BASE_URL, { userStage } from "../../../../Config";
-
-// ItemDetailsScreen Component
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 const ItemDetails = ({ route, navigation }) => {
   const { item } = route?.params;
   console.log("Item details page", item);
@@ -34,23 +33,31 @@ const ItemDetails = ({ route, navigation }) => {
   const [loadingItems, setLoadingItems] = useState({});
   const [isLimitedStock, setIsLimitedStock] = useState({});
   useEffect(() => {
+    // getProfile();
     fetchCartData();
+   
   }, []);
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     await getProfile(); 
+  //     setTimeout(() => {
+  //       fetchCartData();
+  //     }, 1000); 
+  //   };
+  
+  //   fetchData();
+  // }, []);
+  
   const fetchCartData = async () => {
     console.log("fetching cart data");
     const url =
-      userStage === "test1"
-        ? `${BASE_URL}erice-service/cart/customersCartItems?customerId=${customerId}`
-        : `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`;
+      `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`;
 
     console.log("Requesting API:", url);
     try {
       const response = await axios.get(
-        userStage == "test1"
-          ? BASE_URL +
-              `erice-service/cart/customersCartItems?customerId=${customerId}`
-          : BASE_URL +
+        BASE_URL +
               `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
@@ -109,6 +116,8 @@ const ItemDetails = ({ route, navigation }) => {
       setIsLimitedStock(limitedStockMap);
       setCartCount(cartData.length);
     } catch (error) {
+      console.log(error);
+      
       console.error("Error fetching cart items:", error.response.status);
     }
   };
@@ -147,9 +156,7 @@ const ItemDetails = ({ route, navigation }) => {
 
       if (currentQuantity > 1) {
         const response = await axios.patch(
-          BASE_URL == "test1"
-            ? BASE_URL + `erice-service/cart/decrementCartData`
-            : BASE_URL + "cart-service/cart/decrementCartData",
+           BASE_URL + "cart-service/cart/decrementCartData",
           {
             customerId: customerId,
             itemId: item.itemId,
@@ -194,9 +201,7 @@ const ItemDetails = ({ route, navigation }) => {
       const currentQuantity = cartItems[item.itemId] || 0;
 
       const response = await axios.patch(
-        BASE_URL == "test1"
-          ? BASE_URL + `erice-service/cart/incrementCartData`
-          : BASE_URL + `cart-service/cart/incrementCartData`,
+        BASE_URL + `cart-service/cart/incrementCartData`,
         {
           customerId: customerId,
           itemId: item.itemId,
@@ -262,9 +267,7 @@ const ItemDetails = ({ route, navigation }) => {
               console.log("Removing cart item with ID:", getRemoveId);
 
               const response = await axios.delete(
-                BASE_URL == "test1"
-                  ? BASE_URL + "erice-service/cart/remove"
-                  : BASE_URL + "cart-service/cart/remove",
+                 BASE_URL + "cart-service/cart/remove",
                 {
                   data: {
                     id: getRemoveId.cartId,
@@ -278,7 +281,6 @@ const ItemDetails = ({ route, navigation }) => {
 
               console.log("Item removed successfully", response.data);
 
-              // Fetch updated cart data and total after item removal
               fetchCartData();
             } catch (error) {
               console.error(
@@ -294,25 +296,21 @@ const ItemDetails = ({ route, navigation }) => {
   };
 
   const getProfile = async () => {
-    console.log("profile get call response");
 
     try {
       const response = await axios({
         method: "GET",
         url:
-          userStage == "test1"
-            ? BASE_URL +
-              `erice-service/user/customerProfileDetails?customerId=${customerId}`
-            : BASE_URL +
+           BASE_URL +
               `user-service/customerProfileDetails?customerId=${customerId}`,
 
         headers: {
-          // "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.status === 200) {
+        console.log("profile get call response");
         setUser(response.data);
       }
     } catch (error) {
@@ -342,9 +340,7 @@ const ItemDetails = ({ route, navigation }) => {
     const data = { customerId: customerId, itemId: item.itemId };
     try {
       const response = await axios.post(
-        userStage == "test1"
-          ? BASE_URL + "erice-service/cart/add_Items_ToCart"
-          : BASE_URL + "cart-service/cart/add_Items_ToCart",
+         BASE_URL + "cart-service/cart/add_Items_ToCart",
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -362,19 +358,44 @@ const ItemDetails = ({ route, navigation }) => {
   return (
     <View style={styles.detailsContainer}>
       <View style={styles.imageContainer}>
+         {/* Discount Badge */}
+                        {item.itemMrp > item.itemPrice && (
+                          <View style={styles.discountBadge}>
+                            <Text style={styles.discountText}>
+                              {Math.round(
+                                ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
+                              )}
+                              % OFF
+                            </Text>
+                          </View>
+                        )}
         <Image source={{ uri: item.itemImage }} style={styles.detailImage} />
+       {/* Star Ratings */}
+       <View style={styles.ratingContainer}>
+        {/* 4 Full Stars */}
+        {[...Array(4)].map((_, index) => (
+          <FontAwesome key={index} name="star" size={20} color="gold" />
+        ))}
+
+        {/* Half Star */}
+        <FontAwesome name="star-half-full" size={20} color="gold" />
+
+        {/* Static Rating Text */}
+        <Text style={styles.ratingText}>4.8/5</Text>
+      </View>
         <Text style={styles.itemName}>{item.itemName.toUpperCase()}</Text>
       </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, padding: 5 }}
+        showsVerticalScrollIndicator={false}
       >
-        {item.itemDescription && (
+        {/* {item.itemDescription && (
           <View style={styles.descriptionCard}>
             <Text style={styles.descriptionLabel}>Description:</Text>
             <Text style={styles.descriptionText}>{item.itemDescription}</Text>
           </View>
-        )}
+        )} */}
 
         <View style={styles.infoContainer}>
           {/* Item Info */}
@@ -394,6 +415,12 @@ const ItemDetails = ({ route, navigation }) => {
               {item.weight} {item.units}
             </Text>
           </View>
+          {item.itemDescription && (
+          <View style={styles.descriptionCard}>
+            <Text style={styles.descriptionLabel}>Description:</Text>
+            <Text style={styles.descriptionText}>{item.itemDescription}</Text>
+          </View>
+        )}
           <View style={styles.infoRow1}>
             <Text style={{ alignSelf: "center", alignItems: "center" }}>
               {item.itemQuantity1}
@@ -666,8 +693,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginVertical: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    // borderWidth: 1,
+    // borderColor: "#ddd",
   },
   descriptionLabel: {
     fontSize: 14,
@@ -721,5 +748,37 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignSelf: "center",
     alignItems: "center",
+  },
+  discountBadge: {
+    position: "absolute",
+    top: 1,
+    // bottom:1,
+    left: width*0.2, 
+    // right:width*0.2,
+    backgroundColor: "#ffa600",
+    width: 40,   
+    height: 40,
+    borderRadius: 20, 
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2, 
+  },
+  
+  discountText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
+    textAlign: "center",
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  ratingText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "black",
+    marginLeft: 5,
   },
 });

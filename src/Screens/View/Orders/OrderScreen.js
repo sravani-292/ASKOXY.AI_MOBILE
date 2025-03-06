@@ -47,9 +47,7 @@ const OrderScreen = () => {
 
     try {
       const response = await axios.post(
-        userStage == "test1"
-          ? BASE_URL + "erice-service/order/getAllOrders_customerId"
-          : BASE_URL + "order-service/getAllOrders_customerId",
+        BASE_URL + "order-service/getAllOrders_customerId",
         data,
         {
           headers: {

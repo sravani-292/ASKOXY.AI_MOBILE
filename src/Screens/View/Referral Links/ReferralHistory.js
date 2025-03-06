@@ -66,8 +66,7 @@ function getRefereeDetails(){
     axios({
         method:"get",
         url: 
-            userStage =="test1"? BASE_URL + `erice-service/user/customerProfileDetails?customerId=${customerId}`
-            :
+           
             BASE_URL+`reference-service/getreferencedetails/${customerId}`,
         headers: {
           // "Content-Type": "application/json",
@@ -160,6 +159,7 @@ function getRefereeDetails(){
 
      {loading==false?
       <View>
+    {refereesData!="" || refereesData!=[] ?
       <FlatList
         data={refereesData}
         renderItem={renderRefereeItem}
@@ -167,6 +167,11 @@ function getRefereeDetails(){
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
       />
+      :
+      <View style={{marginTop:30,alignSelf:"center"}}>
+        <Text>No Data Found</Text>
+      </View>
+    }
       </View>
       :
         <ActivityIndicator 

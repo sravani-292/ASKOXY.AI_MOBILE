@@ -66,7 +66,10 @@ export default function FreeAIAndGenAI({navigation}) {
       setLoading(true);
       axios({
         method: "post",
-        url: userStage == "test" ? BASE_URL + "marketing-service/campgin/askOxyOfferes" : BASE_URL + "auth-service/auth/askOxyOfferes",
+        url: 
+        // userStage == "test" ? 
+        BASE_URL + "marketing-service/campgin/askOxyOfferes" ,
+        // : BASE_URL + "auth-service/auth/askOxyOfferes",
         data: data,
       })
         .then((response) => {

@@ -179,6 +179,7 @@ if(authMethod=="whatsapp"){
 
     console.log( BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?"+"+Number:phoneNumber}`
     )
+    setLoading(true)
     if(formData.password=="@$k0xy"){
     axios({
       method:"post",
@@ -186,7 +187,7 @@ if(authMethod=="whatsapp"){
     })
     .then((response)=>{
       console.log(response.data)
-      
+      setLoading(false)
       if (response.data.primaryType == "CUSTOMER") {
         if (response.data.accessToken != null) {
           dispatch(AccessToken(response.data));
@@ -196,15 +197,18 @@ if(authMethod=="whatsapp"){
           // );
           navigation.navigate('Home')
         }
-      else{
-         Alert.alert(
-                    "Failed",
-                    `You have logged in as ${response.data.primaryType} , Please login as Customer`
-                  );
-      }
-      }
+        else{
+          Alert.alert('Failed',"AccessToken does not exist")
+        }
+      } else{
+        Alert.alert(
+                   "Failed",
+                   `You have logged in as ${response.data.primaryType} , Please login as Customer`
+                 )
+                }
     })
     .catch((error)=>{
+      setLoading(false)
       console.log(error.response)
       Alert.alert("Failed",error.response)
     })

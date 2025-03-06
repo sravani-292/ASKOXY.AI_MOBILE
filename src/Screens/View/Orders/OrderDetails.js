@@ -78,7 +78,7 @@ const OrderDetails = () => {
 
     axios({
       method: "post",
-      url: userStage=="test1"?BASE_URL + "erice-service/checkout/submitfeedback":BASE_URL+"order-service/submitfeedback",
+      url: BASE_URL+"order-service/submitfeedback",
       data: data,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -104,9 +104,7 @@ const OrderDetails = () => {
   const feedbackGet = async () => {
     axios({
       method: "get",
-      url:userStage=="test1"?
-        BASE_URL +
-        `erice-service/checkout/feedback?feedbackUserId=${customerId}&orderid=${order_id}`: BASE_URL+`order-service/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
+      url: BASE_URL+`order-service/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -129,7 +127,7 @@ const OrderDetails = () => {
     
     const data = {
       method: "get",
-      url: userStage=="test1"?BASE_URL + "erice-service/order/getOrdersByOrderId/" + order_id:BASE_URL+"order-service/getOrdersByOrderId/" + order_id,
+      url: BASE_URL+"order-service/getOrdersByOrderId/" + order_id,
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -501,16 +499,18 @@ const OrderDetails = () => {
           </View>
 
           {/* Delivery Fee */}
+
           <View style={styles.row}>
             <Text style={styles.label}>Delivery Fee:</Text>
             <Text style={styles.value}>+{deliveryFee}</Text>
           </View>
           {/* Gst */}
+          {(gstAmount!=null && gstAmount!=0)&&(
           <View style={styles.row}>
             <Text style={styles.label}>GST:</Text>
             <Text style={styles.value}>+{gstAmount}</Text>
           </View>
-          
+          )}
           {/* coupen value */}
           {(couponValue != null && couponValue !=0) && (
             <View style={styles.row}>
@@ -560,7 +560,7 @@ const OrderDetails = () => {
 
       {/* // yesterday changes */}
 
-      {/* <View
+      <View
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
@@ -580,14 +580,14 @@ const OrderDetails = () => {
                   paddingHorizontal: 20,
                 }}
               >
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setIsmodelVisible(true)}
                 >
                   <View>
                     <Text style={styles.cancelButtonText}>Cancel Order</Text>
                   </View>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             ) : orderstatus == 4 ? (
               <View
@@ -599,15 +599,15 @@ const OrderDetails = () => {
                   paddingHorizontal: 20,
                 }}
               >
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setIsExchangeVisible(true)}
                 >
                   <View>
                     <Text style={styles.cancelButtonText}>Exchange Order</Text>
                   </View>
-                </TouchableOpacity>
-                {isExchangeVisible && (
+                </TouchableOpacity> */}
+                {/* {isExchangeVisible && (
                   <TouchableOpacity
                     style={styles.cancelButton}
                     onPress={() => setIsExchangeVisible(false)}
@@ -618,7 +618,7 @@ const OrderDetails = () => {
                       </Text>
                     </View>
                   </TouchableOpacity>
-                )}
+                )} */}
               </View>
             ) : null}
           </View>
@@ -630,7 +630,7 @@ const OrderDetails = () => {
         >
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>
-      </View> */}
+      </View>
 
       {isModalVisible && (
         <Modal visible={isModalVisible} transparent animationType="slide">

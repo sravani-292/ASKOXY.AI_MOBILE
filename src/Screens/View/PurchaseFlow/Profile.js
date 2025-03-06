@@ -80,7 +80,7 @@ const ProfilePage = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [formattedValue, setFormattedValue] = useState('');
-  const[countryode,setcountryCode]=useState('')
+  const[countryode,setcountryCode]=useState('91')
   const[loader,setLoader]=useState(false)
    const[whatsappNumber,setWhatsappNumber]=useState('')
     const[whatsappNumber_Error,setWhatsappNumber_Error]=useState(false)
@@ -90,6 +90,7 @@ const ProfilePage = () => {
     const[loading,setLoading]=useState(false)
       const[otpSession,setOtpSession]=useState('')
       const[salt,setSalt]=useState('')
+      // const[whatsappVerified,setWhatsappVerified]=useState('')
   // const phoneInput = useRef(null);
 
   useFocusEffect(
@@ -131,9 +132,7 @@ const ProfilePage = () => {
      try {
       const response = await axios({
         method: "GET",
-        url: userStage =="test1"?
-        BASE_URL +
-        `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+        url:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
           // "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -192,8 +191,7 @@ console.log("v",response.data)
     setIsLoading(true);
     try {
       const response = await axios.patch(
-        userStage=="test1"?
-        BASE_URL + "erice-service/user/profileUpdate":BASE_URL+"user-service/profileUpdate",
+        BASE_URL+"user-service/profileUpdate",
         {
           userFirstName: profileForm.user_FirstName,
           userLastName:profileForm.user_LastName,
@@ -310,7 +308,7 @@ console.log("v",response.data)
     // seterrorNumberInput(false)
     // setWhatsappNumber_Error(false)
     try {
-      setWhatsappNumber(value);
+      // setWhatsappNumber(value);
     //   if(value.length>13 || value.length<10){
     //     setValidError(true)
     //     return false;
@@ -318,19 +316,21 @@ console.log("v",response.data)
        console.log({value})
       const callingCode = phoneInput.getCallingCode(value);
       console.log(callingCode);
-      setCode(callingCode);
-      // setWhatsappNumber(value)
-      // console.log(countryCode)
+      setcountryCode(callingCode);
+      setPhoneNumber(value)
+      console.log(phoneNumber)
     } catch (error) {
       // Handle any parsing errors
     }
   };
 
   const handleSubmit = () => {
-    if (phoneNumber.trim() === '') {
-      alert('Please enter a phone number');
-      return;
-    }
+    console.log({phoneNumber})
+    // if (phoneNumber.trim() == '') {
+    //   alert('Please enter a phone number');
+    //   return false;
+    // }
+    console.log(userData.whatsappNumber)
     if(userData.whatsappNumber == "+"+countryode+phoneNumber){
       Alert.alert("Failed","Self referral is not allowed")
       return false
@@ -354,7 +354,7 @@ setLoader(true)
       }
     })
     .then((response)=>{
-      console.log("response",response.data)
+      console.log("response",response)
       setLoader(false)
       if(response.data.status==false){
         Alert.alert("Failed",response.data.message)
@@ -414,7 +414,7 @@ setLoader(true)
       data:data
     })
     .then((response)=>{
-      console.log(response.data)
+      console.log("user-service/sendWhatsappOtpqAndVerify",response)
       setOtpSent(true)
       setLoading(false)
       setOtpSession(response.data.whatsappOtpSession)
@@ -446,7 +446,8 @@ setLoader(true)
       console.log(response.data)
       setOtpSent(false)
       setLoading(false)
-      getProfile()
+      setProfileForm({...profileForm,status:true})
+      // getProfile()
     })
     .catch((error)=>{
       console.log(error.response)
@@ -465,7 +466,7 @@ setLoader(true)
           <View>
             <TextInput
               style={styles.input}
-              placeholder="Enter  your firstName"
+              placeholder="Enter  your first Name"
               value={profileForm?.user_FirstName || ""}
               onChangeText={(text) => {
                 // Allow only alphabetic characters
@@ -481,11 +482,9 @@ setLoader(true)
               <Text style={styles.errorText}>{errors.user_FirstName}</Text>
             ) : null}
 
-
-
               <TextInput
               style={styles.input}
-              placeholder="Enter  your lastName"
+              placeholder="Enter  your last Name"
               value={profileForm?.user_LastName|| ""}
               onChangeText={(text) => {
                 // Allow only alphabetic characters
@@ -503,7 +502,7 @@ setLoader(true)
 
             <TextInput
               style={styles.input}
-              placeholder="Enter your e-mail "
+              placeholder="Enter your E-mail "
               keyboardType="email-address"
               autoCapitalize="none"  
               autoCorrect={false} 
@@ -658,7 +657,7 @@ setLoader(true)
               </Text>
             </TouchableOpacity> */}
 
-          {profileForm.status==true?
+          {profileForm.status==true   ?
             <TouchableOpacity
               style={{
                 backgroundColor: COLORS.services,
@@ -785,7 +784,7 @@ style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]}
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => {setModalVisible(false),setLoader(false)}}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -822,7 +821,7 @@ style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]}
             <View style={styles.buttonContainer}>
               <TouchableOpacity 
                 style={styles.cancelButton}
-                onPress={() => {setModalVisible(false),setPhoneNumber('')}}
+                onPress={() => {setModalVisible(false),setPhoneNumber(''),setLoader(false)}}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -837,7 +836,7 @@ style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]}
               </TouchableOpacity>
               :
               <View style={styles.submitButton}>
-                <ActivityIndicator size={30} color="white"/>
+                <ActivityIndicator size={25} color="white"/>
               </View>
               }
             </View>

@@ -11,6 +11,7 @@ import {
   Dimensions,
   Touchable,
   TouchableOpacity,
+  ScrollView
 } from "react-native";
 import React, { useState,useEffect,useCallback } from "react";
 import axios from "axios";
@@ -64,7 +65,7 @@ const WriteToUs = ({navigation,route}) => {
   );
 
   function getProfileDetails() {
-    axios.get(userStage == "test1"?BASE_URL + `erice-service/user/customerProfileDetails?customerId=${accessToken.userId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${accessToken.userId}`, {
+    axios.get(BASE_URL+`user-service/customerProfileDetails?customerId=${accessToken.userId}`, {
       headers: {
         Authorization: `Bearer ${accessToken.accessToken}`,
     }
@@ -169,9 +170,7 @@ else{
       
       setFormData({...formData,loading:true})
         axios.post(
-          userStage === "test1"
-            ? BASE_URL + "erice-service/writetous/saveData"
-            : BASE_URL + "writetous-service/saveData",
+          BASE_URL + "writetous-service/saveData",
           data
           ,{    
         headers: {
@@ -243,7 +242,7 @@ else{
           setFormData({...formData,uploadLoader:true})
           axios({
             method: "post",
-            url:userStage == "test1" ?BASE_URL+`erice-service/writetous/uploadQueryScreenShot?userId=${accessToken.userId}`:BASE_URL+`writetous-service/uploadQueryScreenShot?userId=${accessToken.userId}`,
+            url:BASE_URL+`writetous-service/uploadQueryScreenShot?userId=${accessToken.userId}`,
             data: fd,
             headers: {
               Authorization: `Bearer ${accessToken.accessToken}`,
@@ -285,8 +284,11 @@ else{
 <TouchableOpacity onPress={()=>navigation.navigate('Ticket History')} style={styles.btn}>
   <Text style={{color:"white"}}>Ticket History</Text>
 </TouchableOpacity>
-
-
+        <ScrollView
+               style={{ flex: 1 }}
+               contentContainerStyle={{ flexGrow: 1, padding: 5 }}
+             >
+         
       <Text style={styles.header}>Write a Query</Text>
       <TextInput
         style={styles.input}
@@ -357,7 +359,7 @@ else{
   <ActivityIndicator size={30} color="white"/>
 </View>
 }
-     
+</ScrollView>
     </View>
   );
 };

@@ -111,11 +111,8 @@ const CartScreen = () => {
     setLoading(true);
     axios
       .get(
-        userStage == "test1"
-          ? BASE_URL +
-              `erice-service/cart/customersCartItems?customerId=${customerId}`
-          : BASE_URL +
-              `cart-service/cart/customersCartItems?customerId=${customerId}`,
+        BASE_URL +
+          `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -148,7 +145,7 @@ const CartScreen = () => {
         const limitedStockMap = cartData.reduce((acc, item) => {
           if (item.quantity === 0) {
             acc[item.itemId] = "outOfStock";
-          } else if (item.quantity === 1) {
+          } else if (item.quantity <= 5) {
             acc[item.itemId] = "lowStock";
           }
           return acc;
@@ -186,13 +183,10 @@ const CartScreen = () => {
   const getProfile = async () => {
     try {
       const response = await axios.get(
-        userStage === "test1"
-          ? `${BASE_URL}erice-service/user/customerProfileDetails?customerId=${customerId}`
-          : `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`
+        `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`
       );
 
       if (response.status === 200) {
-
         if (!response.data.email) {
           Alert.alert(
             "Incomplete Profile",
@@ -221,10 +215,7 @@ const CartScreen = () => {
   const totalCart = async () => {
     try {
       const response = await axios({
-        url:
-          userStage == "test1"
-            ? BASE_URL + "erice-service/cart/cartItemData"
-            : BASE_URL + "cart-service/cart/cartItemData",
+        url: BASE_URL + "cart-service/cart/cartItemData",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -248,9 +239,7 @@ const CartScreen = () => {
   const increaseCartItem = async (item) => {
     try {
       const response = await axios.patch(
-        BASE_URL == "test1"
-          ? BASE_URL + `erice-service/cart/incrementCartData`
-          : BASE_URL + `cart-service/cart/incrementCartData`,
+        BASE_URL + `cart-service/cart/incrementCartData`,
         {
           customerId: customerId,
           itemId: item.itemId,
@@ -273,9 +262,7 @@ const CartScreen = () => {
     try {
       if (cartItems[item.itemId] > 1) {
         const response = await axios.patch(
-          BASE_URL == "test1"
-            ? BASE_URL + `erice-service/cart/decrementCartData`
-            : BASE_URL + "cart-service/cart/decrementCartData",
+          BASE_URL + "cart-service/cart/decrementCartData",
           {
             customerId: customerId,
             itemId: item.itemId,
@@ -303,9 +290,7 @@ const CartScreen = () => {
   const removeCartItem = async (item) => {
     try {
       const response = await axios.delete(
-        BASE_URL == "test1"
-          ? BASE_URL + "erice-service/cart/remove"
-          : BASE_URL + "cart-service/cart/remove",
+        BASE_URL + "cart-service/cart/remove",
         {
           data: {
             id: item.cartId,
@@ -391,7 +376,6 @@ const CartScreen = () => {
         );
       }
     });
-   
 
     if (insufficientStockItems.length > 0) {
       Alert.alert(
@@ -409,7 +393,6 @@ const CartScreen = () => {
       );
       return false;
     }
-
 
     // ✅ Proceed to checkout
     navigation.navigate("Checkout", {
@@ -445,9 +428,13 @@ const CartScreen = () => {
                 item.quantity === 0 && styles.outOfStockCard,
               ]}
             >
-              {isLimitedStock[item.itemId] === "lowStock" && (
+              {isLimitedStock[item.itemId] == "lowStock" && (
                 <View style={styles.limitedStockBadge}>
-                  <Text style={styles.limitedStockText}>1 item left</Text>
+                  <Text style={styles.limitedStockText}>
+                    {item.quantity > 1
+                      ? `${item.quantity} items left`
+                      : `${item.quantity} item left`}
+                  </Text>
                 </View>
               )}
               {isLimitedStock[item.itemId] === "outOfStock" && (
@@ -543,8 +530,7 @@ const CartScreen = () => {
                             </TouchableOpacity>
 
                             <Text style={styles.itemTotal}>
-                              {/* Total: */}
-                               ₹
+                              {/* Total: */}₹
                               {(
                                 item.itemPrice *
                                 (cartItems[item.itemId] || item.cartQuantity)
@@ -643,7 +629,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   itemImage: {
-    marginLeft:5,
+    marginLeft: 5,
     width: width * 0.3,
     height: height / 7,
     marginRight: 10,
@@ -656,7 +642,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 18,
     fontWeight: "bold",
-    width: width * 0.6,
+    width: width * 0.5,
   },
   itemPrice: {
     color: "#16A34A",
@@ -683,7 +669,7 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontWeight: "bold",
-    backgroundColor:"white",
+    backgroundColor: "white",
   },
   removeButton: {
     backgroundColor: "#D32F2F",
@@ -746,8 +732,8 @@ const styles = StyleSheet.create({
     color: "#333",
     marginLeft: 2,
     marginBottom: 20,
-    width:width/3,
-    marginTop:15
+    width: width / 3,
+    marginTop: 15,
   },
   totalText: {
     fontSize: 18,

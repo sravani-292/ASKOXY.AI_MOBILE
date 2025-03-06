@@ -24,9 +24,8 @@ const WalletPage = ({ route }) => {
     setLoading(true)
     const data = { customerId: customerId};
     try {
-      const response = await axios.post(
-        userStage=="test1"?
-        BASE_URL +'erice-service/wallet/customerWalletData':BASE_URL+"order-service/customerWalletData",
+     const response = await axios.post(
+     BASE_URL+"order-service/customerWalletData",
         data,
         {
           headers: {
@@ -36,7 +35,7 @@ const WalletPage = ({ route }) => {
       );
 
       const { walletAmount, walletTransactions } = response.data;
-      console.log("wallet transactions",response.data);
+      console.log("wallet transactions",response);
       setLoading(false)
       setWalletAmount(walletAmount);
       setWalletTxs(walletTransactions);

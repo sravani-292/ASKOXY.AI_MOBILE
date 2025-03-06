@@ -29,19 +29,20 @@ const OrderSummaryScreen = ({ navigation, route }) => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchCartItems();
-      getProfile();
+      fetchCartItems()
+      getProfile()
       console.log("from checkout screen", route.params.addressData);
       setAddress(route.params.addressData);
     }, [])
   );
 
   const fetchCartItems = async () => {
+    console.log("3456789034567-90=98403902189`78654567389507");
     setLoading(true)
     try {
       const response = await fetch(
         BASE_URL +
-          `erice-service/cart/customersCartItems?customerId=${customerId}`,
+        `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           method: "GET",
           headers: {
@@ -50,7 +51,9 @@ const OrderSummaryScreen = ({ navigation, route }) => {
           },
         }
       );
-      const data = await response.json();
+      console.log("cart response",response.data.customerCartResponseList);
+      
+      const data = response.data.customerCartResponseList;
       setCartItems(data);
       console.log("cartItems",data);
       
@@ -66,7 +69,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
 
   const getProfile = async () => {
     // const mobile_No = AsyncStorage.getItem('mobileNumber');
-   
+   console.log("sreeja")
     try {
       const response = await axios({
         method: "GET",
@@ -76,7 +79,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
         },
         url:
           BASE_URL +
-          `erice-service/user/customerProfileDetails?customerId=${customerId}`,
+          `user-service/customerProfileDetails?customerId=${customerId}`,
       });
       // console.log(response.data);
 

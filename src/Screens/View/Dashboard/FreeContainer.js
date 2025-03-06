@@ -29,9 +29,10 @@ const FreeContainer = ({navigation}) => {
       axios({
         method: "post",
         url:
-          userStage == "test"
-            ? BASE_URL + "marketing-service/campgin/askOxyOfferes"
-            : BASE_URL + "auth-service/auth/askOxyOfferes",
+          // userStage == "test"
+          //   ?
+             BASE_URL + "marketing-service/campgin/askOxyOfferes",
+            // : BASE_URL + "auth-service/auth/askOxyOfferes",
         data: data,
       })
         .then((response) => {

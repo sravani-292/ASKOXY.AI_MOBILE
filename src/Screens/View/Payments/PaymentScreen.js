@@ -68,9 +68,7 @@ const PaymentDetails = ({ navigation, route }) => {
     try {
       const response = await axios({
         url:
-          userStage == "test1"
-            ? BASE_URL + "erice-service/cart/cartItemData"
-            : BASE_URL + "cart-service/cart/cartItemData",
+           BASE_URL + "cart-service/cart/cartItemData",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -212,8 +210,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const getWalletAmount = async () => {
     try {
       const response = await axios.post(
-        userStage=="test1"?
-        BASE_URL + `erice-service/cart/applyWalletAmountToCustomer`:BASE_URL+`order-service/applyWalletAmountToCustomer`,
+      BASE_URL+`order-service/applyWalletAmountToCustomer`,
         {
           customerId: customerId,
         },
@@ -226,7 +223,7 @@ const PaymentDetails = ({ navigation, route }) => {
 
       if (response.data) {
         // console.log("==========useWallet=============");
-        // console.log("getWalletAmount:", response.data);
+        console.log("getWalletAmount:", response);
         setWalletAmount(response.data.usableWalletAmountForOrder);
         // console.log("wallet amount", walletAmount);
         setMessge(response.data.message);
@@ -285,9 +282,7 @@ const PaymentDetails = ({ navigation, route }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-         url: userStage =="test1"?
-                        BASE_URL +
-                        `erice-service/user/customerProfileDetails?customerId=${customerId}`:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+         url: BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
       });
       // console.log(response.data);
 
@@ -345,9 +340,11 @@ const PaymentDetails = ({ navigation, route }) => {
     // console.log("postdata", postData);
 
     setLoading(true);
+    console.log({postData});
+    
     axios({
       method: "POST",
-      url: userStage=="test1"?BASE_URL+"erice-service/checkout/orderPlacedPaymet":BASE_URL+"order-service/orderPlacedPaymet",
+      url: BASE_URL+"order-service/orderPlacedPaymet",
       data: postData,
       headers: {
         // 'Content-Type': 'application/json',
@@ -518,8 +515,7 @@ const PaymentDetails = ({ navigation, route }) => {
     try {
       // Updated API URL and headers
       const response = await axios.get(
-        userStage=="test1"?
-        BASE_URL + "erice-service/coupons/getallcoupons":BASE_URL+"order-service/getAllCoupons",
+      BASE_URL+"order-service/getAllCoupons",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -544,7 +540,7 @@ const PaymentDetails = ({ navigation, route }) => {
     // console.log("Total amount is  :", subTotal);
 
     const response = axios
-      .post( userStage == "test1"?BASE_URL + "erice-service/coupons/applycoupontocustomer":BASE_URL+"order-service/applycoupontocustomer", data, {
+      .post( BASE_URL+"order-service/applycoupontocustomer", data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -641,7 +637,7 @@ const PaymentDetails = ({ navigation, route }) => {
               // clearInterval(intervalId); 294182409
               axios({
                 method: "POST",
-                url: userStage=="test1"?BASE_URL + "erice-service/checkout/orderPlacedPaymet":BASE_URL
+                url:BASE_URL
                 +"order-service/orderPlacedPaymet",
                 data: {
                   ...postData,
