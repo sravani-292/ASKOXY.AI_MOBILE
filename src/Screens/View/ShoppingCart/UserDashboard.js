@@ -79,7 +79,7 @@ const UserDashboard = () => {
   };
   const handleRemove = async (item) => {
     setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await removeItem(item);
+    await removeItem (item);
     setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
@@ -112,7 +112,7 @@ const UserDashboard = () => {
           },
         }
       );
-      // console.log("cart response",response.data.customerCartResponseList);
+      console.log("cart response",response);
       
       const cartData = response?.data?.customerCartResponseList;
        const totalCartCount = cartData.reduce((total, item) => total + item.cartQuantity, 0);
@@ -227,10 +227,15 @@ const UserDashboard = () => {
   };
 
   const removeItem = async (item) => {
+    console.log("into the removal method");
+    console.log("cart data", cartData);
+    
     const newQuantity = cartItems[item.itemId];
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
+    console.log("cartitem",cartItem);
+    
     try {
       const response = await axios.delete(
         BASE_URL + "cart-service/cart/remove",
@@ -244,21 +249,28 @@ const UserDashboard = () => {
           },
         }
       );
-
+      console.log("response",response.data);
+      if(response.data=="Card successfully deleted"){
+        // Alert.alert("Item removed", "Item removed from the cart");
+      Alert.alert(response.data)
       fetchCartItems();
-      Alert.alert("Item removed", "Item removed from the cart");
+
+    }
     } catch (error) {
       console.log(error.response);
     }
   };
   const decrementQuantity = async (item) => {
     const newQuantity = cartItems[item.itemId];
+    console.log("new quantity",newQuantity);
+    
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
 
     if (newQuantity === 1) {
-      handleRemove(item);
+      console.log("removing item", item);
+       handleRemove(item);
     } else {
       const data = {
         customerId: customerId,

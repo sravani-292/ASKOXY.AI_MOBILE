@@ -51,8 +51,7 @@ const ItemDetails = ({ route, navigation }) => {
   
   const fetchCartData = async () => {
     console.log("fetching cart data");
-    const url =
-      `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`;
+   
 
     console.log("Requesting API:", url);
     try {
@@ -65,7 +64,7 @@ const ItemDetails = ({ route, navigation }) => {
           },
         }
       );
-      console.log("API Response:", response);
+      console.log("API Response from cart", response);
       const cartData = response?.data?.customerCartResponseList;
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
@@ -327,16 +326,17 @@ const ItemDetails = ({ route, navigation }) => {
         { text: "Cancel" },
       ]);
       return;
-    } else if (!user) {
-      Alert.alert("Alert", "Please Complete Your Profile", [
-        {
-          text: "OK",
-          onPress: () => navigation.navigate("Home", { screen: "Profile" }),
-        },
-        { text: "Cancel" },
-      ]);
-      return;
     }
+    // } else if (!user) {
+    //   Alert.alert("Alert", "Please Complete Your Profile", [
+    //     {
+    //       text: "OK",
+    //       onPress: () => navigation.navigate("Home", { screen: "Profile" }),
+    //     },
+    //     { text: "Cancel" },
+    //   ]);
+    //   return;
+    // }
     const data = { customerId: customerId, itemId: item.itemId };
     try {
       const response = await axios.post(

@@ -121,6 +121,8 @@ const CartScreen = () => {
       )
 
       .then((response) => {
+        console.log("cart screen cart data", response);
+        
         setLoading(false);
         const cartData = response?.data?.customerCartResponseList;
         if (!cartData || !Array.isArray(cartData)) {

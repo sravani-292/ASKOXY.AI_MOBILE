@@ -139,7 +139,7 @@ const ProfilePage = () => {
         },
         });
       
-console.log("v",response.data)
+       console.log("v",response)
       if (response.status === 200) {
         setUser(response.data);
         setProfileForm({

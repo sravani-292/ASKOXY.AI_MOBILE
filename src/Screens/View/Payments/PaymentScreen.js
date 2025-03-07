@@ -12,6 +12,7 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
+import {Picker} from '@react-native-picker/picker';
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -55,6 +56,9 @@ const PaymentDetails = ({ navigation, route }) => {
   const [cartData,setCartData] = useState();
   const [usedWalletAmount,setUsedWalletAmount] = useState();
   const [afterWallet,setAfterWallet]=useState();
+  const [selectedDay, setSelectedDay] = useState(""); // Store selected day
+  const [timeSlots, setTimeSlots] = useState([]); // Store time slots from API
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -63,6 +67,25 @@ const PaymentDetails = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const items = route.params?.items || [];
 
+
+  const days = [
+    { label: "Today", value: "today" },
+    { label: "Tomorrow", value: "tomorrow" },
+    { label: "Day After Tomorrow", value: "day_after_tomorrow" },
+  ];
+
+
+  const fetchTimeSlots = async (day) => {
+    try {
+      const response = await axios.get(
+        `http://182.18.139.138:9029/api/order-service/fetchTimeSlotlist`
+      );
+      setTimeSlots(response.data.timeSlots); // Assuming API returns an array
+    } catch (error) {
+      console.error("Error fetching time slots:", error);
+      setTimeSlots([]); // Reset in case of error
+    }
+  };
 
   const totalCart = async () => {
     try {
@@ -684,38 +707,7 @@ const PaymentDetails = ({ navigation, route }) => {
    
   }
 
-  // function grandTotalfunc() {
-  //   if (coupenApplied === true && useWallet === true) {
-  //     // Alert.alert("Coupen and useWallet Applied",(grandTotal-billAmount))
-  //     setGrandTotalAmount(grandTotal - (coupenDetails + walletAmount)+deliveryBoyFee+totalGstSum);
-  //     console.log(
-  //       "grans total after wallet and coupen",
-  //       grandTotal,
-  //       coupenDetails,
-  //       walletAmount,
-  //       grandTotal - (coupenDetails + walletAmount)
-  //     );
-  //   } else if (coupenApplied === true || useWallet === true) {
-  //     if (coupenApplied === true) {
-  //       setGrandTotalAmount((grandTotal+deliveryBoyFee) - coupenDetails);
-  //       // Alert.alert("Coupen Applied",grandTotal)
-  //       console.log({ grandTotal });
 
-  //       console.log(grandTotal - coupenDetails);
-  //     }
-  //     if (useWallet === true) {
-  //       console.log("wal;let",walletTotal);
-        
-  //       setGrandTotalAmount(walletTotal+deliveryBoyFee);
-  //       console.log(walletAmount);
-
-  //       // Alert.alert("Wallet Applied",(grandTotal-walletAmount))
-  //     }
-  //   } else {
-  //     setGrandTotalAmount(subTotal+deliveryBoyFee+totalGstSum);
-  //     // Alert.alert("None",totalAmount)
-  //   }
-  // }
 
 
   function grandTotalfunc() {
@@ -861,6 +853,7 @@ const PaymentDetails = ({ navigation, route }) => {
           </TouchableOpacity>
           ):null}
         </View>
+      
 
         {/* Payment Details */}
         <View style={styles.paymentDetails}>

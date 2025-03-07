@@ -53,7 +53,7 @@ const Login = () => {
   const [saltSession, setSaltSession] = useState("");
   const [otpGeneratedTime, setOtpGeneratedTime] = useState("");
   const [message, setMessage] = useState(false);
-
+  const [maxLength, setMaxLength] = useState(10); 
   const [authMethod, setAuthMethod] = useState('whatsapp'); 
   const [phoneNumber, setPhoneNumber] = useState('');
   const[whatsappNumber,setWhatsappNumber]=useState('')
@@ -63,10 +63,10 @@ const Login = () => {
   const[validError,setValidError]=useState(false)
   const [countryCode, setcountryCode] = useState('91');
   const [otpSent, setOtpSent] = useState(false);
-const[loading,setLoading]=useState(false)
-const [isValidPhone, setIsValidPhone] = useState(false); 
-const[errorMessage,setErrorMessage]=useState(false)
-const[otpError,setOtpError]=useState(false)
+  const[loading,setLoading]=useState(false)
+  const [isValidPhone, setIsValidPhone] = useState(false); 
+  const[errorMessage,setErrorMessage]=useState(false)
+  const[otpError,setOtpError]=useState(false)
 
 
  
@@ -77,18 +77,23 @@ const[otpError,setOtpError]=useState(false)
       alert('Please enter the OTP');
       return;
     }
-
-    setLoading(true);
-    
-    // Simulate API call to verify OTP
-    setTimeout(() => {
+     setLoading(true);
+     setTimeout(() => {
       setLoading(false);
-      // Navigate to main app or home screen after successful verification
       alert('Login successful!');
-      // navigation.navigate('Home');
     }, 1500);
   };
+  
 
+  // Function to get max length based on country code
+  const updateMaxLength = (countryCode) => {
+    const exampleNumber = getExampleNumber(countryCode);
+    if (exampleNumber) {
+      setMaxLength(exampleNumber.nationalNumber.length);
+    } else {
+      setMaxLength(10); 
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -208,7 +213,7 @@ const[otpError,setOtpError]=useState(false)
       data:data
     })
     .then((response)=>{
-      console.log("response",response)
+      console.log(" send otp response",response)
       setFormData({
         ...formData,
         loading: false,
@@ -373,7 +378,7 @@ if(authMethod=="whatsapp"){
       setcountryCode(callingCode);
       const isValid = /^[0-9]*$/.test(value);
       if (isValid) {
-        setErrorMessage(""); // Clear the error if input is valid
+        setErrorMessage(""); 
         setWhatsappNumber(value);
       } else {
         setErrorMessage(true);
@@ -465,6 +470,7 @@ if(authMethod=="whatsapp"){
               defaultCode="IN"
               layout="first"              
               onChangeText={handlePhoneNumberChange}
+              // maxLength={maxLength}
             />
             
              </View>
