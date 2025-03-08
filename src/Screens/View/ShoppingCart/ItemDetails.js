@@ -32,32 +32,19 @@ const ItemDetails = ({ route, navigation }) => {
   const [cartCount, setCartCount] = useState(0);
   const [loadingItems, setLoadingItems] = useState({});
   const [isLimitedStock, setIsLimitedStock] = useState({});
+  
   useEffect(() => {
     // getProfile();
     fetchCartData();
-   
   }, []);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     await getProfile(); 
-  //     setTimeout(() => {
-  //       fetchCartData();
-  //     }, 1000); 
-  //   };
-  
-  //   fetchData();
-  // }, []);
-  
   const fetchCartData = async () => {
     console.log("fetching cart data");
-   
 
-    console.log("Requesting API:", url);
     try {
       const response = await axios.get(
         BASE_URL +
-              `cart-service/cart/customersCartItems?customerId=${customerId}`,
+          `cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -94,11 +81,7 @@ const ItemDetails = ({ route, navigation }) => {
 
       console.log("Cart Items Map:", cartItemsMap);
 
-      // Mapping items with limited stock (quantity = 1)
-      // const limitedStockMap = cartData.reduce((acc, item) => {
-      //   acc[item.itemId] = item.quantity === 1;
-      //   return acc;
-      // }, {});
+      
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
           acc[item.itemId] = "outOfStock";
@@ -116,7 +99,7 @@ const ItemDetails = ({ route, navigation }) => {
       setCartCount(cartData.length);
     } catch (error) {
       console.log(error);
-      
+
       console.error("Error fetching cart items:", error.response.status);
     }
   };
@@ -155,7 +138,7 @@ const ItemDetails = ({ route, navigation }) => {
 
       if (currentQuantity > 1) {
         const response = await axios.patch(
-           BASE_URL + "cart-service/cart/decrementCartData",
+          BASE_URL + "cart-service/cart/decrementCartData",
           {
             customerId: customerId,
             itemId: item.itemId,
@@ -266,7 +249,7 @@ const ItemDetails = ({ route, navigation }) => {
               console.log("Removing cart item with ID:", getRemoveId);
 
               const response = await axios.delete(
-                 BASE_URL + "cart-service/cart/remove",
+                BASE_URL + "cart-service/cart/remove",
                 {
                   data: {
                     id: getRemoveId.cartId,
@@ -295,13 +278,12 @@ const ItemDetails = ({ route, navigation }) => {
   };
 
   const getProfile = async () => {
-
     try {
       const response = await axios({
         method: "GET",
         url:
-           BASE_URL +
-              `user-service/customerProfileDetails?customerId=${customerId}`,
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${customerId}`,
 
         headers: {
           Authorization: `Bearer ${token}`,
@@ -327,20 +309,11 @@ const ItemDetails = ({ route, navigation }) => {
       ]);
       return;
     }
-    // } else if (!user) {
-    //   Alert.alert("Alert", "Please Complete Your Profile", [
-    //     {
-    //       text: "OK",
-    //       onPress: () => navigation.navigate("Home", { screen: "Profile" }),
-    //     },
-    //     { text: "Cancel" },
-    //   ]);
-    //   return;
-    // }
+
     const data = { customerId: customerId, itemId: item.itemId };
     try {
       const response = await axios.post(
-         BASE_URL + "cart-service/cart/add_Items_ToCart",
+        BASE_URL + "cart-service/cart/add_Items_ToCart",
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -358,31 +331,31 @@ const ItemDetails = ({ route, navigation }) => {
   return (
     <View style={styles.detailsContainer}>
       <View style={styles.imageContainer}>
-         {/* Discount Badge */}
-                        {item.itemMrp > item.itemPrice && (
-                          <View style={styles.discountBadge}>
-                            <Text style={styles.discountText}>
-                              {Math.round(
-                                ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
-                              )}
-                              % OFF
-                            </Text>
-                          </View>
-                        )}
+        {/* Discount Badge */}
+        {item.itemMrp > item.itemPrice && (
+          <View style={styles.discountBadge}>
+            <Text style={styles.discountText}>
+              {Math.round(
+                ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
+              )}
+              % OFF
+            </Text>
+          </View>
+        )}
         <Image source={{ uri: item.itemImage }} style={styles.detailImage} />
-       {/* Star Ratings */}
-       <View style={styles.ratingContainer}>
-        {/* 4 Full Stars */}
-        {[...Array(4)].map((_, index) => (
-          <FontAwesome key={index} name="star" size={20} color="gold" />
-        ))}
+        {/* Star Ratings */}
+        <View style={styles.ratingContainer}>
+          {/* 4 Full Stars */}
+          {[...Array(4)].map((_, index) => (
+            <FontAwesome key={index} name="star" size={20} color="gold" />
+          ))}
 
-        {/* Half Star */}
-        <FontAwesome name="star-half-full" size={20} color="gold" />
+          {/* Half Star */}
+          <FontAwesome name="star-half-full" size={20} color="gold" />
 
-        {/* Static Rating Text */}
-        <Text style={styles.ratingText}>4.8/5</Text>
-      </View>
+          {/* Static Rating Text */}
+          <Text style={styles.ratingText}>4.8/5</Text>
+        </View>
         <Text style={styles.itemName}>{item.itemName.toUpperCase()}</Text>
       </View>
       <ScrollView
@@ -390,13 +363,6 @@ const ItemDetails = ({ route, navigation }) => {
         contentContainerStyle={{ flexGrow: 1, padding: 5 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* {item.itemDescription && (
-          <View style={styles.descriptionCard}>
-            <Text style={styles.descriptionLabel}>Description:</Text>
-            <Text style={styles.descriptionText}>{item.itemDescription}</Text>
-          </View>
-        )} */}
-
         <View style={styles.infoContainer}>
           {/* Item Info */}
           <View style={styles.infoRow}>
@@ -416,11 +382,11 @@ const ItemDetails = ({ route, navigation }) => {
             </Text>
           </View>
           {item.itemDescription && (
-          <View style={styles.descriptionCard}>
-            <Text style={styles.descriptionLabel}>Description:</Text>
-            <Text style={styles.descriptionText}>{item.itemDescription}</Text>
-          </View>
-        )}
+            <View style={styles.descriptionCard}>
+              <Text style={styles.descriptionLabel}>Description:</Text>
+              <Text style={styles.descriptionText}>{item.itemDescription}</Text>
+            </View>
+          )}
           <View style={styles.infoRow1}>
             <Text style={{ alignSelf: "center", alignItems: "center" }}>
               {item.itemQuantity1}
@@ -753,17 +719,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 1,
     // bottom:1,
-    left: width*0.2, 
+    left: width * 0.2,
     // right:width*0.2,
     backgroundColor: "#ffa600",
-    width: 40,   
+    width: 40,
     height: 40,
-    borderRadius: 20, 
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2, 
+    zIndex: 2,
   },
-  
+
   discountText: {
     color: "white",
     fontWeight: "bold",

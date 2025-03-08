@@ -52,13 +52,12 @@ const UserDashboard = () => {
   const [searchText, setSearchText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [user, setUser] = useState();
-
+  
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
   );
 
   const handleAdd = async (item) => {
-    // console.log("handle add", { item });
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await handleAddToCart(item);
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
@@ -79,7 +78,7 @@ const UserDashboard = () => {
   };
   const handleRemove = async (item) => {
     setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await removeItem (item);
+    await removeItem(item);
     setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
@@ -94,6 +93,7 @@ const UserDashboard = () => {
       }
     }, [])
   );
+ 
 
   const onRefresh = () => {
     getAllCategories();
@@ -101,7 +101,7 @@ const UserDashboard = () => {
 
   const fetchCartItems = async () => {
     console.log("sravani cart items");
-    
+
     try {
       const response = await axios.get(
         BASE_URL +
@@ -112,14 +112,15 @@ const UserDashboard = () => {
           },
         }
       );
-      console.log("cart response",response);
-      
-      const cartData = response?.data?.customerCartResponseList;
-       const totalCartCount = cartData.reduce((total, item) => total + item.cartQuantity, 0);
+      console.log("cart response", response?.data?.customerCartResponseList);
 
-         console.log("Total items in cart:", totalCartCount);
+      const cartData = response?.data?.customerCartResponseList;
+      const totalCartCount = cartData.reduce(
+        (total, item) => total + item.cartQuantity,
+        0
+      );
+
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
-        console.error("cartData is empty or invalid:", cartData);
         setCartData([]);
         setCartItems({});
         setIsLimitedStock({});
@@ -140,6 +141,8 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
+      console.log("cart items map", cartItemsMap);
+
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
           acc[item.itemId] = "outOfStock";
@@ -149,20 +152,23 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
-      setCartData([...cartData]);
-      setCartItems({ ...cartItemsMap });
-      setIsLimitedStock({ ...limitedStockMap });
+      setCartData(cartData);
+      setCartItems(cartItemsMap);
+      setIsLimitedStock(limitedStockMap);
       setCartCount(totalCartCount);
+      // setCartData([...cartData]);
+      // setCartItems({ ...cartItemsMap });
+      // setIsLimitedStock({ ...limitedStockMap });
+      // setCartCount(totalCartCount);
       setLoadingItems((prevState) => ({
         ...prevState,
         [cartData.itemId]: false,
       }));
     } catch (error) {
-      console.error("Error fetching cart items:", error.response.status);
+      // console.error("Error fetching cart items:", error.response.status);
     }
   };
 
-  const UpdateCartCount = (newCount) => setCartCount(newCount);
   const handleAddToCart = async (item) => {
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
@@ -171,18 +177,8 @@ const UserDashboard = () => {
       ]);
       return;
     }
-    // else if(!user){
-    //   console.log("user",user);
 
-    //   Alert.alert("Alert", "Please Complete Your  Profile", [
-    //     { text: "Cancel" },
-    //     { text: "OK", onPress: () => navigation.navigate("Home",{screen:"Profile"}) },
-
-    //   ]);
-    //   return;
-    // }
     const data = { customerId: customerId, itemId: item.itemId };
-    // console.log({ data });
 
     try {
       const response = await axios.post(
@@ -192,8 +188,6 @@ const UserDashboard = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
-      console.log("added data", response.data);
 
       if (response.data.errorMessage == "Item added to cart successfully") {
         Alert.alert("Success", "Item added to cart successfully");
@@ -227,15 +221,18 @@ const UserDashboard = () => {
   };
 
   const removeItem = async (item) => {
-    console.log("into the removal method");
-    console.log("cart data", cartData);
-    
+    console.log("into the removal method",item);
+
     const newQuantity = cartItems[item.itemId];
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    console.log("cartitem",cartItem);
-    
+    console.log("cartitem", cartItem);
+  if(!cartItem){
+    console.log("cart item is not found");
+    Alert.alert("Item is not found in the cart");
+    return;
+  }
     try {
       const response = await axios.delete(
         BASE_URL + "cart-service/cart/remove",
@@ -249,28 +246,37 @@ const UserDashboard = () => {
           },
         }
       );
-      console.log("response",response.data);
-      if(response.data=="Card successfully deleted"){
-        // Alert.alert("Item removed", "Item removed from the cart");
-      Alert.alert(response.data)
-      fetchCartItems();
+      console.log("response", response.data);
 
-    }
+      if (response.data == "Card successfully deleted") {
+        const updatedCart = cartData.filter(c => c.itemId !== item.itemId);
+        setCartData([...updatedCart]);
+
+        await fetchCartItems(); // ✅ Ensure fresh data is fetched
+        
+        if (updatedCart.length === 0) {
+            console.log("Cart is now empty. Resetting states.");
+            setCartData([]);
+            setCartItems({});
+            setIsLimitedStock({});
+            setCartCount(0);
+        }
+        Alert.alert(response.data);
+      }
     } catch (error) {
       console.log(error.response);
     }
   };
   const decrementQuantity = async (item) => {
     const newQuantity = cartItems[item.itemId];
-    console.log("new quantity",newQuantity);
-    
+
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
+    console.log("customer cart items", cartItem);
 
     if (newQuantity === 1) {
-      console.log("removing item", item);
-       handleRemove(item);
+      handleRemove(item);
     } else {
       const data = {
         customerId: customerId,
@@ -292,8 +298,6 @@ const UserDashboard = () => {
   };
 
   const getProfile = async () => {
-    console.log("profile get call response");
-
     try {
       const response = await axios({
         method: "GET",
@@ -301,14 +305,12 @@ const UserDashboard = () => {
           BASE_URL +
           `user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
-          // "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
       if (response.status === 200) {
-      console.log("user data", response);
         setUser(response.data);
-       }
+      }
     } catch (error) {
       console.error("ERROR", error.response);
     }
@@ -316,7 +318,6 @@ const UserDashboard = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      // await getProfile();
       getAllCategories();
     };
 
@@ -324,8 +325,6 @@ const UserDashboard = () => {
   }, []);
 
   const getAllCategories = () => {
-    console.log("hai");
-
     setLoading(true);
     axios
       .get(BASE_URL + "product-service/showItemsForCustomrs")
@@ -335,6 +334,8 @@ const UserDashboard = () => {
         const allItems = response.data.flatMap(
           (category) => category.itemsResponseDtoList || []
         );
+        console.log("all items", allItems);
+
         setFilteredItems(allItems);
 
         setTimeout(() => {
@@ -349,7 +350,6 @@ const UserDashboard = () => {
   };
 
   const filterByCategory = (category) => {
-    console.log(category);
     setSelectedCategory(category);
 
     if (category === "All CATEGORIES") {
@@ -602,7 +602,8 @@ const UserDashboard = () => {
                 </TouchableOpacity>
                 {categories.map((category, index) => (
                   <TouchableOpacity
-                    key={category.categoryName}
+                    // key={category.categoryName}
+                    key={index}
                     onPress={() => filterByCategory(category.categoryName)}
                   >
                     <View
@@ -911,7 +912,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 4,
   },
-  
+
   quantityButtonText: {
     color: "#000",
     fontSize: 16,
@@ -1018,23 +1019,22 @@ const styles = StyleSheet.create({
   discountBadge: {
     position: "absolute",
     // top: 1,
-    bottom:1,
-    // left: 5, 
-    right:20,
+    bottom: 1,
+    // left: 5,
+    right: 20,
     backgroundColor: "#ffa600",
-    width: 40,   
+    width: 40,
     height: 40,
-    borderRadius: 20, 
+    borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2, 
+    zIndex: 2,
   },
-  
+
   discountText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 12,
     textAlign: "center",
   },
-  
 });

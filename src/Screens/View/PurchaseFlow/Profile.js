@@ -3,7 +3,7 @@ import React, {
   useEffect,
   useCallback,
   useLayoutEffect,
-  useRef
+  useRef,
 } from "react";
 import {
   View,
@@ -25,7 +25,7 @@ import {
   Modal,
   Linking,
   Pressable,
-  Dimensions
+  Dimensions,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 // import { Ionicons } from "@expo/vector-icons";
@@ -36,36 +36,34 @@ import { Entypo } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 import ShareLinks from "../../../../src/Screens/View/Referral Links/ShareLinks";
 import { set } from "core-js/core/dict";
 import { COLORS } from "../../../../Redux/constants/theme";
 import PhoneInput from "react-native-phone-number-input";
 
-const{height,width}=Dimensions.get('window')
-
+const { height, width } = Dimensions.get("window");
 
 const ProfilePage = () => {
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
   // console.log({userData})
-//   console.log({userStage})
+  //   console.log({userStage})
   const [profileForm, setProfileForm] = useState({
     user_FirstName: "",
     user_LastName: "",
     customer_email: "",
     customer_mobile: "",
     user_mobile: "",
-    phoneNumber:"",
-    status:false
+    phoneNumber: "",
+    status: false,
   });
   const [errors, setErrors] = useState({
     user_FirstName: "",
     user_LastName: "",
     customer_email: "",
     user_mobile: "",
-   
   });
   const [user, setUser] = useState({});
   const [newPassword, setNewPassword] = useState("");
@@ -76,26 +74,25 @@ const ProfilePage = () => {
   const scaleAnim = useState(new Animated.Value(1))[0];
   const [profileData, setProfileData] = useState();
   const [isLoading, setIsLoading] = useState(false);
-  const [state, setState] = useState()
+  const [state, setState] = useState();
   const [modalVisible, setModalVisible] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [formattedValue, setFormattedValue] = useState('');
-  const[countryode,setcountryCode]=useState('91')
-  const[loader,setLoader]=useState(false)
-   const[whatsappNumber,setWhatsappNumber]=useState('')
-    const[whatsappNumber_Error,setWhatsappNumber_Error]=useState(false)
-    const [code, setCode] = useState('91');
-      const [otpSent, setOtpSent] = useState(false);
-      const[otp,setOtp]=useState('')
-    const[loading,setLoading]=useState(false)
-      const[otpSession,setOtpSession]=useState('')
-      const[salt,setSalt]=useState('')
-      // const[whatsappVerified,setWhatsappVerified]=useState('')
-  // const phoneInput = useRef(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [formattedValue, setFormattedValue] = useState("");
+  const [countryode, setcountryCode] = useState("91");
+  const [loader, setLoader] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [whatsappNumber_Error, setWhatsappNumber_Error] = useState(false);
+  const [code, setCode] = useState("91");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const[profileLoader,setProfileLoader]=useState(false);
+  const [otpSession, setOtpSession] = useState("");
+  const [salt, setSalt] = useState("");
 
   useFocusEffect(
     useCallback(() => {
-      setOtpSent(false)
+      setOtpSent(false);
       animateProfile();
       getProfile();
       HandledeactivateStatus();
@@ -122,39 +119,41 @@ const ProfilePage = () => {
     ).start();
   };
 
-
-
-
-
   const getProfile = async () => {
-    console.log("profile get call response");
-
-     try {
+  console.log("profile get call response");
+  setProfileLoader(true);
+    try {
       const response = await axios({
         method: "GET",
-        url:BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
+        url:
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${customerId}`,
         headers: {
-          // "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        });
-      
-       console.log("v",response)
+      });
+
+      console.log("v", response);
       if (response.status === 200) {
         setUser(response.data);
+        // setProfileLoader(false);
+
         setProfileForm({
           user_FirstName: response.data.firstName,
-          user_LastName:response.data.lastName,
+          user_LastName: response.data.lastName,
           customer_email: response.data.email,
           customer_mobile: response.data.whatsappNumber,
           user_mobile: response.data.alterMobileNumber.trim(" "),
-          phoneNumber:response.data.mobileNumber,
-          status:response.data.whatsappVerified
+          phoneNumber: response.data.mobileNumber,
+          status: response.data.whatsappVerified,
         });
       }
     } catch (error) {
-      console.error("ERROR",error);
-      showToast("Error loading profile");
+      console.error("ERROR", error);
+      // showToast("Error loading profile");
+    }
+    finally {
+      setProfileLoader(false); 
     }
   };
 
@@ -162,7 +161,7 @@ const ProfilePage = () => {
     console.log("for profile saving call");
     if (
       !profileForm.user_FirstName ||
-      !profileForm.user_LastName||
+      !profileForm.user_LastName ||
       !profileForm.customer_email ||
       errors.customer_email ||
       !profileForm.user_mobile
@@ -171,7 +170,7 @@ const ProfilePage = () => {
         user_FirstName: profileForm.user_FirstName
           ? ""
           : "First name should not be empty",
-          user_LastName: profileForm.user_LastName
+        user_LastName: profileForm.user_LastName
           ? ""
           : "Last  name should not be empty",
         customer_email: profileForm.customer_email
@@ -180,21 +179,20 @@ const ProfilePage = () => {
         user_mobile: profileForm.user_mobile
           ? ""
           : "Mobile number should not be empty",
-       
       });
       return;
     } else if (profileForm.user_mobile.length != 10) {
       Alert.alert("Error", "Alternative Mobile Number should be 10 digits");
       return false;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await axios.patch(
-        BASE_URL+"user-service/profileUpdate",
+        BASE_URL + "user-service/profileUpdate",
         {
           userFirstName: profileForm.user_FirstName,
-          userLastName:profileForm.user_LastName,
+          userLastName: profileForm.user_LastName,
           customerEmail: profileForm.customer_email,
           customerId: customerId,
           alterMobileNumber: profileForm.user_mobile,
@@ -226,7 +224,7 @@ const ProfilePage = () => {
         Alert.alert("Alert", response.data.errorMessage);
       }
     } catch (error) {
-      setIsLoading(false)
+      setIsLoading(false);
       console.error(error.response);
       Alert.alert("Failed", error.response?.data);
     }
@@ -291,172 +289,157 @@ const ProfilePage = () => {
   };
 
   const HandledeactivateStatus = async () => {
-    // console.log({userData});
-    
+
     const deactivate = userData.userStatus;
-    // console.log({deactivate});
-    if(deactivate=="ACTIVE"){
-      setState(true)
-    }else{
+    if (deactivate == "ACTIVE") {
+      setState(true);
+    } else {
       setState(false);
     }
-  }
+  };
 
   const handlePhoneNumberChange = (value) => {
-    // console.log({value})
-    // setValidError(false)
-    // seterrorNumberInput(false)
-    // setWhatsappNumber_Error(false)
+   
     try {
-      // setWhatsappNumber(value);
-    //   if(value.length>13 || value.length<10){
-    //     setValidError(true)
-    //     return false;
-    // }
-       console.log({value})
+     
+      console.log({ value });
       const callingCode = phoneInput.getCallingCode(value);
       console.log(callingCode);
       setcountryCode(callingCode);
-      setPhoneNumber(value)
-      console.log(phoneNumber)
+      setPhoneNumber(value);
+      console.log(phoneNumber);
     } catch (error) {
-      // Handle any parsing errors
     }
   };
 
   const handleSubmit = () => {
-    console.log({phoneNumber})
-    // if (phoneNumber.trim() == '') {
-    //   alert('Please enter a phone number');
-    //   return false;
-    // }
-    console.log(userData.whatsappNumber)
-    if(userData.whatsappNumber == "+"+countryode+phoneNumber){
-      Alert.alert("Failed","Self referral is not allowed")
-      return false
+    console.log({ phoneNumber });
+   
+    console.log(userData.whatsappNumber);
+    if (userData.whatsappNumber == "+" + countryode + phoneNumber) {
+      Alert.alert("Failed", "Self referral is not allowed");
+      return false;
     }
-    
-let data={
-  "referealId":customerId,
-  "refereeMobileNumber":phoneNumber,
-  "countryCode":"+"+countryode
-}
 
-console.log({data})
-setLoader(true)
+    let data = {
+      referealId: customerId,
+      refereeMobileNumber: phoneNumber,
+      countryCode: "+" + countryode,
+    };
+
+    console.log({ data });
+    setLoader(true);
     axios({
-      method:"post",
-      url:BASE_URL+'user-service/inviteaUser',
-      data:data, 
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-      }
+      method: "post",
+      url: BASE_URL + "user-service/inviteaUser",
+      data: data,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     })
-    .then((response)=>{
-      console.log("response",response)
-      setLoader(false)
-      if(response.data.status==false){
-        Alert.alert("Failed",response.data.message)
-      }else{
-        Alert.alert("Success","Successfully you referred a user")
-        setModalVisible(false);
-        setPhoneNumber('');
-      }
-  
-    })
-    .catch((error)=>{
-      setLoader(false)
-      console.log(error.response)
-      Alert.alert("Failed",error.response.message)
-
-    })
+      .then((response) => {
+        console.log("response", response);
+        setLoader(false);
+        if (response.data.status == false) {
+          Alert.alert("Failed", response.data.message);
+        } else {
+          Alert.alert("Success", "Successfully you referred a user");
+          setModalVisible(false);
+          setPhoneNumber("");
+        }
+      })
+      .catch((error) => {
+        setLoader(false);
+        console.log(error.response);
+        Alert.alert("Failed", error.response.message);
+      });
   };
 
   const handlePhoneNumberChange1 = (value) => {
-    // console.log({value})
-    // setValidError(false)
-    // seterrorNumberInput(false)
-    // setWhatsappNumber_Error(false)
+   
     try {
       setWhatsappNumber(value);
-  
-       console.log({value})
+
+      console.log({ value });
       const callingCode = phoneInput.getCallingCode(value);
       console.log(callingCode);
       setcountryCode(callingCode);
       const isValid = /^[0-9]*$/.test(value);
       if (isValid) {
-        setErrorMessage(""); // Clear the error if input is valid
+        setErrorMessage(""); 
         setWhatsappNumber(value);
       } else {
         setErrorMessage(true);
-        return 
+        return;
       }
-    
     } catch (error) {
       // Handle any parsing errors
     }
   };
 
-
-  function handleSendOtp(){
-    let data={
-      "countryCode":"+"+code,
-        "chatId": whatsappNumber,
-        "id": customerId
-      }
-      console.log({data})
-      setLoading(true)
+  function handleSendOtp() {
+    let data = {
+      countryCode: "+" + code,
+      chatId: whatsappNumber,
+      id: customerId,
+    };
+    console.log({ data });
+    setLoading(true);
     axios({
-      method:"post",
-      url:BASE_URL+`user-service/sendWhatsappOtpqAndVerify`,
-      data:data
+      method: "post",
+      url: BASE_URL + `user-service/sendWhatsappOtpqAndVerify`,
+      data: data,
     })
-    .then((response)=>{
-      console.log("user-service/sendWhatsappOtpqAndVerify",response)
-      setOtpSent(true)
-      setLoading(false)
-      setOtpSession(response.data.whatsappOtpSession)
-      setSalt(response.data.salt)
-    })
-    .catch((error)=>{
-      console.log(error.response)
-      setLoading(false)
-    })
+      .then((response) => {
+        console.log("user-service/sendWhatsappOtpqAndVerify", response);
+        setOtpSent(true);
+        setLoading(false);
+        setOtpSession(response.data.whatsappOtpSession);
+        setSalt(response.data.salt);
+      })
+      .catch((error) => {
+        console.log(error.response);
+        setLoading(false);
+      });
   }
 
-  function handleVerifyOtp(){
-    let data={
-      "countryCode":"+"+code,
-        "chatId": whatsappNumber,
-        "id": customerId,
-        "salt": salt,
-  "whatsappOtp": otp,
-  "whatsappOtpSession": otpSession
-      }
-      console.log({data})
-      setLoading(true)
+  function handleVerifyOtp() {
+    let data = {
+      countryCode: "+" + code,
+      chatId: whatsappNumber,
+      id: customerId,
+      salt: salt,
+      whatsappOtp: otp,
+      whatsappOtpSession: otpSession,
+    };
+    console.log({ data });
+    setLoading(true);
     axios({
-      method:"post",
-      url:BASE_URL+`user-service/sendWhatsappOtpqAndVerify`,
-      data:data
+      method: "post",
+      url: BASE_URL + `user-service/sendWhatsappOtpqAndVerify`,
+      data: data,
     })
-    .then((response)=>{
-      console.log(response.data)
-      setOtpSent(false)
-      setLoading(false)
-      setProfileForm({...profileForm,status:true})
-      // getProfile()
-    })
-    .catch((error)=>{
-      console.log(error.response)
-      setLoading(false)
-    })
+      .then((response) => {
+        console.log(response.data);
+        setOtpSent(false);
+        setLoading(false);
+        setProfileForm({ ...profileForm, status: true });
+        // getProfile()
+      })
+      .catch((error) => {
+        console.log(error.response);
+        setLoading(false);
+      });
   }
-
 
   return (
+    <>
+    {profileLoader ? (
+  <View style={styles.loaderContainer}>
+    <ActivityIndicator size="large" color="#007bff" />
+  </View>
+):(
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.outerContainer}
@@ -482,10 +465,10 @@ setLoader(true)
               <Text style={styles.errorText}>{errors.user_FirstName}</Text>
             ) : null}
 
-              <TextInput
+            <TextInput
               style={styles.input}
               placeholder="Enter  your last Name"
-              value={profileForm?.user_LastName|| ""}
+              value={profileForm?.user_LastName || ""}
               onChangeText={(text) => {
                 // Allow only alphabetic characters
                 const alphabeticText = text.replace(/[^a-zA-Z]/g, "");
@@ -504,8 +487,8 @@ setLoader(true)
               style={styles.input}
               placeholder="Enter your E-mail "
               keyboardType="email-address"
-              autoCapitalize="none"  
-              autoCorrect={false} 
+              autoCapitalize="none"
+              autoCorrect={false}
               value={profileForm?.customer_email || ""}
               onChangeText={(text) => {
                 if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
@@ -564,75 +547,96 @@ setLoader(true)
             {errors.user_mobile ? (
               <Text style={styles.errorText}>{errors.user_mobile}</Text>
             ) : null}
-<Text style={{marginLeft:10}}>Whatsapp Number</Text>
+            <Text style={{ marginLeft: 10 }}>Whatsapp Number</Text>
 
-{profileForm.status==true?
-<TextInput
-              style={styles.input}
-              placeholder="Enter your whatsapp Number"
-              value={profileForm?.customer_mobile || ""}
-              // maxLength={10}
-              keyboardType="number-pad"
-              editable={false}
-              onChangeText={(number) => {
-              setProfileForm({ ...profileForm, customer_mobile: number });
-                // setErrors({ ...errors, user_mobile: "" });
-              }}
-            />
-            :
-<>
-      <PhoneInput
-            placeholder="Whatsapp Number"
-              containerStyle={styles.input1}
-              textInputStyle={styles.phonestyle}
-              codeTextStyle={styles.phonestyle1}
-              ref={(ref) => (phoneInput = ref)}
-              defaultValue={whatsappNumber}
-              defaultCode="IN"
-              layout="first"              
-              onChangeText={handlePhoneNumberChange1}
-            />
-           
-            <View>
-              {otpSent==false?
+            {profileForm.status == true ? (
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your whatsapp Number"
+                value={profileForm?.customer_mobile || ""}
+                // maxLength={10}
+                keyboardType="number-pad"
+                editable={false}
+                onChangeText={(number) => {
+                  setProfileForm({ ...profileForm, customer_mobile: number });
+                  // setErrors({ ...errors, user_mobile: "" });
+                }}
+              />
+            ) : (
               <>
-              {loading==false?
-                <TouchableOpacity style={[styles.Button,{marginVertical:10}]} onPress={()=>handleSendOtp()}>
-                  <Text style={styles.submitButtonText}>Send OTP</Text>
-                </TouchableOpacity>
-                :
-                <View style={[styles.Button,{marginVertical:10}]} >
-                  <ActivityIndicator size={30} color="white"/>
-                </View>
-                }
-              </>
-              :
-              <>
-               <TouchableOpacity style={{alignSelf:"flex-end",marginTop:10,marginRight:30}} onPress={()=>handleSendOtp()}>
-                <Text>Resend Otp</Text>
-            </TouchableOpacity>
-              <View style={{flexDirection:"row",marginVertical:10,alignSelf:"center"}}>
-                <TextInput style={styles.Otpinput} placeholder="Enter Otp"
-                            value={otp}
-                            onChangeText={(number)=>setOtp(number)}
-                            maxLength={4}
-                            keyboardType="numeric"
-                            />
-                            {loading==false?
-                        <TouchableOpacity style={styles.Button} onPress={()=>handleVerifyOtp()}>
-                          <Text  style={styles.submitButtonText}>Verify</Text>
+                <PhoneInput
+                  placeholder="Whatsapp Number"
+                  containerStyle={styles.input1}
+                  textInputStyle={styles.phonestyle}
+                  codeTextStyle={styles.phonestyle1}
+                  ref={(ref) => (phoneInput = ref)}
+                  defaultValue={whatsappNumber}
+                  defaultCode="IN"
+                  layout="first"
+                  onChangeText={handlePhoneNumberChange1}
+                />
+
+                <View>
+                  {otpSent == false ? (
+                    <>
+                      {loading == false ? (
+                        <TouchableOpacity
+                          style={[styles.Button, { marginVertical: 10 }]}
+                          onPress={() => handleSendOtp()}
+                        >
+                          <Text style={styles.submitButtonText}>Send OTP</Text>
                         </TouchableOpacity>
-                        :
-                        <View  style={styles.Button}  >
-                        <ActivityIndicator size={30} color="white"/>
-                      </View>}
-              </View>
+                      ) : (
+                        <View style={[styles.Button, { marginVertical: 10 }]}>
+                          <ActivityIndicator size={30} color="white" />
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <TouchableOpacity
+                        style={{
+                          alignSelf: "flex-end",
+                          marginTop: 10,
+                          marginRight: 30,
+                        }}
+                        onPress={() => handleSendOtp()}
+                      >
+                        <Text>Resend Otp</Text>
+                      </TouchableOpacity>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          marginVertical: 10,
+                          alignSelf: "center",
+                        }}
+                      >
+                        <TextInput
+                          style={styles.Otpinput}
+                          placeholder="Enter Otp"
+                          value={otp}
+                          onChangeText={(number) => setOtp(number)}
+                          maxLength={4}
+                          keyboardType="numeric"
+                        />
+                        {loading == false ? (
+                          <TouchableOpacity
+                            style={styles.Button}
+                            onPress={() => handleVerifyOtp()}
+                          >
+                            <Text style={styles.submitButtonText}>Verify</Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <View style={styles.Button}>
+                            <ActivityIndicator size={30} color="white" />
+                          </View>
+                        )}
+                      </View>
+                    </>
+                  )}
+                </View>
               </>
-              }
-
-            </View>
-            </>
-}
+            )}
 
             <View style={styles.noteContainer}>
               <Text style={styles.noteText}>
@@ -657,134 +661,137 @@ setLoader(true)
               </Text>
             </TouchableOpacity> */}
 
-          {profileForm.status==true   ?
-            <TouchableOpacity
-              style={{
-                backgroundColor: COLORS.services,
-                padding: 10,
-                borderRadius: 5,
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 5,
-                fontSize: 16,
-                fontWeight: "bold",
-              }}
-              onPress={handleProfileSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={{ color: "white", fontSize: 16 }}>
-                  {isProfileSaved || isInitiallySaved
-                    ? "Save Profile"
-                    : "Save Profile"}
-                </Text>
-              )}
-            </TouchableOpacity>
-            :
-            <View
-              style={{
-                backgroundColor: COLORS.backgroundcolour,
-                padding: 10,
-                borderRadius: 5,
-                alignItems: "center",
-                justifyContent: "center",
-                marginTop: 5,
-                fontSize: 16,
-                fontWeight: "bold",
-              }}
-              onPress={handleProfileSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={{ color: "white", fontSize: 16 }}>
-                  {isProfileSaved || isInitiallySaved
-                    ? "Save Profile"
-                    : "Save Profile"}
-                </Text>
-              )}
-            </View>
-            }
+            {profileForm.status == true ? (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: COLORS.services,
+                  padding: 10,
+                  borderRadius: 5,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 5,
+                  fontSize: 16,
+                  fontWeight: "bold",
+                }}
+                onPress={handleProfileSubmit}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={{ color: "white", fontSize: 16 }}>
+                    {isProfileSaved || isInitiallySaved
+                      ? "Save Profile"
+                      : "Save Profile"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={{
+                  backgroundColor: COLORS.backgroundcolour,
+                  padding: 10,
+                  borderRadius: 5,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 5,
+                  fontSize: 16,
+                  fontWeight: "bold",
+                }}
+                onPress={handleProfileSubmit}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={{ color: "white", fontSize: 16 }}>
+                    {isProfileSaved || isInitiallySaved
+                      ? "Save Profile"
+                      : "Save Profile"}
+                  </Text>
+                )}
+              </View>
+            )}
 
             <View style={styles.optionContainer}>
-              <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
-              <TouchableOpacity
-                style={styles.btn}
-                onPress={() => navigation.navigate("Subscription")}
+              <View
+                style={{ flexDirection: "row", justifyContent: "space-evenly" }}
               >
-                <Text style={styles.optionText}>Subscription</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => navigation.navigate("Subscription")}
+                >
+                  <Text style={styles.optionText}>Subscription</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.optionButton}
-                onPress={() => navigation.navigate("Wallet")}
-              >
-                <Entypo
-                  name="wallet"
-                  size={20}
-                  color="#fff"
-                  style={styles.icon}
-                />
-                <Text style={styles.optionText}>Wallet</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.optionButton}
+                  onPress={() => navigation.navigate("Wallet")}
+                >
+                  <Entypo
+                    name="wallet"
+                    size={20}
+                    color="#fff"
+                    style={styles.icon}
+                  />
+                  <Text style={styles.optionText}>Wallet</Text>
+                </TouchableOpacity>
               </View>
-              <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
-              <TouchableOpacity 
-style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]}
-        onPress={() => navigation.navigate('About Us')}
-        >
-        {/* <Ionicons name="logo-whatsapp" size={20} color="white" /> */}
-        <Text style={styles.referButtonText}>FAQs</Text>
-        </TouchableOpacity>
-              {/* <TouchableOpacity style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]} onPress={() => navigation.navigate("Active")}>
+              <View
+                style={{ flexDirection: "row", justifyContent: "space-evenly" }}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.btn,
+                    { backgroundColor: state ? "#f44336" : COLORS.title },
+                  ]}
+                  onPress={() => navigation.navigate("About Us")}
+                >
+                  {/* <Ionicons name="logo-whatsapp" size={20} color="white" /> */}
+                  <Text style={styles.referButtonText}>FAQs</Text>
+                </TouchableOpacity>
+                {/* <TouchableOpacity style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]} onPress={() => navigation.navigate("Active")}>
                         <Text style={styles.optionText}>{state?"Deactivate Account":"Activate Account"}</Text>
                 </TouchableOpacity> */}
-                <TouchableOpacity style={styles.btn} onPress={()=>navigation.navigate("Write To Us")}>
-                <Text style={styles.optionText}>Write To Us</Text>
-
+                <TouchableOpacity
+                  style={styles.btn}
+                  onPress={() => navigation.navigate("Write To Us")}
+                >
+                  <Text style={styles.optionText}>Write To Us</Text>
                 </TouchableOpacity>
-                    </View>
+              </View>
 
-                    <View style={{ flexDirection: "row", justifyContent: "space-evenly" }}>
+              <View
+                style={{ flexDirection: "row", justifyContent: "space-evenly" }}
+              >
+                <TouchableOpacity
+                  style={styles.referButton}
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Ionicons name="logo-whatsapp" size={20} color="white" />
+                  <Text style={styles.referButtonText}>Refer a Friend</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.referButton}
+                  onPress={() => navigation.navigate("Referral History")}
+                >
+                  <Text style={styles.optionText}>Referral History</Text>
+                </TouchableOpacity>
+              </View>
 
-                    <TouchableOpacity 
-        style={styles.referButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="logo-whatsapp" size={20} color="white" />
-        <Text style={styles.referButtonText}>Refer a Friend</Text>
-      </TouchableOpacity>
-  <TouchableOpacity style={styles.referButton} onPress={()=>navigation.navigate("Referral History")}>
-  <Text style={styles.optionText}>Referral History</Text>
-
-  </TouchableOpacity>
-      </View>
-
-      {/* <View style={{ flexDirection: "row", justifyContent: "space-evenly",marginTop:10 }}>
-
-        <TouchableOpacity 
-        style={styles.referButton}
-        onPress={() => navigation.navigate('About Us')}
-        >
-        <Text style={styles.referButtonText}>FAQs</Text>
-        </TouchableOpacity>
-
-        </View> */}
-
+           
             </View>
           </View>
-
         </ScrollView>
       </View>
-       {/* Modal */}
-       <Modal
+      {/* Modal */}
+      <Modal
         animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {setModalVisible(false),setLoader(false)}}
+        onRequestClose={() => {
+          setModalVisible(false), setLoader(false);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
@@ -795,50 +802,50 @@ style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]}
                 <Ionicons name="close" size={24} color="#9ca3af" />
               </Pressable>
             </View>
-            
+
             {/* Description text */}
             <Text style={styles.modalDescription}>
               Please enter the phone number of the person you want to refer.
             </Text>
-            
+
             {/* PhoneInput component */}
             <View style={styles.phoneInputWrapper}>
-
               <PhoneInput
-                  placeholder="Whatsapp Number"
-                  containerStyle={styles.input1}
-                  textInputStyle={styles.phonestyle}
-                  codeTextStyle={styles.phonestyle1}
-                  ref={(ref) => (phoneInput = ref)}
-                  defaultValue={phoneNumber}
-                  defaultCode="IN"
-                  layout="first"              
-                  onChangeText={handlePhoneNumberChange}
-                />
+                placeholder="Whatsapp Number"
+                containerStyle={styles.input1}
+                textInputStyle={styles.phonestyle}
+                codeTextStyle={styles.phonestyle1}
+                ref={(ref) => (phoneInput = ref)}
+                defaultValue={phoneNumber}
+                defaultCode="IN"
+                layout="first"
+                onChangeText={handlePhoneNumberChange}
+              />
             </View>
-            
+
             {/* Buttons */}
             <View style={styles.buttonContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => {setModalVisible(false),setPhoneNumber(''),setLoader(false)}}
+                onPress={() => {
+                  setModalVisible(false), setPhoneNumber(""), setLoader(false);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-              
 
-              {loader==false?
-              <TouchableOpacity 
-                style={styles.submitButton}
-                onPress={()=>handleSubmit()}
-              >
-                <Text style={styles.submitButtonText}>Submit</Text>
-              </TouchableOpacity>
-              :
-              <View style={styles.submitButton}>
-                <ActivityIndicator size={25} color="white"/>
-              </View>
-              }
+              {loader == false ? (
+                <TouchableOpacity
+                  style={styles.submitButton}
+                  onPress={() => handleSubmit()}
+                >
+                  <Text style={styles.submitButtonText}>Submit</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.submitButton}>
+                  <ActivityIndicator size={25} color="white" />
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -846,8 +853,8 @@ style={[styles.btn,{backgroundColor:state?"#f44336":COLORS.title}]}
       {/* <View style={{ top: -80, flex: 0.2 }}>
         <ShareLinks />
       </View> */}
-
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingView>)}
+    </>
   );
 };
 
@@ -885,22 +892,22 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 12,
   },
-  
-  phonestyle:{
-    width:'100%',
-    height:39,
+
+  phonestyle: {
+    width: "100%",
+    height: 39,
   },
-  phonestyle1:{
-    height:20,
+  phonestyle1: {
+    height: 20,
   },
   input1: {
     marginTop: 10,
-    width:width/1.3,
+    width: width / 1.3,
     alignSelf: "center",
     height: 45,
-    elevation:4,
-    backgroundColor:"white",
-    borderColor:"black"
+    elevation: 4,
+    backgroundColor: "white",
+    borderColor: "black",
   },
   saveButton: {
     backgroundColor: COLORS.services,
@@ -914,7 +921,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  Button:{
+  Button: {
     backgroundColor: COLORS.services,
     padding: 15,
     borderRadius: 10,
@@ -925,10 +932,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 3,
-    width:width/3,
-    alignSelf:"center"
+    width: width / 3,
+    alignSelf: "center",
   },
-    Button:{
+  Button: {
     backgroundColor: COLORS.services,
     padding: 15,
     borderRadius: 10,
@@ -939,10 +946,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 3,
-    width:width/3,
-    alignSelf:"center"
+    width: width / 3,
+    alignSelf: "center",
   },
-  Otpinput:{
+  Otpinput: {
     height: 50,
     borderColor: "#ccc",
     borderWidth: 1,
@@ -955,7 +962,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 1,
-    width:width*0.4
+    width: width * 0.4,
   },
   saveButtonText: {
     color: "#FFF",
@@ -964,7 +971,7 @@ const styles = StyleSheet.create({
   },
   optionContainer: {
     marginTop: 20,
-    marginBottom:300
+    marginBottom: 300,
   },
   btn: {
     backgroundColor: "#FFF",
@@ -980,7 +987,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
-    width:width*0.4,    
+    width: width * 0.4,
     height: 50,
     backgroundColor: COLORS.title,
   },
@@ -1037,8 +1044,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 5,
     elevation: 3,
-width:width*0.4,    
-height: 50,
+    width: width * 0.4,
+    height: 50,
     alignSelf: "center",
     justifyContent: "center",
   },
@@ -1081,61 +1088,60 @@ height: 50,
     lineHeight: 18,
   },
   referButton: {
-    backgroundColor: '#25D366',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#25D366",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width:width*0.4,    
-
+    width: width * 0.4,
   },
   referButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     marginLeft: 8,
     fontSize: 16,
   },
   modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    width: '85%',
-    backgroundColor: 'white',
+    width: "85%",
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 24,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: 'green',
+    fontWeight: "600",
+    color: "green",
   },
   modalDescription: {
     fontSize: 16,
-    color: '#4b5563',
+    color: "#4b5563",
     marginBottom: 24,
   },
   phoneInputWrapper: {
     marginBottom: 24,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     gap: 12,
   },
   cancelButton: {
@@ -1145,18 +1151,24 @@ height: 50,
   },
   cancelButtonText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: "#6b7280",
   },
   submitButton: {
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 6,
-    backgroundColor: '#8b5cf6', // Purple color from the image
+    backgroundColor: "#8b5cf6", 
   },
   submitButtonText: {
     fontSize: 16,
-    color: 'white',
-    fontWeight: '600',
+    color: "white",
+    fontWeight: "600",
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff", 
   },
 });
 
