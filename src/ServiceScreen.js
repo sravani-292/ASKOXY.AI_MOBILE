@@ -13,17 +13,20 @@ const{height,width}=Dimensions.get('window')
 import { useNavigationState } from '@react-navigation/native';
 import { ActivityIndicator } from "react-native-paper";
 import LottieView from "lottie-react-native";
+import { set } from "core-js/core/dict";
+import LoginModal from "./Components/LoginModal";
+import { i } from "framer-motion/m";
 
 const services = [
-  { id: "1", name: "Free Rudraksha", image: require("../assets/tick.png"),screen:"FREE RUDRAKSHA" },
-  { id: "2", name: "Free Rice Samples", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Mazda_logo_with_emblem.png",screen:"FREE CONTAINER" },
-  { id: "3", name: "Free AI & Gen AI", image: "https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png" ,screen:"FREE AI & GEN AI"},
-  { id: "4", name: "Study Abroad", image: "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg",screen:"STUDY ABROAD" },
-  { id: "5", name: "Cryptocurrency", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Mazda_logo_with_emblem.png" ,screen:"Crypto Currency"},
-  { id: "6", name: "Legal Knowledge Hub", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Mazda_logo_with_emblem.png",screen:"LEGAL SERVICE" },
-  { id: "7", name: "My Rotary", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Mazda_logo_with_emblem.png",screen:"MY ROTARY " },
-  { id: "8", name: "We are Hiring", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Mazda_logo_with_emblem.png" ,screen:"We Are Hiring"},
-  { id: "89", name: "Manufacturing Services", image: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Mazda_logo_with_emblem.png" ,screen:"Machines"},
+  { id: "1", name: "Free Rudraksha", image: require("../assets/Rudraksha.jpeg"),screen:"FREE RUDRAKSHA" },
+  { id: "2", name: "Free Rice Samples", image: require("../assets/container.jpg"),screen:"FREE CONTAINER" },
+  { id: "3", name: "Free AI & Gen AI", image: require("../assets/freeaiandgenai.png") ,screen:"FREE AI & GEN AI"},
+  { id: "4", name: "Study Abroad", image: require("../assets/Images/E.jpeg"),screen:"STUDY ABROAD" },
+  { id: "5", name: "Cryptocurrency", image: require("../assets/BMVCOIN1.png") ,screen:"Crypto Currency"},
+  { id: "6", name: "Legal Knowledge Hub", image: require("../assets/legal.png"),screen:"LEGAL SERVICE" },
+  { id: "7", name: "My Rotary", image: require("../assets/myrotary.png"),screen:"MY ROTARY " },
+  { id: "8", name: "We are Hiring", image: require("../assets/genai.png") ,screen:"We Are Hiring"},
+  { id: "89", name: "Manufacturing Services", image: require("../assets/manufacturing.png") ,screen:"Machines"},
 
 ];
 
@@ -32,37 +35,6 @@ const images = [
   require("../assets/Images/r2.png"),
 ];
 
-const ComboRice = [
-  {
-    id: "1",
-    name: "Tesla Model 3",
-    price: "$45,590",
-    rating: 4.5,
-    image: "https://tesla-cdn.thron.com/delivery/public/image/tesla/d6b78c35-71bc-4b2b-a65d-e46a7c705ab1/bvlatuR/std/2880x1800/Desktop-Model3",
-  },
-  {
-    id: "2",
-    name: "Tesla Model X",
-    price: "$25,680",
-    rating: 4.8,
-    image: "https://tesla-cdn.thron.com/delivery/public/image/tesla/700b6b26-0ed0-4cb6-92b2-5c53ff8d731e/bvlatuR/std/2880x1800/Desktop-ModelX",
-  },
-  {
-    id: "3",
-    name: "Ford Mustang",
-    price: "$32,500",
-    rating: 4.7,
-    image: "https://www.motortrend.com/uploads/sites/5/2019/02/2019-ford-mustang-gt-pp2-coupe-angular-front.png",
-  },
-  {
-    id: "4",
-    name: "Chevrolet Blazer",
-    price: "$28,000",
-    rating: 4.6,
-    image: "https://di-uploads-pod30.dealerinspire.com/lovechevrolet/uploads/2020/05/Blazer-1.png",
-  },
-  
-];
 
 const ServiceScreen = () => {
   const userData = useSelector((state) => state.counter);
@@ -71,6 +43,9 @@ const ServiceScreen = () => {
   const[data,setData]=useState([])
   const[getCategories,setGetCategories]=useState([])
   const[loading,setLoading]=useState(false)
+  const [chainId, setChainId] = useState("");
+  const [coin, setCoin] = useState("");
+  const [loginModal, setLoginMobal] = useState(false);
   // const[loader,setLoader]=useState(false)
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
@@ -104,6 +79,39 @@ useFocusEffect(
 )
 
 
+useFocusEffect(
+  useCallback(() => {
+    console.log({userData});
+    
+    const profile =async()=>{
+        userData!=null?(
+          axios({
+            method: "get",
+            url:
+              BASE_URL + `user-service/getProfile/${userData.userId}`,
+            headers: {
+              Authorization: `Bearer ${userData.accessToken}`,
+            },
+
+          })
+            .then((response) => {
+              console.log("response", response.data);
+              setChainId(response.data.multiChainId)
+              setCoin(response.data.coinAllocated)
+            })
+            .catch((error) => {
+              console.log("error1", error);
+              setLoading(false)
+            })
+        )
+        :console.log("no user data");
+      }
+      profile()
+      
+  }, [userData])
+);
+
+
   function getAllCampaign() {
     setLoading(true)
     axios({
@@ -132,6 +140,7 @@ useFocusEffect(
       })
       .catch((error) => {
         console.log("error1", error);
+        setData(services)
         setLoading(false)
       });
   }
@@ -152,7 +161,7 @@ useFocusEffect(
     })
     .then((response) => {
       setLoading(false)
-      console.log(response.data)
+      // console.log(response.data)
       setGetCategories(response.data)
     })
     .catch((error) => {
@@ -164,7 +173,13 @@ useFocusEffect(
 useEffect(()=>{
   getAllCampaign();
   getRiceCategories()
+  setLoginMobal(true)
 },[])
+
+// Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
+const truncateId = (id) => {
+  return id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
+};
 
 
 
@@ -184,9 +199,21 @@ useEffect(()=>{
           <MaterialCommunityIcons name="logout" size={25} color="#5e606c" />
         </TouchableOpacity>
         
-        :null}
+        :<TouchableOpacity onPress={()=>navigation.navigate("Login")}  style={{ marginLeft: "auto",color:"#5e606c" }}>
+        <MaterialCommunityIcons name="login" size={25} color="#5e606c" /><Text>Login</Text>
+      </TouchableOpacity>}
 
       </View>
+      {userData!=null&&
+      <View style={styles.IDcontainer}>
+     <Text style={styles.label}>
+        Blockchain ID: <Text style={styles.value}>{truncateId(chainId)}</Text>
+      </Text>
+      <Text style={styles.label}>
+        Coin: <Text style={styles.value}>{coin}</Text>
+      </Text>
+      </View>
+}
 
 <ScrollView>
       <>
@@ -199,13 +226,13 @@ useEffect(()=>{
         onScroll={handleScroll}
         renderItem={({ item }) => (
           <View style={styles.imageContainer}>
-          <Image source={item} style={{ width:"97%",height: "42%", }} />
+          <Image source={item} style={{ width:"97%",height: "35%", }} />
          </View>
         )}
       />
 
       {/* Pagination Dots */}
-      <View style={{ flexDirection: "row", alignSelf: "center" }}>
+      <View style={{ flexDirection: "row", alignSelf: "center",marginTop:-95 }}>
         {images.map((_, index) => (
           <View
             key={index}
@@ -218,10 +245,10 @@ useEffect(()=>{
       </View>
 
       {/* Car Brands Horizontal List */}
-      {data!=null||data!=""&&(
+      {services!=null || services!="" ?(
       <View style={{marginBottom:10,height:180,}}>
       <FlatList
-        data={data}
+        data={services}
         horizontal
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id}
@@ -240,7 +267,7 @@ useEffect(()=>{
              onPress={() => {
                      if(item.screen!=="Crypto Currency")
                       { 
-                        console.log("campaignType",item.campaignType || item.screen);
+                        // console.log("campaignType",item.campaignType || item.screen);
                         
                         navigation.navigate(item.screen || item.campaignType)
                       }
@@ -255,8 +282,11 @@ useEffect(()=>{
                         navigation.navigate(item.screen || item.campaignType)
                       }
                      }
-                  }}         >
-            <Image source={item.image} style={{ width: 70, height: 70, resizeMode: "contain" }} />
+                  }}  >
+              {item.image?
+            <Image source={item.image} style={{ width: 80, height: 80, resizeMode: "contain",borderRadius:100 }} />
+            : <Image source={require("../assets/icon.png")} style={{ width: 80, height: 80, resizeMode: "contain",borderRadius:100 }} />
+            }
             <Text style={{ fontSize: 12, marginTop: 20 ,textAlign:"center"}}>{item.name || item.campaignType}
             </Text>
           </TouchableOpacity>
@@ -264,7 +294,7 @@ useEffect(()=>{
       />
       </View>
       
-      )}
+      ):null}
 
 
       {/* Popular Categories List */}
@@ -277,7 +307,7 @@ useEffect(()=>{
 
       <FlatList
         data={getCategories}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item,index) => index}
         numColumns={2}
         showsVerticalScrollIndicator={false}
         columnWrapperStyle={{ justifyContent: "space-between", marginTop: 10 }}
@@ -304,7 +334,7 @@ useEffect(()=>{
             //   name: item.categoryName,
             //   image: item.ategoryLogo,
             // })}
-            onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"UserDashboard"}):navigation.navigate("Dashboard")}}
+            onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"Rice Products"}):navigation.navigate("Dashboard")}}
             >
               <Text>Show Items</Text>
            </TouchableOpacity>
@@ -325,6 +355,11 @@ useEffect(()=>{
         />
         </View>
         }
+
+        {userData==null?
+         <LoginModal visible={loginModal} onClose={() => setLoginMobal(false)} />
+         :null}
+
          </View>
   );
 };
@@ -349,7 +384,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     height:350,
-    top:-50
+    marginTop:-85
   },
   image: {
     width: width * 0.9, 
@@ -376,5 +411,31 @@ const styles = StyleSheet.create({
   },
   inactiveDot: {
     backgroundColor: "gray",
+  },
+  IDcontainer: {
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 4,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginHorizontal: 10,
+    marginTop: 10,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+  },
+  value: {
+    fontSize: 14,
+    fontWeight: "normal",
+    color: "#007bff",
   },
 })

@@ -12,7 +12,7 @@ import BASE_URL,{userStage} from "../../Config";
 const { width,height } = Dimensions.get('window');
 const cardWidth = width * 0.92;
 
-export default function CryptoCurrency() {
+export default function CryptoCurrency({navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [blockchainId, setBlockchainId] = useState('');
   const[coins,setCoins]=useState('')

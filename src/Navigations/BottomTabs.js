@@ -72,7 +72,7 @@ const Tabs = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="UserDashboard"
+      initialRouteName="Rice Products"
       screenOptions={{
         headerShown: true,
         tabBarShowLabel: false,
@@ -81,7 +81,7 @@ const Tabs = () => {
       }}
     >
       <Tab.Screen
-        name="User Dashboard"
+        name="Rice Products"
         component={UserDashboard}
         options={{
           headerShown: true,

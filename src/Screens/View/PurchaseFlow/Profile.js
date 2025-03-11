@@ -56,6 +56,7 @@ const ProfilePage = () => {
     customer_email: "",
     customer_mobile: "",
     user_mobile: "",
+    user_mobileNumber: "",
     phoneNumber: "",
     status: false,
   });
@@ -64,6 +65,9 @@ const ProfilePage = () => {
     user_LastName: "",
     customer_email: "",
     user_mobile: "",
+    user_mobileNumberError: "",
+    whatsappNumberError: "",
+    whatsappOtpError:"",
   });
   const [user, setUser] = useState({});
   const [newPassword, setNewPassword] = useState("");
@@ -77,11 +81,13 @@ const ProfilePage = () => {
   const [state, setState] = useState();
   const [modalVisible, setModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const[phoneNumber_Error,setPhoneNumber_Error]=useState(false);
   const [formattedValue, setFormattedValue] = useState("");
   const [countryode, setcountryCode] = useState("91");
   const [loader, setLoader] = useState(false);
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [whatsappNumber_Error, setWhatsappNumber_Error] = useState(false);
+  const[whatappOtp_Error,setWhatsappOtp_Error]=useState(false);
   const [code, setCode] = useState("91");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
@@ -89,6 +95,7 @@ const ProfilePage = () => {
   const[profileLoader,setProfileLoader]=useState(false);
   const [otpSession, setOtpSession] = useState("");
   const [salt, setSalt] = useState("");
+  
 
   useFocusEffect(
     useCallback(() => {
@@ -133,7 +140,7 @@ const ProfilePage = () => {
         },
       });
 
-      console.log("v", response);
+      console.log("v", response.data);
       if (response.status === 200) {
         setUser(response.data);
         // setProfileLoader(false);
@@ -183,6 +190,9 @@ const ProfilePage = () => {
       return;
     } else if (profileForm.user_mobile.length != 10) {
       Alert.alert("Error", "Alternative Mobile Number should be 10 digits");
+      return false;
+    }else if(profileForm.user_mobile === phoneNumber || profileForm.user_mobile === whatsappNumber){
+      Alert.alert("Failed", "Alternative Mobile Number should not be same as whatsapp number or mobile number" );
       return false;
     }
 
@@ -299,7 +309,7 @@ const ProfilePage = () => {
   };
 
   const handlePhoneNumberChange = (value) => {
-   
+   setPhoneNumber_Error(false);
     try {
      
       console.log({ value });
@@ -316,7 +326,11 @@ const ProfilePage = () => {
     console.log({ phoneNumber });
    
     console.log(userData.whatsappNumber);
-    if (userData.whatsappNumber == "+" + countryode + phoneNumber) {
+    if(phoneNumber==""){
+      setPhoneNumber_Error(true);
+      return false
+    }
+    if (userData.whatsappNumber == phoneNumber) {
       Alert.alert("Failed", "Self referral is not allowed");
       return false;
     }
@@ -357,7 +371,7 @@ const ProfilePage = () => {
   };
 
   const handlePhoneNumberChange1 = (value) => {
-   
+   setWhatsappNumber_Error(false)
     try {
       setWhatsappNumber(value);
 
@@ -378,7 +392,17 @@ const ProfilePage = () => {
     }
   };
 
-  function handleSendOtp() {
+  function  handleSendOtp() {
+    if (whatsappNumber=== "") {
+      setWhatsappNumber_Error(true);
+      setErrors({ ...errors, whatsappNumberError: "Please enter whatsapp number" });
+      return false;
+    }
+    if (whatsappNumber.length > 10) {
+      setWhatsappNumber_Error(true);
+      setErrors({ ...errors, whatsappNumberError: "Please enter valid whatsapp number" });
+      return false;
+    } 
     let data = {
       countryCode: "+" + code,
       chatId: whatsappNumber,
@@ -393,10 +417,15 @@ const ProfilePage = () => {
     })
       .then((response) => {
         console.log("user-service/sendWhatsappOtpqAndVerify", response);
+        if(response.data.whatsappOtpSession==null || response.data.whatsappOtpSession=="" || response.data.salt == null || response.data.salt == ""){
+          Alert.alert("Failed", "This WhatsApp number already exists.");
+          setLoading(false);
+        }else{
         setOtpSent(true);
         setLoading(false);
         setOtpSession(response.data.whatsappOtpSession);
         setSalt(response.data.salt);
+        }
       })
       .catch((error) => {
         console.log(error.response);
@@ -405,6 +434,27 @@ const ProfilePage = () => {
   }
 
   function handleVerifyOtp() {
+    if(whatsappNumber === ""){
+      setWhatsappNumber_Error(true);
+      setErrors({ ...errors, whatsappNumberError: "Please enter whatsapp number" });
+      return false;
+    }
+    if (whatsappNumber.length > 10) {
+      setWhatsappNumber_Error(true);
+      setErrors({ ...errors, whatsappNumberError: "Please enter valid whatsapp number" });
+      return false;
+    }
+    if (otp === "") {
+      // Alert.alert("Failed", "Please enter otp");
+      setWhatsappOtp_Error(true);
+      setErrors({...errors,whatsappOtpError:"Please enter otp"})
+      return false;
+    }
+
+    if (otp.length < 4 || otp.length > 5) {
+      Alert.alert("Failed", "Please enter valid otp");
+      return false;
+    }
     let data = {
       countryCode: "+" + code,
       chatId: whatsappNumber,
@@ -429,6 +479,7 @@ const ProfilePage = () => {
       })
       .catch((error) => {
         console.log(error.response);
+        Alert.alert("Failed", error.response.data.message || "Something went wrong, Please try again");
         setLoading(false);
       });
   }
@@ -547,13 +598,36 @@ const ProfilePage = () => {
             {errors.user_mobile ? (
               <Text style={styles.errorText}>{errors.user_mobile}</Text>
             ) : null}
+            <View style={styles.noteContainer}>
+              <Text style={styles.noteText}>
+                Please provide a backup mobile number. We’ll use it only if your
+                registered number can’t be reached.
+              </Text>
+            </View>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your mobile number"
+              value={profileForm?.phoneNumber || ""}
+              maxLength={10}
+              keyboardType="number-pad"
+              onChangeText={(text) => {
+                setProfileForm({ ...profileForm, user_mobileNumber: text });
+                setErrors({ ...errors, user_mobileNumber: "" });
+              }}
+            />
+
+{errors.user_mobileNumberError ? (
+              <Text style={styles.errorText}>{errors.user_mobileNumberError}</Text>
+            ) : null}
+
             <Text style={{ marginLeft: 10 }}>Whatsapp Number</Text>
 
             {profileForm.status == true ? (
               <TextInput
-                style={styles.input}
+                style={[styles.input,{color:"#000000"}]}
                 placeholder="Enter your whatsapp Number"
-                value={profileForm?.customer_mobile || ""}
+                value={profileForm?.customer_mobile || whatsappNumber || ""}
                 // maxLength={10}
                 keyboardType="number-pad"
                 editable={false}
@@ -575,6 +649,10 @@ const ProfilePage = () => {
                   layout="first"
                   onChangeText={handlePhoneNumberChange1}
                 />
+
+                {whatsappNumber_Error ? (
+                    <Text style={styles.errorText}>{errors.whatsappNumberError}</Text>
+                ) : null}
 
                 <View>
                   {otpSent == false ? (
@@ -615,10 +693,11 @@ const ProfilePage = () => {
                           style={styles.Otpinput}
                           placeholder="Enter Otp"
                           value={otp}
-                          onChangeText={(number) => setOtp(number)}
+                          onChangeText={(number) => {setOtp(number), setWhatsappOtp_Error(false),setWhatsappNumber_Error(false)}}
                           maxLength={4}
                           keyboardType="numeric"
                         />
+                        
                         {loading == false ? (
                           <TouchableOpacity
                             style={styles.Button}
@@ -632,18 +711,16 @@ const ProfilePage = () => {
                           </View>
                         )}
                       </View>
+                      {whatappOtp_Error ? (
+                    <Text style={styles.errorText1}>{errors.whatsappOtpError}</Text>
+                ) : null}
                     </>
                   )}
                 </View>
               </>
             )}
 
-            <View style={styles.noteContainer}>
-              <Text style={styles.noteText}>
-                Please provide a backup mobile number. We’ll use it only if your
-                registered number can’t be reached.
-              </Text>
-            </View>
+            
             {/* <TouchableOpacity
               style={{
                 backgroundColor: "#007bff",
@@ -674,7 +751,7 @@ const ProfilePage = () => {
                   fontWeight: "bold",
                 }}
                 onPress={handleProfileSubmit}
-                disabled={isLoading}
+                disabled={isLoading} 
               >
                 {isLoading ? (
                   <ActivityIndicator size="small" color="#ffffff" />
@@ -790,7 +867,7 @@ const ProfilePage = () => {
         transparent={true}
         visible={modalVisible}
         onRequestClose={() => {
-          setModalVisible(false), setLoader(false);
+          setModalVisible(false), setLoader(false),setPhoneNumber_Error(false);
         }}
       >
         <View style={styles.modalOverlay}>
@@ -822,13 +899,16 @@ const ProfilePage = () => {
                 onChangeText={handlePhoneNumberChange}
               />
             </View>
+            {phoneNumber_Error==true ? (
+              <Text style={{color:"red",alignSelf:"center"}}>Number is mandatory</Text>
+              ):null}
 
             {/* Buttons */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => {
-                  setModalVisible(false), setPhoneNumber(""), setLoader(false);
+                  setModalVisible(false), setPhoneNumber(""), setLoader(false),setPhoneNumber_Error(false);
                 }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -888,9 +968,20 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   errorText: {
+    marginTop:8,
     color: "red",
     marginBottom: 10,
-    fontSize: 12,
+    fontSize: 15,
+    textAlign:"center",
+    alignSelf:"center"
+  },
+  errorText1: {
+    marginTop:8,
+    color: "red",
+    marginBottom: 10,
+    fontSize: 15,
+    textAlign:"center",
+    alignSelf:"center"
   },
 
   phonestyle: {

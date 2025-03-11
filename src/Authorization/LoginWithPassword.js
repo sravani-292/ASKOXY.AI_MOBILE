@@ -177,13 +177,13 @@ if(authMethod=="whatsapp"){
     }
   }
 
-    console.log( BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?"+"+Number:phoneNumber}`
+    console.log( BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?whatsappNumber:phoneNumber}`
     )
     setLoading(true)
     if(formData.password=="@$k0xy"){
     axios({
       method:"post",
-      url:userStage=="test1"?BASE_URL+``:BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?"+"+Number:phoneNumber}`
+      url:BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?whatsappNumber:phoneNumber}`
     })
     .then((response)=>{
       console.log(response.data)

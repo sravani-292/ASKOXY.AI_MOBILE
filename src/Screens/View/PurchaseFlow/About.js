@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function About() {
   const [expandedId, setExpandedId] = useState(null);
+  
 
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);

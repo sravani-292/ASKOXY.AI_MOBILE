@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import {
   StyleSheet,
   View,
@@ -17,8 +17,43 @@ import BASE_URL,{userStage} from "../../Config";
 
 const LegalService = ({ navigation }) => {
   const userData = useSelector((state) => state.counter);
-  console.log({ userData });
+  // console.log({ userData });
   const [loading, setLoading] = useState(false);
+  const[AlreadyInterested,setAlreadyInterested]=useState(false)
+
+  useEffect(()=>{
+ if(userData==null){
+      Alert.alert("Alert","Please login to continue",[
+        {text:"OK",onPress:()=>navigation.navigate("Login")},
+        {text:"Cancel"}
+      ])
+      return;
+    }else{
+      getCall()
+    }  },[])
+  
+    function getCall(){
+      let data={
+        userId: userData.userId
+      }
+      axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
+      .then((response)=>{
+        console.log(response.data)
+        const hasFreeAI = response.data.some(item => item.askOxyOfers === "LEGALSERVICES");
+  
+    if (hasFreeAI) {
+      // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+      setAlreadyInterested(true)
+    } else {
+      // Alert.alert("No","askOxyOfers does not contain FREEAI");
+      setAlreadyInterested(false)
+    }
+      })
+      .catch((error)=>{
+        console.log(error.response)
+      })
+    }
+
   function legalServicefunc() {
     if (userData == null) {
       Alert.alert("Alert", "Please login to continue", [
@@ -29,7 +64,7 @@ const LegalService = ({ navigation }) => {
     } else {
       let data = {
         askOxyOfers: "LEGALSERVICES",
-        id: userData.userId,
+        userId: userData.userId,
         mobileNumber: userData.whatsappNumber,
         projectType: "ASKOXY",
       };
@@ -37,7 +72,7 @@ const LegalService = ({ navigation }) => {
        setLoading(true)
       axios({
         method: "post",
-        url: userStage == "test" ? BASE_URL + "marketing-service/campgin/askOxyOfferes" : BASE_URL + "auth-service/auth/askOxyOfferes",
+        url:  BASE_URL + "marketing-service/campgin/askOxyOfferes",
         data: data,
       })
         .then((response) => {
@@ -49,7 +84,7 @@ const LegalService = ({ navigation }) => {
           );
         })
         .catch((error) => {
-          console.log(error);
+          console.log("error",error.response);
           setLoading(false);
           if (error.response.status == 400) {
             Alert.alert("Failed", "You have already participated. Thank you!")
@@ -111,6 +146,10 @@ const LegalService = ({ navigation }) => {
             lawyers and advocates.
           </Text> */}
         </View>
+
+
+{AlreadyInterested==false?
+        <>
         {loading == false ? (
           <TouchableOpacity
             style={styles.button}
@@ -125,6 +164,15 @@ const LegalService = ({ navigation }) => {
             </Text>
           </View>
         )}
+        </>
+        :
+        <View
+            style={styles.button1}
+            onPress={() => legalServicefunc()}
+          >
+            <Text style={styles.buttonText}>Already Participated</Text>
+          </View>
+        }
       </View>
     </ScrollView>
   );
@@ -170,6 +218,13 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: "#3d2a71",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  button1: {
+    backgroundColor: "#9367c7",
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,

@@ -159,7 +159,7 @@ function getRefereeDetails(){
 
      {loading==false?
       <View>
-    {refereesData!="" || refereesData!=[] ?
+    {refereesData!="" || refereesData!=[]  ?
       <FlatList
         data={refereesData}
         renderItem={renderRefereeItem}
@@ -168,8 +168,8 @@ function getRefereeDetails(){
         showsVerticalScrollIndicator={false}
       />
       :
-      <View style={{marginTop:30,alignSelf:"center"}}>
-        <Text>No Data Found</Text>
+      <View style={{marginTop:30,alignSelf:"center",}}>
+        <Text style={{fontSize:20,fontWeight:"bold"}}>No Data Found</Text>
       </View>
     }
       </View>

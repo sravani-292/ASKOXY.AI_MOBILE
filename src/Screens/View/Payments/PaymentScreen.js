@@ -356,7 +356,8 @@ const PaymentDetails = ({ navigation, route }) => {
       couponCodeValue: coupenDetails,
       deliveryBoyFee:deliveryBoyFee,
       subTotal:subTotal,
-      gstAmount:totalGstSum
+      gstAmount:totalGstSum,
+      orderFrom:"MOBILE",
     };
 
     // console.log({ postData });
@@ -413,8 +414,8 @@ const PaymentDetails = ({ navigation, route }) => {
           // console.log("==========");
           const data = {
             mid: "1152305",
-            // amount: grandTotalAmount,
-            amount: 1,
+            amount: grandTotalAmount,
+            // amount: 1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -658,6 +659,22 @@ const PaymentDetails = ({ navigation, route }) => {
               data.paymentStatus == "FAILED"
             ) {
               // clearInterval(intervalId); 294182409
+              if(data.paymentStatus === "SUCCESS"){
+                axios({
+                  method: "get",
+                  url: BASE_URL + `/order-service/api/download/invoice?paymentId=${transactionId}&&userId=${customerId}`,
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                })
+                .then((response) => {
+                  console.log(response.data);
+                })
+                .catch((error) => {
+                  console.error("Error in payment confirmation:", error);
+                });
+              }
               axios({
                 method: "POST",
                 url:BASE_URL

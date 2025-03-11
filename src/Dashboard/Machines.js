@@ -10,7 +10,7 @@ import {
 } from "react-native";
 const{width,height}=Dimensions.get("window")
 
-const Machines = () => {
+const Machines = ({navigation}) => {
   return (
     <ScrollView style={styles.container}>
       {/* Image Section */}

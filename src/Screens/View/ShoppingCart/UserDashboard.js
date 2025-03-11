@@ -112,7 +112,7 @@ const UserDashboard = () => {
           },
         }
       );
-      console.log("cart response", response?.data?.customerCartResponseList);
+      // console.log("cart response", response?.data?.customerCartResponseList);
 
       const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
@@ -152,6 +152,7 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
+console.log({limitedStockMap})
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
@@ -221,13 +222,13 @@ const UserDashboard = () => {
   };
 
   const removeItem = async (item) => {
-    console.log("into the removal method",item);
+    // console.log("into the removal method",item);
 
     const newQuantity = cartItems[item.itemId];
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    console.log("cartitem", cartItem);
+    // console.log("cartitem", cartItem);
   if(!cartItem){
     console.log("cart item is not found");
     Alert.alert("Item is not found in the cart");
@@ -334,7 +335,7 @@ const UserDashboard = () => {
         const allItems = response.data.flatMap(
           (category) => category.itemsResponseDtoList || []
         );
-        console.log("all items", allItems);
+        // console.log("all items", allItems);
 
         setFilteredItems(allItems);
 
@@ -659,7 +660,7 @@ const UserDashboard = () => {
                     </Text>
                   </View>
                 )}
-                {isLimitedStock[item.itemId] == "lowStock" && (
+                {isLimitedStock[item.itemId] === "lowStock" &&(
                   <View style={styles.limitedStockBadge}>
                     <Text style={styles.limitedStockText}>
                       {item.quantity > 1

@@ -31,6 +31,7 @@ import { AccessToken } from "../../Redux/action/index";
 import BASE_URL, { userStage } from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
+import { Checkbox } from "react-native-paper";
 import Feather from "react-native-vector-icons/Feather";
 // import dynamicLinks from '@react-native-firebase/dynamic-links';
 // import { initializeApp } from '@react-native-firebase/app';
@@ -46,6 +47,8 @@ const Register = () => {
     loading: false,
   });
   console.log({ BASE_URL });
+    const phoneInput = React.createRef();
+  
   const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -66,6 +69,13 @@ const Register = () => {
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [otpError, setOtpError] = useState(false);
+    const [error1, setError1] = useState(null);
+  const[otpMessage,setOtpMessage]=useState(false)
+  const [isChecked, setIsChecked] = useState(false);
+  const[referCode,setReferCode]=useState("");
+  const[referEmptyError,setReferEmptyError]=useState(false)
+
+  
 
   // Handle OTP verification
   const handleVerifyOTP = () => {
@@ -178,6 +188,13 @@ const Register = () => {
         setWhatsappNumber_Error(true);
         return false;
       }
+      if (!whatsappNumber) {
+        setError1('Please enter a phone number.');
+        return false
+      } else if (!phoneInput.current.isValidNumber(whatsappNumber)) {
+        setError1('Invalid phone number. Please check the format.');
+        return false
+      }
     } else {
       if (phoneNumber == "" || phoneNumber == null) {
         setPhoneNumber_Error(true);
@@ -222,7 +239,7 @@ const Register = () => {
           setMobileOtpSession(response.data.mobileOtpSession);
           setSaltSession(response.data.salt);
           setOtpGeneratedTime(response.data.otpGeneratedTime);
-
+          setOtpMessage(true)
           setOtpSent(true);
         } else {
           Alert, alert("Failed", "Failed to send OTP.Try again");
@@ -278,6 +295,7 @@ const Register = () => {
         expiryTime: otpGeneratedTime,
         registrationType: "whatsapp",
         primaryType: "CUSTOMER",
+        registeredFrom: "MOBILE",
       };
     } else {
       data = {
@@ -290,6 +308,7 @@ const Register = () => {
         expiryTime: otpGeneratedTime,
         registrationType: "mobile",
         primaryType: "CUSTOMER",
+        registeredFrom: "MOBILE",
       };
     }
     console.log({ data });
@@ -365,6 +384,8 @@ const Register = () => {
     setValidError(false);
     seterrorNumberInput(false);
     setWhatsappNumber_Error(false);
+    setError1(false)
+
     try {
       setWhatsappNumber(value);
       //   if(value.length>13 || value.length<10){
@@ -446,6 +467,7 @@ const Register = () => {
                     setWhatsappNumber_Error(false),
                     setPhoneNumber(""),
                     setPhoneNumber_Error(false),
+                    setOtpMessage(false)
                     setFormData({ ...formData, loading: false, otp: "" });
                 }}
                 // disabled={otpSent}
@@ -476,6 +498,7 @@ const Register = () => {
                     setWhatsappNumber_Error(false),
                     setPhoneNumber_Error(false),
                     setPhoneNumber(""),
+                    setOtpMessage(false)
                     setFormData({ ...formData, loading: false, otp: "" });
                 }}
                 // disabled={otpSent}
@@ -495,9 +518,9 @@ const Register = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-               {(authMethod === 'whatsapp'&& otpSent)&&(
+               {/* {(authMethod === 'whatsapp'&& otpSent)&&(
                             <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your whatsapp number</Text>
-                          )}
+                          )} */}
             {/* Phone Number Input */}
             <View style={styles.inputContainer}>
               {/* <Text style={styles.inputLabel}>Phone Number</Text> */}
@@ -505,10 +528,11 @@ const Register = () => {
                 <View style={styles.phoneInputContainer}>
                   <PhoneInput
                     placeholder="Whatsapp Number"
+                    ref={phoneInput}
                     containerStyle={styles.input1}
                     textInputStyle={styles.phonestyle}
                     codeTextStyle={styles.phonestyle1}
-                    ref={(ref) => (phoneInput = ref)}
+                    // ref={(ref) => (phoneInput = ref)}
                     defaultValue={whatsappNumber}
                     defaultCode="IN"
                     layout="first"
@@ -517,9 +541,9 @@ const Register = () => {
                 </View>
               ) : (
                 <>
-                 {(authMethod === 'sms'&& otpSent)&&(
+                 {/* {(authMethod === 'sms'&& otpSent)&&(
                                   <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your Mobile number</Text>
-                                )}
+                                )} */}
                 <TextInput
                   style={[styles.input, otpSent && styles.disabledInput]}
                   placeholder="Enter your phone number"
@@ -553,6 +577,8 @@ const Register = () => {
                 Invalid Mobile Number
               </Text>
             )}
+            {error1 && <Text style={{color: 'red',marginBottom: 10,alignSelf:"center"}}>{error1}</Text>}
+{otpMessage&&<Text style={{textTransform:"uppercase",color:"white",alignSelf:"center",marginBottom:5}}>Otp sent to {authMethod}</Text>}
 
             {errorMessage && (
               <Text style={{ color: "red", alignSelf: "center" }}>
@@ -575,7 +601,8 @@ const Register = () => {
                       otp: numeric,
                       validOtpError: false,
                     }),
-                      setOtpError(false);
+                      setOtpError(false),
+                      setOtpMessage(false)
                   }}
                   maxLength={authMethod === "whatsapp" ? 4 : 6}
                 />
@@ -593,6 +620,7 @@ const Register = () => {
               </Text>
             )}
 
+            
             <TouchableOpacity
               style={styles.resendButton}
               onPress={() => handleSendOtp()}
@@ -600,6 +628,35 @@ const Register = () => {
             >
               <Text style={styles.resendText}>Resend OTP</Text>
             </TouchableOpacity>
+
+            {/* <View style={styles.checkboxContainer}>
+        <Checkbox
+          status={isChecked ? "checked" : "unchecked"}
+          onPress={() => setIsChecked(!isChecked)}
+          color={isChecked ? "#007bff" : "#fff"}
+          backgroundColor={isChecked ? "#007bff" : "#fff"}
+        />
+        <Text style={styles.checkboxLabel}>Referred </Text>
+      </View>
+<View>
+      {isChecked && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter text"
+            value={referCode}
+            onChangeText={(text) => {
+              setReferCode(text);
+              setReferEmptyError(""); // Clear error when typing
+            }}
+          />
+          {referEmptyError ? <Text style={styles.error}>{referEmptyError}</Text> : null}
+        </>
+      )}
+
+    
+    </View> */}
+
 
             {/* Action Buttons */}
             <View style={styles.buttonContainer}>
@@ -808,6 +865,15 @@ const styles = StyleSheet.create({
   otpButtonsContainer: {
     flexDirection: "column",
     gap: 10,
+  },
+  checkboxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  checkboxLabel: {
+    fontSize: 16,
+    color: "white",
   },
   verifyButton: {
     backgroundColor: "#f9b91a", // Orange color

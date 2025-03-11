@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -18,10 +18,12 @@ import BASE_URL,{userStage} from "../../Config";
 import { MaterialIcons } from '@expo/vector-icons';
 
 
-export default function WeAreHiring() {
+export default function WeAreHiring({navigation}) {
     const userData = useSelector((state) => state.counter);
     console.log({ userData });
     const [loading, setLoading] = useState(false);
+    const[AlreadyInterested,setAlreadyInterested]=useState(false)
+
   const requirements = [
     { icon: 'laptop', text: 'Bring your own laptop to take on this exciting role.' },
     { icon: 'favorite', text: 'Passion for content creation and customer engagement.' }
@@ -48,6 +50,39 @@ export default function WeAreHiring() {
     </View>
   );
 
+
+  useEffect(()=>{
+ if(userData==null){
+      Alert.alert("Alert","Please login to continue",[
+        {text:"OK",onPress:()=>navigation.navigate("Login")},
+        {text:"Cancel"}
+      ])
+      return;
+    }else{
+      getCall()
+    }  },[])
+  
+    function getCall(){
+      let data={
+        userId: userData.userId
+      }
+      axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
+      .then((response)=>{
+        console.log(response.data)
+        const hasFreeAI = response.data.some(item => item.askOxyOfers === "WEAREHIRING");
+  
+    if (hasFreeAI) {
+      // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+      setAlreadyInterested(true)
+    } else {
+      // Alert.alert("No","askOxyOfers does not contain FREEAI");
+      setAlreadyInterested(false)
+    }
+      })
+      .catch((error)=>{
+        console.log(error.response)
+      })
+    }
   function interestedfunc() {
     if (userData == null) {
       Alert.alert("Alert", "Please login to continue", [
@@ -57,7 +92,7 @@ export default function WeAreHiring() {
       return;
     } else {
       let data = {
-        askOxyOfers: "LEGALSERVICES",
+        askOxyOfers: "WEAREHIRING",
         id: userData.userId,
         mobileNumber: userData.whatsappNumber,
         projectType: "ASKOXY",
@@ -66,7 +101,7 @@ export default function WeAreHiring() {
        setLoading(true)
       axios({
         method: "post",
-        url: userStage == "test" ? BASE_URL + "marketing-service/campgin/askOxyOfferes" : BASE_URL + "auth-service/auth/askOxyOfferes",
+        url:  BASE_URL + "marketing-service/campgin/askOxyOfferes",
         data: data,
       })
         .then((response) => {
@@ -132,9 +167,24 @@ export default function WeAreHiring() {
           ))}
         </View>
 
+
+{AlreadyInterested==false?
+<>
+{loading==false?
         <TouchableOpacity style={styles.applyButton} onPress={()=>interestedfunc()}>
           <Text style={styles.applyButtonText}>Join Us Now</Text>
         </TouchableOpacity>
+        :
+        <View style={styles.applyButton}>
+            <ActivityIndicator size="small" color="#fff" />
+        </View>
+        }
+        </>
+        :
+        <View style={styles.applyButton}>
+        <Text style={styles.applyButtonText}>Already Participated</Text>
+      </View>
+        }
       </ScrollView>
     </SafeAreaView>
   );
