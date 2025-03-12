@@ -152,15 +152,12 @@ const UserDashboard = () => {
         return acc;
       }, {});
 
-console.log({limitedStockMap})
+     console.log({limitedStockMap})
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
       setCartCount(totalCartCount);
-      // setCartData([...cartData]);
-      // setCartItems({ ...cartItemsMap });
-      // setIsLimitedStock({ ...limitedStockMap });
-      // setCartCount(totalCartCount);
+      
       setLoadingItems((prevState) => ({
         ...prevState,
         [cartData.itemId]: false,
@@ -189,8 +186,11 @@ console.log({limitedStockMap})
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+    
+      console.log("item added response", response.data);
+      
 
-      if (response.data.errorMessage == "Item added to cart successfully") {
+  if (response.data.errorMessage == "Item added to cart successfully") {
         Alert.alert("Success", "Item added to cart successfully");
 
         fetchCartItems();
@@ -253,7 +253,7 @@ console.log({limitedStockMap})
         const updatedCart = cartData.filter(c => c.itemId !== item.itemId);
         setCartData([...updatedCart]);
 
-        await fetchCartItems(); // ✅ Ensure fresh data is fetched
+        await fetchCartItems(); 
         
         if (updatedCart.length === 0) {
             console.log("Cart is now empty. Resetting states.");
@@ -711,7 +711,16 @@ console.log({limitedStockMap})
                         {cartItems[item.itemId]}
                       </Text>
                     )}
-
+                    {item.itemPrice==1 ?(
+                       <View
+                       style={styles.quantityButton1}
+                       // onPress={() => incrementQuantity(item)}
+                       onPress={() => handleIncrease(item)}
+                       disabled={loadingItems[item.itemId]}
+                     >
+                       <Text style={styles.quantityButtonText}>+</Text>
+                     </View>
+                    ):(
                     <TouchableOpacity
                       style={[
                         cartItems[item.itemId] === item.quantity
@@ -725,7 +734,7 @@ console.log({limitedStockMap})
                       }
                     >
                       <Text style={styles.buttonText}>+</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity>)}
                   </View>
                 ) : (
                   <View>
@@ -749,29 +758,7 @@ console.log({limitedStockMap})
                         </Text>
                       </TouchableOpacity>
                     ) : (
-                      // <TouchableOpacity
-                      //   style={[
-                      //     styles.addButton,
-                      //     (removalLoading[item.itemId] ||
-                      //       loadingItems[item.itemId]) &&
-                      //       styles.disabledButton,
-                      //   ]}
-                      //   onPress={() => handleAddToCart(item)}
-                      //   disabled={
-                      //     removalLoading[item.itemId] ||
-                      //     loadingItems[item.itemId]
-                      //   } // Disable when loading
-                      // >
-                      //   <Text style={styles.addButtonText}>
-                      //     {item.quantity === 0
-                      //       ? "Out of Stock"
-                      //       : removalLoading[item.itemId]
-                      //       ? "Removing"
-                      //       : loadingItems[item.itemId]
-                      //       ? "Adding"
-                      //       : "Add to Cart"}
-                      //   </Text>
-                      // </TouchableOpacity>
+                     
                       <View style={styles.addButton}>
                         <ActivityIndicator size="small" color="white" />
                       </View>
@@ -842,11 +829,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 5,
-    height: 40,
+    // height: 85,
+    height:height/12,
   },
   priceContainer: {
     marginTop: 20,
@@ -1037,5 +1025,11 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 12,
     textAlign: "center",
+  },
+  quantityButton1: {
+    backgroundColor: "#c0c0c0",
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    borderRadius: 4,
   },
 });

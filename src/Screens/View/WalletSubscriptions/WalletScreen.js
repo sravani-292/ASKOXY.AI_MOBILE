@@ -33,7 +33,8 @@ const WalletPage = ({ route }) => {
           }
         }
       );
-
+      console.log(response);
+      
       const { walletAmount, walletTransactions } = response.data;
       console.log("wallet transactions",response);
       setLoading(false)

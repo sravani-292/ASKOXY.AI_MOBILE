@@ -558,31 +558,7 @@ const ProfilePage = () => {
               <Text style={styles.errorText}>{errors.customer_email}</Text>
             ) : null}
 
-            {/* <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor:
-                    isProfileSaved ||
-                    (profileForm?.customer_mobile?.length || 0) === 13
-                      ? "#e0e0e0"
-                      : "#fff",
-                },
-              ]}
-              placeholder="Enter your mobile number"
-              value={profileForm?.phoneNumber || ""}
-              onChangeText={(number) => {
-                if (number.length <= 13) {
-                  setProfileForm({ ...profileForm, phoneNumber: number });
-                }
-              }}
-              maxLength={13}
-              editable={
-                !isProfileSaved &&
-                (profileForm?.customer_mobile?.length || 0) < 14
-              }
-              disabled={profileForm?.customer_mobile?true:false}
-            /> */}
+           
 
             <TextInput
               style={styles.input}

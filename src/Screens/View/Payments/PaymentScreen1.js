@@ -56,13 +56,11 @@ const PaymentDetails = ({ navigation, route }) => {
   const [cartData,setCartData] = useState();
   const [usedWalletAmount,setUsedWalletAmount] = useState();
   const [afterWallet,setAfterWallet]=useState();
- const [availableDays, setAvailableDays] = useState([]); // Store available days
-   const [selectedDay, setSelectedDay] = useState(""); // Selected day
-   const [timeSlots, setTimeSlots] = useState([]); // Store time slots
-   const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); // Selected slot
-   const [selectedDate, setSelectedDate] = useState("");  
-   const [selectedDayName, setSelectedDayName] = useState("");  
- 
+  const [availableDays, setAvailableDays] = useState([]); 
+  const [selectedDay, setSelectedDay] = useState(""); 
+  const [timeSlots, setTimeSlots] = useState([]); 
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); 
+
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -96,7 +94,7 @@ const getDayOfWeek = (offset) => {
       const response = await axios.get(
         `http://182.18.139.138:9029/api/order-service/fetchTimeSlotlist`
       );
-      // console.log("Time slots response:", response.data);
+      console.log("Time slots response:", response.data);
       
       const data = response.data;
 
@@ -117,20 +115,7 @@ const getDayOfWeek = (offset) => {
     else if (day === "day_after_tomorrow") offset = 2;
 
     const mappedDay = getDayOfWeek(offset);
-    setSelectedDayName(mappedDay); 
     
-    
-    const today = new Date();
-  const targetDate = new Date();
-  targetDate.setDate(today.getDate() + offset);
-
-  const formattedDate = targetDate.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-  setSelectedDate(formattedDate);  // Store the formatted date in state
     // Find the time slots for the selected day
     const selectedDayData = availableDays.find(d => d.dayOfWeek === mappedDay);
 
@@ -161,18 +146,14 @@ const getDayOfWeek = (offset) => {
           customerId: customerId,
         },
       });
-      //  console.log("cart",response.data);
        
         const cartResponse = response.data.cartResponseList;
-        // console.log("cart response",cartResponse);
          setCartData(cartResponse);
        const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
-        // console.log({totalDeliveryFee});
         setTotalGstSum(response.data.totalGstSum)
         setDeliveryBoyFee(totalDeliveryFee)
         setGrandTotal(response.data.totalSumWithGstSum)
     } catch (error) {
-      // setError("Failed to fetch cart data");
     }
   };
   
@@ -180,7 +161,7 @@ const getDayOfWeek = (offset) => {
 
   const [selectedPaymentMode, setSelectedPaymentMode] = useState(null);
 
-  var calculatedTotal;
+  var calculatedTotal; 
   useEffect(() => {
     calculatedTotal = items.reduce(
       (total, item) => total + item.cartQuantity * item.itemPrice,
@@ -193,30 +174,23 @@ const getDayOfWeek = (offset) => {
         0
       )
     );
-    // console.log("calculated total", calculatedTotal);
-    // setTotalAmount(calculatedTotal);
-    setSubTotal(calculatedTotal);
+   setSubTotal(calculatedTotal);
     grandTotalfunc()
+
   }, [items]);
 
   const handlePaymentModeSelect = (mode) => {
     setSelectedPaymentMode(mode);
-    // console.log({ mode });
   };
 
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
-    // setTotalAmount(calculatedTotal);
-    // console.log("coupen removed");
-    Alert.alert("coupen removed successfully");
+   Alert.alert("coupen removed successfully");
   };
 
   const confirmPayment = () => {
-       if(selectedTimeSlot == null || selectedTimeSlot == ""){
-          Alert.alert("Please select time slot");
-        }
-   else if (selectedPaymentMode == null || selectedPaymentMode == "") {
+    if (selectedPaymentMode == null || selectedPaymentMode == "") {
       Alert.alert("Please select payment method");
       return
     } else {
@@ -285,11 +259,11 @@ const getDayOfWeek = (offset) => {
   };
 
   useEffect(() => {
+    fetchTimeSlots();
     getProfile();
     getOffers();
     getWalletAmount();
     totalCart();
-    fetchTimeSlots();
     // setDeliveryBoyFee(200);
   }, [grandTotalAmount, deliveryBoyFee]);
 
@@ -371,10 +345,8 @@ const getDayOfWeek = (offset) => {
         },
          url: BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
       });
-      // console.log(response.data);
 
       if (response.status === 200) {
-        // console.log(response.data);
         setProfileForm({
           customer_name: response.data.name,
           customer_email: response.data.email,
@@ -392,7 +364,6 @@ const getDayOfWeek = (offset) => {
     if(loading==true){
       return;
     }
-    // console.log({ selectedPaymentMode });
     let wallet;
     if (useWallet) {
       wallet = walletAmount;
@@ -420,8 +391,7 @@ const getDayOfWeek = (offset) => {
       couponCodeValue: coupenDetails,
       deliveryBoyFee:deliveryBoyFee,
       subTotal:subTotal,
-      gstAmount:totalGstSum,
-      orderFrom:"MOBILE",
+      gstAmount:totalGstSum
     };
 
     // console.log({ postData });
@@ -435,12 +405,11 @@ const getDayOfWeek = (offset) => {
       url: BASE_URL+"order-service/orderPlacedPaymet",
       data: postData,
       headers: {
-        // 'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     })
       .then((response) => {
-        // console.log("Order Placed Response:", response.data);
+        console.log("Order Placed Response:", response.data);
         if (response.data.status) {
           Alert.alert(
             "Sorry",
@@ -472,14 +441,14 @@ const getDayOfWeek = (offset) => {
           // setLoading(false);
         
         } else {
-          // console.log("paymentId==================", response.data);
+          console.log("paymentId==================", response.data);
           setTransactionId(response.data.paymentId);
           // onlinePaymentFunc()
           // console.log("==========");
           const data = {
             mid: "1152305",
-            amount: grandTotalAmount,
-            // amount: 1,
+            // amount: grandTotalAmount,
+            amount: 1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -518,7 +487,6 @@ const getDayOfWeek = (offset) => {
   };
 
   useEffect(() => {
-    // console.log("djhftghngdxhkjhfghjcvyhds");
     if (
       paymentStatus == "PENDING" ||
       paymentStatus == "" ||
@@ -533,9 +501,9 @@ const getDayOfWeek = (offset) => {
   }, [paymentStatus, paymentId]);
 
   const getepayPortal = async (data) => {
-    // console.log("getepayPortal", data);
+    console.log("getepayPortal", data);
     const JsonData = JSON.stringify(data);
-    // console.log("ytfddd");
+    console.log("ytfddd");
 
     var ciphertext = encryptEas(JsonData);
     var newCipher = ciphertext.toUpperCase();
@@ -548,7 +516,7 @@ const getDayOfWeek = (offset) => {
       terminalId: data.terminalId,
       req: newCipher,
     });
-    // console.log("========");
+    console.log("========");
     var requestOptions = {
       method: "POST",
       headers: myHeaders,
@@ -561,14 +529,13 @@ const getDayOfWeek = (offset) => {
     )
       .then((response) => response.text())
       .then((result) => {
-        //  console.log("===getepayPortal result======")
-        //  console.log("result",result);
+      
         var resultobj = JSON.parse(result);
         // console.log(resultobj);
         var responseurl = resultobj.response;
         var data = decryptEas(responseurl);
-        // console.log("===getepayPortal data======");
-        // console.log(data);
+        console.log("===getepayPortal data======");
+        console.log(data);
         data = JSON.parse(data);
         setPaymentId(data.paymentId);
         // paymentID = data.paymentId
@@ -614,7 +581,7 @@ const getDayOfWeek = (offset) => {
         setLoading(false);
       }
     } catch (error) {
-      // console.log(error.response);
+      console.log(error.response);
       setLoading(false);
     }
   };
@@ -634,13 +601,10 @@ const getDayOfWeek = (offset) => {
         },
       })
       .then((response) => {
-        // console.log("coupen applied", response.data);
         const { discount, grandTotal } = response.data;
-        // setGrandTotal(grandTotal);
         setCoupenDetails(discount);
         Alert.alert(response.data.message);
         setCoupenApplied(response.data.couponApplied);
-        // console.log("coupenapplied state", response.data.couponApplied);
       })
       .catch((error) => {
         console.log("error", error.response);
@@ -648,7 +612,7 @@ const getDayOfWeek = (offset) => {
   };
 
   function Requery(paymentId) {
-    // console.log("requery");
+    console.log("requery");
     
     // setLoading(true);
     if (
@@ -710,35 +674,18 @@ const getDayOfWeek = (offset) => {
         .then((result) => {
           var resultobj = JSON.parse(result);
           if (resultobj.response != null) {
-            // console.log("Requery ID result", paymentId);
+            console.log("Requery ID result", paymentId);
             var responseurl = resultobj.response;
-            // console.log({ responseurl });
+            console.log({ responseurl });
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
-            // console.log("Payment Result", data);
+            console.log("Payment Result", data);
             setPaymentStatus(data.paymentStatus);
-            // console.log(data.paymentStatus);
+            console.log(data.paymentStatus);
             if (
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILED"
             ) {
-              // clearInterval(intervalId); 294182409
-              if(data.paymentStatus === "SUCCESS"){
-                axios({
-                  method: "get",
-                  url: BASE_URL + `/order-service/api/download/invoice?paymentId=${transactionId}&&userId=${customerId}`,
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                })
-                .then((response) => {
-                  console.log(response.data);
-                })
-                .catch((error) => {
-                  console.error("Error in payment confirmation:", error);
-                });
-              }
               axios({
                 method: "POST",
                 url:BASE_URL
@@ -792,38 +739,34 @@ const getDayOfWeek = (offset) => {
 
 
   function grandTotalfunc() {
-    let total = grandTotal + deliveryBoyFee; // Start with total including delivery fee
-    let usedWallet = 0; // Track how much wallet is actually used
+    let total = grandTotal + deliveryBoyFee; 
+    let usedWallet = 0;
 
     if (coupenApplied) {
         total -= coupenDetails;
     }
 
-    if (useWallet && walletAmount > 0) {  // Process only if user has wallet balance
+    if (useWallet && walletAmount > 0) {  
         if (walletAmount >= total) {
-            usedWallet = total;  // Use only what's needed
+            usedWallet = total;  
             total = 0;  
         } else {
-            usedWallet = walletAmount; // Use full wallet balance
+            usedWallet = walletAmount; 
             total -= walletAmount;
         }
     }
 
-    // Ensure total is never negative
     total = Math.max(0, total);
 
-    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
-    setUsedWalletAmount(usedWallet);  // Store how much wallet is used
+    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); 
+    setUsedWalletAmount(usedWallet);  
     setGrandTotalAmount(total);
 
     if(total === 0){
-      // console.log("Get all Values",{total});
       
       setSelectedPaymentMode('COD');
     }
 
-    // console.log("Used Wallet:", usedWallet);
-    // console.log("Final Grand Total:", total);
 }
 
   useEffect(() => {
@@ -900,49 +843,29 @@ const getDayOfWeek = (offset) => {
             <Text style={styles.message}>{message}</Text>
           </View>
         )}
-{/* Delievery slots */}
-       
 
-<View style={styles.container1}>
-      <Text style={styles.label}>Select Day:</Text>
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={selectedDay}
-          onValueChange={handleDayChange}
-          style={styles.picker}
-        >
-          <Picker.Item label="Select a day" value="" />
-          {days.map((day) => (
-            <Picker.Item key={day.value} label={day.label} value={day.value} />
-          ))}
-        </Picker>
-      </View>
+       {/* Delievery Slot  */}
+       <View style={{ padding: 20 }}>
+      <Text>Select Day:</Text>
+      <Picker selectedValue={selectedDay} onValueChange={handleDayChange}>
+        <Picker.Item label="Select a day" value="" />
+        {days.map((day) => (
+          <Picker.Item key={day.value} label={day.label} value={day.value} />
+        ))}
+      </Picker>
 
       {timeSlots.length > 0 && (
         <>
-          <Text style={styles.label}>Select Time Slot:</Text>
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedTimeSlot}
-              onValueChange={setSelectedTimeSlot}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select a time slot" value="" />
-              {timeSlots.map((slot, index) => (
-                <Picker.Item key={index} label={slot} value={slot} />
-              ))}
-            </Picker>
-          </View>
-
-          {/* <TouchableOpacity
-            style={[
-              styles.button,
-              selectedTimeSlot ? styles.buttonActive : styles.buttonDisabled,
-            ]}
-            disabled={!selectedTimeSlot}
+          <Text>Select Time Slot:</Text>
+          <Picker
+            selectedValue={selectedTimeSlot}
+            onValueChange={setSelectedTimeSlot}
           >
-            <Text style={styles.buttonText}>Confirm</Text>
-          </TouchableOpacity> */}
+            <Picker.Item label="Select a time slot" value="" />
+            {timeSlots.map((slot, index) => (
+              <Picker.Item key={index} label={slot} value={slot} />
+            ))}
+          </Picker>
         </>
       )}
     </View>
@@ -1014,7 +937,6 @@ const getDayOfWeek = (offset) => {
 
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabelBold}>Grand Total</Text>
-            {/* <Text style={styles.detailsValueBold}>₹{grandTotalAmount+deliveryBoyFee}</Text> */}
             <Text style={styles.detailsValueBold}>₹{grandTotalAmount}</Text>
 
           </View>
@@ -1319,47 +1241,6 @@ const styles = StyleSheet.create({
   },
   highlight: {
     color: COLORS.services,
-    fontWeight: "bold",
-  },
-  container1: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    width: width *1,
-    alignSelf: "center",
-   
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-  },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginBottom: 15,
-    backgroundColor: "#f9f9f9",
-  },
-  picker: {
-    height: 50,
-    width:width*0.9
-  },
-  button: {
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  buttonActive: {
-    backgroundColor: "#28a745",
-  },
-  buttonDisabled: {
-    backgroundColor: "#ccc",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
     fontWeight: "bold",
   },
 });

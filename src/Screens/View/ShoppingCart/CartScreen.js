@@ -516,6 +516,16 @@ const CartScreen = () => {
                                 {cartItems[item.itemId] || item.cartQuantity}
                               </Text>
                             )}
+                              {item.itemPrice==1 ?(
+                                                   <View
+                                                   style={styles.quantityButton1}
+                                                   // onPress={() => incrementQuantity(item)}
+                                                   onPress={() => handleIncrease(item)}
+                                                   disabled={loadingItems[item.itemId]}
+                                                 >
+                                                   <Text style={styles.quantityButtonText}>+</Text>
+                                                 </View>
+                                                ):(
                             <TouchableOpacity
                               style={[
                                 styles.quantityButton,
@@ -529,7 +539,7 @@ const CartScreen = () => {
                               }
                             >
                               <Text style={styles.buttonText}>+</Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity>)}
 
                             <Text style={styles.itemTotal}>
                               {/* Total: */}₹

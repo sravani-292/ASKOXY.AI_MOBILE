@@ -429,6 +429,15 @@ const ItemDetails = ({ route, navigation }) => {
                 )}
 
                 {/* Increase Button */}
+                 {item.itemPrice==1 ?(
+                                       <View
+                                       style={styles.quantityButton1}
+                                       // onPress={() => incrementQuantity(item)}
+                                       onPress={() => handleIncrease(item)}
+                                       disabled={loadingItems[item.itemId]}
+                                     >
+                                       <Text style={styles.quantityButtonText}>+</Text>
+                                     </View>):(
                 <TouchableOpacity
                   style={[
                     cartItems[item.itemId] === item.quantity
@@ -442,11 +451,11 @@ const ItemDetails = ({ route, navigation }) => {
                   }
                 >
                   <Text style={styles.buttonText}>+</Text>
-                </TouchableOpacity>
+                </TouchableOpacity>)}
               </View>
             ) : (
               <>
-                {item.itemPrice != 1 ? (
+                {/* {item.itemPrice != 1 ? ( */}
                   <TouchableOpacity
                     style={[
                       styles.addButton,
@@ -463,7 +472,7 @@ const ItemDetails = ({ route, navigation }) => {
                         : "Add to Cart"}
                     </Text>
                   </TouchableOpacity>
-                ) : null}
+                {/* ) : null} */}
               </>
             )}
           </View>
@@ -746,5 +755,12 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "black",
     marginLeft: 5,
+  },
+  quantityButton1: {
+    backgroundColor: "#c0c0c0",
+    padding: 10,
+    borderRadius: 5,
+    alignSelf: "center",
+    alignItems: "center",
   },
 });
