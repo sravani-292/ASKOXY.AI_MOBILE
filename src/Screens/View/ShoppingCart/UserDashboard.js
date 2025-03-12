@@ -112,7 +112,7 @@ const UserDashboard = () => {
           },
         }
       );
-      // console.log("cart response", response?.data?.customerCartResponseList);
+      console.log("cart response", response?.data?.customerCartResponseList);
 
       const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
@@ -247,9 +247,12 @@ const UserDashboard = () => {
           },
         }
       );
-      console.log("response", response.data);
 
-      if (response.data == "Card successfully deleted") {
+      console.log(" removal response", response);
+      
+      console.log(" removal response", response.status);
+       
+      if (response.status==200) {
         const updatedCart = cartData.filter(c => c.itemId !== item.itemId);
         setCartData([...updatedCart]);
 

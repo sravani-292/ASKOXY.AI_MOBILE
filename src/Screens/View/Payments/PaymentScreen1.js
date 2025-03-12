@@ -293,7 +293,6 @@ const getDayOfWeek = (offset) => {
         setWalletTotal(
           grandTotal - response.data.usableWalletAmountForOrder
         );
-        // console.log("wallet total", walletTotal);
         // console.log("==========useWallet=============");
       }
     } catch (error) {

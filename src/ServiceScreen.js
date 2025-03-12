@@ -322,18 +322,15 @@ const truncateId = (id) => {
               position: "relative",
             }}
           >
+            <TouchableOpacity onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"Rice Products"}):navigation.navigate("Dashboard")}}>
             <Image
               source={{ uri: item.categoryLogo }}
               style={{ width: width/2.5, height: 200, borderRadius: 10 ,alignSelf:"center"}}
             />
-            
+            </TouchableOpacity>
             <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 5,alignSelf:"center" }}>{item.categoryName}</Text>
            <TouchableOpacity style={{backgroundColor:"#b1a9c6",padding:10,borderRadius:10,marginTop:10,alignItems:"center"}} 
-            // onPress={()=> navigation.navigate("Rice Product Detail", {
-            //   details: item,
-            //   name: item.categoryName,
-            //   image: item.ategoryLogo,
-            // })}
+           
             onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"Rice Products"}):navigation.navigate("Dashboard")}}
             >
               <Text>Show Items</Text>
