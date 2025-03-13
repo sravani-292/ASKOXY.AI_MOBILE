@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList,Dimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
+import { COLORS } from '../../../../../Redux/constants/theme';
+const {width,height}=Dimensions.get('window');
 const transactions = [
   {
     id: '1',
@@ -65,9 +66,13 @@ export default function TransactionHistory({walletTxs}) {
       </View>
       <Text style={[
         styles.transactionAmount,
-        { color: item.walletTxType === 1? '#4CAF50' : '#F44336' }
+        { color: item.walletTxType === 1? '#4CAF50' : '#F44336' ,
+
+          // textAlign: 'right', 
+          // alignSelf: 'flex-end' 
+        }
       ]}>
-        {item.walletTxType === 1 ? '+' : '-'}${item.walletTxAmount}
+        {item.walletTxType === 1 ? '+' : '-'}{item.walletTxAmount}
       </Text>
     </View>
   );
@@ -94,7 +99,7 @@ export default function TransactionHistory({walletTxs}) {
           <Text style={[styles.filterText, filter === 2 && styles.activeFilterText]}>Debit</Text>
         </TouchableOpacity>
       </View>
-
+  
       <FlatList
         data={filteredTransactions}
         renderItem={renderTransaction}
@@ -122,7 +127,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   activeFilter: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.services,
   },
   filterText: {
     color: '#666',
@@ -131,7 +136,10 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   transactionList: {
-    padding: 16,
+    padding: 15,
+    width:width*0.8,
+    // marginRight:20,
+    // alignSelf:"center"
   },
   transactionCard: {
     flexDirection: 'row',
@@ -146,6 +154,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
+    width:width*0.9
   },
   transactionLeft: {
     flexDirection: 'row',
@@ -168,9 +177,14 @@ const styles = StyleSheet.create({
   transactionDate: {
     fontSize: 14,
     color: '#666',
+    width:width*0.7
   },
   transactionAmount: {
     fontSize: 16,
     fontWeight: '600',
+    marginBottom:50,
+    marginLeft:-90  
+    // marginLeft:width*0.
+
   },
 });

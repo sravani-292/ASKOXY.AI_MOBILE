@@ -644,7 +644,7 @@ const CheckOut = ({ navigation, route }) => {
                 paddingHorizontal: 20,
                 borderRadius: 5,
               }}
-              onPress={() => navigation.navigate("Dashboard")}
+              onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
             >
               <Text style={{ color: "#fff", fontSize: 16 }}>
                 Browse Products

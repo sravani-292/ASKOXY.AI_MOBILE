@@ -586,7 +586,7 @@ const CartScreen = () => {
           </Text>
           <TouchableOpacity
             style={styles.browseButton}
-            onPress={() => navigation.navigate("Dashboard")}
+            onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
           >
             <Text style={styles.browseButtonText}>Browse Items</Text>
           </TouchableOpacity>
@@ -600,7 +600,7 @@ const CartScreen = () => {
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
               style={styles.addButton}
-              onPress={() => navigation.navigate("Dashboard")}
+              onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
             >
               <Text style={styles.actionButtonText}>Add More</Text>
             </TouchableOpacity>

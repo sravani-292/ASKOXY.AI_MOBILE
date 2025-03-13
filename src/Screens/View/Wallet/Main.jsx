@@ -4,9 +4,11 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import WalletOverview from './components/WalletOverview';
 import TransactionHistory from './components/TransactionHistory';
 import SubscriptionHistory from './components/SubscriptionHistory';
+import Subscription from '../WalletSubscriptions/Subscription';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import BASE_URL from '../../../../Config';
+import { COLORS } from '../../../../Redux/constants/theme';
 export default function MainWallet() {
   const [activeTab, setActiveTab] = useState('transactions');
 
@@ -87,8 +89,10 @@ export default function MainWallet() {
         {activeTab === 'transactions' ? (
           <TransactionHistory walletTxs={walletTxs} />
         ) : (
-            <></>
-        //   <SubscriptionHistory />
+            <>
+           {/* <SubscriptionHistory /> */}
+           <Subscription/>
+          </>
         )}
       </ScrollView>
     </View>
@@ -115,7 +119,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeTab: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.services,
   },
   tabText: {
     fontSize: 16,

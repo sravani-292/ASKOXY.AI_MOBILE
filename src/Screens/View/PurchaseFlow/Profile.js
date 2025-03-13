@@ -564,6 +564,7 @@ const Profile = ({ navigation }) => {
                     backupPhone_error: false,
                   })
                 }
+                maxLength={10}
               />
             
             </View>
@@ -808,12 +809,12 @@ const Profile = ({ navigation }) => {
               <Text style={styles.quickActionText}>Refer a Friend</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Referral History")}
+            {/* <TouchableOpacity onPress={() => navigation.navigate("Referral History")}
               style={[styles.quickActionButton, styles.historyButton]}
             >
               <MaterialIcons name="history" size={20} color="#fff" />
               <Text style={styles.quickActionText}>Referral History</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
       </ScrollView>

@@ -182,7 +182,8 @@ const UserDashboard = ({route}) => {
     }
 
     const data = { customerId: customerId, itemId: item.itemId };
-
+       console.log("added data",data);
+       
     try {
       const response = await axios.post(
         BASE_URL + "cart-service/cart/add_Items_ToCart",

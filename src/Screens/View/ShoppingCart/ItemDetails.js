@@ -481,7 +481,7 @@ const ItemDetails = ({ route, navigation }) => {
       <View style={styles.footer}>
         <View style={styles.rowContainer}>
           <TouchableOpacity
-            onPress={() => navigation.navigate("Dashboard")}
+            onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
             style={styles.smallButton}
           >
             <Text style={styles.buttonText}>Add More</Text>

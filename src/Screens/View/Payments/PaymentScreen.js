@@ -213,10 +213,11 @@ const getDayOfWeek = (offset) => {
   };
 
   const confirmPayment = () => {
-       if(selectedTimeSlot == null || selectedTimeSlot == ""){
-          Alert.alert("Please select time slot");
-        }
-   else if (selectedPaymentMode == null || selectedPaymentMode == "") {
+      //  if(selectedTimeSlot == null || selectedTimeSlot == ""){
+      //     Alert.alert("Please select time slot");
+      //   }
+  //  else
+    if (selectedPaymentMode == null || selectedPaymentMode == "") {
       Alert.alert("Please select payment method");
       return
     } else {
@@ -416,8 +417,8 @@ const getDayOfWeek = (offset) => {
       orderStatus: selectedPaymentMode,
       pincode: addressDetails.pincode,
       walletAmount: usedWalletAmount,
-      couponCodeUsed: coupon,
-      couponCodeValue: coupenDetails,
+      couponCode: coupon,
+      couponValue: coupenDetails,
       deliveryBoyFee:deliveryBoyFee,
       subTotal:subTotal,
       gstAmount:totalGstSum,

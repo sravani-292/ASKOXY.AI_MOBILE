@@ -33,8 +33,8 @@ ActivityIndicator
 
 export default function ReferralHistory() {
    const userData = useSelector((state) => state.counter);
-    const token = userData.accessToken;
-    const customerId = userData.userId;
+    const token = userData?.accessToken;
+    const customerId = userData?.userId;
     const[refereesData,setRefereesData]=useState([])
     const[loading,setLoading]=useState(false)
 //   const refereesData = [
@@ -136,7 +136,7 @@ function getRefereeDetails(){
       <View style={styles.detailRow}>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Referred Date</Text>
-          <Text style={styles.detailValue}>{formatDate(item.created_at)}</Text>
+          <Text style={styles.detailValue}>{formatDate(item?.created_at)}</Text>
         </View>
       </View>
       
@@ -145,7 +145,7 @@ function getRefereeDetails(){
       <View style={styles.detailRow}>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Status</Text>
-          {renderStatusBadge(item.referenceStatus)}
+          {/* {renderStatusBadge(item?.referenceStatus)} */}
         </View>
       </View>
       
@@ -159,7 +159,7 @@ function getRefereeDetails(){
 
      {loading==false?
       <View>
-    {refereesData!="" || refereesData!=[]  ?
+    {refereesData ?
       <FlatList
         data={refereesData}
         renderItem={renderRefereeItem}
