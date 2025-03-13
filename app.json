@@ -2,7 +2,7 @@
   "expo": {
     "name": "ASKOXY.AI",
     "slug": "oxyrice_customer",
-    "version": "1.0.16",
+    "version": "1.0.17",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,11 +14,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "15",
+      "buildNumber": "16",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to show available delivery options, calculate delivery times, and ensure your order reaches you accurately.",
         "NSLocationAlwaysUsageDescription": "We need your location to ensure timely delivery updates even when the app is in the background.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Your location will help us provide the best delivery experience, including background tracking if needed."
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Your location will help us provide the best delivery experience, including background tracking if needed.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,7 +28,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 16
+      "versionCode": 17
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,6 +39,10 @@
     "updates": {
       "url": "https://u.expo.dev/5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
     },
+    "plugins": [
+      "expo-font",
+      "expo-localization"
+    ],
     "extra": {
       "eas": {
         "projectId": "5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"

@@ -5,17 +5,15 @@ import { View, Text, Image, TextInput, FlatList, TouchableOpacity,ScrollView,
           BackHandler, Dimensions ,StyleSheet,Alert} from "react-native";
 import { Ionicons, FontAwesome,MaterialCommunityIcons } from "@expo/vector-icons";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useDispatch,useSelector } from "react-redux";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import BASE_URL,{userStage} from "../Config"
-const{height,width}=Dimensions.get('window')
+const{height,width}=Dimensions.get('window' || 'screen')
 import { useNavigationState } from '@react-navigation/native';
-import { ActivityIndicator } from "react-native-paper";
 import LottieView from "lottie-react-native";
-import { set } from "core-js/core/dict";
 import LoginModal from "./Components/LoginModal";
 import { i } from "framer-motion/m";
+import UpdateChecker from "../until/Updates";
 
 const services = [
   { id: "1", name: "Free Rudraksha", image: require("../assets/Rudraksha.jpeg"),screen:"FREE RUDRAKSHA" },
@@ -78,38 +76,29 @@ useFocusEffect(
   }, [currentScreen])
 )
 
+const profile =async()=>{
+  userData!=null?(
+    axios({
+      method: "get",
+      url:
+        BASE_URL + `user-service/getProfile/${userData.userId}`,
+      headers: {
+        Authorization: `Bearer ${userData.accessToken}`,
+      },
 
-useFocusEffect(
-  useCallback(() => {
-    console.log({userData});
-    
-    const profile =async()=>{
-        userData!=null?(
-          axios({
-            method: "get",
-            url:
-              BASE_URL + `user-service/getProfile/${userData.userId}`,
-            headers: {
-              Authorization: `Bearer ${userData.accessToken}`,
-            },
-
-          })
-            .then((response) => {
-              console.log("response", response.data);
-              setChainId(response.data.multiChainId)
-              setCoin(response.data.coinAllocated)
-            })
-            .catch((error) => {
-              console.log("error1", error);
-              setLoading(false)
-            })
-        )
-        :console.log("no user data");
-      }
-      profile()
-      
-  }, [userData])
-);
+    })
+      .then((response) => {
+        console.log("response", response.data);
+        setChainId(response.data.multiChainId)
+        setCoin(response.data.coinAllocated)
+      })
+      .catch((error) => {
+        console.log("error1", error);
+        setLoading(false)
+      })
+  )
+  :console.log("no user data");
+}
 
 
   function getAllCampaign() {
@@ -173,8 +162,9 @@ useFocusEffect(
 useEffect(()=>{
   getAllCampaign();
   getRiceCategories()
+  profile()
   setLoginMobal(true)
-},[])
+},[userData])
 
 // Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
 const truncateId = (id) => {
@@ -184,7 +174,7 @@ const truncateId = (id) => {
 
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff", padding: 5 }}>
+    <View style={{ flex: 1, backgroundColor: "#F5F5F5F5", padding: 5 }}>
       {loading==false?
     <>
       {/* Header */}
@@ -204,19 +194,20 @@ const truncateId = (id) => {
       </TouchableOpacity>}
 
       </View>
+      <UpdateChecker/>
       {userData!=null&&
       <View style={styles.IDcontainer}>
      <Text style={styles.label}>
         Blockchain ID: <Text style={styles.value}>{truncateId(chainId)}</Text>
       </Text>
       <Text style={styles.label}>
-        Coin: <Text style={styles.value}>{coin}</Text>
+        Coins: <Text style={styles.value}>{coin}</Text>
       </Text>
       </View>
 }
 
 <ScrollView>
-      <>
+      <View style={{marginBottom:height*0.1}}>
       <FlatList
         data={images}
         keyExtractor={(_, index) => index.toString()}
@@ -226,13 +217,13 @@ const truncateId = (id) => {
         onScroll={handleScroll}
         renderItem={({ item }) => (
           <View style={styles.imageContainer}>
-          <Image source={item} style={{ width:"97%",height: "35%", }} />
+          <Image source={item} style={{ width:"95%",height: "34%", }} />
          </View>
         )}
       />
 
       {/* Pagination Dots */}
-      <View style={{ flexDirection: "row", alignSelf: "center",marginTop:-95 }}>
+      <View style={{ flexDirection: "row", alignSelf: "center",marginTop:-height*0.13 }}>
         {images.map((_, index) => (
           <View
             key={index}
@@ -300,8 +291,8 @@ const truncateId = (id) => {
       {/* Popular Categories List */}
       <View style={{ flexDirection: "row", justifyContent: "space-between",padding:10 }}>
         <Text style={{ fontSize: 18, fontWeight: "bold" }}>Popular Categories</Text>
-        <TouchableOpacity onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"UserDashboard"}):navigation.navigate("Dashboard")}}>
-          <Text style={{ fontSize: 14, color: "#3d2a71" }}>View All</Text>
+        <TouchableOpacity onPress={()=>navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}>
+          <Text style={{ fontSize: 14, color: "#3d2a71",fontWeight:"bold",marginRight:15 }}>View All</Text>
         </TouchableOpacity>
       </View>
 
@@ -310,28 +301,34 @@ const truncateId = (id) => {
         keyExtractor={(item,index) => index}
         numColumns={2}
         showsVerticalScrollIndicator={false}
-        columnWrapperStyle={{ justifyContent: "space-between", marginTop: 10 }}
+        columnWrapperStyle={{ justifyContent: "space-evenly", marginTop: 10 }}
         renderItem={({ item }) => (
           <View
             style={{
-              backgroundColor: "#F5F5F5",
+              backgroundColor: "#ffff",
               borderRadius: 10,
               padding: 10,
-              width: "48%",
+              width: "45%",
+              height: "100%",
               marginBottom: 15,
               position: "relative",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
             }}
           >
-            <TouchableOpacity onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"Rice Products"}):navigation.navigate("Dashboard")}}>
+            <TouchableOpacity onPress={()=>navigation.navigate("Rice Products",{screen:"Rice Products",category:item.categoryName})}>
             <Image
               source={{ uri: item.categoryLogo }}
-              style={{ width: width/2.5, height: 200, borderRadius: 10 ,alignSelf:"center"}}
+              style={{ width: width/2.8, height: 150, borderRadius: 10 ,alignSelf:"center"}}
             />
             </TouchableOpacity>
             <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 5,alignSelf:"center" }}>{item.categoryName}</Text>
-           <TouchableOpacity style={{backgroundColor:"#b1a9c6",padding:10,borderRadius:10,marginTop:10,alignItems:"center"}} 
+           <TouchableOpacity style={{backgroundColor:"#b1a9c6",padding:10,borderRadius:10,marginTop:10,alignItems:"center",left:0,bottom:0,top:0,right:0}} 
            
-            onPress={()=>{userData!=null?navigation.navigate("Home",{screen:"Rice Products"}):navigation.navigate("Dashboard")}}
+            onPress={()=>navigation.navigate("Rice Products",{screen:"Rice Products",category:item.categoryName})}
             >
               <Text>Show Items</Text>
            </TouchableOpacity>
@@ -339,7 +336,7 @@ const truncateId = (id) => {
           </View>
         )}
       />
-</>
+</View>
 </ScrollView>
 </>
 :
@@ -377,11 +374,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   imageContainer: {
-    width:width*1,
+    width:width,
     justifyContent: "center",
     alignItems: "center",
-    height:350,
-    marginTop:-85
+    alignSelf: "center",
+    height: height * 0.42,
+    marginTop:-height*0.12
   },
   image: {
     width: width * 0.9, 

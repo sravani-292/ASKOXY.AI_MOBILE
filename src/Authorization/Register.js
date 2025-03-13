@@ -295,7 +295,7 @@ const Register = () => {
         expiryTime: otpGeneratedTime,
         registrationType: "whatsapp",
         primaryType: "CUSTOMER",
-        registeredFrom: "MOBILE",
+        registerdFrom: "MOBILE",
       };
     } else {
       data = {
@@ -308,7 +308,7 @@ const Register = () => {
         expiryTime: otpGeneratedTime,
         registrationType: "mobile",
         primaryType: "CUSTOMER",
-        registeredFrom: "MOBILE",
+        registerdFrom: "MOBILE",
       };
     }
     console.log({ data });

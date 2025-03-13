@@ -8,8 +8,10 @@ import CustomNavigationBar from "../Components/AppBar";
 import Rice from "../Screens/View/ShoppingCart/Rice";
 import ProfilePage from "../Screens/View/PurchaseFlow/Profile";
 // import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
+import MainWallet from "../Screens/View/Wallet/Main";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
 import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
+import ServiceScreen from "../ServiceScreen";
 import { COLORS } from "../../Redux/constants/theme";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -72,7 +74,7 @@ const Tabs = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="Rice Products"
+      initialRouteName="Home"
       screenOptions={{
         headerShown: true,
         tabBarShowLabel: false,
@@ -80,9 +82,32 @@ const Tabs = () => {
         header: (props) => <CustomNavigationBar {...props} />,
       }}
     >
+
+<Tab.Screen
+        name="Home"
+        component={ServiceScreen}
+        options={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarStyle: styles.tabBar,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabIconContainer,{borderRadius:20}]}>
+              <Image
+                source={require("../../assets/icon.png")}
+                resizeMode="contain"
+                style={[styles.tabIcon,{width:width*0.5,height:"85%",borderRadius:20}]}
+              />
+              {/* <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
+                Home
+              </Text> */}
+            </View>
+          ),
+        }}
+      />
+
       <Tab.Screen
-        name="Rice Products"
-        component={UserDashboard}
+        name="Wallet"
+        component={MainWallet}
         options={{
           headerShown: true,
           tabBarShowLabel: false,
@@ -90,12 +115,12 @@ const Tabs = () => {
           tabBarIcon: ({ focused }) => (
             <View style={styles.tabIconContainer}>
               <Image
-                source={require("../../assets/BottomTabImages/Home.png")}
+                source={require("../../assets/BottomTabImages/wallet.png")}
                 resizeMode="contain"
-                style={[styles.tabIcon, getIconColor(focused)]}
+                style={[styles.tabIcon, getIconColor(focused),{width:26,height:26,fontWeight:"bold"}]}
               />
               <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
-                Home
+                Wallet
               </Text>
             </View>
           ),

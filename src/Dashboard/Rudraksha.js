@@ -65,11 +65,7 @@ const Rudraksha = ({ navigation }) => {
     setFormData({ ...formData, loading: true });
     axios({
       method: "post",
-      url:
-        userStage == "test"
-          ? BASE_URL + "marketing-service/campgin/rudhrakshaDistribution"
-          : BASE_URL + "auth-service/auth/rudhrakshaDistribution",
-
+      url: BASE_URL + "marketing-service/campgin/rudhrakshaDistribution",
       data: data,
     })
       .then((response) => {
@@ -117,6 +113,28 @@ const Rudraksha = ({ navigation }) => {
         setFormData({ ...formData, loading: false });
         console.log("error", error.response);
       });
+  }
+
+  function getCall(){
+    let data={
+      userId: userData.userId
+    }
+    axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
+    .then((response)=>{
+      console.log(response.data)
+      const hasFreeAI = response.data.some(item => item.askOxyOfers === "FREERUDRAKSHA");
+
+  if (hasFreeAI) {
+    // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+    setAlreadyInterested(true)
+  } else {
+    // Alert.alert("No","askOxyOfers does not contain FREEAI");
+    setAlreadyInterested(false)
+  }
+    })
+    .catch((error)=>{
+      console.log(error.response)
+    })
   }
 
   return (

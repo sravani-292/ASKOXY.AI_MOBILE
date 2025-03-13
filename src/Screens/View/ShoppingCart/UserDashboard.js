@@ -20,6 +20,7 @@ import React, {
   useState,
   useCallback,
   useLayoutEffect,
+  useRef,
 } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -35,11 +36,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
 
-const UserDashboard = () => {
+const UserDashboard = ({route}) => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("All CATEGORIES");
+  const [selectedCategory, setSelectedCategory] = useState(route?.params.category || "All CATEGORIES");
   const navigation = useNavigation();
   const [loadingItems, setLoadingItems] = useState({});
   const [cartCount, setCartCount] = useState();
@@ -52,6 +53,8 @@ const UserDashboard = () => {
   const [searchText, setSearchText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [user, setUser] = useState();
+
+  const scrollViewRef = useRef(null);
   
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
@@ -91,6 +94,8 @@ const UserDashboard = () => {
       if (userData) {
         fetchCartItems();
       }
+      console.log(route.params.category);
+      
     }, [])
   );
  
@@ -112,7 +117,7 @@ const UserDashboard = () => {
           },
         }
       );
-      console.log("cart response", response?.data?.customerCartResponseList);
+      // console.log("cart response", response?.data?.customerCartResponseList);
 
       const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
@@ -334,16 +339,42 @@ const UserDashboard = () => {
       .get(BASE_URL + "product-service/showItemsForCustomrs")
       .then((response) => {
         setCategories(response.data);
-        setSelectedCategory("All CATEGORIES");
+        // console.log(response.data[0]);
+        
         const allItems = response.data.flatMap(
           (category) => category.itemsResponseDtoList || []
         );
-        // console.log("all items", allItems);
+        if (selectedCategory === "All CATEGORIES") {
+          console.log({selectedCategory});
+          
+               const allItems = response.data.flatMap(
+            (category) => category.itemsResponseDtoList || []
+          ).sort((a, b) => (a.quantity > 0 ? -1 : 1));
+          setFilteredItems(allItems);
+        } else {
+          console.log({selectedCategory});
+          const filtered = response.data
+            .filter(
+              (cat) =>
+                cat.categoryName.trim().toLowerCase() ===
+              selectedCategory.trim().toLowerCase()
+            )
+            .flatMap((cat) => cat.itemsResponseDtoList || [])
+            .sort((a, b) => (a.quantity > 0 ? -1 : 1));
+          setFilteredItems(filtered);
+        }
 
-        setFilteredItems(allItems);
+        // setFilteredItems(allItems);
 
         setTimeout(() => {
           setLoading(false);
+          // Auto-scroll to the first category
+      setTimeout(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollTo({ x: 100, animated: true });
+        }
+      }, 100);
+           
         }, 1500);
       })
       .catch((error) => {
@@ -359,7 +390,7 @@ const UserDashboard = () => {
     if (category === "All CATEGORIES") {
       const allItems = categories.flatMap(
         (category) => category.itemsResponseDtoList || []
-      );
+      ).sort((a, b) => (a.quantity > 0 ? -1 : 1));
       setFilteredItems(allItems);
     } else {
       const filtered = categories
@@ -368,7 +399,8 @@ const UserDashboard = () => {
             cat.categoryName.trim().toLowerCase() ===
             category.trim().toLowerCase()
         )
-        .flatMap((cat) => cat.itemsResponseDtoList || []);
+        .flatMap((cat) => cat.itemsResponseDtoList || [])
+        .sort((a, b) => (a.quantity > 0 ? -1 : 1));
       setFilteredItems(filtered);
     }
   };
@@ -586,7 +618,7 @@ const UserDashboard = () => {
                 justifyContent: "center",
               }}
             >
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} ref={scrollViewRef}>
                 <TouchableOpacity
                   onPress={() => filterByCategory("All CATEGORIES")}
                 >
@@ -798,11 +830,11 @@ const styles = StyleSheet.create({
   },
 
   row: {
-    justifyContent: "space-between",
+    justifyContent: "space-evenly",
     marginBottom: 10,
   },
   itemCard: {
-    flex: 1,
+    // flex: 1,
     padding: 10,
     borderWidth: 1,
     borderColor: "#ddd",
@@ -814,6 +846,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    width: "45%",
+    height: "100%",
+
   },
   imageContainer: {
     position: "relative",
@@ -828,7 +863,7 @@ const styles = StyleSheet.create({
 
   labelText: {
     color: "#fff",
-    fontSize: 10,
+    fontSize: 16,
     fontWeight: "bold",
   },
   itemName: {
@@ -837,7 +872,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 5,
     // height: 85,
-    height:height/12,
+    height:height/24,
   },
   priceContainer: {
     marginTop: 20,

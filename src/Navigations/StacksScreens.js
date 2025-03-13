@@ -129,7 +129,7 @@ export default function StacksScreens() {
         name="Subscription History"
         component={SubscriptionHistory}
       /> */}
-      <Stack.Screen name="About Us" component={About}/>
+      <Stack.Screen name="Terms and Conditions" component={About}/>
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
       <Stack.Screen name="Checkout" component={CheckOut} />
@@ -141,9 +141,9 @@ export default function StacksScreens() {
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
       <Stack.Screen name="Item Details" component={ItemDetails}  />
       <Stack.Screen name="Refund" component={Refund} />
-      <Stack.Screen name="Dashboard" component={UserDashboard} />
+      <Stack.Screen name="Rice Products" component={UserDashboard} />
       <Stack.Screen name="Write To Us" component={WriteToUs}/>
-      <Stack.Screen name="Rice Products" component={Rice}/>
+      {/* <Stack.Screen name="Rice Products" component={Rice}/> */}
       <Stack.Screen name="ChatGpt" component={ChatGpt}/>
       <Stack.Screen name="Referral History" component={ReferralHistory}/>
 

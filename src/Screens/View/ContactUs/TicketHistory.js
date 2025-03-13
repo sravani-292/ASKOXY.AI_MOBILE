@@ -46,7 +46,7 @@ const TicketHistory = ({ navigation }) => {
     setLoading(true);
     axios
       .post(
-         BASE_URL + `writetous-service/getAllQueries`,
+         BASE_URL + `user-service/write/getAllQueries`,
         {
           queryStatus: queryStatus,
           userId: customerId,

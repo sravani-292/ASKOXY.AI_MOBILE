@@ -900,10 +900,10 @@ const getDayOfWeek = (offset) => {
             <Text style={styles.message}>{message}</Text>
           </View>
         )}
+
 {/* Delievery slots */}
        
-
-<View style={styles.container1}>
+{/* <View style={styles.container1}>
       <Text style={styles.label}>Select Day:</Text>
       <View style={styles.pickerContainer}>
         <Picker
@@ -934,7 +934,7 @@ const getDayOfWeek = (offset) => {
             </Picker>
           </View>
 
-          {/* <TouchableOpacity
+          <TouchableOpacity
             style={[
               styles.button,
               selectedTimeSlot ? styles.buttonActive : styles.buttonDisabled,
@@ -942,10 +942,10 @@ const getDayOfWeek = (offset) => {
             disabled={!selectedTimeSlot}
           >
             <Text style={styles.buttonText}>Confirm</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </>
       )}
-    </View>
+    </View> */}
         {/* Payment Methods */}
         <Text style={styles.paymentHeader}>Choose Payment Method</Text>
         <View style={styles.paymentOptions}>

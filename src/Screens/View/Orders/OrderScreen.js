@@ -12,13 +12,10 @@ import {
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
-import dayjs from "dayjs";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { COLORS } from "../../../../Redux/constants/theme";
 
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../../../Config";
-import { get } from "react-native/Libraries/TurboModule/TurboModuleRegistry";
 const { width, height } = Dimensions.get("window");
 
 const OrderScreen = () => {
@@ -119,6 +116,17 @@ const OrderScreen = () => {
     });
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   // Render each order
   const renderOrder = ({ item }) => (
     <TouchableOpacity
@@ -134,7 +142,7 @@ const OrderScreen = () => {
       <View style={styles.orderInfo}>
         {/* <Text style={styles.date}>{item?.orderDate?.slice(0, 10)}</Text> */}
         <Text style={styles.date}>
-          {dayjs(item?.orderDate).format("MMM DD, YYYY hh:mm:ss A")}
+          {formatDate(item?.orderDate)}
         </Text>
         <Text style={styles.orderId}>
           Order Id: <Text>{item.newOrderId}</Text>

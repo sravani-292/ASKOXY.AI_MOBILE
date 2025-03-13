@@ -45,17 +45,18 @@ const Login = () => {
     validOtpError: false,
     loading: false,
   });
+  const [isTelugu, setIsTelugu] = useState(true);
+
   // console.log({ BASE_URL });
   const phoneInput = React.createRef();
 
-  const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [mobileOtpSession, setMobileOtpSession] = useState();
   const [saltSession, setSaltSession] = useState(""); 
   const [otpGeneratedTime, setOtpGeneratedTime] = useState("");
   const [message, setMessage] = useState(false);
-  const [authMethod, setAuthMethod] = useState("whatsapp");
+  const [authMethod, setAuthMethod] = useState("sms");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [whatsappNumber_Error, setWhatsappNumber_Error] = useState(false);
@@ -71,24 +72,7 @@ const Login = () => {
   const [otpError, setOtpError] = useState(false);
   const [otpMessage, setOtpMessage] = useState(false);
 
-  // Handle OTP verification
-  const handleVerifyOTP = () => {
-    if (!otp) {
-      alert("Please enter the OTP");
-      return;
-    }
-
-    setLoading(true);
-
-    // Simulate API call to verify OTP
-    setTimeout(() => {
-      setLoading(false);
-      // Navigate to main app or home screen after successful verification
-      alert("Login successful!");
-      // navigation.navigate('Home');
-    }, 1500);
-  };
-
+ 
   useFocusEffect(
     useCallback(() => {
       const checkLoginData = async () => {
@@ -153,26 +137,6 @@ const Login = () => {
     }, [currentScreen])
   );
 
-  const getVersion = async () => {
-    try {
-      const response = await axios.get(
-        BASE_URL + "erice-service/user/getAllVersions",
-        {
-          method: "get",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          params: {
-            userType: "CUSTOMER",
-            versionType: "ANDROID",
-          },
-        }
-      );
-      console.log("Version response:", response.data);
-    } catch (error) {
-      console.error("Error fetching version:", error);
-    }
-  };
 
   const handleSendOtp = async () => {
     // console.log("sdmbv",authMethod,countryCode,whatsappNumber)
@@ -182,7 +146,7 @@ const Login = () => {
         setWhatsappNumber_Error(true);
         return false;
       }
-      if (!whatsappNumber) {
+      if (!whatsappNumber) { 
         setError1("Please enter a phone number.");
         return false;
       } else if (!phoneInput.current.isValidNumber(whatsappNumber)) {
@@ -327,7 +291,10 @@ const Login = () => {
               response.data.userStatus == "ACTIVE" ||
               response.data.userStatus == null
             ) {
-              navigation.navigate("Service Screen");
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Home", params: { screen: "Dashboard" } }],
+              });
             } else {
               Alert.alert(
                 "Deactivated",
@@ -428,9 +395,84 @@ const Login = () => {
 
           {/* Login Section */}
           <View style={styles.logingreenView}>
+
+
+{otpSent==false?
+             <View style={{ backgroundColor: "white", margin: 20, padding: 10, borderRadius: 10, elevation: 5 }}>
+             <View style={{ flexDirection: "row", alignItems: "center" }}>
+               <Text style={{ fontSize: 20 }}>⚠️</Text>
+               <View style={{ width: width * 0.8, marginLeft: 10 }}>
+                 {isTelugu ? (
+                   <>
+                     <Text style={{ fontSize: 20, fontWeight: "bold",marginBottom:10 }}>ERICE కస్టమర్లకు గమనిక</Text>
+                     <Text style={{ fontSize: 17 }}>
+                       మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్ అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు.
+                     </Text>
+                   </>
+                 ) : (
+                   <>
+                     <Text style={{ fontSize: 20, fontWeight: "bold",marginBottom:10 }}>Attention Erice Customers</Text>
+                     <Text style={{ fontSize: 17 }}>
+                       Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.
+                     </Text>
+                   </>
+                 )}
+               </View>
+             </View>
+       
+             {/* Toggle Button at Bottom Right */}
+             <TouchableOpacity
+               onPress={() => setIsTelugu(!isTelugu)}
+               style={{
+                 position: "absolute",
+                //  bottom: 10,
+                 right: 10,
+                 padding: 8,
+                 borderRadius: 5,
+                 backgroundColor: "#f0f0f0",
+                 opacity: 0.7
+               }}
+             >
+               <Text style={{ fontSize: 14, fontWeight: "bold", color: "blue" }}>
+                 {isTelugu ? "English Version" : "Telugu Version"}
+               </Text>
+             </TouchableOpacity>
+           </View>
+             :null}
             <Text style={styles.loginTxt}>Login</Text>
 
             <View style={styles.authMethodContainer}>
+            <TouchableOpacity
+                style={[
+                  styles.authMethodButton,
+                  authMethod === "sms" && styles.activeAuthMethod,
+                ]}
+                onPress={() => {
+                  setAuthMethod("sms"),
+                    setOtpSent(false),
+                    setWhatsappNumber(""),
+                    setWhatsappNumber_Error(false),
+                    setOtpMessage(false),
+                    setPhoneNumber_Error(false),
+                    setPhoneNumber(""),
+                    setFormData({ ...formData, loading: false, otp: "" });
+                }}
+                // disabled={otpSent}
+              >
+                <Ionicons
+                  name="chatbubble-outline"
+                  size={20}
+                  color={authMethod === "sms" ? "#3d2a71" : "#fff"}
+                />
+                <Text
+                  style={[
+                    styles.authMethodText,
+                    authMethod === "sms" && styles.activeAuthMethodText,
+                  ]}
+                >
+                  SMS
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.authMethodButton,
@@ -462,37 +504,7 @@ const Login = () => {
                   WhatsApp
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.authMethodButton,
-                  authMethod === "sms" && styles.activeAuthMethod,
-                ]}
-                onPress={() => {
-                  setAuthMethod("sms"),
-                    setOtpSent(false),
-                    setWhatsappNumber(""),
-                    setWhatsappNumber_Error(false),
-                    setOtpMessage(false),
-                    setPhoneNumber_Error(false),
-                    setPhoneNumber(""),
-                    setFormData({ ...formData, loading: false, otp: "" });
-                }}
-                // disabled={otpSent}
-              >
-                <Ionicons
-                  name="chatbubble-outline"
-                  size={20}
-                  color={authMethod === "sms" ? "#3d2a71" : "#fff"}
-                />
-                <Text
-                  style={[
-                    styles.authMethodText,
-                    authMethod === "sms" && styles.activeAuthMethodText,
-                  ]}
-                >
-                  SMS
-                </Text>
-              </TouchableOpacity>
+             
             </View>
             {/* {authMethod === "whatsapp" && otpSent && (
               <Text style={{ textAlign: "center", color: "#fff" }}>

@@ -170,7 +170,7 @@ else{
       
       setFormData({...formData,loading:true})
         axios.post(
-          BASE_URL + "writetous-service/saveData",
+          BASE_URL + "user-service/write/saveData",
           data
           ,{    
         headers: {
@@ -242,7 +242,7 @@ else{
           setFormData({...formData,uploadLoader:true})
           axios({
             method: "post",
-            url:BASE_URL+`writetous-service/uploadQueryScreenShot?userId=${accessToken.userId}`,
+            url:BASE_URL+`user-service/write/uploadQueryScreenShot?userId=${accessToken.userId}`,
             data: fd,
             headers: {
               Authorization: `Bearer ${accessToken.accessToken}`,
