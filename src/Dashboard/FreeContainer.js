@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../Config";
 
 const { width, height } = Dimensions.get("window");
-
+ 
 const FreeContainer = ({navigation}) => {
   const userData = useSelector((state) => state.counter);
 //   console.log({ userData });
@@ -28,6 +28,7 @@ const FreeContainer = ({navigation}) => {
       let data={
         userId: userData.userId
       }
+      // console.log({data})
       axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
       .then((response)=>{
         console.log(response.data)
@@ -56,7 +57,7 @@ const FreeContainer = ({navigation}) => {
     } else {
       let data = {
         askOxyOfers: "FREESAMPLE",
-        id: userData.userId,
+        userId: userData.userId,
         mobileNumber: userData.whatsappNumber,
         projectType: "ASKOXY",
       };
@@ -70,6 +71,7 @@ const FreeContainer = ({navigation}) => {
         .then((response) => {
           console.log(response.data);
           setLoading(false);
+          getCall()
           Alert.alert(
             "Success",
             "Your interest has been submitted successfully!"

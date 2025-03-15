@@ -9,7 +9,7 @@ import {
   TextInput,
   Alert,
 } from "react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback,useEffect } from "react";
 import axios from "axios";
 // import { TextInput } from "react-native-paper";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -26,6 +26,7 @@ const Rudraksha = ({ navigation }) => {
   // console.log({userData})
   const [modalVisible1, setModalVisible1] = useState(false);
   const [deliveryType, setDeliveryType] = useState(null);
+  const [AlreadyInterested, setAlreadyInterested] = useState(false);
 
   const [formData, setFormData] = useState({
     whatsappNumber: "",
@@ -50,10 +51,51 @@ const Rudraksha = ({ navigation }) => {
       return;
     } else {
       setModalVisible1(true);
+      // getCall()
     }
+  }
+ useEffect(()=>{
+    if(userData==null){
+      Alert.alert("Alert","Please login to continue",[
+        {text:"OK",onPress:()=>navigation.navigate("Login")},
+        {text:"Cancel"}
+      ])
+      return;
+    }else{
+      getCall()
+    }
+  },[])
+
+  function getCall() {
+    let data = {
+      userId: userData.userId,
+    };
+    axios
+      .post(
+        BASE_URL + `marketing-service/campgin/allOfferesDetailsForAUser`,
+        data
+      )
+      .then((response) => {
+        console.log(response.data);
+        const hasFreeAI = response.data.some(
+          (item) => item.askOxyOfers === "FREERUDRAKSHA"
+        );
+
+        if (hasFreeAI) {
+          // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+          setAlreadyInterested(true);
+        } else {
+          // Alert.alert("No","askOxyOfers does not contain FREEAI");
+          setAlreadyInterested(false);
+        }
+      })
+      .catch((error) => {
+        // console.log(error.response);
+      });
   }
 
   function saveaddress() {
+    
     if (formData.address == "" || formData.address == null) {
       setFormData({ ...formData, address_error: true });
       return false;
@@ -115,26 +157,32 @@ const Rudraksha = ({ navigation }) => {
       });
   }
 
-  function getCall(){
-    let data={
-      userId: userData.userId
-    }
-    axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
-    .then((response)=>{
-      console.log(response.data)
-      const hasFreeAI = response.data.some(item => item.askOxyOfers === "FREERUDRAKSHA");
+  function getCall() {
+    let data = {
+      userId: userData.userId,
+    };
+    axios
+      .post(
+        BASE_URL + `marketing-service/campgin/allOfferesDetailsForAUser`,
+        data
+      )
+      .then((response) => {
+        console.log(response.data);
+        const hasFreeAI = response.data.some(
+          (item) => item.askOxyOfers === "FREERUDRAKSHA"
+        );
 
-  if (hasFreeAI) {
-    // Alert.alert("Yes", "askOxyOfers contains FREEAI");
-    setAlreadyInterested(true)
-  } else {
-    // Alert.alert("No","askOxyOfers does not contain FREEAI");
-    setAlreadyInterested(false)
-  }
-    })
-    .catch((error)=>{
-      console.log(error.response)
-    })
+        if (hasFreeAI) {
+          // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+          setAlreadyInterested(true);
+        } else {
+          // Alert.alert("No","askOxyOfers does not contain FREEAI");
+          setAlreadyInterested(false);
+        }
+      })
+      .catch((error) => {
+        console.log(error.response);
+      });
   }
 
   return (
@@ -180,25 +228,24 @@ const Rudraksha = ({ navigation }) => {
         రుద్రాక్షార్చన కార్యక్రమాలను నిర్వహించేందుకు సంకల్పించాము! ఈ దివ్య
         ప్రయాణంలో భాగస్వామ్యం అవ్వండి. 🙏
       </Text>
-      {/* {!Rudraksha && ( */}
-      <TouchableOpacity
-        style={styles.button}
-        // onPress={() => setModalVisible(true)}
-        // onPress={() => {
-        //   if (userData != null) {
-        //     setModalVisible1(true);
-        //   } else {
-        //     // callWhatsappLogin();
-        //     // setModalVisible1(true)
-        //     navigation.navigate("Login");
-        //   }
-        // }}
-        onPress={() => interestedfunc()}
-      >
-        <Text style={styles.buttonText}>I Want Free Rudraksha</Text>
-      </TouchableOpacity>
-      {/* )} */}
 
+      {AlreadyInterested == false ? (
+        <>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => interestedfunc()}
+          >
+            <Text style={styles.buttonText}>I Want Free Rudraksha</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <View
+          style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
+          // onPress={() => interestedfunc()}
+        >
+          <Text style={styles.buttonText}>Already Participated</Text>
+        </View>
+      )}
       <Modal
         animationType="slide"
         transparent={true}
@@ -228,7 +275,7 @@ const Rudraksha = ({ navigation }) => {
                 error={formData.address_error}
                 multiline={true} // Enables multiline input
                 numberOfLines={4} // Default visible lines
-                editable={formData.saveaddressbtn==true?true:false}
+                editable={formData.saveaddressbtn == true ? true : false}
                 onChangeText={(text) =>
                   setFormData({
                     ...formData,

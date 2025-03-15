@@ -9,7 +9,7 @@ const AbroadCategories = ({navigation}) => {
     const userData = useSelector((state) => state.counter);
     const[AlreadyInterested,setAlreadyInterested]=useState(false)
 
-    console.log("userData", userData);
+    // console.log("userData", userData);
 
   const [loading, setLoading] = useState(false)
   
@@ -32,7 +32,7 @@ const AbroadCategories = ({navigation}) => {
       }
       axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
       .then((response)=>{
-        console.log(response.data)
+        // console.log(response.data)
         const hasFreeAI = response.data.some(item => item.askOxyOfers === "STUDYABROAD");
   
     if (hasFreeAI) {
@@ -59,7 +59,7 @@ const AbroadCategories = ({navigation}) => {
       } else {
         let data = {
           askOxyOfers: "STUDYABROAD",
-          id: userData.userId,
+          userId: userData.userId,
           mobileNumber: userData.whatsappNumber,
           projectType: "ASKOXY",
         };
@@ -71,10 +71,11 @@ const AbroadCategories = ({navigation}) => {
           data: data,
         })
           .then((response) => {
-            console.log(response.data);
+            console.log("STUDYABROAD",response.data);
+            getCall();
             // setModalVisible(false);
             setLoading(false);
-            setMobileNumber("");
+            // setMobileNumber("");
             Alert.alert(
               "Success",
               "Your interest has been submitted successfully!"
@@ -103,7 +104,7 @@ const AbroadCategories = ({navigation}) => {
         ]);
         return;
       } else {
-        navigation.navigate("ExploreGpts");
+        navigation.navigate("Explore Gpt");
       }
     }
   

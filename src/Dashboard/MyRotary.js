@@ -66,7 +66,7 @@ const MyRotary = ({navigation}) => {
     } else {
       let data = {
         askOxyOfers: "ROTARIAN",
-        id: userData.userId,
+        userId: userData.userId,
         mobileNumber: userData.whatsappNumber,
         projectType: "ASKOXY",
       };
