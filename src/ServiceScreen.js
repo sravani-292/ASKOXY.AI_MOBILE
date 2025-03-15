@@ -3,7 +3,7 @@
 import React,{useState,useEffect,useCallback} from "react";
 import { View, Text, Image, TextInput, FlatList, TouchableOpacity,ScrollView,
           BackHandler, Dimensions ,StyleSheet,Alert} from "react-native";
-import { Ionicons, FontAwesome,MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons, FontAwesome,MaterialCommunityIcons,MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useDispatch,useSelector } from "react-redux";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -14,17 +14,19 @@ import LottieView from "lottie-react-native";
 import LoginModal from "./Components/LoginModal";
 import { i } from "framer-motion/m";
 import UpdateChecker from "../until/Updates";
+import * as Clipboard from 'expo-clipboard';
+
 
 const services = [
-  { id: "1", name: "Free Rudraksha", image: require("../assets/Rudraksha.jpeg"),screen:"FREE RUDRAKSHA" },
-  { id: "2", name: "Free Rice Samples", image: require("../assets/container.jpg"),screen:"FREE CONTAINER" },
-  { id: "3", name: "Free AI & Gen AI", image: require("../assets/freeaiandgenai.png") ,screen:"FREE AI & GEN AI"},
-  { id: "4", name: "Study Abroad", image: require("../assets/Images/E.jpeg"),screen:"STUDY ABROAD" },
+  { id: "1", name: "Free Rudraksha", image: require("../assets/freerudraksha.png"),screen:"FREE RUDRAKSHA" },
+  { id: "2", name: "Free Rice Samples", image: require("../assets/RiceSamples.png"),screen:"FREE CONTAINER" },
+  { id: "3", name: "Free AI & Gen AI", image: require("../assets/FreeAI.png") ,screen:"FREE AI & GEN AI"},
+  { id: "4", name: "Study Abroad", image: require("../assets/study abroad.png"),screen:"STUDY ABROAD" },
   { id: "5", name: "Cryptocurrency", image: require("../assets/BMVCOIN1.png") ,screen:"Crypto Currency"},
-  { id: "6", name: "Legal Knowledge Hub", image: require("../assets/legal.png"),screen:"LEGAL SERVICE" },
-  { id: "7", name: "My Rotary", image: require("../assets/myrotary.png"),screen:"MY ROTARY " },
-  { id: "8", name: "We are Hiring", image: require("../assets/genai.png") ,screen:"We Are Hiring"},
-  { id: "89", name: "Manufacturing Services", image: require("../assets/manufacturing.png") ,screen:"Machines"},
+  { id: "6", name: "Legal Knowledge Hub", image: require("../assets/LegalHub.png"),screen:"LEGAL SERVICE" },
+  { id: "7", name: "My Rotary", image: require("../assets/Rotary.png"),screen:"MY ROTARY " },
+  { id: "8", name: "We are Hiring", image: require("../assets/Careerguidance.png") ,screen:"We Are Hiring"},
+  { id: "9", name: "Manufacturing Services", image: require("../assets/Machines.png") ,screen:"Machines"},
 
 ];
 
@@ -44,6 +46,8 @@ const ServiceScreen = () => {
   const [chainId, setChainId] = useState("");
   const [coin, setCoin] = useState("");
   const [loginModal, setLoginMobal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   // const[loader,setLoader]=useState(false)
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
@@ -88,12 +92,12 @@ const profile =async()=>{
 
     })
       .then((response) => {
-        console.log("response", response.data);
+        // console.log("response", response.data);
         setChainId(response.data.multiChainId)
         setCoin(response.data.coinAllocated)
       })
       .catch((error) => {
-        console.log("error1", error);
+        // console.log("error1", error);
         setLoading(false)
       })
   )
@@ -124,7 +128,7 @@ const profile =async()=>{
              !apiScreens.includes(service.screen)
            )
          ];
-         console.log({mergedData})
+        //  console.log({mergedData})
          setData(mergedData);
       })
       .catch((error) => {
@@ -170,7 +174,14 @@ useEffect(()=>{
 const truncateId = (id) => {
   return id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
 };
-
+const handleCopy = async () => {
+  try {
+    await Clipboard.setStringAsync(chainId);
+    setCopied(true);
+  } catch (error) {
+    console.error('Copy error:', error);
+  }
+};
 
 
   return (
@@ -199,7 +210,22 @@ const truncateId = (id) => {
       <View style={styles.IDcontainer}>
      <Text style={styles.label}>
         Blockchain ID: <Text style={styles.value}>{truncateId(chainId)}</Text>
+        
       </Text>
+      <TouchableOpacity 
+        style={[styles.copyButton, copied ? styles.copiedButton : null,{left:-80}]} 
+        onPress={handleCopy}
+        activeOpacity={0.7}
+      >
+        <MaterialIcons 
+          name={copied ? "check" : "content-copy"} 
+          size={14} 
+          color="#FFFFFF" 
+        />
+        {/* <Text style={styles.buttonText}>
+          {copied ? "Copied" : "Copy"}
+        </Text> */}
+      </TouchableOpacity>
       <Text style={styles.label}>
         Coins: <Text style={styles.value}>{coin}</Text>
       </Text>
@@ -407,6 +433,26 @@ const styles = StyleSheet.create({
   inactiveDot: {
     backgroundColor: "gray",
   },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#5e35b1',
+    padding: 6,
+    // paddingHorizontal: 12,
+    borderRadius: 4,
+    // marginLeft:40
+  },
+  copiedButton: {
+    backgroundColor: '#4CAF50',
+    // marginLeft:40
+
+  },
+  buttonText: {
+    color: '#FFFFFF',
+    marginLeft: 4,
+    fontWeight: '500',
+    fontSize: 14,
+  },
   IDcontainer: {
     backgroundColor: "#fff",
     padding: 10,
@@ -427,10 +473,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 5,
+    flexDirection:"row",
+    justifyContent:"space-evenly",
+
   },
   value: {
     fontSize: 14,
     fontWeight: "normal",
     color: "#007bff",
+    // marginRight:10
   },
 })

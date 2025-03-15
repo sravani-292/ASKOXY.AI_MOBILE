@@ -68,7 +68,7 @@ export default function StacksScreens() {
     <Stack.Navigator
       // initialRouteName="Crypto Currency"
       // initialRouteName="Login"
-      initialRouteName ="Service Screen"
+      initialRouteName ="SplashScreen"
       screenOptions={{
         headerShown: true,
         headerTintColor: "white",
@@ -102,11 +102,13 @@ export default function StacksScreens() {
         component={Register}
         options={{ headerShown: false }}
       />
-      {/* <Stack.Screen
-        name="CampaignServices"
-        component={DashboardStack}
+
+
+      <Stack.Screen
+        name="SplashScreen"
+        component={SplashScreen}
         options={{ headerShown: false}}
-      /> */}
+      />
       <Stack.Screen
         name="Home"
         component={Tabs}

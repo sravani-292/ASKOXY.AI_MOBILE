@@ -72,11 +72,11 @@ const WriteToUs = ({navigation,route}) => {
     })
     .then(function (response) {
       console.log("customer data1",response.data);
-      if(response.data.whatsappVerified==true){
+      if(response.data.whatsappVerified==true || response.data.mobileVerified==true){
       setFormData({
         ...formData, name: `${response.data.firstName} ${response.data.lastName}`,
                     email: response.data.email,
-                    mobileNumber: response.data.whatsappNumber
+                    mobileNumber: response.data?.whatsappNumber || response.data?.mobileNumber
       });
     }else{
       Alert.alert(

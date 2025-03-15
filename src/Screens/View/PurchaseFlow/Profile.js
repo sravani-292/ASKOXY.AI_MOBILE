@@ -386,19 +386,21 @@ const Profile = ({ navigation }) => {
         {/* Profile Image */}
         <TouchableOpacity
           style={{
-            backgroundColor: "#c0c0c0",
+            backgroundColor: "#2ecc71",
             padding: 1,
             alignSelf: "flex-end",
             margin: 10,
+            borderRadius: 8,
+            marginRight:20
           }}
           onPress={() => setWhatsappVerifyModal(true)}
         >
           <View style={{flexDirection:"row"}}>
-          <Text style={{margin:5,fontSize:16}}>Verify Your WhatsApp Number</Text>
+          <Text style={{margin:5,fontSize:16,color:"white",fontWeight:"800"}}>Verify Your WhatsApp Number</Text>
           <MaterialCommunityIcons
             name="whatsapp"
             size={20}
-            color="green"
+            color="white"
             style={styles.whatsappIcon}
           />
           </View>
@@ -517,7 +519,7 @@ const Profile = ({ navigation }) => {
               />
               <TextInput
                 style={styles.input}
-                value={formData.phone}
+                value={formData.phone ||(formData.status&&(formData.whatsappNumber))}
                 placeholder="Phone Number"
                 keyboardType="phone-pad"
                 onChangeText={(number) =>
@@ -884,6 +886,7 @@ const styles = StyleSheet.create({
   whatsappIcon: {
     alignSelf: "flex-end",
     padding: 5,
+    fontWeight:"900"
   },
   infoBox: {
     backgroundColor: "#f8f9fa",

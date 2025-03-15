@@ -400,19 +400,19 @@ const Login = () => {
 {otpSent==false?
              <View style={{ backgroundColor: "white", margin: 20, padding: 10, borderRadius: 10, elevation: 5 }}>
              <View style={{ flexDirection: "row", alignItems: "center" }}>
-               <Text style={{ fontSize: 20 }}>⚠️</Text>
-               <View style={{ width: width * 0.8, marginLeft: 10 }}>
+               <Text style={{ fontSize: 18 }}>⚠️</Text>
+               <View style={{ width: width * 0.75, marginLeft: 10 }}>
                  {isTelugu ? (
                    <>
-                     <Text style={{ fontSize: 20, fontWeight: "bold",marginBottom:10 }}>ERICE కస్టమర్లకు గమనిక</Text>
-                     <Text style={{ fontSize: 17 }}>
+                     <Text style={{ fontSize: 16, fontWeight: "bold",marginBottom:10 }}>ERICE కస్టమర్లకు గమనిక</Text>
+                     <Text style={{ fontSize: 15 }}>
                        మీ డేటా మైగ్రేట్ చేయబడింది. SMS ఎంపికను ఉపయోగించి లాగిన్ అవ్వండి. మీ మొబైల్ మరియు WhatsApp నంబర్లు ఒకటే అయితే, మీరు WhatsApp ద్వారా కూడా లాగిన్ అవ్వవచ్చు.
                      </Text>
                    </>
                  ) : (
                    <>
-                     <Text style={{ fontSize: 20, fontWeight: "bold",marginBottom:10 }}>Attention Erice Customers</Text>
-                     <Text style={{ fontSize: 17 }}>
+                     <Text style={{ fontSize: 16, fontWeight: "bold",marginBottom:10 }}>Attention Erice Customers</Text>
+                     <Text style={{ fontSize: 15 }}>
                        Your data has been migrated. Log in using the SMS option. If your mobile and WhatsApp numbers are the same, you can also log in via WhatsApp.
                      </Text>
                    </>
@@ -424,13 +424,14 @@ const Login = () => {
              <TouchableOpacity
                onPress={() => setIsTelugu(!isTelugu)}
                style={{
-                 position: "absolute",
+                //  position: "absolute",
                 //  bottom: 10,
                  right: 10,
-                 padding: 8,
+                 padding: 4,
                  borderRadius: 5,
                  backgroundColor: "#f0f0f0",
-                 opacity: 0.7
+                 opacity: 0.7,
+                 alignSelf:"flex-end"
                }}
              >
                <Text style={{ fontSize: 14, fontWeight: "bold", color: "blue" }}>
@@ -704,14 +705,13 @@ const styles = StyleSheet.create({
   orangeImage: {
     height: 170,
     width: 170,
-    marginBottom: -20,
+    marginBottom: -55,
   },
   oxyricelogo: {
-    // flex:1,
-    width: 220,
+    width: 180,
     height: 60,
-    // resizeMode: "center",
-    marginRight: width / 8,
+    marginRight: width / 6,
+    // top:-30
   },
   oxylogoView: {
     height: 1,
@@ -727,18 +727,18 @@ const styles = StyleSheet.create({
     marginTop: -95,
   },
   logingreenView: {
-    flex: 2,
+    flex: 3,
     backgroundColor: "#3d2a71",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: height / -15,
+    marginTop: - height / 11,
     // height: height/2,
   },
   loginTxt: {
     color: "white",
     fontWeight: "500",
     fontSize: 25,
-    margin: 20,
+    margin: 10,
     alignSelf: "center",
   },
   authMethodContainer: {

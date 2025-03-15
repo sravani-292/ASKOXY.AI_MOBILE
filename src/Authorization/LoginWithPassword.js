@@ -412,11 +412,9 @@ const styles = StyleSheet.create({
     marginBottom: -20,
   },
   oxyricelogo: {
-    // flex:1,
-    width: 220,
+    width: 180,
     height: 60,
-    // resizeMode: "center",
-    marginRight: width / 8,
+    marginRight: width / 6,
   },
   oxylogoView: {
     height: 1,
@@ -436,7 +434,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#3d2a71",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-
+    marginTop: - height / 11,
     // height: height/2,
   },
   phonebtn:{
