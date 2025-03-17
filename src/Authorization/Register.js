@@ -86,12 +86,9 @@ const Register = () => {
 
     setLoading(true);
 
-    // Simulate API call to verify OTP
     setTimeout(() => {
       setLoading(false);
-      // Navigate to main app or home screen after successful verification
       alert("Login successful!");
-      // navigation.navigate('Home');
     }, 1500);
   };
 

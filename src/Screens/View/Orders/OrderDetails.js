@@ -86,7 +86,14 @@ const OrderDetails = () => {
     })
       .then((response) => {
         console.log("feedback submitted response", response.data);
-        Alert.alert("Success", "Feedback submitted successfully!");
+        Alert.alert("Success", "Feedback submitted successfully!", [
+          {
+            text: "OK",
+            onPress: () => {
+              feedbackGet(); 
+            },
+          },
+        ]);
         getOrderDetails();
         // navigation.navigate("Home");
       })
@@ -102,6 +109,7 @@ const OrderDetails = () => {
   }, []);
 
   const feedbackGet = async () => {
+    setLoading(true);
     axios({
       method: "get",
       url: BASE_URL+`order-service/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
@@ -110,8 +118,9 @@ const OrderDetails = () => {
       },
     })
       .then((response) => {
-        console.log("feedbackGet", response.data);
+        console.log("feedbackGet", response);
         setOrderFeedback(response.data);
+        setLoading(false);
       })
       .catch((error) => {
         console.log("error",error.response);
@@ -143,16 +152,13 @@ const OrderDetails = () => {
 
       const orderStatus = response.data[0].orderStatus;
       setOrderStatus(orderStatus);
-      // console.log("order status", orderStatus);
 
-      // console.log("Fetched order details:", response.data);
     } catch (error) {
       // console.error("Error fetching order details:", error.response);
     }
   };
 
   const toggleExchangeItemSelection = (id, quantity) => {
-    // console.log("quntity", quantity);
 
     setSelectedCancelItems((prev) => ({
       ...prev,
@@ -200,7 +206,6 @@ const OrderDetails = () => {
       method: "patch",
       headers: {
         Authorization: `Bearer ${token}`,
-        // "Content-Type": "application/json",
       },
       data: data,
     })
@@ -224,7 +229,7 @@ const OrderDetails = () => {
   if (loading) {
     return (
       <View style={styles.centeredContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#4B0082" />
       </View>
     );
   }
@@ -442,25 +447,34 @@ const OrderDetails = () => {
                       )}
                     </View>
                     {/* <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmit}
-            >
-              <Text style={styles.submitButtonText}>Submit</Text>
-            </TouchableOpacity> */}
+                     style={styles.submitButton}
+                    onPress={handleSubmit}
+                       >
+               <Text style={styles.submitButtonText}>Submit</Text>
+                 </TouchableOpacity> */}
                   </View>
                 </View>
               </View>
             ) : (
               // <Text>{orderstatus}</Text>
               <View>
-                <Text
-                  style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
-                >
-                  Rate your order Experience{" "}
-                </Text>
-                <View style={styles.section}>
-                  <Text>Already you have submitted feedback</Text>
-                </View>
+                 <Text style={styles.feedbackTitle}>Your Submitted Feedback</Text>
+
+                <View>
+       
+  <View style={styles.feedbackContainer}>
+  <View style={styles.feedbackBox}>
+    <View style={styles.feedbackRow}>
+      <Text style={styles.feedbackLabel}>Feedback Status :</Text>
+      <Text style={styles.feedbackText}>{orderFeedback[0]?.feedbackStatus || "Not Available"}</Text>
+    </View>
+    <View style={styles.feedbackRow}>
+      <Text style={styles.feedbackLabel}>Comments :</Text>
+      <Text style={styles.feedbackText}>{orderFeedback[0]?.comments || "No comments provided"}</Text>
+    </View>
+  </View>
+</View>
+              </View>
               </View>
             )}
           </View>
@@ -1206,11 +1220,42 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
   },
   heading:{
     color:COLORS.services
-  }
+  },
+  feedbackContainer: {
+    marginVertical: 15,
+    // paddingHorizontal: 10,
+      backgroundColor: "#dcdcdc",
+      width:width*0.9,
+      borderRadius:10
+  },
+  feedbackTitle: {
+    fontSize: 17,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign:"left"
+  },
+  feedbackBox: {
+    padding: 15,
+    borderRadius:40,
+    
+  },
+  feedbackRow: {
+    flexDirection: "row",
+    marginBottom: 5,
+  },
+  feedbackLabel: {
+    fontWeight: "bold",
+    fontSize: 16,
+    marginRight: 5,
+  },
+  feedbackText: {
+    fontSize: 16,
+    color: "#555",
+  },
 });
 
 export default OrderDetails;

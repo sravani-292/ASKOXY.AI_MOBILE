@@ -38,7 +38,6 @@ const PaymentDetails = ({ navigation, route }) => {
   const [couponCode, setCouponCode] = useState("");
   const [paymentId, setPaymentId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState("1");
-  // const [totalAmount, setTotalAmount] = useState("");
   const [grandTotal, setGrandTotal] = useState("");
   const [coupenDetails, setCoupenDetails] = useState("");
   const [coupenApplied, setCoupenApplied] = useState(false);
@@ -56,13 +55,14 @@ const PaymentDetails = ({ navigation, route }) => {
   const [cartData,setCartData] = useState();
   const [usedWalletAmount,setUsedWalletAmount] = useState();
   const [afterWallet,setAfterWallet]=useState();
- const [availableDays, setAvailableDays] = useState([]); // Store available days
-   const [selectedDay, setSelectedDay] = useState(""); // Selected day
-   const [timeSlots, setTimeSlots] = useState([]); // Store time slots
-   const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); // Selected slot
-   const [selectedDate, setSelectedDate] = useState("");  
-   const [selectedDayName, setSelectedDayName] = useState("");  
- 
+  const [availableDays, setAvailableDays] = useState([]); 
+  const [selectedDay, setSelectedDay] = useState("");
+  const [timeSlots, setTimeSlots] = useState([]); 
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); 
+  const [selectedDate, setSelectedDate] = useState("");  
+  const [selectedDayName, setSelectedDayName] = useState("");  
+  const [showButtons, setShowButtons] = useState(false);
+  const [orderId, setOrderId] = useState("");
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -96,18 +96,75 @@ const getDayOfWeek = (offset) => {
       const response = await axios.get(
         `http://182.18.139.138:9029/api/order-service/fetchTimeSlotlist`
       );
-      // console.log("Time slots response:", response.data);
       
       const data = response.data;
 
-      // Filter available days
       const filteredDays = data.filter(day => day);
       setAvailableDays(filteredDays);
     } catch (error) {
       console.error("Error fetching time slots:", error);
     }
   };
+  
+  const checkOfferEligibility = async (customerId) => {
+    try {
+      const { data } = await axios.get(
+        `http://65.0.147.157:9029/api/order-service/freeContainerBasedOnUserId?userId=${customerId}`
+      );
+      
+  
+      const hasInterested = data.some(item => item.freeContainer === "Interested");
 
+      setShowButtons(!hasInterested);
+    } catch (error) {
+      console.error("Error fetching offer details:", error?.response?.status, error?.response?.data);
+      setShowButtons(false); 
+    }
+  };
+  
+  
+
+  const handleOfferResponse = async (orderId, userId, userResponse) => {
+    try {
+      setLoading(true); 
+  
+      const requestBody = {
+        freeContainer: userResponse, 
+        orderId: orderId,
+        userId:customerId
+      };
+      
+      console.log(" free Request Body:", requestBody);
+      
+      const API_URL = `${BASE_URL}order-service/freeContainer`;
+  
+      const response= await axios.post(API_URL, requestBody, {
+        headers: { "Content-Type": "application/json" },
+      });
+      console.log("API Response:", response);
+      
+      console.log(response);
+      // Alert.alert("Success", `You selected: ${userResponse}`);
+    } catch (error) {
+      console.error("API Error:", error);
+      Alert.alert("Error", error.response?.data?.message || "Something went wrong!");
+    } finally {
+      Alert.alert(
+        "Thank You!",
+        "Your interest has been successfully registered.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              setLoading(false);
+              navigation.navigate("My Orders");
+            },
+          },
+        ]
+      );
+    }
+  };
+  
 
   const handleDayChange = (day) => {
     setSelectedDay(day);
@@ -120,7 +177,7 @@ const getDayOfWeek = (offset) => {
     setSelectedDayName(mappedDay); 
     
     
-    const today = new Date();
+  const today = new Date();
   const targetDate = new Date();
   targetDate.setDate(today.getDate() + offset);
 
@@ -130,7 +187,7 @@ const getDayOfWeek = (offset) => {
     year: "numeric",
   });
 
-  setSelectedDate(formattedDate);  // Store the formatted date in state
+  setSelectedDate(formattedDate);  
     // Find the time slots for the selected day
     const selectedDayData = availableDays.find(d => d.dayOfWeek === mappedDay);
 
@@ -161,13 +218,10 @@ const getDayOfWeek = (offset) => {
           customerId: customerId,
         },
       });
-      //  console.log("cart",response.data);
        
         const cartResponse = response.data.cartResponseList;
-        // console.log("cart response",cartResponse);
-         setCartData(cartResponse);
+        setCartData(cartResponse);
        const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
-        // console.log({totalDeliveryFee});
         setTotalGstSum(response.data.totalGstSum)
         setDeliveryBoyFee(totalDeliveryFee)
         setGrandTotal(response.data.totalSumWithGstSum)
@@ -193,8 +247,6 @@ const getDayOfWeek = (offset) => {
         0
       )
     );
-    // console.log("calculated total", calculatedTotal);
-    // setTotalAmount(calculatedTotal);
     setSubTotal(calculatedTotal);
     grandTotalfunc()
   }, [items]);
@@ -213,11 +265,10 @@ const getDayOfWeek = (offset) => {
   };
 
   const confirmPayment = () => {
-      //  if(selectedTimeSlot == null || selectedTimeSlot == ""){
-      //     Alert.alert("Please select time slot");
-      //   }
-  //  else
-    if (selectedPaymentMode == null || selectedPaymentMode == "") {
+       if(selectedTimeSlot == null || selectedTimeSlot == ""){
+          Alert.alert("Please select time slot");
+        }
+   else if (selectedPaymentMode == null || selectedPaymentMode == "") {
       Alert.alert("Please select payment method");
       return
     } else {
@@ -252,10 +303,8 @@ const getDayOfWeek = (offset) => {
 
 
   const handleOrderConfirmation = () => {
-    // console.log("Cart Data payment :", cartData); 
     
     if (!cartData || cartData.length === 0) {
-        // console.log("cartData is empty or undefined");
         return;
     }
     const zeroQuantityItems = cartData
@@ -291,6 +340,7 @@ const getDayOfWeek = (offset) => {
     getWalletAmount();
     totalCart();
     fetchTimeSlots();
+    checkOfferEligibility(customerId);
     // setDeliveryBoyFee(200);
   }, [grandTotalAmount, deliveryBoyFee]);
 
@@ -310,18 +360,15 @@ const getDayOfWeek = (offset) => {
       );
 
       if (response.data) {
-        // console.log("==========useWallet=============");
-        // console.log("getWalletAmount:", response);
+      
         setWalletAmount(response.data.usableWalletAmountForOrder);
-        // console.log("wallet amount", walletAmount);
         setMessge(response.data.message);
         setTotalSum(response.data.totalSum);
         setStatus();
         setWalletTotal(
           grandTotal - response.data.usableWalletAmountForOrder
         );
-        // console.log("wallet total", walletTotal);
-        // console.log("==========useWallet=============");
+      
       }
     } catch (error) {
       console.error(
@@ -375,7 +422,6 @@ const getDayOfWeek = (offset) => {
       // console.log(response.data);
 
       if (response.status === 200) {
-        // console.log(response.data);
         setProfileForm({
           customer_name: response.data.name,
           customer_email: response.data.email,
@@ -423,10 +469,13 @@ const getDayOfWeek = (offset) => {
       subTotal:subTotal,
       gstAmount:totalGstSum,
       orderFrom:"MOBILE",
+      dayOfWeek: selectedDayName,
+      expectedDeliveryDate: selectedDate,
+      timeSlot: selectedTimeSlot,
     };
 
-    // console.log({ postData });
-    // console.log("postdata", postData);
+    console.log({ postData });
+    console.log("postdata", postData);
 
     setLoading(true);
     console.log({postData});
@@ -436,12 +485,13 @@ const getDayOfWeek = (offset) => {
       url: BASE_URL+"order-service/orderPlacedPaymet",
       data: postData,
       headers: {
-        // 'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     })
       .then((response) => {
-        // console.log("Order Placed Response:", response.data);
+        console.log("Order Placed with Payment API:", response);
+         console.log("order id after placing the order",response.data.orderId);
+          setOrderId(response.data.orderId);
         if (response.data.status) {
           Alert.alert(
             "Sorry",
@@ -456,27 +506,61 @@ const getDayOfWeek = (offset) => {
           return;
         }
         // Handle COD or other payment types here
-        if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
-          Alert.alert(
-            "Order Confirmed!",
-            "Your order has been placed successfully . Thank you for shopping with us!",
-            [
-              {
-                text: "OK",
-                onPress: () => {
-                  setLoading(false); 
-                  navigation.navigate("My Orders");
-                },
-              },
-            ]
-          );
-          // setLoading(false);
+        // if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
+        //   Alert.alert(
+        //     "Order Confirmed!",
+        //     "Your order has been placed successfully . Thank you for shopping with us!",
+        //     [
+        //       {
+        //         text: "OK",
+        //         onPress: () => {
+        //           setLoading(false); 
+        //           navigation.navigate("My Orders");
+        //         },
+        //       },
+        //     ]
+        //   );
+        //   // setLoading(false);
         
-        } else {
-          // console.log("paymentId==================", response.data);
+        // } 
+        if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
+          const message = showButtons?
+          "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
+          "Buy 9 bags of 26kg / 10kg in 3 years OR refer 9 friends. " +
+          "When they buy their first bag, the container is yours forever.\n\n" +
+          "* No purchase in 45 days OR a 45-day gap between purchases = Container will be taken back.":"Your order has been placed successfully. Thank you for shopping with us!"
+        
+        
+          const buttons = showButtons
+            ? 
+            [
+                {
+                  text: "Interested",
+                  onPress: () => handleOfferResponse(response.data.orderId, customerId, "Interested"),
+                },
+                {
+                  text: "Not Interested",
+                  onPress: () => handleOfferResponse(response.data.orderId, customerId, "Not Interested"),
+                  style: "cancel",
+                },
+              ]
+            : [
+              {
+                        text: "OK",
+                        onPress: () => {
+                          setLoading(false); 
+                          navigation.navigate("My Orders");
+                        },
+                      },
+              ];
+        
+          Alert.alert("Order Confirmed!", message, buttons);
+        }
+        
+        
+        else {
           setTransactionId(response.data.paymentId);
-          // onlinePaymentFunc()
-          // console.log("==========");
+         
           const data = {
             mid: "1152305",
             amount: grandTotalAmount,
@@ -512,7 +596,7 @@ const getDayOfWeek = (offset) => {
         
       })
       .catch((error) => {
-        console.error("Order Placement Error:", error.response);
+        console.error("Order Placement Error:", error);
         Alert.alert("Error", error.response.data.error);
         setLoading(false);
       });
@@ -641,7 +725,6 @@ const getDayOfWeek = (offset) => {
         setCoupenDetails(discount);
         Alert.alert(response.data.message);
         setCoupenApplied(response.data.couponApplied);
-        // console.log("coupenapplied state", response.data.couponApplied);
       })
       .catch((error) => {
         console.log("error", error.response);
@@ -649,9 +732,7 @@ const getDayOfWeek = (offset) => {
   };
 
   function Requery(paymentId) {
-    // console.log("requery");
-    
-    // setLoading(true);
+   
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
@@ -759,19 +840,39 @@ const getDayOfWeek = (offset) => {
                     "Order Placed with Payment API:",
                     secondResponse.data
                   );
-                  Alert.alert(
-                    "Order Confirmed!",
-                    "Your order has been placed successfully . Thank you for shopping with us!",
+                  const message = showButtons ?
+                  "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
+                  "Buy 9 bags of 26kg / 10kg in 3 years OR refer 9 friends. " +
+                  "When they buy their first bag, the container is yours forever.\n\n" +
+                  "* No purchase in 45 days OR a 45-day gap between purchases = Container will be taken back.":"Your order has been placed successfully. Thank you for shopping with us!";
+                
+                
+                  const buttons = showButtons
+                    ? 
                     [
+                        {
+                          text: "Interested",
+                          onPress: () => handleOfferResponse(secondResponse.data.orderId, customerId, "Interested"),
+                        },
+                        {
+                          text: "Not Interested",
+                          onPress: () => handleOfferResponse(secondResponse.data.orderId, customerId, "Not Interested"),
+                          style: "cancel",
+                        },
+                      ]
+                    : [
                       {
                         text: "OK",
                         onPress: () => {
-                          setLoading(false); 
+                          setLoading(false);
                           navigation.navigate("My Orders");
                         },
                       },
-                    ]
-                  );
+                    ];
+                
+                  Alert.alert("Order Confirmed!", message, buttons);
+                
+                 
                 })
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
@@ -793,14 +894,14 @@ const getDayOfWeek = (offset) => {
 
 
   function grandTotalfunc() {
-    let total = grandTotal + deliveryBoyFee; // Start with total including delivery fee
-    let usedWallet = 0; // Track how much wallet is actually used
+    let total = grandTotal + deliveryBoyFee; 
+    let usedWallet = 0; 
 
     if (coupenApplied) {
         total -= coupenDetails;
     }
 
-    if (useWallet && walletAmount > 0) {  // Process only if user has wallet balance
+    if (useWallet && walletAmount > 0) { 
         if (walletAmount >= total) {
             usedWallet = total;  // Use only what's needed
             total = 0;  
@@ -904,7 +1005,7 @@ const getDayOfWeek = (offset) => {
 
 {/* Delievery slots */}
        
-{/* <View style={styles.container1}>
+ <View style={styles.container1}>
       <Text style={styles.label}>Select Day:</Text>
       <View style={styles.pickerContainer}>
         <Picker
@@ -935,7 +1036,7 @@ const getDayOfWeek = (offset) => {
             </Picker>
           </View>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[
               styles.button,
               selectedTimeSlot ? styles.buttonActive : styles.buttonDisabled,
@@ -943,10 +1044,10 @@ const getDayOfWeek = (offset) => {
             disabled={!selectedTimeSlot}
           >
             <Text style={styles.buttonText}>Confirm</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </>
       )}
-    </View> */}
+    </View> 
         {/* Payment Methods */}
         <Text style={styles.paymentHeader}>Choose Payment Method</Text>
         <View style={styles.paymentOptions}>
@@ -1328,12 +1429,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: width *1,
     alignSelf: "center",
-   
+    
   },
   label: {
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 5,
+   
   },
   pickerContainer: {
     borderWidth: 1,
@@ -1341,9 +1443,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     backgroundColor: "#f9f9f9",
+  
   },
   picker: {
-    height: 50,
+    height: 60,
     width:width*0.9
   },
   button: {

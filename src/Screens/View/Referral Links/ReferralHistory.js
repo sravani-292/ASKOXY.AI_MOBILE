@@ -17,17 +17,11 @@ ActivityIndicator
   } from "react-native";
   import { useNavigation } from "@react-navigation/native";
   // import { Ionicons } from "@expo/vector-icons";
-  import Ionicons from "react-native-vector-icons/Ionicons";
-  import PhoneInput from "react-native-phone-number-input";
   import axios from "axios";
   import { useSelector } from "react-redux";
-  import { Entypo } from "@expo/vector-icons";
-  import { useFocusEffect } from "@react-navigation/native";
-  import * as Location from "expo-location";
   import AsyncStorage from "@react-native-async-storage/async-storage";
   import BASE_URL,{userStage} from "../../../../Config";
   import ShareLinks from "../../../../src/Screens/View/Referral Links/ShareLinks";
-  import { set } from "core-js/core/dict";
   import { COLORS } from "../../../../Redux/constants/theme";
   const{height,width}=Dimensions.get('window')
 
@@ -37,26 +31,7 @@ export default function ReferralHistory() {
     const customerId = userData?.userId;
     const[refereesData,setRefereesData]=useState([])
     const[loading,setLoading]=useState(false)
-//   const refereesData = [
-//     {
-//       id: '1',
-//       whatsAppNumber: '9165798',
-//       referredDate: 'Mar 3, 2025',
-//       status: 'Invited'
-//     },
-//     {
-//       id: '2',
-//       whatsAppNumber: '8276493',
-//       referredDate: 'Mar 1, 2025',
-//       status: 'Accepted'
-//     },
-//     {
-//       id: '3',
-//       whatsAppNumber: '7391524',
-//       referredDate: 'Feb 28, 2025',
-//       status: 'Pending'
-//     }
-//   ];
+
 useEffect(()=>{
     getRefereeDetails()
 },[])
@@ -145,7 +120,7 @@ function getRefereeDetails(){
       <View style={styles.detailRow}>
         <View style={styles.detailItem}>
           <Text style={styles.detailLabel}>Status</Text>
-          {/* {renderStatusBadge(item?.referenceStatus)} */}
+          {renderStatusBadge(item?.referenceStatus)}
         </View>
       </View>
       
@@ -174,10 +149,8 @@ function getRefereeDetails(){
     }
       </View>
       :
-        <ActivityIndicator 
-        size="medium" 
-        color="#3d2a71"
-        />
+      <ActivityIndicator size="large" color="#3d2a71" />
+
      }
       
     </SafeAreaView>

@@ -205,7 +205,7 @@ const handleCopy = async () => {
       </TouchableOpacity>}
 
       </View>
-      <UpdateChecker/>
+      {/* <UpdateChecker/> */}
       {userData!=null&&
       <View style={styles.IDcontainer}>
      <Text style={styles.label}>

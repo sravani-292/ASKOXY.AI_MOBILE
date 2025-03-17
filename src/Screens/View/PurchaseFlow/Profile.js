@@ -12,7 +12,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Modal,
-  Alert
+  Alert,
 } from "react-native";
 import {
   MaterialIcons,
@@ -26,13 +26,14 @@ import { useSelector } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
 import BASE_URL, { userStage } from "../../../../Config";
 import PhoneInput from "react-native-phone-number-input";
+import { pre } from "framer-motion/m";
 
 const { height, width } = Dimensions.get("window");
 
 const Profile = ({ navigation }) => {
-    const userData = useSelector((state) => state.counter);
-    const token = userData.accessToken;
-    const customerId = userData.userId;
+  const userData = useSelector((state) => state.counter);
+  const token = userData.accessToken;
+  const customerId = userData.userId;
   const phoneInput = React.createRef();
 
   const [formData, setFormData] = useState({
@@ -49,7 +50,7 @@ const Profile = ({ navigation }) => {
     backupPhone_error: false,
     whatsappNumber: "",
     whatsappNumber_error: false,
-    ValidwhatsappNumber_error:false,
+    ValidwhatsappNumber_error: false,
     otp: "",
     otp_error: false,
     otpShow: false,
@@ -59,57 +60,59 @@ const Profile = ({ navigation }) => {
   const [loader, setLoader] = useState(false);
   const [countryCode, setcountryCode] = useState("91");
   const [profileData, setProfileData] = useState();
-    const [modalVisible, setModalVisible] = useState(false);
-    const[frndNumber,setFrndNumber]=useState('')
-    const[frndNumber_error,setFrndNumber_error]=useState(false)
+  const [modalVisible, setModalVisible] = useState(false);
+  const [frndNumber, setFrndNumber] = useState("");
+  const [frndNumber_error, setFrndNumber_error] = useState(false);
   const [code, setCode] = useState("91");
-    const[errorMessage,setErrorMessage]=useState(false)
-      const [loading, setLoading] = useState(false);
-      const [otpSession, setOtpSession] = useState("");
-      const [salt, setSalt] = useState("");
+  const [errorMessage, setErrorMessage] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [otpSession, setOtpSession] = useState("");
+  const [salt, setSalt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSame, setIsSame] = useState(null);
+  const [mobileVerified,setMobileVerified]=useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      getProfile();
+    }, [])
+  );
+  const getProfile = async () => {
+    console.log("profile get call response");
+    setProfileLoader(true);
+    try {
+      const response = await axios({
+        method: "GET",
+        url:
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${customerId}`,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    useFocusEffect(
-      useCallback(()=>{
-          getProfile()
-      },[])
-    )
-    const getProfile = async () => {
-      console.log("profile get call response");
-      setProfileLoader(true);
-        try {
-          const response = await axios({
-            method: "GET",
-            url:
-              BASE_URL +
-              `user-service/customerProfileDetails?customerId=${customerId}`,
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          // console.log("profile get response", response.data);
-          setProfileLoader(false);
-          if (response.status === 200) {
-            // setUser(response.data);
-            setFormData({
-              firstName: response.data.firstName,
-              lastName: response.data.lastName,
-              email: response.data.email,
-              whatsappNumber: response.data.whatsappNumber,
-              backupPhone: response.data.alterMobileNumber.trim(" "),
-              phone: response.data.mobileNumber,
-              status: response.data.whatsappVerified,
-            });
-          }
-        } catch (error) {
-          setProfileLoader(false);
-          console.error("ERROR", error);
-        }
-        finally {
-          setProfileLoader(false);
-        }
-      };
+      console.log("profile get response", response.data);
+      console.log("profile get response", response.data.mobileVerified);
+      setMobileVerified(response.data.mobileVerified);
+      setProfileLoader(false);
+      if (response.status === 200) {
+        // setUser(response.data);
+        setFormData({
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
+          email: response.data.email,
+          whatsappNumber: response.data.whatsappNumber,
+          backupPhone: response.data.alterMobileNumber.trim(" "),
+          phone: response.data.mobileNumber,
+          status: response.data.whatsappVerified,
+        });
+      }
+    } catch (error) {
+      setProfileLoader(false);
+      console.error("ERROR", error);
+    } finally {
+      setProfileLoader(false);
+    }
+  };
 
   const handleProfileSubmit = async () => {
     console.log("for profile saving call");
@@ -129,11 +132,11 @@ const Profile = ({ navigation }) => {
       setFormData({ ...formData, email_error: true });
       return false;
     }
-    if(formData.whatsappNumber!=null){
-        if (formData.phone == "" || formData.phone == null) {
+    if (formData.whatsappNumber != null) {
+      if (formData.phone == "" || formData.phone == null) {
         setFormData({ ...formData, phone_error: true });
         return false;
-        }
+      }
     }
     if (formData.backupPhone == "" || formData.backupPhone == null) {
       setFormData({ ...formData, backupPhone_error: true });
@@ -155,6 +158,17 @@ const Profile = ({ navigation }) => {
     }
 
     setIsLoading(true);
+    let data ={
+      userFirstName: formData.firstName,
+      userLastName: formData.lastName,
+      customerEmail: formData.email,
+      customerId: customerId,
+      alterMobileNumber: formData.backupPhone,
+      whatsappNumber: isSame ? formData.phone : formData.whatsappNumber || "",        
+      mobileNumber: formData.phone,
+    }
+    console.log("profile save call data",data);
+    
     try {
       const response = await axios.patch(
         BASE_URL + "user-service/profileUpdate",
@@ -164,8 +178,8 @@ const Profile = ({ navigation }) => {
           customerEmail: formData.email,
           customerId: customerId,
           alterMobileNumber: formData.backupPhone,
-          whatsappNumber:formData.whatsappNumber || "",
-          mobileNumber:formData.phone
+          whatsappNumber: isSame ? formData.phone : formData.whatsappNumber || "",        
+          mobileNumber: formData.phone,
         },
         {
           headers: {
@@ -193,21 +207,29 @@ const Profile = ({ navigation }) => {
   };
 
   const profileWhatsappNumber = (value) => {
-    setFormData({...formData,whatsappNumber_error:false,ValidwhatsappNumber_error:false})
+    setFormData({
+      ...formData,
+      whatsappNumber_error: false,
+      ValidwhatsappNumber_error: false,
+    });
     try {
       // setWhatsappNumber(value);
-      setFormData({...formData,whatsappNumber:value})
+      
+      setFormData({ ...formData, whatsappNumber: value });
+
 
       console.log({ value });
-      const callingCode = phoneInput.getCallingCode(value);
-      console.log(callingCode);
-      setcountryCode(callingCode);
+      // const callingCode = phoneInput.getCallingCode(value);
+      console.log("satdfegfrhjjhnhj",formData.whatsappNumber);
+      
+      // console.log(callingCode);
+      // setcountryCode(callingCode);
       const isValid = /^[0-9]*$/.test(value);
       if (isValid) {
         setErrorMessage("");
-        setFormData({...formData,whatsappNumber:value})
+        setFormData({ ...formData, whatsappNumber: value });
       } else {
-        setFormData({...formData,ValidwhatsappNumber_error:true})
+        setFormData({ ...formData, ValidwhatsappNumber_error: true });
         return;
       }
     } catch (error) {
@@ -216,174 +238,204 @@ const Profile = ({ navigation }) => {
   };
 
   const handleReferNumber = (value) => {
+    console.log("handleReferNumber");
+    
     setFrndNumber_error(false);
-     try {
+    try {
+      console.log({ value });
+      console.log("varalakshmi");
+      console.log("getcallingcode", phoneInput.current.getCallingCode(value));
+      if (phoneInput.current) {
+        console.log("getCallingCode", phoneInput.current.getCallingCode(value));
+      }
+      const callingCode = phoneInput.current.getCallingCode(value);
+      console.log({callingCode});
+      setCode(callingCode);
+      console.log("value", {value});
       
-       console.log({ value });
-       const callingCode = phoneInput.getCallingCode(value);
-       console.log(callingCode);
-       setCode(callingCode);
-       setFrndNumber(value);
-       console.log(frndNumber);
-     } catch (error) {
-     }
-   };
+      setFrndNumber(value);
+      console.log("referee number", value);
+    } catch (error) {}
+  };
 
+  function handleSendOtp() {
+    if (formData.whatsappNumber === "") {
+      setFormData({ ...formData, whatsappNumber_error: true });
+      return false;
+    }
+    if (formData.whatsappNumber.length > 10) {
+      //  setWhatsappNumber_Error(true);
+      setFormData({ ...formData, whatsappNumber_error: true });
+      return false;
+    }
+    let data = {
+      countryCode: "+" + code,
+      chatId: formData.whatsappNumber,
+      id: customerId,
+    };
+    console.log({ data });
+    setLoading(true);
+    axios({
+      method: "post",
+      url: BASE_URL + `user-service/sendWhatsappOtpqAndVerify`,
+      data: data,
+    })
+      .then((response) => {
+        console.log("user-service/sendWhatsappOtpqAndVerify", response.data);
+        if (
+          // 9059433013
+          response.data.whatsappOtpSession == null ||
+          response.data.whatsappOtpSession == "" ||
+          response.data.salt == null ||
+          response.data.salt == ""
+        ) {
+          Alert.alert("Failed", "This WhatsApp number already exists.");
+          setLoading(false);
+        } else {
+          setFormData({ ...formData, otpShow: true ,whatsappNumber_error:false});
+          setLoading(false);
+          setOtpSession(response.data.whatsappOtpSession);
+          setSalt(response.data.salt);
+        }
+      })
+      .catch((error) => {
+        console.log(error.response);
+        setLoading(false);
+      });
+  }
 
-     function  handleSendOtp() {
-       if (formData.whatsappNumber=== "") {
-         setFormData({ ...formData, whatsappNumber_error: true });
-         return false;
-       }
-       if (formData.whatsappNumber.length > 10) {
-        //  setWhatsappNumber_Error(true);
-         setFormData({ ...formData, whatsappNumber_error: true });
-         return false;
-       } 
-       let data = {
-         countryCode: "+" + code,
-         chatId: formData.whatsappNumber,
-         id: customerId,
-       };
-       console.log({ data });
-       setLoading(true);
-       axios({
-         method: "post",
-         url: BASE_URL + `user-service/sendWhatsappOtpqAndVerify`,
-         data: data,
-       })
-         .then((response) => {
-           console.log("user-service/sendWhatsappOtpqAndVerify", response);
-           if(response.data.whatsappOtpSession==null || response.data.whatsappOtpSession=="" || response.data.salt == null || response.data.salt == ""){
-             Alert.alert("Failed", "This WhatsApp number already exists.");
-             setLoading(false);
-           }else{
-          setFormData({ ...formData, otpShow: true })
-           setLoading(false);
-           setOtpSession(response.data.whatsappOtpSession);
-           setSalt(response.data.salt);
-           }
-         })
-         .catch((error) => {
-           console.log(error.response);
-           setLoading(false);
-         });
-     }
-   
-     function handleVerifyOtp() {
-       if(formData.whatsappNumber === ""){
-        //  setWhatsappNumber_Error(true);
-         setFormData({...formData,whatsappNumber_error:true})
-        //  setErrors({ ...errors, whatsappNumberError: "Please enter whatsapp number" });
-         return false;
-       }
-       if (whatsappNumber.length > 10) {
-        //  setWhatsappNumber_Error(true);
-         setFormData({...formData,ValidwhatsappNumber_error:true})
+  function handleVerifyOtp() {
+    if (formData.whatsappNumber === "") {
+      //  setWhatsappNumber_Error(true);
+      setFormData({ ...formData, whatsappNumber_error: true });
+      return false;
+    }
+    if (formData.whatsappNumber.length > 10) {
+      setFormData({ ...formData, ValidwhatsappNumber_error: true });
 
-        //  setErrors({ ...errors, whatsappNumberError: "Please enter valid whatsapp number" });
-         return false;
-       }
-       if (formData.otp === "") {
-         // Alert.alert("Failed", "Please enter otp");
-         setWhatsappOtp_Error(true);
-         setErrors({...errors,whatsappOtpError:"Please enter otp"})
-         return false;
-       }
-   
-       if (otp.length < 4 || otp.length > 5) {
-         Alert.alert("Failed", "Please enter valid otp");
-         return false;
-       }
-       let data = {
-         countryCode: "+" + code,
-         chatId: whatsappNumber,
-         id: customerId,
-         salt: salt,
-         whatsappOtp: otp,
-         whatsappOtpSession: otpSession,
-       };
-       console.log({ data });
-       setLoading(true);
-       axios({
-         method: "post",
-         url: BASE_URL + `user-service/sendWhatsappOtpqAndVerify`,
-         data: data,
-       })
-         .then((response) => {
-           console.log(response.data);
-           setOtpSent(false);
-           setLoading(false);
-           setProfileForm({ ...profileForm, status: true });
-           // getProfile()
-         })
-         .catch((error) => {
-           console.log(error.response);
-           Alert.alert("Failed", error.response.data.message || "Something went wrong, Please try again");
-           setLoading(false);
-         });
-     }
-     const SubmitReferNumber = () => {
-      //  console.log({ frndNumber });
-      
-       console.log(userData.whatsappNumber);
-       if(frndNumber==""){
-        setFormData({...formData,frndNumber_error:true})
-         setFrndNumber(true);
-         return false
-       }
-       if (userData.whatsappNumber == frndNumber) {
-         Alert.alert("Failed", "Self referral is not allowed");
-         return false;
-       }
-   
-       let data = {
-         referealId: customerId,
-         refereeMobileNumber: frndNumber,
-         countryCode: "+" + code,
-       };
-   
-       console.log({ data });
-       setLoader(true);
-       axios({
-         method: "post",
-         url: BASE_URL + "user-service/inviteaUser",
-         data: data,
-         headers: {
-           "Content-Type": "application/json",
-           Authorization: `Bearer ${token}`,
-         },
-       })
-         .then((response) => {
-           console.log("response", response);
-           setLoader(false);
-           if (response.data.status == false) {
-             Alert.alert("Failed", response.data.message);
-           } else {
-             Alert.alert("Success", "Successfully you referred a user");
-             setModalVisible(false);
-             setFrndNumber("");
-           }
-         })
-         .catch((error) => {
-           setLoader(false);
-           console.log(error.response);
-           Alert.alert("Failed", error.response.message);
-         });
-     };
-   
- 
+      return false;
+    }
+    if (formData.otp === "") {
+      setWhatsappOtp_Error(true);
+      setErrors({ ...errors, whatsappOtpError: "Please enter otp" });
+      return false;
+    }
+
+    if (formData.otp.length < 4 || formData.otp.length > 5) {
+      Alert.alert("Failed", "Please enter valid otp");
+      return false;
+    }
+    let data = {
+      countryCode: "+" + code,
+      chatId: formData.whatsappNumber,
+      id: customerId,
+      salt: salt,
+      whatsappOtp: formData.otp,
+      whatsappOtpSession: otpSession,
+    };
+    console.log({ data });
+    setLoading(true);
+    axios({
+      method: "post",
+      url: BASE_URL + `user-service/sendWhatsappOtpqAndVerify`,
+      data: data,
+    })
+      .then((response) => {
+        console.log("verification otp",response);
+        
+        console.log(response.data);
+        // if (response.data.status == false) {
+        if(response.data.status==200){
+          Alert.alert("Success", "Whatsapp number verified successfully");
+        }
+        setWhatsappVerifyModal(false);
+        setOtpSent(false);
+        setLoading(false);
+        setProfileForm({ ...profileForm, status: true });
+        setFormData(prevState => ({ ...prevState,setwhatsappNumber_error: false ,setValidwhatsappNumber_error:false}));
+        // getProfile()
+      })
+      .catch((error) => {
+        console.log(error.response);
+        Alert.alert(
+          "Failed",
+          error.response.data.message ||
+            "Something went wrong, Please try again"
+        );
+        setLoading(false);
+      });
+  }
+  const SubmitReferNumber = () => {
+     console.log({ frndNumber });
+
+    console.log(userData.whatsappNumber);
+    if (frndNumber == "") {
+      // setFormData({ ...formData, frndNumber_error: true });
+      setFrndNumber_error(true);
+      return false;
+    }
+    if (userData.whatsappNumber == frndNumber) {
+      Alert.alert("Failed", "Self referral is not allowed");
+      return false;
+    }
+
+    let data = {
+      referealId: customerId,
+      refereeMobileNumber: frndNumber,
+      countryCode: "+" + code,
+    };
+
+    console.log({ data });
+    setLoader(true);
+    axios({
+      method: "post",
+      url: BASE_URL + "user-service/inviteaUser",
+      data: data,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        console.log("response", response);
+        setLoader(false);
+        if (response.data.status == false) {
+          Alert.alert("Failed", response.data.message);
+        } else {
+          Alert.alert("Success", "Successfully you referred a user");
+          setModalVisible(false);
+          setFrndNumber("");
+        }
+      })
+      .catch((error) => {
+        setLoader(false);
+        console.log(error.response);
+        Alert.alert("Failed", error.response.message);
+      });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-
-{/* {profileL/oader==true? */}
+      {/* <Text
+        style={{
+          fontWeight: "bold",
+          color: "#ff9800",
+          fontSize: 16,
+          textAlign: "center",
+          width: width * 0.9,
+          alignSelf: "center",
+          alignItems: "center",
+        }}
+      >
+        Please verify your WhatsApp number if it's different from your mobile
+        number to receive updates. 😊
+      </Text> */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
       >
-        {/* Profile Image */}
+        {isSame == false &&(
         <TouchableOpacity
           style={{
             backgroundColor: "#2ecc71",
@@ -391,21 +443,30 @@ const Profile = ({ navigation }) => {
             alignSelf: "flex-end",
             margin: 10,
             borderRadius: 8,
-            marginRight:20
+            marginRight: 20,
           }}
           onPress={() => setWhatsappVerifyModal(true)}
         >
-          <View style={{flexDirection:"row"}}>
-          <Text style={{margin:5,fontSize:16,color:"white",fontWeight:"800"}}>Verify Your WhatsApp Number</Text>
-          <MaterialCommunityIcons
-            name="whatsapp"
-            size={20}
-            color="white"
-            style={styles.whatsappIcon}
-          />
+          <View style={{ flexDirection: "row" }}>
+            <Text
+              style={{
+                margin: 5,
+                fontSize: 16,
+                color: "white",
+                fontWeight: "800",
+              }}
+            >
+              Verify 
+              {/* Your WhatsApp Number */}
+            </Text>
+            <MaterialCommunityIcons
+              name="whatsapp"
+              size={20}
+              color="white"
+              style={styles.whatsappIcon}
+            />
           </View>
-         
-        </TouchableOpacity>
+        </TouchableOpacity>)}
 
         {/* Form Fields */}
         <View style={styles.formContainer}>
@@ -431,10 +492,10 @@ const Profile = ({ navigation }) => {
               />
             </View>
             {formData.firstName_error && (
-                <Text style={{ color: "red", alignSelf: "center" }}>
-                  First Name is mandatory
-                </Text>
-              )}
+              <Text style={{ color: "red", alignSelf: "center" }}>
+                First Name is mandatory
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -457,13 +518,12 @@ const Profile = ({ navigation }) => {
                   })
                 }
               />
-             
             </View>
             {formData.lastName_error && (
-                <Text style={{ color: "red", alignSelf: "center" }}>
-                  Last Name is mandatory
-                </Text>
-              )}
+              <Text style={{ color: "red", alignSelf: "center" }}>
+                Last Name is mandatory
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -479,34 +539,36 @@ const Profile = ({ navigation }) => {
                 value={formData.email}
                 placeholder="Email Address"
                 keyboardType="email-address"
-                // onChangeText={(text) =>
-                //   setFormData({
-                //     ...formData,
-                //     email: text,
-                //     email_error: false,
-                //     validEmail: false,
-                //   })
-                // }
+               
                 onChangeText={(text) => {
                   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text)) {
-                    setFormData({ ...formData, email: text,validEmail:false,email_error:false });
+                    setFormData({
+                      ...formData,
+                      email: text,
+                      validEmail: false,
+                      email_error: false,
+                    });
                   } else {
-                    setFormData({ ...formData, email: text,validEmail:true ,email_error:false });
+                    setFormData({
+                      ...formData,
+                      email: text,
+                      validEmail: true,
+                      email_error: false,
+                    });
                   }
                 }}
               />
-              
             </View>
             {formData.email_error && (
-                <Text style={{ color: "red", alignSelf: "center" }}>
-                  Email is mandatory
-                </Text>
-              )}
-              {formData.validEmail && (
-                <Text style={{ color: "red", alignSelf: "center" }}>
-                  Invalid Email
-                </Text>
-              )}
+              <Text style={{ color: "red", alignSelf: "center" }}>
+                Email is mandatory
+              </Text>
+            )}
+            {formData.validEmail && (
+              <Text style={{ color: "red", alignSelf: "center" }}>
+                Invalid Email
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputGroup}>
@@ -519,7 +581,10 @@ const Profile = ({ navigation }) => {
               />
               <TextInput
                 style={styles.input}
-                value={formData.phone ||(formData.status&&(formData.whatsappNumber))}
+                
+                value={
+                  formData.phone || (formData.status && formData.whatsappNumber)
+                }
                 placeholder="Phone Number"
                 keyboardType="phone-pad"
                 onChangeText={(number) =>
@@ -529,14 +594,14 @@ const Profile = ({ navigation }) => {
                     phone_error: false,
                   })
                 }
+                editable={false}
               />
-              
             </View>
             {formData.phone_error && (
-                <Text style={{ color: "red", alignSelf: "center" }}>
-                  Phone Number is mandatory
-                </Text>
-              )}
+              <Text style={{ color: "red", alignSelf: "center" }}>
+                Phone Number is mandatory
+              </Text>
+            )}
           </View>
 
           <View style={styles.infoBox}>
@@ -568,28 +633,84 @@ const Profile = ({ navigation }) => {
                 }
                 maxLength={10}
               />
-            
             </View>
             {formData.backupPhone_error && (
-                <Text style={{ color: "red", alignSelf: "center" }}>
-                  Backup Phone Number is mandatory
-                </Text>
-              )}
+              <Text style={{ color: "red", alignSelf: "center" }}>
+                Backup Phone Number is mandatory
+              </Text>
+            )}
           </View>
-          {/* Save Button */}
-          {isLoading==false?
-          <TouchableOpacity style={styles.saveButton} onPress={()=>handleProfileSubmit()}>
-            <Text style={styles.saveButtonText}>Save Profile</Text>
-          </TouchableOpacity>
-          :
-          <View style={styles.saveButton}>
-            <ActivityIndicator size="small" color="white"/>
-          </View>
-          }
+         {/* for question */}
+         {mobileVerified && (
+  <View
+    style={{
+      padding: 10,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    <Text
+      style={{
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#333",
+        flex: 1,
+        flexShrink: 1,
+        marginRight: 5,
+      }}
+    >
+      Is your mobile number the same as your WhatsApp number?
+    </Text>
+
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <TouchableOpacity
+        style={{
+          backgroundColor: isSame === true ? "#4CAF50" : "#ddd",
+          paddingVertical: 8,
+          paddingHorizontal: 10,
+          borderRadius: 5,
+          marginRight: 5,
+          minWidth: width / 7,
+          alignItems: "center",
+        }}
+        onPress={() => setIsSame(true)}
+      >
+        <Text style={{ color: isSame === true ? "#fff" : "#000" }}>Yes</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={{
+          backgroundColor: isSame === false ? "#4CAF50" : "#ddd",
+          paddingVertical: 8,
+          paddingHorizontal: 8,
+          borderRadius: 5,
+          minWidth: width / 8,
+          alignItems: "center",
+        }}
+        onPress={() => setIsSame(false)}
+      >
+        <Text style={{ color: isSame === false ? "#fff" : "#000" }}>No</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+)}
+
+          {isLoading == false ? (
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={() => handleProfileSubmit()}
+            >
+              <Text style={styles.saveButtonText}>Save Profile</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.saveButton}>
+              <ActivityIndicator size="small" color="white" />
+            </View>
+          )}
         </View>
 
-
-{/* Verify Your Whatsapp MNumber */}
+        {/* Verify Your Whatsapp MNumber */}
         <Modal
           animationType="fade"
           transparent={true}
@@ -633,13 +754,12 @@ const Profile = ({ navigation }) => {
                 </Text>
               ) : null}
 
-              {formData.ValidwhatsappNumber_error==true?
+              {formData.ValidwhatsappNumber_error == true ? (
                 <Text style={{ color: "red", alignSelf: "center" }}>
                   Invalid Whatspp Number
                 </Text>
-              :null}
+              ) : null}
 
-             
               {formData.otpShow == true ? (
                 <View style={styles.buttonContainer}>
                   <View>
@@ -661,7 +781,7 @@ const Profile = ({ navigation }) => {
                   <View>
                     <TouchableOpacity
                       style={styles.submitButton}
-                       onPress={() => handleVerifyOtp()}
+                      onPress={() => handleVerifyOtp()}
                     >
                       <Text style={styles.submitButtonText}>Verify Otp</Text>
                     </TouchableOpacity>
@@ -672,7 +792,7 @@ const Profile = ({ navigation }) => {
                   {loading == false ? (
                     <TouchableOpacity
                       style={styles.submitButton}
-                      onPress={() =>handleSendOtp()}
+                      onPress={() => handleSendOtp()}
                     >
                       <Text style={styles.submitButtonText}>Send Otp</Text>
                     </TouchableOpacity>
@@ -687,91 +807,97 @@ const Profile = ({ navigation }) => {
           </View>
         </Modal>
 
+        {/* Refer A Friend */}
 
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            // setFormData({ ...formData, frndNumber: false });
+            setFrndNumber("");
+            setFrndNumber_error(false);
+            setModalVisible(false), setLoader(false);
+          }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              {/* Header with close button */}
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Enter Referee Details</Text>
+                <Pressable onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#9ca3af" />
+                </Pressable>
+              </View>
 
-{/* Refer A Friend */}
+              {/* Description text */}
+              <Text style={styles.modalDescription}>
+                Please enter the phone number of the person you want to refer.
+              </Text>
 
-    <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setFormData({...formData,frndNumber:false})
-          setModalVisible(false), setLoader(false)
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            {/* Header with close button */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Enter Referee Details</Text>
-              <Pressable onPress={() => setModalVisible(false)}>
-                <Ionicons name="close" size={24} color="#9ca3af" />
-              </Pressable>
-            </View>
+              <View style={styles.phoneInputWrapper}>
+                <PhoneInput
+                  placeholder="Whatsapp Number"
+                  containerStyle={styles.input1}
+                  textInputStyle={styles.phonestyle}
+                  codeTextStyle={styles.phonestyle1}
+                  ref={phoneInput}
+                  // ref={(ref) => (phoneInput = ref)}
+                  defaultValue={frndNumber}
+                  defaultCode="IN"
+                  layout="first"
+                  onChangeText={handleReferNumber}
+                />
+              </View>
+              {frndNumber_error == true ? (
+                <Text style={{ color: "red", alignSelf: "center" }}>
+                 Phone Number is mandatory
+                </Text>
+              ) : null}
 
-            {/* Description text */}
-            <Text style={styles.modalDescription}>
-              Please enter the phone number of the person you want to refer.
-            </Text>
-
-            <View style={styles.phoneInputWrapper}>
-              <PhoneInput
-                placeholder="Whatsapp Number"
-                containerStyle={styles.input1}
-                textInputStyle={styles.phonestyle}
-                codeTextStyle={styles.phonestyle1}
-                ref={phoneInput}
-                // ref={(ref) => (phoneInput = ref)}
-                defaultValue={formData.frndNumber}
-                defaultCode="IN"
-                layout="first"
-                onChangeText={handleReferNumber}
-              />
-            </View>
-            {formData.frndNumber_error==true ? (
-              <Text style={{color:"red",alignSelf:"center"}}>Number is mandatory</Text>
-              ):null}
-
-            <View style={styles.buttonContainer1}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => {
-                  setModalVisible(false), setFrndNumber(""), setLoader(false),setFrndNumber_error(false);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              {loader == false ? (
+              <View style={styles.buttonContainer1}>
                 <TouchableOpacity
-                  style={styles.submitButton}
-                  onPress={() => SubmitReferNumber()}
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setModalVisible(false),
+                      setFrndNumber(""),
+                      setLoader(false),
+                      setFrndNumber_error(false);
+                  }}
                 >
-                  <Text style={styles.submitButtonText}>Submit</Text>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
-              ) : (
-                <View style={styles.submitButton}>
-                  <ActivityIndicator size={25} color="white" />
-                </View>
-              )}
+
+                {loader == false ? (
+                  <TouchableOpacity
+                    style={styles.submitButton}
+                    onPress={() => SubmitReferNumber()}
+                  >
+                    <Text style={styles.submitButtonText}>Submit</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={styles.submitButton}>
+                    <ActivityIndicator size={25} color="white" />
+                  </View>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-
+        </Modal>
 
         {/* Quick Actions */}
         <View style={styles.quickActionsContainer}>
           <View style={styles.quickActionsRow}>
-            <TouchableOpacity  onPress={() => navigation.navigate("Subscription")}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Subscription")}
               style={[styles.quickActionButton, styles.subscriptionButton]}
             >
               <Ionicons name="card-outline" size={20} color="#fff" />
               <Text style={styles.quickActionText}>Subscription</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Wallet")}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Wallet")}
               style={[styles.quickActionButton, styles.walletButton]}
             >
               <MaterialIcons
@@ -784,14 +910,16 @@ const Profile = ({ navigation }) => {
           </View>
 
           <View style={styles.quickActionsRow}>
-            <TouchableOpacity onPress={() => navigation.navigate("Terms and Conditions")}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Terms and Conditions")}
               style={[styles.quickActionButton, styles.faqButton]}
             >
               <MaterialIcons name="help-outline" size={20} color="#fff" />
               <Text style={styles.quickActionText}>FAQs</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate("Write To Us")}
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Write To Us")}
               style={[styles.quickActionButton, styles.writeButton]}
             >
               <MaterialCommunityIcons
@@ -804,23 +932,23 @@ const Profile = ({ navigation }) => {
           </View>
 
           <View style={styles.quickActionsRow}>
-            <TouchableOpacity onPress={() => setModalVisible(true)}
+            <TouchableOpacity
+              onPress={() => setModalVisible(true)}
               style={[styles.quickActionButton, styles.referButton]}
             >
               <FontAwesome5 name="user-friends" size={18} color="#fff" />
               <Text style={styles.quickActionText}>Refer a Friend</Text>
             </TouchableOpacity>
 
-            {/* <TouchableOpacity onPress={() => navigation.navigate("Referral History")}
+            <TouchableOpacity onPress={() => navigation.navigate("Referral History")}
               style={[styles.quickActionButton, styles.historyButton]}
             >
               <MaterialIcons name="history" size={20} color="#fff" />
               <Text style={styles.quickActionText}>Referral History</Text>
-            </TouchableOpacity> */}
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-    
     </SafeAreaView>
   );
 };
@@ -830,7 +958,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f8f9fa",
     paddingTop: 20,
-    marginBottom:50
+    marginBottom: 50,
   },
   header: {
     flexDirection: "row",
@@ -886,7 +1014,7 @@ const styles = StyleSheet.create({
   whatsappIcon: {
     alignSelf: "flex-end",
     padding: 5,
-    fontWeight:"900"
+    fontWeight: "900",
   },
   infoBox: {
     backgroundColor: "#f8f9fa",

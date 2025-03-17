@@ -315,7 +315,7 @@ else{
           setFormData({ ...formData, mobileNumber: text })
           }
           editable={false}
-          // disabled={true}
+          // disabled={true} 
 
       />
       <TextInput
