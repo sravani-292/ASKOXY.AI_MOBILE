@@ -44,7 +44,6 @@ function getRefereeDetails(){
            
             BASE_URL+`reference-service/getreferencedetails/${customerId}`,
         headers: {
-          // "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         })
@@ -61,15 +60,17 @@ function getRefereeDetails(){
 
 
   const renderStatusBadge = (status) => {
+  console.log("referral status",status);
+  
     let badgeStyle = styles.statusContainer;
     let textStyle = styles.statusText;
     
     switch(status) {
-      case 'Accepted':
+      case 'REGISTERED':
         badgeStyle = {...badgeStyle, backgroundColor: '#E8F5E9'};
         textStyle = {...textStyle, color: '#2E7D32'};
         break;
-      case 'Pending':
+      case 'Invited':
         badgeStyle = {...badgeStyle, backgroundColor: '#E3F2FD'};
         textStyle = {...textStyle, color: '#1565C0'};
         break;

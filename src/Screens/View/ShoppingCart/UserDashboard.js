@@ -271,7 +271,7 @@ const UserDashboard = ({route}) => {
             setIsLimitedStock({});
             setCartCount(0);
         }
-        Alert.alert(response.data);
+        Alert.alert("Success",response.data);
       }
     } catch (error) {
       console.log(error.response);

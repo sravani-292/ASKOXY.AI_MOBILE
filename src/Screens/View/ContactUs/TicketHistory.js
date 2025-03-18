@@ -107,7 +107,7 @@ const TicketHistory = ({ navigation }) => {
     setYesLoader(true);
     axios
       .post(
-        BASE_URL + "writetous-service/saveData",
+        BASE_URL + "user-service/write/saveData",
         data,
         {
           headers: {

@@ -62,6 +62,7 @@ const Profile = ({ navigation }) => {
   const [profileData, setProfileData] = useState();
   const [modalVisible, setModalVisible] = useState(false);
   const [frndNumber, setFrndNumber] = useState("");
+    const [error1, setError1] = useState(null);
   const [frndNumber_error, setFrndNumber_error] = useState(false);
   const [code, setCode] = useState("91");
   const [errorMessage, setErrorMessage] = useState(false);
@@ -247,6 +248,7 @@ const Profile = ({ navigation }) => {
     console.log("handleReferNumber");
     
     setFrndNumber_error(false);
+    setError1(false)
     try {
       console.log({ value });
       console.log("varalakshmi");
@@ -378,6 +380,13 @@ const Profile = ({ navigation }) => {
     if (frndNumber == "") {
       // setFormData({ ...formData, frndNumber_error: true });
       setFrndNumber_error(true);
+      return false;
+    }
+    if (!frndNumber) { 
+      setError1("Please enter a phone number.");
+      return false;
+    } else if (!phoneInput.current.isValidNumber(frndNumber)) {
+      setError1("Invalid phone number. Please check the format.");
       return false;
     }
 
@@ -867,6 +876,15 @@ const Profile = ({ navigation }) => {
                  Phone Number is mandatory
                 </Text>
               ) : null}
+
+
+               {error1 && (
+                            <Text
+                              style={{ color: "red", marginBottom: 10, alignSelf: "center" }}
+                            >
+                              {error1}
+                            </Text>
+                          )}
 
               <View style={styles.buttonContainer1}>
                 <TouchableOpacity
