@@ -15,7 +15,7 @@ import Animated, {
 import { useNavigation } from "@react-navigation/native";
 
 const LoginModal = ({ visible, onClose }) => {
-  const translateY = useSharedValue(300); // Start from bottom
+  const translateY = useSharedValue(300); 
   const navigation = useNavigation();
 
   useEffect(() => {

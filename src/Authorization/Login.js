@@ -142,7 +142,6 @@ const Login = () => {
     // console.log("sdmbv",authMethod,countryCode,whatsappNumber)
     if (authMethod === "whatsapp") {
       if (whatsappNumber == "" || whatsappNumber == null) {
-        // console.log("djtcg")
         setWhatsappNumber_Error(true);
         return false;
       }
@@ -237,7 +236,6 @@ const Login = () => {
         return false;
       }
     }
-    //  setLoading(true);
     setFormData({ ...formData, loading: true });
     let data;
     if (authMethod == "whatsapp") {
@@ -250,7 +248,6 @@ const Login = () => {
         salt: saltSession,
         expiryTime: otpGeneratedTime,
         registrationType: "whatsapp",
-        // primaryType: "DELIVERYBOY",
       };
     } else {
       data = {
@@ -262,7 +259,6 @@ const Login = () => {
         salt: saltSession,
         expiryTime: otpGeneratedTime,
         registrationType: "mobile",
-        // primaryType: "DELIVERYBOY",
       };
     }
     // console.log({ data });

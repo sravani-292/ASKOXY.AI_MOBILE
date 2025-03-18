@@ -71,6 +71,7 @@ const Profile = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSame, setIsSame] = useState(null);
   const [mobileVerified,setMobileVerified]=useState(false);
+  const [whatsappVerified,setWhatsappVerified]=useState(false);
    const currentScreen = useNavigationState(
       (state) => state.routes[state.index]?.name
     );
@@ -95,6 +96,8 @@ const Profile = ({ navigation }) => {
 
       console.log("profile get response", response);
       console.log("profile get response", response.data.mobileVerified);
+      console.log("profile get response", response.data.whatsappVerified);
+      setWhatsappVerified(response.data.whatsappVerified);
       setMobileVerified(response.data.mobileVerified);
       setProfileLoader(false);
       if (response.status === 200) {
@@ -382,7 +385,7 @@ const Profile = ({ navigation }) => {
       console.log("User Data whatsappNumber",userData.whatsappNumber);
       const code = "+" + code;
       
-      if (userData.whatsappNumber) { // Ensure it's not null before using .replace()
+      if (userData.whatsappNumber) { 
         const num = userData.whatsappNumber.replace(code, "");
         console.log("num", num);
         
@@ -440,20 +443,7 @@ const Profile = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      {/* <Text
-        style={{
-          fontWeight: "bold",
-          color: "#ff9800",
-          fontSize: 16,
-          textAlign: "center",
-          width: width * 0.9,
-          alignSelf: "center",
-          alignItems: "center",
-        }}
-      >
-        Please verify your WhatsApp number if it's different from your mobile
-        number to receive updates. 😊
-      </Text> */}
+     
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}
@@ -664,7 +654,7 @@ const Profile = ({ navigation }) => {
             )}
           </View>
          {/* for question */}
-         {mobileVerified && (
+         {mobileVerified && !whatsappVerified &&(
   <View
     style={{
       padding: 10,

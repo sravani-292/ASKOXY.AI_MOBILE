@@ -101,7 +101,7 @@ const getDayOfWeek = (offset) => {
 
       const filteredDays = data.filter(day => day);
       setAvailableDays(filteredDays);
-      console.log("Available days:", filteredDays);
+      // console.log("Available days:", filteredDays);
       
     } catch (error) {
       console.error("Error fetching time slots:", error);
@@ -569,8 +569,8 @@ const getDayOfWeek = (offset) => {
          
           const data = {
             mid: "1152305",
-            amount: grandTotalAmount,
-            // amount: 1,
+            // amount: grandTotalAmount,
+            amount: 1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",

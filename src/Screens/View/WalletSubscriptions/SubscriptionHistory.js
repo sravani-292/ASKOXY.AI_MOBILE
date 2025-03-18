@@ -93,7 +93,7 @@ const[loading,setLoading]=useState(false)
     <View>
       {loading==false?
       <>
-      {details!=="" || details.length>0?
+      {Array.isArray(details) && details.length > 0 ?
       <FlatList
         data={details}
         keyExtractor={(item) => item.id}

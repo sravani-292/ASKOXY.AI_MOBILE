@@ -2,8 +2,6 @@ import { toast } from 'react-toastify';
 import { css } from 'glamor';
 
 export default function toast(){
-  // Keep the signature of the original toast object
-  // Doing so you can pass additionnal options
   success(msg, options = {})
   {
     return toast.success(msg, {
