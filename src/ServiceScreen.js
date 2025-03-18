@@ -15,6 +15,7 @@ import LoginModal from "./Components/LoginModal";
 import { i } from "framer-motion/m";
 import UpdateChecker from "../until/Updates";
 import * as Clipboard from 'expo-clipboard';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
 const services = [
@@ -80,7 +81,44 @@ useFocusEffect(
   }, [currentScreen])
 )
 
+useFocusEffect(
+  useCallback(() => {
+    if(userData){
+    profile()
+    navigation.navigate("Home")
+    }
+    checkLoginData()
+    getAllCampaign()
+    getRiceCategories()
+  }, [currentScreen])
+)
+
+const checkLoginData = async () => {
+  console.log("userData", userData);
+  if(userData && userData.accessToken){
+      navigation.navigate("Home");
+  }else{
+  try {
+    const loginData = await AsyncStorage.getItem("userData");
+    // console.log("logindata",loginData);
+    if (loginData) {
+      const user = JSON.parse(loginData);
+      if (user.accessToken) {
+          console.log("Active");
+          dispatch(AccessToken(user));
+          navigation.navigate("Home");
+      }
+    }else{
+      navigation.navigate("Service Screen");
+    }
+  } catch (error) {
+    console.error("Error fetching login data", error.response);
+  }
+}
+}
+
 const profile =async()=>{
+  console.log("userData", userData);
   userData!=null?(
     axios({
       method: "get",
@@ -163,6 +201,32 @@ const profile =async()=>{
   })
   }
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout Confirmation",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Logout cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("userData");
+              navigation.navigate("Login");
+            } catch (error) {
+              console.error("Error clearing user data:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
 useEffect(()=>{
   getAllCampaign();
   getRiceCategories()
@@ -196,7 +260,7 @@ const handleCopy = async () => {
           style={{ width: 150, height: 50, marginRight: 10,marginBottom:-5 }}
         />
 {userData!=null?
-        <TouchableOpacity onPress={()=>navigation.navigate("Login")}  style={{ marginLeft: "auto" }}>
+        <TouchableOpacity onPress={()=>handleLogout()}  style={{ marginLeft: "auto" }}>
           <MaterialCommunityIcons name="logout" size={25} color="#5e606c" />
         </TouchableOpacity>
         
@@ -213,7 +277,7 @@ const handleCopy = async () => {
         
       </Text>
       <TouchableOpacity 
-        style={[styles.copyButton, copied ? styles.copiedButton : null,{left:-80}]} 
+        style={[styles.copyButton, copied ? styles.copiedButton : null,{marginLeft:-width*0.3}]} 
         onPress={handleCopy}
         activeOpacity={0.7}
       >

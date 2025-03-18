@@ -16,7 +16,7 @@ export default function WalletOverview({walletAmount,income,expenses}) {
               <MaterialCommunityIcons name="arrow-down" size={20} color="white" />
             </View>
             <View>
-              <Text style={styles.statLabel}>Income</Text>
+              <Text style={styles.statLabel}>Credit</Text>
               <Text style={styles.statAmount}>₹{income}</Text>
             </View>
           </View>
@@ -28,7 +28,7 @@ export default function WalletOverview({walletAmount,income,expenses}) {
               <MaterialCommunityIcons name="arrow-up" size={20} color="white" />
             </View>
             <View>
-              <Text style={styles.statLabel}>Expenses</Text>
+              <Text style={styles.statLabel}>Debit</Text>
               <Text style={styles.statAmount}>₹{expenses}</Text>
             </View>
           </View>

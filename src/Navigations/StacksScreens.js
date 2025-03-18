@@ -68,7 +68,7 @@ export default function StacksScreens() {
     <Stack.Navigator
       // initialRouteName="Crypto Currency"
       // initialRouteName="Login"
-      initialRouteName ="SplashScreen"
+      initialRouteName ="Service Screen"
       screenOptions={{
         headerShown: true,
         headerTintColor: "white",

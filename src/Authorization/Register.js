@@ -72,7 +72,7 @@ const Register = () => {
     const [error1, setError1] = useState(null);
   const[otpMessage,setOtpMessage]=useState(false)
   const [isChecked, setIsChecked] = useState(false);
-  const[referCode,setReferCode]=useState("");
+  const[referCode,setReferCode]=useState(null);
   const[referEmptyError,setReferEmptyError]=useState(false)
 
   
@@ -202,6 +202,7 @@ const Register = () => {
         return false;
       }
     }
+    
     let data;
     data =
       authMethod === "whatsapp"
@@ -210,12 +211,14 @@ const Register = () => {
             whatsappNumber,
             userType: "Register",
             registrationType: "whatsapp",
+            referrerIdForMobile: referCode
           }
         : {
             countryCode: "+91",
             mobileNumber: phoneNumber,
             userType: "Register",
             registrationType: "sms",
+            referrerIdForMobile: referCode
           };
     console.log({ data });
     setFormData({ ...formData, loading: true });
@@ -278,6 +281,14 @@ const Register = () => {
         return false;
       }
     }
+
+    if(referCode!=null){
+      if(referCode.length>4){
+       setReferEmptyError(true)
+       return false
+      }
+   }
+   
     //  setLoading(true);
     setFormData({ ...formData, loading: true });
     let data;
@@ -293,6 +304,7 @@ const Register = () => {
         registrationType: "whatsapp",
         primaryType: "CUSTOMER",
         registerdFrom: "MOBILE",
+        referrerIdForMobile: referCode
       };
     } else {
       data = {
@@ -306,6 +318,7 @@ const Register = () => {
         registrationType: "mobile",
         primaryType: "CUSTOMER",
         registerdFrom: "MOBILE",
+        referrerIdForMobile: referCode
       };
     }
     console.log({ data });
@@ -626,21 +639,22 @@ const Register = () => {
               <Text style={styles.resendText}>Resend OTP</Text>
             </TouchableOpacity>
 
-            {/* <View style={styles.checkboxContainer}>
-        <Checkbox
+            <View style={styles.checkboxContainer}>
+        {/* <Checkbox
           status={isChecked ? "checked" : "unchecked"}
           onPress={() => setIsChecked(!isChecked)}
           color={isChecked ? "#007bff" : "#fff"}
           backgroundColor={isChecked ? "#007bff" : "#fff"}
         />
-        <Text style={styles.checkboxLabel}>Referred </Text>
+        <Text style={styles.checkboxLabel}>Referred </Text> */}
       </View>
 <View>
-      {isChecked && (
+      {/* {isChecked && ( */}
+      {otpSent && (
         <>
           <TextInput
             style={styles.input}
-            placeholder="Enter text"
+            placeholder="Enter Referred Code(optional)"
             value={referCode}
             onChangeText={(text) => {
               setReferCode(text);
@@ -650,9 +664,10 @@ const Register = () => {
           {referEmptyError ? <Text style={styles.error}>{referEmptyError}</Text> : null}
         </>
       )}
+      {/* )} */}
 
     
-    </View> */}
+    </View>
 
 
             {/* Action Buttons */}

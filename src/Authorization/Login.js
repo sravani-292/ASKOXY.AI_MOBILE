@@ -280,10 +280,10 @@ const Login = () => {
           if (response.data.accessToken != null) {
             setOtpSent(false);
             dispatch(AccessToken(response.data));
-            // await AsyncStorage.setItem(
-            //   "userData",
-            //   JSON.stringify(response.data)
-            // );
+            await AsyncStorage.setItem(
+              "userData",
+              JSON.stringify(response.data)
+            );
             // await AsyncStorage.setItem("mobileNumber", formData.mobileNumber);
             // setFormData({ ...formData, otp: "" });
 

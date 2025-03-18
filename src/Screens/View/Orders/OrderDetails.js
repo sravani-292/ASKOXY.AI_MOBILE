@@ -522,7 +522,7 @@ const OrderDetails = () => {
           {(gstAmount!=null && gstAmount!=0)&&(
           <View style={styles.row}>
             <Text style={styles.label}>GST:</Text>
-            <Text style={styles.value}>+{gstAmount}</Text>
+            <Text style={styles.value}>+{gstAmount.toFixed(2)}</Text>
           </View>
           )}
           {/* coupen value */}
@@ -559,7 +559,7 @@ const OrderDetails = () => {
           {/* Grand Total */}
           <View style={styles.grandTotalRow}>
             <Text style={styles.grandTotalLabel}>Grand Total:</Text>
-            <Text style={styles.grandTotalValue}>₹{grandTotal}</Text>
+            <Text style={styles.grandTotalValue}>₹{grandTotal.toFixed(2)}</Text>
           </View>
         </View>
       </ScrollView>

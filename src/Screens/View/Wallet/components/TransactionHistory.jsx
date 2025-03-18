@@ -46,6 +46,7 @@ export default function TransactionHistory({walletTxs}) {
     return t.walletTxType === filter;
   });
 
+
   const renderTransaction = ({ item }) => (
     <View style={styles.transactionCard}>
       <View style={styles.transactionLeft}>
@@ -61,7 +62,8 @@ export default function TransactionHistory({walletTxs}) {
         </View>
         <View>
           <Text style={styles.transactionTitle}>{item.walletTxType === 1 ? item.walletTxPurpose === 2 ? `Order ID : #${item.orderId}` : item.walletTxPurpose === 3? "Subscription" :`Refereed To : #${item.refereedTo}`:"Debit"}</Text>
-          <Text style={styles.transactionDate}>{new Date(item.createdAt).toLocaleDateString()} • {item.walletTxDesc}</Text>
+          <Text style={styles.transactionCategory}>• {item.walletTxDesc}</Text>
+          <Text style={styles.transactionDate}>{new Date(item.createdAt).toLocaleDateString()} </Text>
         </View>
       </View>
       <Text style={[
@@ -105,6 +107,8 @@ export default function TransactionHistory({walletTxs}) {
         renderItem={renderTransaction}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.transactionList}
+        ListFooterComponentStyle={styles.footerStyle}
+        ListFooterComponent={<View style={{height:height*0.001}}></View>}
       />
     </View>
   );
@@ -138,6 +142,7 @@ const styles = StyleSheet.create({
   transactionList: {
     padding: 15,
     width:width*0.8,
+    
     // marginRight:20,
     // alignSelf:"center"
   },
@@ -173,6 +178,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 4,
+    width:width*0.5
   },
   transactionDate: {
     fontSize: 14,
@@ -186,5 +192,14 @@ const styles = StyleSheet.create({
     marginLeft:-90  
     // marginLeft:width*0.
 
+  },
+  footerStyle:{
+    marginBottom:height*0.1
+  },
+  transactionCategory: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+    width:width*0.6
   },
 });

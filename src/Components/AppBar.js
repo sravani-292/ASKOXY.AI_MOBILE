@@ -44,6 +44,7 @@ export default function CustomNavigationBar({
             try {
               await AsyncStorage.removeItem("userData");
               navigation.navigate("Login");
+              
             } catch (error) {
               console.error("Error clearing user data:", error);
             }

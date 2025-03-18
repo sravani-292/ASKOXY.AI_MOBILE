@@ -185,16 +185,16 @@ if(authMethod=="whatsapp"){
       method:"post",
       url:BASE_URL+`user-service/hiddenLoginByMobileNumber/${authMethod === "whatsapp"?whatsappNumber:phoneNumber}`
     })
-    .then((response)=>{
+    .then(async(response)=>{
       console.log(response.data)
       setLoading(false)
       if (response.data.primaryType == "CUSTOMER") {
         if (response.data.accessToken != null) {
           dispatch(AccessToken(response.data));
-          // await AsyncStorage.setItem(
-          //   "userData",
-          //   JSON.stringify(response.data)
-          // );
+          await AsyncStorage.setItem(
+            "userData",
+            JSON.stringify(response.data)
+          );
           navigation.navigate('Home')
         }
         else{

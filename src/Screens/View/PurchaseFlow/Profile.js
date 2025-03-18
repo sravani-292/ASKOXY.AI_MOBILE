@@ -23,7 +23,7 @@ import {
 import Ionicons from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigationState} from "@react-navigation/native";
 import BASE_URL, { userStage } from "../../../../Config";
 import PhoneInput from "react-native-phone-number-input";
 import { pre } from "framer-motion/m";
@@ -71,10 +71,13 @@ const Profile = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSame, setIsSame] = useState(null);
   const [mobileVerified,setMobileVerified]=useState(false);
+   const currentScreen = useNavigationState(
+      (state) => state.routes[state.index]?.name
+    );
   useFocusEffect(
     useCallback(() => {
       getProfile();
-    }, [])
+    }, [currentScreen])
   );
   const getProfile = async () => {
     console.log("profile get call response");
@@ -90,7 +93,7 @@ const Profile = ({ navigation }) => {
         },
       });
 
-      console.log("profile get response", response.data);
+      console.log("profile get response", response);
       console.log("profile get response", response.data.mobileVerified);
       setMobileVerified(response.data.mobileVerified);
       setProfileLoader(false);
@@ -368,16 +371,36 @@ const Profile = ({ navigation }) => {
   const SubmitReferNumber = () => {
      console.log({ frndNumber });
 
-    console.log(userData.whatsappNumber);
+   
     if (frndNumber == "") {
       // setFormData({ ...formData, frndNumber_error: true });
       setFrndNumber_error(true);
       return false;
     }
-    if (userData.whatsappNumber == frndNumber) {
-      Alert.alert("Failed", "Self referral is not allowed");
-      return false;
+
+    if (userData.whatsappNumber !== null) {
+      console.log("User Data whatsappNumber",userData.whatsappNumber);
+      const code = "+" + code;
+      
+      if (userData.whatsappNumber) { // Ensure it's not null before using .replace()
+        const num = userData.whatsappNumber.replace(code, "");
+        console.log("num", num);
+        
+        if (num === frndNumber) {
+          Alert.alert("Failed", "Self referral is not allowed");
+          return false;
+        }
+      }
+    } else {
+      console.log("User Data  mobileNumber",userData.mobileNumber);
+      
+      if (userData.mobileNumber === frndNumber) {
+        Alert.alert("Failed", "Self referral is not allowed");
+        return false;
+      }
     }
+    
+    
 
     let data = {
       referealId: customerId,
@@ -825,7 +848,7 @@ const Profile = ({ navigation }) => {
               {/* Header with close button */}
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Enter Referee Details</Text>
-                <Pressable onPress={() => setModalVisible(false)}>
+                <Pressable onPress={() => {setModalVisible(false),setFrndNumber("")}}>
                   <Ionicons name="close" size={24} color="#9ca3af" />
                 </Pressable>
               </View>

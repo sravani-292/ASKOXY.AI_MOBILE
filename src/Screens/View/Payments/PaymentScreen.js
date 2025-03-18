@@ -94,13 +94,15 @@ const getDayOfWeek = (offset) => {
   const fetchTimeSlots = async () => {
     try {
       const response = await axios.get(
-        `http://182.18.139.138:9029/api/order-service/fetchTimeSlotlist`
+        `${BASE_URL}order-service/fetchTimeSlotlist`
       );
       
       const data = response.data;
 
       const filteredDays = data.filter(day => day);
       setAvailableDays(filteredDays);
+      console.log("Available days:", filteredDays);
+      
     } catch (error) {
       console.error("Error fetching time slots:", error);
     }
@@ -109,7 +111,7 @@ const getDayOfWeek = (offset) => {
   const checkOfferEligibility = async (customerId) => {
     try {
       const { data } = await axios.get(
-        `http://65.0.147.157:9029/api/order-service/freeContainerBasedOnUserId?userId=${customerId}`
+        `${BASE_URL}order-service/freeContainerBasedOnUserId?userId=${customerId}`
       );
       
   
@@ -118,7 +120,7 @@ const getDayOfWeek = (offset) => {
       setShowButtons(!hasInterested);
     } catch (error) {
       console.error("Error fetching offer details:", error?.response?.status, error?.response?.data);
-      setShowButtons(false); 
+      setShowButtons(true); 
     }
   };
   
@@ -266,7 +268,7 @@ const getDayOfWeek = (offset) => {
 
   const confirmPayment = () => {
        if(selectedTimeSlot == null || selectedTimeSlot == ""){
-          Alert.alert("Please select time slot");
+          Alert.alert("Please select time slot to proceed");
         }
    else if (selectedPaymentMode == null || selectedPaymentMode == "") {
       Alert.alert("Please select payment method");
@@ -306,6 +308,9 @@ const getDayOfWeek = (offset) => {
     
     if (!cartData || cartData.length === 0) {
         return;
+    }
+    if(grandTotalAmount==0){
+      setSelectedPaymentMode('COD');
     }
     const zeroQuantityItems = cartData
       .filter(item => item.quantity === 0)
@@ -454,6 +459,7 @@ const getDayOfWeek = (offset) => {
       coupon = null;
       coupenAmount = 0;
     }
+    
     postData = {
       address: addressDetails.address,
       amount: grandTotalAmount,
@@ -921,7 +927,7 @@ const getDayOfWeek = (offset) => {
     if(total === 0){
       // console.log("Get all Values",{total});
       
-      setSelectedPaymentMode('COD');
+      // setSelectedPaymentMode('COD');
     }
 
     // console.log("Used Wallet:", usedWallet);
@@ -1110,14 +1116,14 @@ const getDayOfWeek = (offset) => {
           </View>
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>GST</Text>
-            <Text style={styles.detailsValue}>+₹{totalGstSum}</Text>
+            <Text style={styles.detailsValue}>+₹{Number((totalGstSum || 0.00).toFixed(2))}</Text>
           </View>
           <View style={styles.divider} />
 
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabelBold}>Grand Total</Text>
             {/* <Text style={styles.detailsValueBold}>₹{grandTotalAmount+deliveryBoyFee}</Text> */}
-            <Text style={styles.detailsValueBold}>₹{grandTotalAmount}</Text>
+            <Text style={styles.detailsValueBold}>₹{Number(grandTotalAmount || 0).toFixed(2)}</Text>
 
           </View>
       
