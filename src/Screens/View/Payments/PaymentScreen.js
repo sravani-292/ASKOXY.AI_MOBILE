@@ -309,7 +309,7 @@ const getDayOfWeek = (offset) => {
     if (!cartData || cartData.length === 0) {
         return;
     }
-    if(grandTotalAmount==0){
+    if(grandTotalAmount<=100){
       setSelectedPaymentMode('COD');
     }
     const zeroQuantityItems = cartData
@@ -1059,36 +1059,39 @@ const getDayOfWeek = (offset) => {
         {/* Payment Methods */}
         <Text style={styles.paymentHeader}>Choose Payment Method</Text>
         <View style={styles.paymentOptions}>
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              selectedPaymentMode === "ONLINE" && styles.selectedOption,
-            ]}
-            onPress={() => handlePaymentModeSelect("ONLINE")}
-          >
-            <FontAwesome5
-              name="credit-card"
-              size={24}
-              color={selectedPaymentMode === "ONLINE" ? COLORS.backgroundcolour : "black"}
-            />
-            <Text style={styles.optionText}>Online Payment</Text>
-          </TouchableOpacity>
-          {grandTotalAmount != 1?(
-          <TouchableOpacity
-            style={[
-              styles.paymentOption,
-              selectedPaymentMode === "COD" && styles.selectedOption,
-            ]}
-            onPress={() => handlePaymentModeSelect("COD")}
-          >
-            <MaterialIcons
-              name="delivery-dining"
-              size={24}
-              color={selectedPaymentMode === "COD" ? COLORS.backgroundcolour : "black"}
-            />
-            <Text style={styles.optionText}>Cash on Delivery</Text>
-          </TouchableOpacity>
-          ):null}
+        <TouchableOpacity
+          style={[
+            styles.paymentOption,
+            selectedPaymentMode === "ONLINE" && styles.selectedOption,
+          ]}
+          onPress={() => handlePaymentModeSelect("ONLINE")}
+        >
+          <FontAwesome5
+            name="credit-card"
+            size={24}
+            color={selectedPaymentMode === "ONLINE" ? COLORS.backgroundcolour : "black"}
+          />
+          <Text style={styles.optionText}>Online Payment</Text>
+        </TouchableOpacity>
+        
+         
+          {grandTotalAmount  > 100 && (
+         <TouchableOpacity
+         style={[
+           styles.paymentOption,
+           selectedPaymentMode === "COD" && styles.selectedOption,
+         ]}
+         onPress={() => handlePaymentModeSelect("COD")}
+       >
+         <MaterialIcons
+           name="delivery-dining"
+           size={24}
+           color={selectedPaymentMode === "COD" ? COLORS.backgroundcolour : "black"}
+         />
+         <Text style={styles.optionText}>Cash on Delivery</Text>
+       </TouchableOpacity>
+          )}
+          
         </View>
       
 
