@@ -353,7 +353,7 @@ const Profile = ({ navigation }) => {
         
         console.log(response.data);
         // if (response.data.status == false) {
-        if(response.data.status==200){
+        if(response.status==200){
           Alert.alert("Success", "Whatsapp number verified successfully");
         }
         setWhatsappVerifyModal(false);

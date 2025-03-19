@@ -84,8 +84,8 @@ const getDayOfWeek = (offset) => {
 };
 
   const days = [
-    { label: "Today", value: "today" },
-    { label: "Tomorrow", value: "tomorrow" },
+    { label: "TODAY", value: "today" },
+    { label: "TOMORROW", value: "tomorrow" },
     { label: getDayOfWeek(2), value: "day_after_tomorrow" },
   ];
 
@@ -1019,7 +1019,9 @@ const getDayOfWeek = (offset) => {
           onValueChange={handleDayChange}
           style={styles.picker}
         >
-          <Picker.Item label="Select a day" value="" />
+          {/* <Picker.Item label="SELECT A DAY" value="" /> */}
+          <Picker.Item label="SELECT A DAY" value="" enabled={false} color="gray" />
+
           {days.map((day) => (
             <Picker.Item key={day.value} label={day.label} value={day.value} />
           ))}
@@ -1035,7 +1037,7 @@ const getDayOfWeek = (offset) => {
               onValueChange={setSelectedTimeSlot}
               style={styles.picker}
             >
-              <Picker.Item label="Select a time slot" value="" />
+              <Picker.Item label="Select a time slot" value="" enabled={false} color="gray"/>
               {timeSlots.map((slot, index) => (
                 <Picker.Item key={index} label={slot} value={slot} />
               ))}
