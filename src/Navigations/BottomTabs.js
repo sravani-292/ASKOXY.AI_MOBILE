@@ -7,6 +7,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import CustomNavigationBar from "../Components/AppBar";
 import Rice from "../Screens/View/ShoppingCart/Rice";
 import ProfilePage from "../Screens/View/PurchaseFlow/Profile";
+import ProfileSettings from "../Screens/View/Profile/ProfileView";
 // import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import MainWallet from "../Screens/View/Wallet/Main";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
@@ -175,7 +176,7 @@ const Tabs = () => {
 
       <Tab.Screen
         name="Profile"
-        component={ProfilePage}
+        component={ProfileSettings}
         screenOptions={{
           headerShown: true,
         }}

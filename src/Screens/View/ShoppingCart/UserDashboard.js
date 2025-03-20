@@ -872,8 +872,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 5,
-    // height: 85,
-    height:height/24,
+    width:120,
+    height:height/19,
+    alignSelf:"center"
   },
   priceContainer: {
     marginTop: 20,

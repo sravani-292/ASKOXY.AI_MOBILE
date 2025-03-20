@@ -91,9 +91,10 @@ const Login = () => {
 
           if (loginData) {
             const user = JSON.parse(loginData);
-            // if (user.accessToken) {
-            //   dispatch(AccessToken(user));
-            //   navigation.navigate("Home");
+            if (user.accessToken) {
+              dispatch(AccessToken(user));
+              navigation.navigate("Home");
+            }
           }
         } catch (error) {
           console.error("Error fetching login data", error.response);
@@ -102,7 +103,7 @@ const Login = () => {
 
       checkLoginData();
       // getVersion();
-    }, [])
+    }, [currentScreen])
   );
 
   const currentScreen = useNavigationState(

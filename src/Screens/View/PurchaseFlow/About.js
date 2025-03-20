@@ -66,7 +66,7 @@ const[show,setShow]=useState(false)
     {
       id: 2,
       question: 'Who can I refer?',
-      answer: 'You can refer anyone who is not already a registered user on ASKOXY.ai. To count as a referral, they must sign up using your referral link.'
+      answer: 'You can refer anyone who is not already a registered user on ASKOXY.AI. To count as a referral, they must sign up using your referral link.'
     },
     {
       id: 3,
@@ -76,7 +76,7 @@ const[show,setShow]=useState(false)
     {
       id: 4,
       question: 'What rewards do I get for referring a friend?',
-      answer: 'Apart from getting a *free steel container, you will also receive *₹100 cashback** in your *AskOxy.ai wallet* when you successfully refer someone.'
+      answer: 'Apart from getting a free steel container, you will also receive ₹100 cashback in your AskOxy.ai wallet when you successfully refer someone.'
     },
     {
       id: 5,
@@ -91,12 +91,12 @@ const[show,setShow]=useState(false)
     {
       id: 7,
       question: 'Is there a limit to the number of people I can refer?',
-      answer: 'No, you can refer *as many friends as you like. You will receive *₹100 cashback for each successful referral**, subject to promotional terms.'
+      answer: 'No, you can refer as many friends as you like. You will receive *₹100 cashback for each successful referral, subject to promotional terms.'
     },
     {
       id: 8,
       question: 'What happens if my friend forgets to use my referral link?',
-      answer: 'Referrals must use your link at the time of sign-up. If they forget, the referral may not be counted, and you will **not receive the reward.'
+      answer: 'Referrals must use your link at the time of sign-up. If they forget, the referral may not be counted, and you will not receive the reward.'
     },
     {
       id: 9,
@@ -113,33 +113,33 @@ const[show,setShow]=useState(false)
   const freeSteelContainerfaqs=[
     {
       id:1,
-      question:"About AskOxy.ai",
+      question:"About ASKOXY.AI",
       answer:"AskOxy.ai is an AI-powered platform integrating 34+ marketplaces, designed to simplify lives with innovative solutions, including premium rice delivery"
     },
     {
       id:2,
-      question:"Who is the founder of AskOxy.ai?",
-      answer:"AskOxy.ai is led by Radhakrishna Thatavarti ([LinkedIn](https://www.linkedin.com/in/oxyradhakrishna/)), an entrepreneur with over 24 years of experience in software technology and business leadership. His vision is to empower communities through sustainable, customer-centric solutions using AI, Blockchain, and Java technologies."
+      question:"Who is the founder of ASKOXY.AI?",
+      answer:"ASKOXY.AI is led by Radhakrishna Thatavarti ([LinkedIn](https://www.linkedin.com/in/oxyradhakrishna/)), an entrepreneur with over 24 years of experience in software technology and business leadership. His vision is to empower communities through sustainable, customer-centric solutions using AI, Blockchain, and Java technologies."
     },
     {
       id:3,
       question:"What is the Free Steel Container offer?",
-      answer:"Customers who purchase a 26kg rice bag* will receive a FREE steel rice container. However, the container remains the property of OXY Group* until ownership is earned."
+      answer:"Customers who purchase a 26kg rice bag will receive a FREE steel rice container. However, the container remains the property of OXY Group* until ownership is earned."
     },
     {
       id:4,
       question:"How can I earn ownership of the steel container?",
-      answer:"You can *own* the container by meeting either of the following criteria: \n1. Refer 9 new users to AskOxy.ai. \n2. Purchase 9 rice bags within 1 year."
+      answer:"You can own the container by meeting either of the following criteria: \n1. Refer 9 new users to AskOxy.ai. \n2. Purchase 9 rice bags within 3 years."
     },
     {
       id:5,
       question:"What happens if I do not purchase regularly?",
-      answer:"- If you do not make a purchase within 45 days, or \n- If there is a gap of 45 days between purchases, then the container will be taken back."
+      answer:"- If you do not make a purchase within 90 days, or \n- If there is a gap of 90 days between purchases, then the container will be taken back."
     },
     {
       id:6,
       question:"How long does delivery take for the rice bag and container?",
-      answer:"- The *rice bag* will be delivered *within 24 hours*\n- Due to high demand, container delivery may be delayed."
+      answer:"- The rice bag will be delivered within 24 hours\n- Due to high demand, container delivery may be delayed."
     },
     {
       id:7,

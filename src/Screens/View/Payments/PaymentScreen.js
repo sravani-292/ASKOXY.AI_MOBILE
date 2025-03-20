@@ -28,7 +28,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
-  // console.log("payment screen", route.params);
+  console.log("payment screen", route.params);
     // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
@@ -234,7 +234,7 @@ const getDayOfWeek = (offset) => {
   
   var addressDetails = route.params.address;
 
-  const [selectedPaymentMode, setSelectedPaymentMode] = useState(null);
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState('ONLINE');
 
   var calculatedTotal;
   useEffect(() => {
@@ -309,7 +309,7 @@ const getDayOfWeek = (offset) => {
     if (!cartData || cartData.length === 0) {
         return;
     }
-    if(grandTotalAmount<=100){
+    if(grandTotalAmount==0){
       setSelectedPaymentMode('COD');
     }
     const zeroQuantityItems = cartData
@@ -478,6 +478,8 @@ const getDayOfWeek = (offset) => {
       dayOfWeek: selectedDayName,
       expectedDeliveryDate: selectedDate,
       timeSlot: selectedTimeSlot,
+      latitude:addressDetails.latitude,
+      longitude:addressDetails.longitude
     };
 
     console.log({ postData });
@@ -569,8 +571,8 @@ const getDayOfWeek = (offset) => {
          
           const data = {
             mid: "1152305",
-            // amount: grandTotalAmount,
-            amount: 1,
+            amount: grandTotalAmount,
+            // amount: 1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",

@@ -20,6 +20,10 @@ const LegalService = ({ navigation }) => {
   // console.log({ userData });
   const [loading, setLoading] = useState(false);
   const[AlreadyInterested,setAlreadyInterested]=useState(false)
+  const[profileData,setProfileData]=useState()
+// const[number,setNumber]=useState()
+    console.log("userData", userData);
+    let number;
 
   useEffect(()=>{
  if(userData==null){
@@ -30,7 +34,22 @@ const LegalService = ({ navigation }) => {
       return;
     }else{
       getCall()
+      getProfile()
     }  },[])
+
+    const getProfile = async () => {
+      axios({
+       method:"get",
+       url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
+      })
+      .then((response)=>{
+       console.log(response.data)
+       setProfileData(response.data)
+      })
+      .catch((error)=>{
+       console.log(error.response.data)
+      })
+     };
   
     function getCall(){
       let data={
@@ -62,10 +81,23 @@ const LegalService = ({ navigation }) => {
       ]);
       return;
     } else {
+      if((profileData.whatsappNumber!=null || profileData.whatsappNumber!='') && 
+    (profileData.mobileNumber!=null || profileData.mobileNumber!='')) {
+  number=(profileData.whatsappNumber)
+  return false;
+}
+else if(profileData.whatsappNumber!=null || profileData.whatsappNumber!='') {
+  number=(profileData.whatsappNumber)
+  return false;
+}
+else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
+  number=(profileData.mobileNumber)
+  return false;
+}
       let data = {
         askOxyOfers: "LEGALSERVICES",
         userId: userData.userId,
-        mobileNumber: userData.whatsappNumber,
+        mobileNumber: number,
         projectType: "ASKOXY",
       };
       console.log(data);

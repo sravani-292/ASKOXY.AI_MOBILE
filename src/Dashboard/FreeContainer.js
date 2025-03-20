@@ -11,6 +11,10 @@ const FreeContainer = ({navigation}) => {
 //   console.log({ userData });
   const [loading, setLoading] = useState(false);
   const[AlreadyInterested,setAlreadyInterested]=useState(false)
+  const[profileData,setProfileData]=useState()
+// const[number,setNumber]=useState()
+    console.log("userData", userData);
+    let number;
 
   useEffect(()=>{
     if(userData==null){
@@ -21,8 +25,23 @@ const FreeContainer = ({navigation}) => {
       return;
     }else{
       getCall()
+      getProfile()
     }
   },[])
+
+  const getProfile = async () => {
+    axios({
+     method:"get",
+     url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
+    })
+    .then((response)=>{
+     console.log(response.data)
+     setProfileData(response.data)
+    })
+    .catch((error)=>{
+     console.log(error.response.data)
+    })
+   };
   
     function getCall(){
       let data={
@@ -55,10 +74,23 @@ const FreeContainer = ({navigation}) => {
       ]);
       return;
     } else {
+      if((profileData.whatsappNumber!=null || profileData.whatsappNumber!='') && 
+    (profileData.mobileNumber!=null || profileData.mobileNumber!='')) {
+  number=(profileData.whatsappNumber)
+  return false;
+}
+else if(profileData.whatsappNumber!=null || profileData.whatsappNumber!='') {
+  number=(profileData.whatsappNumber)
+  return false;
+}
+else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
+  number=(profileData.mobileNumber)
+  return false;
+}
       let data = {
         askOxyOfers: "FREESAMPLE",
         userId: userData.userId,
-        mobileNumber: userData.whatsappNumber,
+        mobileNumber: number,
         projectType: "ASKOXY",
       };
       console.log(data);
@@ -150,7 +182,7 @@ const FreeContainer = ({navigation}) => {
             How to Earn Ownership:
           </Text>
           <Text style={{ fontSize: 16, marginTop: 5 }}>
-            ✅ <Text style={styles.text}>Plan A:</Text> Buy 9 bags in 1 year and
+            ✅ <Text style={styles.text}>Plan A:</Text> Buy 9 bags in 3 year and
             the container is yours forever.
           </Text>
           <Text style={styles.ortext}>OR</Text>
@@ -165,7 +197,7 @@ const FreeContainer = ({navigation}) => {
             Important Info:
           </Text>
           <Text style={{ fontSize: 16, marginTop: 5, color: "#555" }}>
-            ✅ No purchase in 45 days or a 45-day gap between purchases =
+            ✅ No purchase in 90 days or a 90-day gap between purchases =
             Container will be taken back.
           </Text>
           <Text style={{ marginTop: 5 }}>
@@ -220,8 +252,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   image: {
-    height: 250,
-    width: width ,
+    height: 400,
+    width: width*0.9 ,
+    alignSelf:"center",
     // padding:10
   },
   header: {

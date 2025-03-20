@@ -520,8 +520,8 @@ const CheckOut = ({ navigation, route }) => {
             pincode: address.pincode,
             address: address.address,
             addressType: "",
-            latitude: "",
-            longitude: "",
+            latitude: address.latitude,
+            longitude: address.longitude,
           })
         )
       );

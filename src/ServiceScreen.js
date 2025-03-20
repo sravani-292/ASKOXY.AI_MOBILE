@@ -7,15 +7,16 @@ import { Ionicons, FontAwesome,MaterialCommunityIcons,MaterialIcons } from "@exp
 import axios from "axios";
 import { useDispatch,useSelector } from "react-redux";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import BASE_URL,{userStage} from "../Config"
+import BASE_URL from "../Config"
 const{height,width}=Dimensions.get('window' || 'screen')
 import { useNavigationState } from '@react-navigation/native';
 import LottieView from "lottie-react-native";
 import LoginModal from "./Components/LoginModal";
-import { i } from "framer-motion/m";
 import UpdateChecker from "../until/Updates";
 import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AccessToken } from "../Redux/action/index";
+import {trackScreen } from "../until/Analytics"
 
 
 const services = [
@@ -48,6 +49,7 @@ const ServiceScreen = () => {
   const [coin, setCoin] = useState("");
   const [loginModal, setLoginMobal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const dispatch = useDispatch();
 
   // const[loader,setLoader]=useState(false)
   const currentScreen = useNavigationState(
@@ -83,10 +85,6 @@ useFocusEffect(
 
 useFocusEffect(
   useCallback(() => {
-    if(userData){
-    profile()
-    navigation.navigate("Home")
-    }
     checkLoginData()
     getAllCampaign()
     getRiceCategories()
@@ -96,15 +94,18 @@ useFocusEffect(
 const checkLoginData = async () => {
   console.log("userData", userData);
   if(userData && userData.accessToken){
+    setLoginMobal(false)
       navigation.navigate("Home");
+
   }else{
   try {
     const loginData = await AsyncStorage.getItem("userData");
-    // console.log("logindata",loginData);
+    console.log("logindata",loginData);
     if (loginData) {
       const user = JSON.parse(loginData);
       if (user.accessToken) {
           console.log("Active");
+          setLoginMobal(false)
           dispatch(AccessToken(user));
           navigation.navigate("Home");
       }
@@ -133,6 +134,7 @@ const profile =async()=>{
         // console.log("response", response.data);
         setChainId(response.data.multiChainId)
         setCoin(response.data.coinAllocated)
+        setLoginMobal(false)
       })
       .catch((error) => {
         // console.log("error1", error);
@@ -141,6 +143,10 @@ const profile =async()=>{
   )
   :console.log("no user data");
 }
+
+useEffect(() => {
+  trackScreen("Serives and Products");
+}, []);
 
 
   function getAllCampaign() {

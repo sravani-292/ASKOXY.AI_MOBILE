@@ -94,10 +94,6 @@ const Profile = ({ navigation }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      console.log("profile get response", response);
-      console.log("profile get response", response.data.mobileVerified);
-      console.log("profile get response", response.data.whatsappVerified);
       setWhatsappVerified(response.data.whatsappVerified);
       setMobileVerified(response.data.mobileVerified);
       setProfileLoader(false);

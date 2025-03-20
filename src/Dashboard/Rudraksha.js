@@ -27,6 +27,10 @@ const Rudraksha = ({ navigation }) => {
   const [modalVisible1, setModalVisible1] = useState(false);
   const [deliveryType, setDeliveryType] = useState(null);
   const [AlreadyInterested, setAlreadyInterested] = useState(false);
+  const[profileData,setProfileData]=useState()
+// const[number,setNumber]=useState()
+    console.log("userData", userData);
+    let number;
 
   const [formData, setFormData] = useState({
     whatsappNumber: "",
@@ -63,8 +67,23 @@ const Rudraksha = ({ navigation }) => {
       return;
     }else{
       getCall()
+      getProfile()
     }
   },[])
+
+  const getProfile = async () => {
+    axios({
+     method:"get",
+     url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
+    })
+    .then((response)=>{
+     console.log(response.data)
+     setProfileData(response.data)
+    })
+    .catch((error)=>{
+     console.log(error.response.data)
+    })
+   };
 
   function getCall() {
     let data = {
@@ -134,7 +153,7 @@ const Rudraksha = ({ navigation }) => {
       url:
         userStage == "test"
           ? BASE_URL + "marketing-service/campgin/rudhrakshaDistribution"
-          : BASE_URL + "auth-service/auth/rudhrakshaDistribution",
+          : BASE_URL + "marketing-service/campgin/rudhrakshaDistribution",
       data: {
         userId: userData.userId,
         deliveryType: value,

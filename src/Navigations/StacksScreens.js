@@ -39,6 +39,7 @@ import LinearGradient from "react-native-linear-gradient";
 import { COLORS } from "../../Redux/constants/theme";
 import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory"
 import Main from "../Screens/View/WalletSubscriptions/Main";
+import ProfileScreen from "../Screens/View/Profile/ProfileScreen";
 
 
 import Rudraksha from "../Dashboard/Rudraksha";
@@ -258,6 +259,12 @@ export default function StacksScreens() {
         options={{
           headerStyle: { backgroundColor: "#3d2a71" },
         }}
+      />
+
+      <Stack.Screen
+        name="Profile edit"
+        component={ProfileScreen}
+        options={{ headerShown: true }}
       />
 
       <Stack.Screen
