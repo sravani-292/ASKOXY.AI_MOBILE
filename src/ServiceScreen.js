@@ -1,8 +1,7 @@
-
-
 import React,{useState,useEffect,useCallback} from "react";
 import { View, Text, Image, TextInput, FlatList, TouchableOpacity,ScrollView,
-          BackHandler, Dimensions ,StyleSheet,Alert} from "react-native";
+          BackHandler, Dimensions ,StyleSheet,Alert,Modal,
+          Linking} from "react-native";
 import { Ionicons, FontAwesome,MaterialCommunityIcons,MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useDispatch,useSelector } from "react-redux";
@@ -16,10 +15,11 @@ import UpdateChecker from "../until/Updates";
 import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AccessToken } from "../Redux/action/index";
-import {trackScreen } from "../until/Analytics"
+import FreeSampleScreen from "./FreeSample";
 
 
 const services = [
+  { id: "1", name: "Oxyloans", image: require("../assets/oxyloans.jpg"),screen:"OXYLOANS" },
   { id: "1", name: "Free Rudraksha", image: require("../assets/freerudraksha.png"),screen:"FREE RUDRAKSHA" },
   { id: "2", name: "Free Rice Samples", image: require("../assets/RiceSamples.png"),screen:"FREE CONTAINER" },
   { id: "3", name: "Free AI & Gen AI", image: require("../assets/FreeAI.png") ,screen:"FREE AI & GEN AI"},
@@ -49,6 +49,7 @@ const ServiceScreen = () => {
   const [coin, setCoin] = useState("");
   const [loginModal, setLoginMobal] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false)
   const dispatch = useDispatch();
 
   // const[loader,setLoader]=useState(false)
@@ -143,10 +144,6 @@ const profile =async()=>{
   )
   :console.log("no user data");
 }
-
-useEffect(() => {
-  trackScreen("Serives and Products");
-}, []);
 
 
   function getAllCampaign() {
@@ -277,33 +274,82 @@ const handleCopy = async () => {
       </View>
       {/* <UpdateChecker/> */}
       {userData!=null&&
-      <View style={styles.IDcontainer}>
-     <Text style={styles.label}>
-        Blockchain ID: <Text style={styles.value}>{truncateId(chainId)}</Text>
-        
-      </Text>
-      <TouchableOpacity 
-        style={[styles.copyButton, copied ? styles.copiedButton : null,{marginLeft:-width*0.3}]} 
-        onPress={handleCopy}
-        activeOpacity={0.7}
-      >
-        <MaterialIcons 
-          name={copied ? "check" : "content-copy"} 
-          size={14} 
-          color="#FFFFFF" 
-        />
-        {/* <Text style={styles.buttonText}>
-          {copied ? "Copied" : "Copy"}
-        </Text> */}
-      </TouchableOpacity>
+  <View style={styles.IDcontainer}>
+    <Text style={styles.label}>
+      Blockchain ID: <Text style={styles.value}>{truncateId(chainId)}</Text>
+    </Text>
+    <TouchableOpacity 
+      style={[styles.copyButton, copied ? styles.copiedButton : null,{marginLeft:-width*0.3}]} 
+      onPress={handleCopy}
+      activeOpacity={0.7}
+    >
+      <MaterialIcons 
+        name={copied ? "check" : "content-copy"} 
+        size={14} 
+        color="#FFFFFF" 
+      />
+    </TouchableOpacity>
+    <View style={styles.coinContainer}>
       <Text style={styles.label}>
         Coins: <Text style={styles.value}>{coin}</Text>
       </Text>
-      </View>
+      <TouchableOpacity 
+        style={styles.infoButton}
+        onPress={() => setInfoModalVisible(true)}
+      >
+        <MaterialIcons 
+          name="info-outline" 
+          size={16} 
+          color="#4A90E2" 
+        />
+      </TouchableOpacity>
+    </View>
+  </View>
 }
 
+{/* BMVCoins Info Modal */}
+<Modal
+  animationType="fade"
+  transparent={true}
+  visible={infoModalVisible}
+  onRequestClose={() => setInfoModalVisible(false)}
+>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalContent}>
+      <View style={styles.modalHeader}>
+        <Text style={styles.modalTitle}>How to use BMVCoins?</Text>
+        <TouchableOpacity onPress={() => setInfoModalVisible(false)}>
+          <Text style={styles.closeButton}>✕</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.modalText}>
+        You can collect BMVCoins and use them to get discounts on rice bags, as well as other products and services.
+      </Text>
+      
+      <View style={styles.valueBox}>
+        <Text style={styles.valueTitle}>Current value:</Text>
+        <Text style={styles.valueText}>1,000 BMVCoins = ₹10 discount</Text>
+      </View>
+      
+      <Text style={styles.infoTitle}>Important information:</Text>
+      <View style={styles.bulletList}>
+        <Text style={styles.bulletPoint}>• A minimum of 20,000 BMVCoins is required for redemption.</Text>
+        <Text style={styles.bulletPoint}>• The discount value may change in the future.</Text>
+      </View>
+      
+      <TouchableOpacity 
+        style={styles.gotItButton}
+        onPress={() => setInfoModalVisible(false)}
+      >
+        <Text style={styles.gotItText}>Got it</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
 <ScrollView>
-      <View style={{marginBottom:height*0.1}}>
+      <View style={{marginBottom:height*0.05}}>
       <FlatList
         data={images}
         keyExtractor={(_, index) => index.toString()}
@@ -355,8 +401,12 @@ const handleCopy = async () => {
                      if(item.screen!=="Crypto Currency")
                       { 
                         // console.log("campaignType",item.campaignType || item.screen);
+                        if(item.screen =="OXYLOANS"){
+                            Linking.openURL("https://www.oxyloans.com/");
+                        }else{
+                          navigation.navigate(item.screen || item.campaignType)
+                        }
                         
-                        navigation.navigate(item.screen || item.campaignType)
                       }
                      else{
                       if(userData==null || userData==undefined){
@@ -432,7 +482,11 @@ const handleCopy = async () => {
           </View>
         )}
       />
+      <View style={{marginBottom:10,marginTop:height*0.05}}>
+         <FreeSampleScreen />
+         </View>
 </View>
+      
 </ScrollView>
 </>
 :
@@ -449,6 +503,7 @@ const handleCopy = async () => {
         {userData==null?
          <LoginModal visible={loginModal} onClose={() => setLoginMobal(false)} />
          :null}
+       
 
          </View>
   );
@@ -552,5 +607,88 @@ const styles = StyleSheet.create({
     fontWeight: "normal",
     color: "#007bff",
     // marginRight:10
+  },
+  coinContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  infoButton: {
+    padding: 5,
+    marginLeft: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    width: "90%",
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#8A2BE2",
+  },
+  closeButton: {
+    fontSize: 24,
+    color: "#888",
+  },
+  modalText: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  valueBox: {
+    backgroundColor: "#F8F4FF",
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 20,
+  },
+  valueTitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 8,
+  },
+  valueText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#555",
+  },
+  infoTitle: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 8,
+  },
+  bulletList: {
+    marginBottom: 20,
+  },
+  bulletPoint: {
+    fontSize: 16,
+    color: "#555",
+    marginBottom: 6,
+    lineHeight: 24,
+  },
+  gotItButton: {
+    backgroundColor: "#8A2BE2",
+    borderRadius: 24,
+    padding: 14,
+    alignItems: "center",
+  },
+  gotItText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "500",
   },
 })

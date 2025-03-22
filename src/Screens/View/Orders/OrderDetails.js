@@ -493,13 +493,13 @@ const OrderDetails = () => {
             <Text style={styles.detailValue}>{customerMobile}</Text>
           </Text>
           <Text style={styles.detailText}>
-            Pincode: <Text style={styles.detailValue}>{orderAddress.pincode}</Text>
+            Pincode: <Text style={styles.detailValue}>{orderAddress?.pincode}</Text>
           </Text>
           <Text style={styles.detailText}>Address:</Text>
           <Text style={styles.detailValue}>
             {" "}
-            {orderAddress.flatNo}, {orderAddress.landMark},
-            {orderAddress.address}
+            {orderAddress?.flatNo}, {orderAddress?.landMark},
+            {orderAddress?.address}
           </Text>
         </View>
 
@@ -640,7 +640,7 @@ const OrderDetails = () => {
 
         <TouchableOpacity
           style={styles.cancelButton}
-          onPress={() => navigation.navigate("Write To Us")}
+          onPress={() => navigation.navigate("Write To Us",{orderId:order_id})}
         >
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>

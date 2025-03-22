@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Dimensions,
   RefreshControl,
+  Modal,Animated, Easing
 } from "react-native";
 import axios from "axios";
 import { StyleSheet } from "react-native";
@@ -37,7 +38,8 @@ const CartScreen = () => {
   const [deleteLoader, setDeleteLoader] = useState(false);
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
-
+  const [hasWeight, setHasWeight] = useState("");
+  const[containerAddedPrice,setContainerAddedPrice]=useState(false)
   const [address, setAddress] = useState({
     email: "",
     mobileNumber: "",
@@ -59,6 +61,130 @@ const CartScreen = () => {
     addressId: "",
     hasId: false,
   };
+  const [containerDecision, setContainerDecision] = useState(null);
+
+
+  const [modalVisible, setModalVisible] = useState(true);
+  const [showCode, setShowCode] = useState(false);
+  const scaleValue = new Animated.Value(0); // Initial scale value for zoom-in animation
+
+  const CONTAINER_TYPES = {
+    SMALL: {
+      id: "53d7f68c-f770-4a70-ad67-ee2726a1f8f3",
+      WEIGHT: "10",
+      NAME: "10kg Rice Container",
+      Price:2000
+    },
+    LARGE: {
+      id: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
+      WEIGHT: "26",
+      NAME: "26kg Rice Container",
+      Price:2500
+
+    }
+  };
+
+  // Zoom-in animation
+  useEffect(() => {
+    if (modalVisible) {
+      Animated.timing(scaleValue, {
+        toValue: 1, // Fully expanded
+        duration: 500, // Animation duration
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [modalVisible]);
+
+  useEffect(() => {
+    // Load saved container decision
+    const loadContainerDecision = async () => {
+      try {
+        const savedDecision = await AsyncStorage.getItem('containerDecision');
+        if (savedDecision) {
+          setContainerDecision(savedDecision);
+        }
+      } catch (error) {
+        console.log("Error loading container decision:", error);
+      }
+    };
+
+    const checkCartForContainers = () => {
+      if (cartData && cartData.length > 0) {
+        const containerExists = cartData.some(item => 
+          item.itemId === CONTAINER_TYPES.LARGE.id || 
+          item.itemId === CONTAINER_TYPES.SMALL.id
+        );
+        
+        if (!containerExists && containerDecision === 'yes') {
+          // If the user had a container but it's no longer in the cart, reset decision
+          setContainerDecision(null);
+          setContainerAddedPrice(false);
+          AsyncStorage.removeItem('containerDecision');
+        }
+      }
+    };
+    checkCartForContainers();
+    loadContainerDecision();
+  }, [cartData]);
+
+  const handleYes = async() => {
+    // setShowCode(true);
+    setContainerDecision('yes');
+  
+    try {
+      await AsyncStorage.setItem('containerDecision', 'yes');
+    } catch (error) {
+      console.log("Error saving container decision:", error);
+    }
+    setModalVisible(false);
+
+     const containerId= hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.id : CONTAINER_TYPES.SMALL.id;
+     const data = { customerId: customerId, itemId: containerId };
+
+     try {
+      const response = await axios.post(
+        BASE_URL + "cart-service/cart/add_Items_ToCart",
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+    
+      console.log("item added response", response.data);
+      
+
+  if (response.data.errorMessage == "Item added to cart successfully") {
+        Alert.alert("Success", `Successfully added ${hasWeight} container to your cart`);
+
+        fetchCartData();
+      } else {
+        setLoader(false);
+        Alert.alert("Alert", response.data.errorMessage);
+      }
+    } catch (error) {
+      setLoader(false);
+    }
+  };
+
+
+  const handleNo = async() => {
+    // Save user's decision
+    setContainerDecision('no');
+    setContainerAddedPrice(false);
+    setModalVisible(false);
+    
+    try {
+      await AsyncStorage.setItem('containerDecision', 'no');
+    } catch (error) {
+      console.log("Error saving container decision:", error);
+    }
+  };
+
+
+
+
+
 
   const handleIncrease = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
@@ -121,10 +247,13 @@ const CartScreen = () => {
       )
 
       .then((response) => {
-        console.log("cart screen cart data", response);
+        // console.log("cart screen cart data", response.data);
         
         setLoading(false);
         const cartData = response?.data?.customerCartResponseList;
+        const weightArray = cartData.map(item => item.weight);
+console.log({weightArray})
+
         if (!cartData || !Array.isArray(cartData)) {
           setCartData([]);
           setIsLimitedStock({});
@@ -156,6 +285,7 @@ const CartScreen = () => {
         setError(null);
 
         setCartData(cartData);
+        FreeContainerfunc(cartData)
         setCartItems(cartItemsMap);
         setIsLimitedStock(limitedStockMap);
         setLoading(false);
@@ -163,6 +293,7 @@ const CartScreen = () => {
           ...prevState,
           [cartData.itemId]: false,
         }));
+        return weightArray;
       })
       .catch((error) => {
         setError("Failed to load cart data");
@@ -170,16 +301,76 @@ const CartScreen = () => {
       });
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchCartData();
-      totalCart();
-    }, [])
-  );
+ // ✅ Accept cartData as a parameter
+ function FreeContainerfunc(cartData) {
+  // if (containerDecision) {
+  //   console.log("User already made container decision:", containerDecision);
+  //   return;
+  // }
+  axios
+    .get(BASE_URL + `cart-service/cart/ContainerInterested/${customerId}`)
+    .then((response) => {
+      console.log("Cart API called successfully", response.data);
+
+      // Check if freeContainerStatus is "Interested" - if so, never show the alert
+      if (response.data.freeContainerStatus === "Interested") {
+        console.log("User already interested in container, no alert will be shown.");
+        return;
+      }
+
+      // ✅ Ensure cartData is valid
+      if (!cartData || cartData.length === 0) {
+        console.log("Cart is empty, no alert triggered.");
+        return;
+      }
+
+      // Only proceed to show alerts if freeContainerStatus is null
+      if (response.data.freeContainerStatus === null) {
+        let has10kg = cartData.some(item => item.weight === 10);
+        let has26kg = cartData.some(item => item.weight === 26);
+
+        // ✅ If the cart has more than 0 items, show alerts based on weight
+        if (cartData.length > 0) {
+          if (has10kg && has26kg) {
+            // Alert.alert("You have won a 26kg bag!");
+            setHasWeight("26kgs");
+            setContainerAddedPrice(true);
+            setModalVisible(true);
+          } else if (has26kg) {
+            // Alert.alert("You have a 26kg bag");
+            setHasWeight("26kgs");
+            setContainerAddedPrice(true);
+            setModalVisible(true);
+          } else if (has10kg) {
+            setHasWeight("10kgs");
+            setContainerAddedPrice(true);
+            setModalVisible(true);
+          }
+          // else {
+          //   Alert.alert("No eligible bag found");
+          // }
+        }
+      } else {
+        console.log("User container status is not null or 'Interested', no alert triggered.");
+      }
+    })
+    .catch((error) => {
+      console.log("Error fetching cart data:", error);
+    });
+}
+// ✅ Call fetchCartData when screen is focused
+useFocusEffect(
+  useCallback(() => {
+    fetchCartData();
+    totalCart();
+  }, [])
+);
+
 
   const onRefresh = () => {
     fetchCartData();
     totalCart();
+    FreeContainerfunc()
   };
 
   const getProfile = async () => {
@@ -290,6 +481,7 @@ const CartScreen = () => {
   };
 
   const removeCartItem = async (item) => {
+    console.log("item to remove", item);
     try {
       const response = await axios.delete(
         BASE_URL + "cart-service/cart/remove",
@@ -304,8 +496,34 @@ const CartScreen = () => {
         }
       );
 
+      console.log("Item",item.itemId)
+
+      // if(item.itemId= (containerAddedPrice?hasWeight=="26kgs"?CONTAINER_TYPES.LARGE.id:CONTAINER_TYPES.SMALL.id:0)){
+      //   console.log(containerAddedPrice?hasWeight=="26kgs"?CONTAINER_TYPES.LARGE.id:CONTAINER_TYPES.SMALL.id:0)
+      //   setContainerAddedPrice(false)
+      //   setModalVisible(false)
+      // }
+
+      const containerLargeId = CONTAINER_TYPES.LARGE.id;
+    const containerSmallId = CONTAINER_TYPES.SMALL.id;
+    
+    if(item.itemId === containerLargeId || item.itemId === containerSmallId) {
+      // Reset container decision when container is removed
+      setContainerDecision(null);
+      setContainerAddedPrice(false);
+      
+      try {
+        await AsyncStorage.removeItem('containerDecision');
+        console.log("Container decision reset");
+      } catch (error) {
+        console.log("Error resetting container decision:", error);
+      }
+    }
+    
       fetchCartData();
       totalCart();
+
+      
     } catch (error) {
       console.error("Error removing cart item:", error);
     }
@@ -405,6 +623,7 @@ const CartScreen = () => {
       ),
       locationdata,
       addressdata,
+    
     });
   };
 
@@ -415,6 +634,7 @@ const CartScreen = () => {
         <RefreshControl refreshing={loading} onRefresh={onRefresh} />
       }
     >
+    {/* <Text>sdhgv</Text> */}
       {loading ? (
         <ActivityIndicator size="large" color="#9333ea" />
       ) : error ? (
@@ -594,9 +814,38 @@ const CartScreen = () => {
       )}
       {cartData && cartData.length > 0 && (
         <>
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalText}>Grand Total: ₹{grandTotal}</Text>
-          </View>
+         
+
+{/* <View style={styles.totalContainer}>
+  {containerAddedPrice && containerDecision === 'yes' && (
+    <>
+      <Text style={styles.totalText}>Sub Total: ₹{grandTotal + (containerAddedPrice && containerDecision === 'yes' ? (hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price) : 0)}</Text>
+    <Text style={styles.totalText}>Container Price: - ₹{(hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price)}</Text>
+  </>
+  )}
+  <Text style={styles.totalText}>Grand Total: ₹{grandTotal}</Text>
+</View> */}
+
+<View style={styles.totalContainer}>
+  {containerAddedPrice && containerDecision === 'yes' && (
+    <>
+      <View style={styles.row}>
+        <Text style={styles.label}>Sub Total:</Text>
+        <Text style={styles.value}>₹{grandTotal + (hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price)}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Container Price:</Text>
+        <Text style={styles.discountValue}>-₹{(hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price)}</Text>
+      </View>
+      <View style={styles.divider} />
+    </>
+  )}
+  <View style={styles.grandTotalRow}>
+    <Text style={styles.grandTotalLabel}>Grand Total:</Text>
+    <Text style={styles.grandTotalValue}>₹{grandTotal}</Text>
+  </View>
+</View>
+
           <View style={styles.actionButtonsContainer}>
             <TouchableOpacity
               style={styles.addButton}
@@ -614,6 +863,70 @@ const CartScreen = () => {
           </View>
         </>
       )}
+
+{/* Modal to display the free container */}
+<Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          {/* Animated Alert Box */}
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ scale: scaleValue }], // Apply zoom-in animation
+              },
+            ]}
+          >
+            <Text style={styles.congratsText}>🎉 Congratulations! 🎉</Text>
+            <Text style={styles.messageText}>You’ve Won a {hasWeight==="26kgs"?"26kgs":"10kgs"} Container for FREE!</Text>
+
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>How to Earn Ownership:</Text>
+            </View>
+            
+            <View style={styles.planContainer}>
+              <Text style={styles.planTitle}>Plan A:</Text>
+              <Text style={styles.planDescription}>
+                Buy 9 bags during the next 3 years, and the container is yours forever.
+              </Text>
+            </View>
+            
+            <View style={styles.orContainer}>
+              <View style={styles.divider} />
+              <Text style={styles.orText}>OR</Text>
+              <View style={styles.divider} />
+            </View>
+            
+            <View style={styles.planContainer}>
+              <Text style={styles.planTitle}>Plan B:</Text>
+              <Text style={styles.planDescription}>
+                Refer 9 people, and when they buy their first bag, the container is yours forever.
+              </Text>
+            </View>
+            
+            <Text style={styles.questionText}>Do you own it?</Text>
+
+            {/* Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.buttonYes} onPress={handleYes}>
+                <Text style={styles.buttonText}>Yes, I’m Interested!</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.buttonNo} onPress={handleNo}>
+                <Text style={styles.buttonText}>No, Thanks</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Show Code */}
+            {/* {showCode && (
+              <Text style={styles.codeText}>Your Code: FREECON26</Text>
+            )} */}
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -731,13 +1044,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  totalContainer: {
-    fontWeight: "bold",
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: "#D1D5DB",
-    marginLeft: 0,
-  },
+ 
   itemTotal: {
     fontSize: 16,
     fontWeight: "bold",
@@ -911,6 +1218,153 @@ const styles = StyleSheet.create({
   dimItem: {
     opacity: 0.5, // Fades the item while loading
   },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  congratsText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  messageText: {
+    fontSize: 16,
+    marginVertical: 10,
+    textAlign: 'center',
+  },
+  questionText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginVertical: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  buttonYes: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 5,
+    marginRight: 10,
+  },
+  buttonNo: {
+    backgroundColor: '#FF5733',
+    padding: 10,
+    borderRadius: 5,
+  }, 
+  buttonText: {
+    color: 'white',
+  },
+  codeText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4CAF50',
+    marginTop: 20,
+  },
+  titleContainer: {
+    // marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#212529',
+  },
+  planContainer: {
+    // marginBottom: 16,
+  },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#343a40',
+    marginBottom: 4,
+  },
+  planDescription: {
+    fontSize: 16,
+    color: '#495057',
+    lineHeight: 22,
+  },
+  orContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ced4da',
+  },
+  orText: {
+    paddingHorizontal: 16,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#6c757d',
+  },
+  totalContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  label: {
+    fontSize: 15,
+    color: '#495057',
+  },
+  value: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#212529',
+    textAlign: 'right',
+  },
+  discountValue: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#2e7d32',
+    textAlign: 'right',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#dee2e6',
+    marginVertical: 8,
+  },
+  grandTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  grandTotalLabel: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    color: '#212529',
+  },
+  grandTotalValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#212529',
+    textAlign: 'right',
+  }
 });
 
 export default CartScreen;

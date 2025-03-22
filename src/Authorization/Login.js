@@ -524,6 +524,7 @@ const Login = () => {
                     defaultCode="IN"
                     layout="first"
                     onChangeText={handlePhoneNumberChange}
+                    onSubmitEditing={handleSendOtp}
                   />
                 </View>
               ) : (
@@ -545,6 +546,7 @@ const Login = () => {
                     }}
                     // editable={!otpSent}
                     maxLength={10}
+                    onSubmitEditing={handleSendOtp}
                   />
                 </>
               )}
@@ -612,6 +614,7 @@ const Login = () => {
                       setOtpMessage(false);
                   }}
                   maxLength={authMethod === "whatsapp" ? 4 : 6}
+                  onSubmitEditing={handleVerifyOtp}
                 />
               </View>
             )}

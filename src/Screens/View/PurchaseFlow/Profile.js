@@ -81,6 +81,38 @@ const Profile = ({ navigation }) => {
       getProfile();
     }, [currentScreen])
   );
+
+  const profileWhatsappNumber = (value) => {
+    setFormData({
+      ...formData,
+      whatsappNumber_error: false,
+      ValidwhatsappNumber_error: false,
+    });
+    try {
+      // setWhatsappNumber(value);
+      
+      setFormData({ ...formData, whatsappNumber: value });
+
+
+      console.log({ value });
+      // const callingCode = phoneInput.getCallingCode(value);
+      console.log("satdfegfrhjjhnhj",formData.whatsappNumber);
+      
+      // console.log(callingCode);
+      // setcountryCode(callingCode);
+      const isValid = /^[0-9]*$/.test(value);
+      if (isValid) {
+        setErrorMessage("");
+        setFormData({ ...formData, whatsappNumber: value });
+      } else {
+        setFormData({ ...formData, ValidwhatsappNumber_error: true });
+        return;
+      }
+    } catch (error) {
+      // Handle any parsing errors
+    }
+  };
+  
   const getProfile = async () => {
     console.log("profile get call response");
     setProfileLoader(true);
@@ -209,59 +241,6 @@ const Profile = ({ navigation }) => {
     }
   };
 
-  const profileWhatsappNumber = (value) => {
-    setFormData({
-      ...formData,
-      whatsappNumber_error: false,
-      ValidwhatsappNumber_error: false,
-    });
-    try {
-      // setWhatsappNumber(value);
-      
-      setFormData({ ...formData, whatsappNumber: value });
-
-
-      console.log({ value });
-      // const callingCode = phoneInput.getCallingCode(value);
-      console.log("satdfegfrhjjhnhj",formData.whatsappNumber);
-      
-      // console.log(callingCode);
-      // setcountryCode(callingCode);
-      const isValid = /^[0-9]*$/.test(value);
-      if (isValid) {
-        setErrorMessage("");
-        setFormData({ ...formData, whatsappNumber: value });
-      } else {
-        setFormData({ ...formData, ValidwhatsappNumber_error: true });
-        return;
-      }
-    } catch (error) {
-      // Handle any parsing errors
-    }
-  };
-
-  const handleReferNumber = (value) => {
-    console.log("handleReferNumber");
-    
-    setFrndNumber_error(false);
-    setError1(false)
-    try {
-      console.log({ value });
-      console.log("varalakshmi");
-      console.log("getcallingcode", phoneInput.current.getCallingCode(value));
-      if (phoneInput.current) {
-        console.log("getCallingCode", phoneInput.current.getCallingCode(value));
-      }
-      const callingCode = phoneInput.current.getCallingCode(value);
-      console.log({callingCode});
-      setCode(callingCode);
-      console.log("value", {value});
-      
-      setFrndNumber(value);
-      console.log("referee number", value);
-    } catch (error) {}
-  };
-
   function handleSendOtp() {
     if (formData.whatsappNumber === "") {
       setFormData({ ...formData, whatsappNumber_error: true });
@@ -369,6 +348,29 @@ const Profile = ({ navigation }) => {
         setLoading(false);
       });
   }
+
+  const handleReferNumber = (value) => {
+    console.log("handleReferNumber");
+    
+    setFrndNumber_error(false);
+    setError1(false)
+    try {
+      console.log({ value });
+      console.log("varalakshmi");
+      console.log("getcallingcode", phoneInput.current.getCallingCode(value));
+      if (phoneInput.current) {
+        console.log("getCallingCode", phoneInput.current.getCallingCode(value));
+      }
+      const callingCode = phoneInput.current.getCallingCode(value);
+      console.log({callingCode});
+      setCode(callingCode);
+      console.log("value", {value});
+      
+      setFrndNumber(value);
+      console.log("referee number", value);
+    } catch (error) {}
+  };
+
   const SubmitReferNumber = () => {
      console.log({ frndNumber });
 

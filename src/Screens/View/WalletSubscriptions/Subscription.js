@@ -12,19 +12,16 @@ import {
 } from "react-native";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import BASE_URL,{userStage} from "../../../../Config"
+import BASE_URL, { userStage } from "../../../../Config";
 import { useNavigation } from "@react-navigation/native";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
-import { ScrollView } from "react-native-gesture-handler";
-import { COLORS } from "../../../../Redux/constants/theme";
+
 const { width, height } = Dimensions.get("window");
 
-const Subscription = () => { 
+const Subscription = () => {
   const userData = useSelector((state) => state.counter);
-  // console.log({userData})
   const customerId = userData.userId;
-
   const token = userData.accessToken;
   const [loading, setLoading] = useState(false);
   const [subscriptionHistoryData, setSubscriptionHistoryData] = useState([]);
@@ -37,18 +34,12 @@ const Subscription = () => {
   const [status, setStatus] = useState(true);
   const [noteResponse, setNoteResponse] = useState();
   const navigation = useNavigation();
-// var status
+
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
     customer_mobile: "",
   });
-
-  useEffect(() => {
-    getSubscription()
-    fetchSubscriptionData();
-    getProfile();
-  }, []);
 
   useEffect(() => {
     const fetchAllDataInOrder = async () => {
@@ -72,13 +63,10 @@ const Subscription = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        url:BASE_URL+`user-service/customerProfileDetails?customerId=${userData.userId}`,
+        url: BASE_URL + `user-service/customerProfileDetails?customerId=${userData.userId}`,
       });
-      console.log(response.data);
 
       if (response.status === 200) {
-        console.log(response.data);
-        // setUser(response.data);
         setProfileForm({
           customer_name: response.data.name,
           customer_email: response.data.email,
@@ -91,10 +79,9 @@ const Subscription = () => {
   };
 
   const getSubscription = async () => {
-    setLoading(true)
+    setLoading(true);
     const data = {
-      url:
-        BASE_URL+"order-service/getSubscriptionsDetailsForaCustomer",
+      url: BASE_URL + "order-service/getSubscriptionsDetailsForaCustomer",
       method: "post",
       headers: {
         "Content-Type": "application/json",
@@ -107,13 +94,11 @@ const Subscription = () => {
 
     try {
       const response = await axios(data);
-      setLoading(false)
-      console.log("get subscription", response);
+      setLoading(false);
       setStatus(response.data.status);
       setNoteResponse(response.data.message);
-      console.log("status", status);
     } catch (error) {
-      // console.error("Error fetching subscription details:", error);
+      setLoading(false);
     }
   };
 
@@ -121,7 +106,7 @@ const Subscription = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-       BASE_URL+"order-service/getAllPlans",
+        BASE_URL + "order-service/getAllPlans",
         {
           headers: {
             "Content-Type": "application/json",
@@ -131,8 +116,6 @@ const Subscription = () => {
       );
 
       if (response.data) {
-        console.log("subscription", response);
-        // Alert.alert(response.data.message)
         setLoading(false);
         setSubscriptionHistoryData(response.data);
       }
@@ -144,8 +127,6 @@ const Subscription = () => {
   };
 
   const handleSubscription = (plan) => {
-    console.log("varam", plan.amount);
-
     setLoader(true);
     Alert.alert(
       "Confirm Subscription",
@@ -163,20 +144,20 @@ const Subscription = () => {
       ]
     );
   };
+  
   let postData;
 
   function SubscriptionConfirmation(details) {
     setSubscription(true);
-    console.log({ details });
-    console.log("amount", details.getAmount);
 
     postData = {
       customerId: userData.userId,
       planId: details.planId,
     };
+    
     axios
       .post(
-        BASE_URL+"order-service/userSubscriptionAmount",
+        BASE_URL + "order-service/userSubscriptionAmount",
         postData,
         {
           headers: {
@@ -186,9 +167,7 @@ const Subscription = () => {
       )
       .then(function (response) {
         setLoader(false);
-        console.log("userSubscriptionAmount",response.data);
         if (response.data.paymentId == null && response.data.status == false) {
-          //  Alert.alert(response.data.message.replace(/\. /g, '.\n') );
           Alert.alert(
             "Subscription Status",
             response.data.message.replace(/\. /g, ".\n"),
@@ -202,11 +181,9 @@ const Subscription = () => {
           );
         } else {
           setTransactionId(response.data.paymentId);
-          console.log("==========");
           const data = {
             mid: "1152305",
             amount: details.amount,
-            // amount:1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -231,91 +208,76 @@ const Subscription = () => {
             txnNote: "Rice Order in Subscription",
             vpa: "Getepay.merchant129014@icici",
           };
-          console.log({ data });
           getepayPortal(data);
         }
       })
       .catch(function (error) {
         console.log(error.response);
+        setLoader(false);
       });
   }
 
   const getepayPortal = async (data) => {
-    // console.log("getepayPortal", data);
-    const totalAmount = data.amount;
     const JsonData = JSON.stringify(data);
-
     var ciphertext = encryptEas(JsonData);
-
     var newCipher = ciphertext.toUpperCase();
 
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
-    // console.log("ytfddd");
 
     var raw = JSON.stringify({
       mid: data.mid,
       terminalId: data.terminalId,
       req: newCipher,
     });
-    console.log("========");
+    
     var requestOptions = {
       method: "POST",
       headers: myHeaders,
       body: raw,
       redirect: "follow",
     };
+    
     await fetch(
       "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
       requestOptions
     )
       .then((response) => response.text())
       .then((result) => {
-        //  console.log("===getepayPortal result======")
-        //  console.log("result",result);
         var resultobj = JSON.parse(result);
-        // console.log(resultobj);
         var responseurl = resultobj.response;
         var data = decryptEas(responseurl);
-        // console.log("===getepayPortal data======");
-        // console.log(data);
         data = JSON.parse(data);
-        // console.log("Payment process",data);
-        // localStorage.setItem("paymentId",data.paymentId)
-        console.log(data.paymentId);
-        // console.log(data.qrIntent)
+        
         Requery(data.paymentId);
-        // window.location.href = data.qrIntent;
         setPaymentId(data.paymentId);
 
-        // paymentID = data.paymentId
         Alert.alert(
           "Payment Confirmation",
           "Are you sure you want to proceed with the payment of to subscribe to this plan?",
-
           [
             {
               text: "No",
-              onPress: () => {},
+              onPress: () => {
+                setLoader(false);
+              },
             },
             {
-              text: "yes",
+              text: "Yes",
               onPress: () => {
                 Linking.openURL(data.qrIntent);
                 setLoader(false);
               },
             },
-            // {
-            //   text: "No",
-            //   onPress: () => {},
-            // },
           ]
         );
       })
-      .catch((error) => console.log("getepayPortal", error.response));
-    setLoader(false);
+      .catch((error) => {
+        console.log("getepayPortal", error.response);
+        setLoader(false);
+      });
   };
-  // Requery();
+
   useEffect(() => {
     if (
       paymentStatus == "PENDING" ||
@@ -327,24 +289,16 @@ const Subscription = () => {
         Requery();
       }, 2000);
       return () => clearInterval(data);
-    } else {
-      // setLoading(false)
     }
   }, [paymentStatus, paymentId]);
 
   function Requery() {
-    // console.log("requery", paymentId, paymentStatus);
-
-    // setLoading(false);
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
       paymentStatus === null ||
       paymentStatus === undefined 
-      // paymentStatus==="FAILED"
     ) {
-      // console.log("Before.....",paymentId)
-
       const Config = {
         "Getepay Mid": 1152305,
         "Getepay Terminal Id": "getepay.merchant128638@icici",
@@ -360,7 +314,6 @@ const Subscription = () => {
         terminalId: Config["Getepay Terminal Id"],
         vpa: "",
       };
-      // console.log(JsonData);
 
       var ciphertext = encryptEas(
         JSON.stringify(JsonData),
@@ -396,51 +349,39 @@ const Subscription = () => {
       )
         .then((response) => response.text())
         .then((result) => {
-          // console.log("PaymentResult : ", result);
           var resultobj = JSON.parse(result);
-          // console.log(resultobj);
-          // setStatus(resultobj);
           if (resultobj.response != null) {
-            // console.log("Requery ID result", paymentId);
             var responseurl = resultobj.response;
-            // console.log({ responseurl });
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
-            // console.log("Payment Result", data);
             setPaymentStatus(data.paymentStatus);
-            console.log("paymentStatus", data.paymentStatus);
+            
             if (
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILURE"
             ) {
-              // clearInterval(intervalId); 294182409
               axios({
                 method: "POST",
-                url: BASE_URL+"order-service/userSubscriptionAmount",
+                url: BASE_URL + "order-service/userSubscriptionAmount",
                 data: {
                   ...postData,
                   paymentId: transactionId,
                   paymentStatus: data.paymentStatus,
                 },
                 headers: {
-                  // "Content-Type": "application/json",
                   Authorization: `Bearer ${token}`,
                 },
               })
-                
                 .then(function (response) {
-                  console.log("Order Placed with Payment API:", response);
                   setLoading(false);
-                  // Alert.alert("Successfullt g!");
                   Alert.alert(
                     data.paymentStatus,
                     "Successfully you have got subscription",
                     [
                       {
-                        text: "yes",
+                        text: "Yes",
                         onPress: () => {
                           navigation.navigate("Wallet");
-                          // Requery(data.paymentId);
                         },
                       },
                     ]
@@ -449,51 +390,82 @@ const Subscription = () => {
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
                 });
-            } else {
             }
           }
         })
         .catch((error) => console.log("Payment Status", error.response));
     }
-    
   }
 
-  const renderPlan = ({ item }) => (
-    <>
-      <ScrollView>
-        <View style={styles.planContainer}>
-          <Text style={styles.title}>₹{item.amount}</Text>
-          <Text style={styles.text}>Get Amount: ₹{item.getAmount}</Text>
-          <Text style={styles.text}>
-            Limit: ₹{item.limitAmount}{" "}
-            <Text style={styles.note}>(per month)</Text>
-          </Text>
-          {loader === false ? (
-            <TouchableOpacity
-              style={[
-                styles.button,
-                {
-                  opacity: status ? 0.5 : 1,
-                  backgroundColor:  COLORS.services ,
-                },
-              ]}
-              // style={styles.button}
-              onPress={() => handleSubscription(item)}
-              disabled={status}
-              // {status==true?disabled:""}
-              
-            >
-              <Text style={styles.buttonText}>Subscribe</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.button}>
-              <ActivityIndicator size="small" color="white" />
-            </View>
-          )}
+  // New design implementation based on the image
+  const renderPlan = ({ item, index }) => {
+    // Calculate wallet balance based on the amount (using the pattern from the image)
+    const walletBalance = item.amount * 1.09;
+    const originalPrice = item.amount * 1.09;
+    const savings = originalPrice - item.amount;
+    const monthlyLimit = item.limitAmount;
+
+    // Select different color for each card (using purple gradient as shown in image)
+    const cardColors = ["#9333ea", "#9333ea", "#9333ea"];
+    
+    return (
+      <>
+      {item.status && (
+      <View style={styles.newPlanContainer}>
+        {/* Wallet Balance Section */}
+        <View style={[styles.walletBalanceSection, { backgroundColor: cardColors[index % 3] }]}>
+          <Text style={styles.walletBalanceLabel}>Wallet Balance</Text>
+          <Text style={styles.walletBalanceAmount}>₹{walletBalance.toLocaleString()}</Text>
         </View>
-      </ScrollView>
-    </>
-  );
+        
+        {/* Subscription Price Section */}
+        <View style={styles.pricingSection}>
+          <Text style={styles.subscriptionPriceLabel}>Subscription Price</Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.actualPrice}>₹{item.amount.toLocaleString()}</Text>
+            {/* <Text style={styles.originalPrice}>₹{originalPrice.toLocaleString()}</Text> */}
+            <View style={styles.savingsTag}>
+              <Text style={styles.savingsText}>Save ₹{savings.toLocaleString()}</Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Features Section */}
+        <Text style={styles.featuresTitle}>Features</Text>
+        
+        {/* Monthly Usage Limit */}
+        <View style={styles.featureBox}>
+          <View style={styles.featureContent}>
+            <View style={styles.featureIconContainer}>
+              <Text style={styles.featureIcon}>⚡</Text>
+            </View>
+            <View style={styles.featureTextContainer}>
+              <Text style={styles.featureLabel}>Monthly Usage Limit</Text>
+              <Text style={styles.featureValue}>₹{monthlyLimit.toLocaleString()}</Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Button */}
+        <TouchableOpacity
+          style={[
+            styles.chooseButton,
+            { opacity: status ? 0.5 : 1 }
+          ]}
+          onPress={() => handleSubscription(item)}
+          disabled={status || loader}
+        >
+          {loader ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text style={styles.chooseButtonText}>{status ? "Subscribed" : "Choose Plan"}</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+       )}
+      </>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -502,13 +474,13 @@ const Subscription = () => {
       ) : (
         <>
           <Text style={styles.header}>Subscription Plans</Text>
-          {noteResponse &&(
-          <View style={styles.noteContainer}>
-          <Text style={styles.noteText}>
-          <Text style={styles.noteLabel}>Note: </Text>
-          {noteResponse}
-          </Text>
-          </View> 
+          {noteResponse && (
+            <View style={styles.noteContainer}>
+              <Text style={styles.noteText}>
+                <Text style={styles.noteLabel}>Note: </Text>
+                {noteResponse}
+              </Text>
+            </View>
           )}
           {subscriptionHistoryData.length > 0 ? (
             <FlatList
@@ -517,7 +489,6 @@ const Subscription = () => {
               keyExtractor={(item) => item.planId.toString()}
               numColumns={1}
               contentContainerStyle={styles.listContent}
-              // columnWrapperStyle={styles.row}
               showsVerticalScrollIndicator={false}
               showsHorizontalScrollIndicator={false}
             />
@@ -546,49 +517,29 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: 16,
   },
-  row: {
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  planContainer: {
-    backgroundColor: "#f9f9f9", 
-    borderRadius: 10,
-    padding: 15,
-    borderColor: "#ddd",
+  noteContainer: {
+    backgroundColor: "#f7f7f7",
+    padding: 20,
+    borderRadius: 8,
     borderWidth: 1,
+    borderColor: "#ddd",
     shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    marginBottom: 10, 
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 8,
-    color: "#03843b",
-    textAlign: "center",
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: "#555",
-    textAlign: "center",
-  },
-  button: {
-    backgroundColor:COLORS.quantitybutton,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginTop: 10,
-    width: width * 0.5,
+    shadowRadius: 4,
+    width: width * 0.9,
+    marginBottom: 20,
     alignSelf: "center",
   },
-  buttonText: {
-    color: "#fff",
+  noteText: {
     fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
+    color: "#333333",
+    lineHeight: 24,
+    alignSelf: "center",
+    fontWeight: "bold",
+  },
+  noteLabel: {
+    color: "red",
+    fontWeight: "bold",
   },
   emptyText: {
     textAlign: "center",
@@ -596,37 +547,133 @@ const styles = StyleSheet.create({
     color: "#777",
     marginTop: 20,
   },
-  note: {
-    fontSize: 12,
-    color: "#777",
-    marginLeft: 4,
-    fontStyle: "italic",
-  },
-  noteContainer: {
-    backgroundColor: '#f7f7f7', 
-    padding: 20,
-    borderRadius: 8,
+  
+  // New styles for the cards based on the image
+  newPlanContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    width:width*0.9,
-    marginBottom:10,
-    alignSelf:"center"
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+    overflow: "hidden",
   },
-  noteText: {
-    fontSize: 16, 
-    color: '#333333', 
-    // fontFamily: 'Arial', 
-    lineHeight: 24,
-    // textAlign: 'left',
-    alignSelf:"center",
-    fontWeight: 'bold', 
+  walletBalanceSection: {
+    padding: 16,
+    paddingVertical: 20,
+    backgroundColor: "#9333ea", // Purple color from image
   },
-  noteLabel: {
-    color: 'red', 
-    fontWeight: 'bold', 
+  walletBalanceLabel: {
+    color: "#fff",
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  walletBalanceAmount: {
+    color: "#fff",
+    fontSize: 32,
+    fontWeight: "bold",
+  },
+  pricingSection: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  subscriptionPriceLabel: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#666",
+    marginBottom: 8,
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  actualPrice: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000",
+    marginRight: 8,
+  },
+  originalPrice: {
+    fontSize: 16,
+    color: "#999",
+    textDecorationLine: "line-through",
+    marginRight: 8,
+  },
+  savingsTag: {
+    backgroundColor: "#e6f7ed",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  savingsText: {
+    color: "#03843b",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  featuresTitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#666",
+    marginTop: 16,
+    marginLeft: 16,
+    marginBottom: 8,
+  },
+  featureBox: {
+    marginHorizontal: 16,
+    backgroundColor: "#f8f0ff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  featureContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  featureIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#9333ea",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  featureIcon: {
+    fontSize: 18,
+    color: "#fff",
+  },
+  featureTextContainer: {
+    flex: 1,
+  },
+  featureLabel: {
+    fontSize: 16,
+    color: "#9333ea",
+    fontWeight: "500",
+  },
+  featureValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  chooseButton: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#9333ea",
+    borderRadius: 8,
+    padding: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chooseButtonText: {
+    color: "#9333ea",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
 

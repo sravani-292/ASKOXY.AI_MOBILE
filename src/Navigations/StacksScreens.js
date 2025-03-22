@@ -59,6 +59,10 @@ import UniversityGPT from "../Dashboard/ExploreGpts/UniversityGpt";
 
 
 import ServiceScreen from "../ServiceScreen"
+import ReferFriend from "../Screens/View/Referral Links/ReferFriend";
+import BarcodeScanner from "../Screens/View/Profile/BarcodeScanner";
+import AddressBookScreen from "../Screens/View/Profile/AddressScreen";
+import StoreLocatorScreen from "../StoreLocation";
 
 
 
@@ -68,7 +72,7 @@ export default function StacksScreens() {
     
     <Stack.Navigator
       // initialRouteName="Crypto Currency"
-      // initialRouteName="Login"
+      // initialRouteName="Scan"
       initialRouteName ="Service Screen"
       screenOptions={{
         headerShown: true,
@@ -262,7 +266,7 @@ export default function StacksScreens() {
       />
 
       <Stack.Screen
-        name="Profile edit"
+        name="Profile Edit"
         component={ProfileScreen}
         options={{ headerShown: true }}
       />
@@ -275,6 +279,30 @@ export default function StacksScreens() {
         //   headerStyle: { backgroundColor: "white" },
         //   headerTintColor: "blue", // Change this to your preferred color
         // }}
+      />
+
+      <Stack.Screen
+        name="Invite a friend"
+        component={ReferFriend}
+        options={{ headerShown: true }}
+      />
+
+      <Stack.Screen
+        name="Scan"
+        component={BarcodeScanner}
+        options={{ headerShown: true }}
+      />
+
+      <Stack.Screen 
+        name="Saved Address" 
+        component={AddressBookScreen} 
+        options={{ headerShown: true }}
+      />
+
+      <Stack.Screen
+        name="Store Location"
+        component={StoreLocatorScreen}
+        options={{ headerShown: true }}
       />
 
       

@@ -71,6 +71,12 @@ const PaymentDetails = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const items = route.params?.items || [];
 
+
+  const isPast8PM = () => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    return currentHour >= 20; // 8 PM is 20 in 24-hour format
+  };
 // Function to map 'today, tomorrow, day_after_tomorrow' to actual weekday names
 const getDayOfWeek = (offset) => {
   const daysOfWeek = [
@@ -83,11 +89,16 @@ const getDayOfWeek = (offset) => {
   return daysOfWeek[targetDate.getDay()];
 };
 
-  const days = [
-    { label: "TODAY", value: "today" },
-    { label: "TOMORROW", value: "tomorrow" },
-    { label: getDayOfWeek(2), value: "day_after_tomorrow" },
-  ];
+
+
+const startingDayOffset = isPast8PM() ? 1 : 0; // Start from tomorrow if past 8 PM
+
+// Days array with dynamic starting point
+const days = [
+  { label: isPast8PM() ? "TOMORROW" : "TODAY", value: isPast8PM() ? "tomorrow" : "today" },
+  { label: isPast8PM() ? getDayOfWeek(2) : "TOMORROW", value: isPast8PM() ? "day_after_tomorrow" : "tomorrow" },
+  { label: isPast8PM() ? getDayOfWeek(3) : getDayOfWeek(2), value: isPast8PM() ? "day_after_tomorrow_2" : "day_after_tomorrow" },
+];
 
   
 
@@ -255,6 +266,7 @@ const getDayOfWeek = (offset) => {
 
   const handlePaymentModeSelect = (mode) => {
     setSelectedPaymentMode(mode);
+    setLoading(false)
     // console.log({ mode });
   };
 
@@ -673,7 +685,7 @@ const getDayOfWeek = (offset) => {
           [
             {
               text: "No",
-              onPress: () => {},
+              onPress: () => {()=>setLoading(false)},
             },
             {
               text: "yes",

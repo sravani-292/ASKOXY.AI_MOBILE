@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBar,Platform } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBar,Platform,Alert } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import BASE_URL from "../../../../Config";
 import { useSelector } from "react-redux";
@@ -30,7 +31,7 @@ export default function ProfileSettings({ navigation }) {
       type: 'Feather', 
       label: 'Address', 
       showArrow: true,
-      navigation: "",
+      navigation: "Saved Address",
       gradient: ['#FF7676', '#FF4848']
     },
     { 
@@ -39,7 +40,7 @@ export default function ProfileSettings({ navigation }) {
       type: 'Feather', 
       label: 'Invite', 
       showArrow: true,
-      navigation: "",
+      navigation: "Invite a friend", 
       gradient: ['#7B61FF', '#5A3FFF']
     },
     { 
@@ -93,6 +94,32 @@ export default function ProfileSettings({ navigation }) {
   React.useEffect(() => {
     getProfile();
   }, []);
+
+   const handleLogout = () => {
+      Alert.alert(
+        "Logout Confirmation",
+        "Are you sure you want to logout?",
+        [
+          {
+            text: "Cancel",
+            onPress: () => console.log("Logout cancelled"),
+            style: "cancel",
+          },
+          {
+            text: "Yes",
+            onPress: async () => {
+              try {
+                await AsyncStorage.removeItem("userData");
+                navigation.navigate("Login");
+              } catch (error) {
+                console.error("Error clearing user data:", error);
+              }
+            },
+          },
+        ],
+        { cancelable: true }
+      );
+    };
 
   const getProfile = async () => {
     console.log("profile get call response");
@@ -167,7 +194,7 @@ export default function ProfileSettings({ navigation }) {
             <Text style={styles.profileEmail}>{formData.email}</Text>
           </View>
           
-          <TouchableOpacity style={styles.editButton} onPress={() => {navigation.navigate('Profile edit');}}>
+          <TouchableOpacity style={styles.editButton} onPress={() => {navigation.navigate('Profile Edit');}}>
             <LinearGradient
               colors={['#6366F1', '#4F46E5']}
               style={styles.editButtonGradient}
@@ -201,7 +228,7 @@ export default function ProfileSettings({ navigation }) {
         </View>
         
         {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <LinearGradient
             colors={['#F56565', '#E53E3E']}
             style={styles.logoutButtonGradient}
