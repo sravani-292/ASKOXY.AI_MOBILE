@@ -28,6 +28,7 @@ const AddressBook = ({ route }) => {
   const customerId = userData.userId;
   const [addressList, setAddressList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const[saveLoader,setSaveLoader]=useState(false);  
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedType, setSelectedType] = useState("");
   const [coordinates, setCoordinates] = useState(null);
@@ -149,7 +150,7 @@ const AddressBook = ({ route }) => {
     console.log("value for saving api", value);
       const { status,isWithin, distanceInKm,coord1 } =await getCoordinates(value);
       console.log({status,isWithin,distanceInKm,coord1});
-
+setSaveLoader(true)
     if (isWithin == true && coord1) {
       console.log("Address saved as it is within the radius.");
       try {
@@ -173,6 +174,7 @@ const AddressBook = ({ route }) => {
         console.log("data", data);
 
         const response = await axios(data);
+        setSaveLoader(false)
         console.log("Added address:", response.data);
         Alert.alert("Address saved successfully");
         setModalVisible(false);
@@ -192,6 +194,7 @@ const AddressBook = ({ route }) => {
       }
     } else {
       console.log("Address not saved as it is outside the radius.");
+      setSaveLoader(false)
       // alert("Address not saved. It is outside the allowed distance.");
       setNewAddress({
         address: "",
@@ -332,12 +335,15 @@ const AddressBook = ({ route }) => {
               )}
 
               {addressList.length != 0 ? (
+                <>                
                 <TouchableOpacity
                   style={styles.button1}
                   onPress={() => handleSendAddress(selectedAddress)}
                 >
                   <Text style={styles.addButtonText}>SUBMIT ADDRESS</Text>
                 </TouchableOpacity>
+               
+                </>
               ) : null}
             </ScrollView>
             {/* </ScrollView> */}
@@ -460,6 +466,9 @@ const AddressBook = ({ route }) => {
             </View>
             {errors.type && <Text style={styles.errorText}>{errors.type}</Text>}
 
+
+            {saveLoader==false?
+
             <TouchableOpacity
               style={styles.submitButton}
               // onPress={() => handleSendAddress()}
@@ -467,6 +476,11 @@ const AddressBook = ({ route }) => {
             >
               <Text style={styles.submitButtonText}>Submit</Text>
             </TouchableOpacity>
+             :
+             <View  style={styles.submitButton}>
+               <ActivityIndicator size={"small"} color="white"/>
+             </View>
+             }
           </View>
         </View>
       </Modal>

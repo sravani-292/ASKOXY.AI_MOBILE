@@ -1,143 +1,158 @@
-import { Dimensions, ScrollView, StyleSheet, Text, View ,ActivityIndicator,TouchableOpacity,Alert} from "react-native";
-import React, { useState,useEffect } from "react";
-const { height, width } = Dimensions.get('window')
+import {
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import React, { useState, useEffect } from "react";
+const { height, width } = Dimensions.get("window");
 import axios from "axios";
 import BASE_URL, { userStage } from "../../Config";
 import { useSelector } from "react-redux";
 
-const AbroadCategories = ({navigation}) => {
-    const userData = useSelector((state) => state.counter);
-    const[AlreadyInterested,setAlreadyInterested]=useState(false)
-    const[profileData,setProfileData]=useState()
-// const[number,setNumber]=useState()
-    console.log("userData", userData);
-    let number;
+const AbroadCategories = ({ navigation }) => {
+  const userData = useSelector((state) => state.counter);
+  const [AlreadyInterested, setAlreadyInterested] = useState(false);
+  const [profileData, setProfileData] = useState();
+  console.log("userData", userData);
+  let number;
 
-  const [loading, setLoading] = useState(false)
-  
+  const [loading, setLoading] = useState(false);
 
-
-  useEffect(()=>{
- if(userData==null){
-      Alert.alert("Alert","Please login to continue",[
-        {text:"OK",onPress:()=>navigation.navigate("Login")},
-        {text:"Cancel"}
-      ])
+  useEffect(() => {
+    if (userData == null) {
+      Alert.alert("Alert", "Please login to continue", [
+        { text: "OK", onPress: () => navigation.navigate("Login") },
+        { text: "Cancel" },
+      ]);
       return;
-    }else{
-      getCall()
-      getProfile()
-    }  },[])
+    } else {
+      getCall();
+      getProfile();
+    }
+  }, []);
 
-    const getProfile = async () => {
-     axios({
-      method:"get",
-      url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
-     })
-     .then((response)=>{
-      console.log(response.data)
-      setProfileData(response.data)
-     })
-     .catch((error)=>{
-      console.log(error.response.data)
-     })
+  const getProfile = async () => {
+    axios({
+      method: "get",
+      url:
+        BASE_URL +
+        `user-service/customerProfileDetails?customerId=${userData.userId}`,
+    })
+      .then((response) => {
+        console.log("profile data", response.data);
+        setProfileData(response.data);
+      })
+      .catch((error) => {
+        console.log(error.response.data);
+      });
+  };
+
+  function getCall() {
+    let data = {
+      userId: userData.userId,
+    };
+    axios
+      .post(
+        BASE_URL + `marketing-service/campgin/allOfferesDetailsForAUser`,
+        data
+      )
+      .then((response) => {
+        // console.log(response.data)
+        const hasFreeAI = response.data.some(
+          (item) => item.askOxyOfers === "STUDYABROAD"
+        );
+
+        if (hasFreeAI) {
+          // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+          setAlreadyInterested(true);
+        } else {
+          // Alert.alert("No","askOxyOfers does not contain FREEAI");
+          setAlreadyInterested(false);
+        }
+      })
+      .catch((error) => {
+        console.log(error.response);
+      });
+  }
+
+  function interestedfunc() {
+    console.log("I am interested in abroad");
+  
+    if (userData == null) {
+      Alert.alert("Alert", "Please login to continue", [
+        { text: "OK", onPress: () => navigation.navigate("Login") },
+        { text: "Cancel" },
+      ]);
+      return;
+    } 
+  
+    console.log("varalakshmi");
+  
+    let number = null; 
+  
+    if (profileData?.whatsappNumber && profileData?.mobileNumber) {
+      console.log("sravani");
+      number = profileData.whatsappNumber;
+      console.log("whatsapp number", number);
+    } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
+      number = profileData.whatsappNumber;
+    } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
+      number = profileData.mobileNumber;
+    }
+  
+    if (!number) {
+    console.log ("Error", "No valid phone number found.");
+      return;
+    }
+  
+    let data = {
+      askOxyOfers: "STUDYABROAD",
+      userId: userData.userId,
+      mobileNumber: number,
+      projectType: "ASKOXY",
     };
   
-    function getCall(){
-      let data={
-        userId: userData.userId
-      }
-      axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
-      .then((response)=>{
-        // console.log(response.data)
-        const hasFreeAI = response.data.some(item => item.askOxyOfers === "STUDYABROAD");
+    console.log("Sending Data:", data);
   
-    if (hasFreeAI) {
-      // Alert.alert("Yes", "askOxyOfers contains FREEAI");
-      setAlreadyInterested(true)
-    } else {
-      // Alert.alert("No","askOxyOfers does not contain FREEAI");
-      setAlreadyInterested(false)
-    }
+    setLoading(true);
+  
+    axios
+      .post(BASE_URL + "marketing-service/campgin/askOxyOfferes", data)
+      .then((response) => {
+        console.log("STUDYABROAD Response:", response.data);
+        getCall();
+        setLoading(false);
+        Alert.alert("Success", "Your interest has been submitted successfully!");
       })
-      .catch((error)=>{
-        console.log(error.response)
-      })
-    }
-
-    function interestedfunc() {
-      // setModalVisible(true)
-      if (userData == null) {
-        Alert.alert("Alert", "Please login to continue", [
-          { text: "OK", onPress: () => navigation.navigate("Login") },
-          { text: "Cancel" },
-        ]);
-        return;
-      } else { 
-if((profileData.whatsappNumber!=null || profileData.whatsappNumber!='') && 
-    (profileData.mobileNumber!=null || profileData.mobileNumber!='')) {
-  number=(profileData.whatsappNumber)
-  return false;
-}
-else if(profileData.whatsappNumber!=null || profileData.whatsappNumber!='') {
-  number=(profileData.whatsappNumber)
-  return false;
-}
-else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
-  number=(profileData.mobileNumber)
-  return false;
-}
-        let data = {
-          askOxyOfers: "STUDYABROAD",
-          userId: userData.userId,
-          mobileNumber: number,
-          projectType: "ASKOXY",
-        };
-        console.log(data);
-        setLoading(true);
-        axios({
-          method: "post",
-          url:BASE_URL + "marketing-service/campgin/askOxyOfferes",
-          data: data,
-        })
-          .then((response) => {
-            console.log("STUDYABROAD",response.data);
-            getCall();
-            // setModalVisible(false);
-            setLoading(false);
-            // setMobileNumber("");
-            Alert.alert(
-              "Success",
-              "Your interest has been submitted successfully!"
-            );
-          })
-          .catch((error) => {
-            console.log(error);
-            setLoading(false);
-            if (error.response.status == 400) {
-              Alert.alert(
-                "Failed",
-                "You have already participated. Thank you!"
-              );
-            } else {
-              Alert.alert("Failed", error.response.data);
-            }
-          });
-      }
-    }
+      .catch((error) => {
+        console.error("Error:", error);
+        setLoading(false);
+        if (error.response?.status === 400) {
+          Alert.alert("Failed", "You have already participated. Thank you!");
+        } else {
+          Alert.alert("Failed", error.response?.data || "Something went wrong!");
+        }
+      });
+  }
+  
 
   function exploreGptfun() {
-      if (userData == null) {
-        Alert.alert("Alert", "Please login to continue", [
-          { text: "OK", onPress: () => navigation.navigate("Login") },
-          { text: "Cancel" },
-        ]);
-        return;
-      } else {
-        navigation.navigate("Explore Gpt");
-      }
+    if (userData == null) {
+      Alert.alert("Alert", "Please login to continue", [
+        { text: "OK", onPress: () => navigation.navigate("Login") },
+        { text: "Cancel" },
+      ]);
+      return;
+    } else {
+      navigation.navigate("Explore Gpt");
     }
-  
+  }
+
   return (
     <ScrollView style={styles.container}>
       {/* Top Heading */}
@@ -214,35 +229,37 @@ else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
           <Text style={styles.buttonText}>Explore GPTS</Text>
         </TouchableOpacity>
 
-
-{AlreadyInterested==false?
-<>
-        {loading == false ? (
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
-            onPress={() => interestedfunc()}
-          >
-            <Text style={[styles.buttonText,{color:"white"}]}>I'm Interested</Text>
-          </TouchableOpacity>
+        {AlreadyInterested == false ? (
+          <>
+            {loading == false ? (
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
+                onPress={() => interestedfunc()}
+              >
+                <Text style={[styles.buttonText, { color: "white" }]}>
+                  I'm Interested
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
+              >
+                <Text style={styles.buttonText}>
+                  <ActivityIndicator size="small" color="#fff" />
+                </Text>
+              </View>
+            )}
+          </>
         ) : (
           <View
-            style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
-          >
-            <Text style={styles.buttonText}>
-              <ActivityIndicator size="small" color="#fff" />
-            </Text>
-          </View>
-        )}
-        </>
-:
-<View
             style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
             onPress={() => interestedfunc()}
           >
-            <Text style={[styles.buttonText,{color:"white"}]}>Already Participated</Text>
+            <Text style={[styles.buttonText, { color: "white" }]}>
+              Already Participated
+            </Text>
           </View>
-}
-
+        )}
       </View>
       {/* <View style={styles.featureBox}>
         <Text style={styles.featureText}>

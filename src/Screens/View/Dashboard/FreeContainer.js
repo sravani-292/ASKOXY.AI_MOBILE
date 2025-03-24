@@ -1,43 +1,116 @@
-import React,{useState} from "react";
+import React,{useState,useEffect} from "react";
 import { View, Text, TouchableOpacity, Alert, ScrollView, StyleSheet,ActivityIndicator,Dimensions,Image } from "react-native";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
-
+ 
 const FreeContainer = ({navigation}) => {
   const userData = useSelector((state) => state.counter);
 //   console.log({ userData });
   const [loading, setLoading] = useState(false);
-  function interestedfunc() {
-    if (userData == null) {
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-        { text: "Cancel" },
-      ]);
+  const[AlreadyInterested,setAlreadyInterested]=useState(false)
+  const[profileData,setProfileData]=useState()
+// const[number,setNumber]=useState()
+    console.log("userData", userData);
+    let number;
+
+  useEffect(()=>{
+    if(userData==null){
+      Alert.alert("Alert","Please login to continue",[
+        {text:"OK",onPress:()=>navigation.navigate("Login")},
+        {text:"Cancel"}
+      ])
       return;
+    }else{
+      getCall()
+      getProfile()
+    }
+  },[])
+
+  const getProfile = async () => {
+    axios({
+     method:"get",
+     url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
+    })
+    .then((response)=>{
+     console.log(response.data)
+     setProfileData(response.data)
+    })
+    .catch((error)=>{
+     console.log(error.response.data)
+    })
+   };
+  
+    function getCall(){
+      let data={
+        userId: userData.userId
+      }
+      // console.log({data})
+      axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
+      .then((response)=>{
+        console.log(response.data)
+        const hasFreeAI = response.data.some(item => item.askOxyOfers === "FREESAMPLE");
+  
+    if (hasFreeAI) {
+      // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+      setAlreadyInterested(true)
     } else {
+      // Alert.alert("No","askOxyOfers does not contain FREEAI");
+      setAlreadyInterested(false)
+    }
+      })
+      .catch((error)=>{
+        console.log(error.response)
+      })
+    }
+
+  function interestedfunc() {
+   if (userData == null) {
+         Alert.alert("Alert", "Please login to continue", [
+           { text: "OK", onPress: () => navigation.navigate("Login") },
+           { text: "Cancel" },
+         ]);
+         return;
+       } 
+     
+       console.log("varalakshmi");
+     
+       let number = null; 
+     
+       if (profileData?.whatsappNumber && profileData?.mobileNumber) {
+         console.log("sravani");
+         number = profileData.whatsappNumber;
+         console.log("whatsapp number", number);
+       } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
+         number = profileData.whatsappNumber;
+       } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
+         number = profileData.mobileNumber;
+       }
+     
+       if (!number) {
+       console.log ("Error", "No valid phone number found.");
+         return;
+       }
+
       let data = {
         askOxyOfers: "FREESAMPLE",
-        id: userData.userId,
-        mobileNumber: userData.whatsappNumber,
+        userId: userData.userId,
+        mobileNumber: number,
         projectType: "ASKOXY",
       };
       console.log(data);
       setLoading(true);
       axios({
         method: "post",
-        url:
-          // userStage == "test"
-          //   ?
-             BASE_URL + "marketing-service/campgin/askOxyOfferes",
-            // : BASE_URL + "auth-service/auth/askOxyOfferes",
+        url:BASE_URL + "marketing-service/campgin/askOxyOfferes",
         data: data,
       })
         .then((response) => {
           console.log(response.data);
           setLoading(false);
+          getCall()
           Alert.alert(
             "Success",
             "Your interest has been submitted successfully!"
@@ -57,7 +130,7 @@ const FreeContainer = ({navigation}) => {
             Alert.alert("Failed", error.response.data);
           }
         });
-    }
+    
   }  
 
   return (
@@ -116,7 +189,7 @@ const FreeContainer = ({navigation}) => {
             How to Earn Ownership:
           </Text>
           <Text style={{ fontSize: 16, marginTop: 5 }}>
-            ✅ <Text style={styles.text}>Plan A:</Text> Buy 9 bags in 1 year and
+            ✅ <Text style={styles.text}>Plan A:</Text> Buy 9 bags in 3 year and
             the container is yours forever.
           </Text>
           <Text style={styles.ortext}>OR</Text>
@@ -131,7 +204,7 @@ const FreeContainer = ({navigation}) => {
             Important Info:
           </Text>
           <Text style={{ fontSize: 16, marginTop: 5, color: "#555" }}>
-            ✅ No purchase in 45 days or a 45-day gap between purchases =
+            ✅ No purchase in 90 days or a 90-day gap between purchases =
             Container will be taken back.
           </Text>
           <Text style={{ marginTop: 5 }}>
@@ -141,6 +214,8 @@ const FreeContainer = ({navigation}) => {
          
         </View>
 
+{AlreadyInterested==false?
+<>
         {loading == false ? (
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
@@ -157,6 +232,15 @@ const FreeContainer = ({navigation}) => {
             </Text>
           </View>
         )}
+        </>
+        :
+        <View
+        style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
+        onPress={() => interestedfunc()}
+      >
+        <Text style={styles.buttonText}>Already Participated</Text>
+      </View>
+        }
       </View>
     </ScrollView>
   );
@@ -175,8 +259,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   image: {
-    height: 250,
-    width: width ,
+    height: 400,
+    width: width*0.9 ,
+    alignSelf:"center",
     // padding:10
   },
   header: {

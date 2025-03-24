@@ -64,7 +64,7 @@ const CartScreen = () => {
   const [containerDecision, setContainerDecision] = useState(null);
 
 
-  const [modalVisible, setModalVisible] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const scaleValue = new Animated.Value(0); // Initial scale value for zoom-in animation
 
@@ -169,10 +169,11 @@ const CartScreen = () => {
 
 
   const handleNo = async() => {
+    setModalVisible(false);
     // Save user's decision
     setContainerDecision('no');
     setContainerAddedPrice(false);
-    setModalVisible(false);
+    
     
     try {
       await AsyncStorage.setItem('containerDecision', 'no');
@@ -247,12 +248,11 @@ const CartScreen = () => {
       )
 
       .then((response) => {
-        // console.log("cart screen cart data", response.data);
-        
+        console.log("cart screen cart data", response.data);
         setLoading(false);
         const cartData = response?.data?.customerCartResponseList;
-        const weightArray = cartData.map(item => item.weight);
-console.log({weightArray})
+        const weightArray = cartData?.map(item => item.weight);
+        console.log({weightArray})
 
         if (!cartData || !Array.isArray(cartData)) {
           setCartData([]);
@@ -296,6 +296,8 @@ console.log({weightArray})
         return weightArray;
       })
       .catch((error) => {
+        console.log(error.response);
+        
         setError("Failed to load cart data");
         setLoading(false);
       });
@@ -315,6 +317,7 @@ console.log({weightArray})
       // Check if freeContainerStatus is "Interested" - if so, never show the alert
       if (response.data.freeContainerStatus === "Interested") {
         console.log("User already interested in container, no alert will be shown.");
+        setModalVisible(false);
         return;
       }
 
@@ -380,7 +383,7 @@ useFocusEffect(
       );
 
       if (response.status === 200) {
-        if (!response.data.email) {
+        if (!response.data.firstName) {
           Alert.alert(
             "Incomplete Profile",
             "Please fill out your profile to proceed.",

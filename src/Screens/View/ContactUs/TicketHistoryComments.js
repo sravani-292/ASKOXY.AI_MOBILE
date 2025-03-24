@@ -4,6 +4,7 @@ const {height,width}=Dimensions.get('window')
 const TicketHistoryComments = ({route,navigation}) => {
     // console.log("TicketHistoryComments",route.params.details.userPendingQueries);
     const [details, setDetails] = useState([])
+    console.log(route.params.details.userPendingQueries);
     
     useEffect(() => {
             setDetails(route.params.details.userPendingQueries);

@@ -63,6 +63,7 @@ import ReferFriend from "../Screens/View/Referral Links/ReferFriend";
 import BarcodeScanner from "../Screens/View/Profile/BarcodeScanner";
 import AddressBookScreen from "../Screens/View/Profile/AddressScreen";
 import StoreLocatorScreen from "../StoreLocation";
+import AppUpdateScreen from "../../AppUpdateScreen";
 
 
 
@@ -72,8 +73,8 @@ export default function StacksScreens() {
     
     <Stack.Navigator
       // initialRouteName="Crypto Currency"
-      // initialRouteName="Scan"
-      initialRouteName ="Service Screen"
+      initialRouteName="App Update"
+      // initialRouteName ="Service Screen"
       screenOptions={{
         headerShown: true,
         headerTintColor: "white",
@@ -303,6 +304,12 @@ export default function StacksScreens() {
         name="Store Location"
         component={StoreLocatorScreen}
         options={{ headerShown: true }}
+      />
+
+      <Stack.Screen
+        name="App Update"
+        component={AppUpdateScreen}
+        options={{ headerShown: false }}
       />
 
       

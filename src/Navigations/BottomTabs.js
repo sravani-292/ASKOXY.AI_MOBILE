@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, use } from "react";
-import { Image, StyleSheet, View, Text, Dimensions,TouchableOpacity } from "react-native";
+import { Image, StyleSheet, View, Text, Dimensions,TouchableOpacity,Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSelector } from "react-redux";
 import axios from "axios";
@@ -92,15 +92,15 @@ const Tabs = () => {
           tabBarShowLabel: false,
           tabBarStyle: styles.tabBar,
           tabBarIcon: ({ focused }) => (
-            <View style={[styles.tabIconContainer,{borderRadius:20}]}>
+            <View style={[styles.tabIconContainer]}>
               <Image
-                source={require("../../assets/icon.png")}
+                source={require("../../assets/BottomTabImages/Home.png")}
                 resizeMode="contain"
-                style={[styles.tabIcon,{width:width*0.5,height:"85%",borderRadius:20}]}
+                style={[styles.tabIcon,getIconColor(focused)]}
               />
-              {/* <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
+              <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
                 Home
-              </Text> */}
+              </Text>
             </View>
           ),
         }}
@@ -118,7 +118,7 @@ const Tabs = () => {
               <Image
                 source={require("../../assets/BottomTabImages/wallet.png")}
                 resizeMode="contain"
-                style={[styles.tabIcon, getIconColor(focused),{width:26,height:26,fontWeight:"bold"}]}
+                style={[styles.tabIcon, getIconColor(focused)]}
               />
               <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
                 Wallet

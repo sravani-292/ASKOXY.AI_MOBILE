@@ -72,33 +72,29 @@ const PaymentDetails = ({ navigation, route }) => {
   const items = route.params?.items || [];
 
 
-  const isPast8PM = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    return currentHour >= 20; // 8 PM is 20 in 24-hour format
-  };
-// Function to map 'today, tomorrow, day_after_tomorrow' to actual weekday names
 const getDayOfWeek = (offset) => {
-  const daysOfWeek = [
-    "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY",
-    "THURSDAY", "FRIDAY", "SATURDAY",
-  ];
-  const today = new Date();
   const targetDate = new Date();
-  targetDate.setDate(today.getDate() + offset);
-  return daysOfWeek[targetDate.getDay()];
+  targetDate.setDate(targetDate.getDate() + offset);
+  
+   const day = targetDate.getDate().toString().padStart(2, "0");
+   const month = (targetDate.getMonth() + 1).toString().padStart(2, "0"); 
+   const year = targetDate.getFullYear();
+ 
+   const formattedDate = `${day}-${month}-${year}`;
+
+  const dayName = targetDate.toLocaleDateString("en-GB", { weekday: "long" });
+
+  return { label: `${dayName} (${formattedDate})`, value: dayName.toUpperCase()
+};
 };
 
-
-
-const startingDayOffset = isPast8PM() ? 1 : 0; // Start from tomorrow if past 8 PM
-
-// Days array with dynamic starting point
 const days = [
-  { label: isPast8PM() ? "TOMORROW" : "TODAY", value: isPast8PM() ? "tomorrow" : "today" },
-  { label: isPast8PM() ? getDayOfWeek(2) : "TOMORROW", value: isPast8PM() ? "day_after_tomorrow" : "tomorrow" },
-  { label: isPast8PM() ? getDayOfWeek(3) : getDayOfWeek(2), value: isPast8PM() ? "day_after_tomorrow_2" : "day_after_tomorrow" },
+  getDayOfWeek(1),
+  getDayOfWeek(2),
+  getDayOfWeek(3),
 ];
+
+console.log(days);
 
   
 
@@ -112,7 +108,6 @@ const days = [
 
       const filteredDays = data.filter(day => day);
       setAvailableDays(filteredDays);
-      // console.log("Available days:", filteredDays);
       
     } catch (error) {
       console.error("Error fetching time slots:", error);
@@ -128,10 +123,10 @@ const days = [
   
       const hasInterested = data.some(item => item.freeContainer === "Interested");
 
-      setShowButtons(!hasInterested);
+      // setShowButtons(!hasInterested);
     } catch (error) {
       console.error("Error fetching offer details:", error?.response?.status, error?.response?.data);
-      setShowButtons(true); 
+      // setShowButtons(true); 
     }
   };
   
@@ -157,7 +152,6 @@ const days = [
       console.log("API Response:", response);
       
       console.log(response);
-      // Alert.alert("Success", `You selected: ${userResponse}`);
     } catch (error) {
       console.error("API Error:", error);
       Alert.alert("Error", error.response?.data?.message || "Something went wrong!");
@@ -179,41 +173,38 @@ const days = [
   };
   
 
-  const handleDayChange = (day) => {
-    setSelectedDay(day);
-
-    let offset = 0;
-    if (day === "tomorrow") offset = 1;
-    else if (day === "day_after_tomorrow") offset = 2;
-
-    const mappedDay = getDayOfWeek(offset);
-    setSelectedDayName(mappedDay); 
+  const handleDayChange = (selectedDay) => {
+    setSelectedDay(selectedDay);
+  
+    // Find the offset for the selected day
+    const today = new Date();
+    const todayIndex = today.getDay();
+    const daysOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const selectedIndex = daysOfWeek.indexOf(selectedDay);
     
-    
-  const today = new Date();
-  const targetDate = new Date();
-  targetDate.setDate(today.getDate() + offset);
-
-  const formattedDate = targetDate.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
-  setSelectedDate(formattedDate);  
-    // Find the time slots for the selected day
-    const selectedDayData = availableDays.find(d => d.dayOfWeek === mappedDay);
-
-    if (selectedDayData) {
-      setTimeSlots([
-        selectedDayData.timeSlot1,
-        selectedDayData.timeSlot2,
-        selectedDayData.timeSlot3,
-        selectedDayData.timeSlot4,
-      ]);
-    } else {
-      setTimeSlots([]);
-    }
+    let offset = (selectedIndex - todayIndex + 7) % 7;
+    if (offset === 0) offset = 7; 
+  
+    const targetDate = new Date();
+    targetDate.setDate(today.getDate() + offset);
+  
+    const formattedDate = [
+      targetDate.getDate().toString().padStart(2, "0"), 
+      (targetDate.getMonth() + 1).toString().padStart(2, "0"), 
+      targetDate.getFullYear(), 
+    ].join("-"); 
+    console.log(formattedDate); 
+  
+    setSelectedDate(formattedDate);
+    setSelectedDayName(selectedDay);
+  
+    const selectedDayData = availableDays.find(d => d.dayOfWeek === selectedDay);
+    setTimeSlots(selectedDayData ? [
+      selectedDayData.timeSlot1,
+      selectedDayData.timeSlot2,
+      selectedDayData.timeSlot3,
+      selectedDayData.timeSlot4,
+    ] : []);
   };
 
 
@@ -266,15 +257,13 @@ const days = [
 
   const handlePaymentModeSelect = (mode) => {
     setSelectedPaymentMode(mode);
-    setLoading(false)
     // console.log({ mode });
   };
 
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
-    // setTotalAmount(calculatedTotal);
-    // console.log("coupen removed");
+   
     Alert.alert("coupen removed successfully");
   };
 
@@ -321,7 +310,7 @@ const days = [
     if (!cartData || cartData.length === 0) {
         return;
     }
-    if(grandTotalAmount==0){
+    if(grandTotalAmount == 0){
       setSelectedPaymentMode('COD');
     }
     const zeroQuantityItems = cartData
@@ -456,7 +445,6 @@ const days = [
     if(loading==true){
       return;
     }
-    // console.log({ selectedPaymentMode });
     let wallet;
     if (useWallet) {
       wallet = walletAmount;
@@ -480,6 +468,8 @@ const days = [
       landMark: addressDetails.landMark,
       orderStatus: selectedPaymentMode,
       pincode: addressDetails.pincode,
+      latitude:addressDetails.latitude,
+      longitude:addressDetails.longitude,
       walletAmount: usedWalletAmount,
       couponCode: coupon,
       couponValue: coupenDetails,
@@ -525,24 +515,7 @@ const days = [
           );
           return;
         }
-        // Handle COD or other payment types here
-        // if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
-        //   Alert.alert(
-        //     "Order Confirmed!",
-        //     "Your order has been placed successfully . Thank you for shopping with us!",
-        //     [
-        //       {
-        //         text: "OK",
-        //         onPress: () => {
-        //           setLoading(false); 
-        //           navigation.navigate("My Orders");
-        //         },
-        //       },
-        //     ]
-        //   );
-        //   // setLoading(false);
-        
-        // } 
+       
         if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
           const message = showButtons?
           "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
@@ -623,7 +596,6 @@ const days = [
   };
 
   useEffect(() => {
-    // console.log("djhftghngdxhkjhfghjcvyhds");
     if (
       paymentStatus == "PENDING" ||
       paymentStatus == "" ||
@@ -685,7 +657,7 @@ const days = [
           [
             {
               text: "No",
-              onPress: () => {()=>setLoading(false)},
+              onPress: () => {},
             },
             {
               text: "yes",

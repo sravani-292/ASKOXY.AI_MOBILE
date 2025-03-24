@@ -24,6 +24,7 @@ import { useSelector } from "react-redux";
 export default function FreeAIAndGenAI({navigation}) {
   const userData = useSelector((state) => state.counter);
   console.log("userData", userData);
+  const [profileData, setProfileData] = useState();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
@@ -67,7 +68,7 @@ useEffect(()=>{
        url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
       })
       .then((response)=>{
-       console.log(response.data)
+       console.log("profile details",response.data)
        setProfileData(response.data)
       })
       .catch((error)=>{
@@ -100,26 +101,32 @@ useEffect(()=>{
   function interestedfunc() {
     // setModalVisible(true)
     if (userData == null) {
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-        { text: "Cancel" },
-      ]);
-      return;
-    } else {
+         Alert.alert("Alert", "Please login to continue", [
+           { text: "OK", onPress: () => navigation.navigate("Login") },
+           { text: "Cancel" },
+         ]);
+         return;
+       } 
+     
+       console.log("varalakshmi");
+     
+       let number = null; 
+     
+       if (profileData?.whatsappNumber && profileData?.mobileNumber) {
+         console.log("sravani");
+         number = profileData.whatsappNumber;
+         console.log("whatsapp number", number);
+       } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
+         number = profileData.whatsappNumber;
+       } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
+         number = profileData.mobileNumber;
+       }
+     
+       if (!number) {
+       console.log ("Error", "No valid phone number found.");
+         return;
+       }
 
-      if((profileData.whatsappNumber!=null || profileData.whatsappNumber!='') && 
-    (profileData.mobileNumber!=null || profileData.mobileNumber!='')) {
-  number=(profileData.whatsappNumber)
-  return false;
-}
-else if(profileData.whatsappNumber!=null || profileData.whatsappNumber!='') {
-  number=(profileData.whatsappNumber)
-  return false;
-}
-else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
-  number=(profileData.mobileNumber)
-  return false;
-}
       let data = {
         askOxyOfers: "FREEAI",
         userId: userData.userId,
@@ -152,7 +159,7 @@ else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
             Alert.alert("Failed", error.response.data);
           }
         });
-    }
+      
   }
 
   return (

@@ -76,26 +76,31 @@ const MyRotary = ({navigation}) => {
     }
   function interestedfunc() {
     if (userData == null) {
-      
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-        { text: "Cancel" },
-      ]);
-      return;
-    } else {
-      if((profileData.whatsappNumber!=null || profileData.whatsappNumber!='') && 
-    (profileData.mobileNumber!=null || profileData.mobileNumber!='')) {
-  number=(profileData.whatsappNumber)
-  return false;
-}
-else if(profileData.whatsappNumber!=null || profileData.whatsappNumber!='') {
-  number=(profileData.whatsappNumber)
-  return false;
-}
-else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
-  number=(profileData.mobileNumber)
-  return false;
-}
+         Alert.alert("Alert", "Please login to continue", [
+           { text: "OK", onPress: () => navigation.navigate("Login") },
+           { text: "Cancel" },
+         ]);
+         return;
+       } 
+     
+       console.log("varalakshmi");
+     
+       let number = null; 
+     
+       if (profileData?.whatsappNumber && profileData?.mobileNumber) {
+         console.log("sravani");
+         number = profileData.whatsappNumber;
+         console.log("whatsapp number", number);
+       } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
+         number = profileData.whatsappNumber;
+       } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
+         number = profileData.mobileNumber;
+       }
+     
+       if (!number) {
+       console.log ("Error", "No valid phone number found.");
+         return;
+       }
       let data = {
         askOxyOfers: "ROTARIAN",
         userId: userData.userId,
@@ -131,7 +136,7 @@ else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
             Alert.alert("Failed", error.response.data);
           }
         });
-    }
+    
   }
   return (
     <ScrollView style={styles.container}>

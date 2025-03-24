@@ -1,38 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
-  SafeAreaView,
-  StatusBar,
-  Alert,
   ActivityIndicator,
+  Modal,
+  TextInput,
+  Alert,
+  ScrollView,
   Dimensions
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import axios from "axios"; 
+} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import axios from "axios";
 import { useSelector } from "react-redux";
-import BASE_URL,{userStage} from "../../../../Config";
-const { width, height } = Dimensions.get('window');
+import { Ionicons } from "react-native-vector-icons";
+import BASE_URL, { userStage } from "../../../../Config";
+import { COLORS } from "../../../../Redux/constants/theme";
 
-const AddressBookScreen = ({ navigation }) => {
-      const userData = useSelector((state) => state.counter);
-      const token = userData.accessToken;
+const {width, height} = Dimensions.get("window");
+
+const AddressScreen = ({ route }) => {
+  const navigation = useNavigation();
+  const [errors, setErrors] = useState({});
+  const userData = useSelector((state) => state.counter);
+  const token = userData.accessToken;
   const customerId = userData.userId;
-  const [addresses, setAddresses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedAddress, setSelectedAddress] = useState(null);
+  const [addressList, setAddressList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saveLoader, setSaveLoader] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedType, setSelectedType] = useState("");
+  const [newAddress, setNewAddress] = useState({
+    customerId: customerId,
+    flatNo: "",
+    landMark: "",
+    pincode: "",
+    address: "",
+    type: "",
+    status: true,
+  });
 
-useEffect(()=>{
-    fetchOrderAddress()
-},[])
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrderAddress();
+    }, [])
+  );
+
+  const validateFields = () => {
+    const newErrors = {};
+    if (!newAddress.flatNo) newErrors.flatNo = "Flat No is required.";
+    if (!newAddress.landMark) newErrors.landMark = "Landmark is required.";
+    if (!newAddress.pincode) newErrors.pincode = "Pincode is required.";
+    else if (newAddress.pincode.length < 6)
+      newErrors.pincode = "Pincode must be 6 digits.";
+    if (!newAddress.address) newErrors.address = "Address is required.";
+    if (!selectedType) newErrors.type = "Please select an address type.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAddAddress = () => {
+    setModalVisible(true);
+  };
+
+  const handleTypePress = (type) => {
+    setSelectedType(type);
+    if (errors.type) {
+      setErrors((prev) => ({ ...prev, type: null }));
+    }
+  };
+
   const fetchOrderAddress = async () => {
     setLoading(true);
     try {
       const response = await axios({
-        url: BASE_URL+`user-service/getAllAdd?customerId=${customerId}`,
+        url: BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -42,10 +86,10 @@ useEffect(()=>{
       console.log("All addresss are :", response.data);
 
       if (response && response.data) {
-        setAddresses(response.data);
+        setAddressList(response.data);
       } else {
         console.warn("API returned empty or invalid data");
-        setAddresses([]);
+        setAddressList([]);
       }
 
       setLoading(false);
@@ -55,266 +99,361 @@ useEffect(()=>{
     }
   };
 
+  const saveAddress = async () => {
+    if (!validateFields()) {
+      return;
+    }
+    setSaveLoader(true);
 
+    try {
+      const data = {
+        method: "post",
+        url: BASE_URL + "user-service/addAddress",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          address: newAddress.address,
+          addressType: selectedType,
+          userId: customerId,
+          flatNo: newAddress.flatNo,
+          landMark: newAddress.landMark,
+          latitude: 0, // Default value since we're not checking distance
+          longitude: 0, // Default value since we're not checking distance
+          pincode: newAddress.pincode,
+        },
+      };
+      console.log("data", data);
 
-
-
-
-
-  const renderAddressItem = ({ item }) => {
-    const isSelected = selectedAddress === item.id;
-    
-    return (
-      <TouchableOpacity
-        style={[
-          styles.addressCard,
-          isSelected ? styles.selectedAddressCard : null
-        ]}
-        onPress={() => setSelectedAddress(item.id)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.addressHeader}>
-          <View style={styles.nameContainer}>
-            <Text style={styles.addressName}>{item.addressType}</Text>
-            {item.isDefault && (
-              <View style={styles.defaultBadge}>
-                <Text style={styles.defaultText}>Default</Text>
-              </View>
-            )}
-          </View>
-          
-          
-        </View>
-        
-        <Text style={styles.recipientName}>{item.address}</Text>
-        <Text style={styles.addressLine}>{`${item.flatNo}, ${item.landMark} ${item.pincode}`}</Text>
-
-        {/* <Text style={styles.addressLine}>{item.street}</Text>
-        {item.apartment ? <Text style={styles.addressLine}>{item.address}</Text> : null}
-        <Text style={styles.addressLine}>{`${item.flatNo}, ${item.landMark} ${item.pincode}`}</Text> */}
-        {/* <Text style={styles.addressLine}>{item.country}</Text>
-        <Text style={styles.phoneNumber}>{item.phone}</Text> */}
-        
-        {/* {isSelected && !item.isDefault && (
-          <TouchableOpacity 
-            style={styles.setDefaultButton}
-            onPress={() => handleSetDefaultAddress(item.id)}
-          >
-            <Text style={styles.setDefaultText}>Set as Default</Text>
-          </TouchableOpacity>
-        )} */}
-      </TouchableOpacity>
-    );
+      const response = await axios(data);
+      setSaveLoader(false);
+      console.log("Added address:", response.data);
+      Alert.alert("Address saved successfully");
+      setModalVisible(false);
+      setNewAddress({
+        address: "",
+        flatNo: "",
+        landMark: "",
+        pincode: "",
+      });
+      setSelectedType("");
+      fetchOrderAddress();
+    } catch (error) {
+      console.error("Error adding address:", error);
+      setSaveLoader(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      
-      {/* <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Addresses</Text>
-        <View style={styles.rightHeaderPlaceholder} />
-      </View> */}
-      
+    <View style={styles.container}>
       {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#6200ee" />
-          <Text style={styles.loadingText}>Loading your addresses...</Text>
-        </View>
+        <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <>
-          {addresses.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Ionicons name="location-outline" size={80} color="#ccc" />
-              <Text style={styles.emptyText}>You don't have any saved addresses</Text>
-              {/* <Text style={styles.emptySubText}>Add an address to make checkout faster</Text> */}
-            </View>
-          ) : (
-            <FlatList
-              data={addresses}
-              renderItem={renderAddressItem}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.listContainer}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
-          
-        
+          <View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={styles.title}>Your Delivery Addresses</Text>
+              <View>
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={() => handleAddAddress()}
+                >
+                  <Text style={styles.addButtonText}>Add +</Text>
+                </TouchableOpacity>
+              </View>
+
+              {addressList.length > 0 ? (
+                addressList
+                  .slice(-4)
+                  .reverse()
+                  .map((address, index) => {
+                    return (
+                      <View key={index}>
+                        <View style={styles.addressRow}>
+                          <Text style={styles.addressText}>
+                            <Text style={styles.label}>Address: </Text>
+                            <Text style={styles.value}>{address.address}</Text>
+                            {"\n"}
+                            <Text style={styles.label}>Flat No: </Text>
+                            <Text style={styles.value}>{address.flatNo}</Text>
+                            {"\n"}
+                            <Text style={styles.label}>Landmark: </Text>
+                            <Text style={styles.value}>{address.landMark}</Text>
+                            {"\n"}
+                            <Text style={styles.label}>Address Type: </Text>
+                            <Text style={styles.value}>
+                              {address.addressType}
+                            </Text>
+                            {"\n"}
+                            <Text style={styles.label}>Pincode: </Text>
+                            <Text style={styles.value}>{address.pincode}</Text>
+                            {"\n"}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })
+              ) : (
+                <View style={styles.noDeliveryRow}>
+                  <Text style={styles.noDeliveryText}>
+                    No address found. Add a new address above.
+                  </Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
         </>
       )}
-    </SafeAreaView>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
+
+            <View style={{ marginTop: 25 }}>
+              <TextInput
+                style={styles.input}
+                placeholder="Flat No"
+                value={newAddress.flatNo}
+                onChangeText={(text) => {
+                  setNewAddress((prev) => ({ ...prev, flatNo: text }));
+                  if (errors.flatNo) {
+                    setErrors((prev) => ({ ...prev, flatNo: null }));
+                  }
+                }}
+              />
+              {errors.flatNo && (
+                <Text style={styles.errorText}>{errors.flatNo}</Text>
+              )}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Landmark"
+                value={newAddress.landMark}
+                onChangeText={(text) => {
+                  setNewAddress((prev) => ({ ...prev, landMark: text }));
+                  if (errors.landMark) {
+                    setErrors((prev) => ({ ...prev, landMark: null }));
+                  }
+                }}
+              />
+              {errors.landMark && (
+                <Text style={styles.errorText}>{errors.landMark}</Text>
+              )}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Address"
+                value={newAddress.address}
+                onChangeText={(text) => {
+                  setNewAddress((prev) => ({ ...prev, address: text }));
+                  if (errors.address) {
+                    setErrors((prev) => ({ ...prev, address: null }));
+                  }
+                }}
+              />
+              {errors.address && (
+                <Text style={styles.errorText}>{errors.address}</Text>
+              )}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Pincode"
+                value={newAddress.pincode}
+                onChangeText={(text) => {
+                  setNewAddress((prev) => ({ ...prev, pincode: text }));
+                  if (errors.pincode) {
+                    setErrors((prev) => ({ ...prev, pincode: null }));
+                  }
+                }}
+                keyboardType="numeric"
+                maxLength={6}
+              />
+              {errors.pincode && (
+                <Text style={styles.errorText}>{errors.pincode}</Text>
+              )}
+            </View>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  selectedType === "Home" && styles.buttonSelected,
+                ]}
+                onPress={() => handleTypePress("Home")}
+              >
+                <Text style={styles.buttonText}>Home</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  selectedType === "Work" && styles.buttonSelected,
+                ]}
+                onPress={() => handleTypePress("Work")}
+              >
+                <Text style={styles.buttonText}>Work</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  selectedType === "Others" && styles.buttonSelected,
+                ]}
+                onPress={() => handleTypePress("Others")}
+              >
+                <Text style={styles.buttonText}>Others</Text>
+              </TouchableOpacity>
+            </View>
+            {errors.type && <Text style={styles.errorText}>{errors.type}</Text>}
+
+            {saveLoader == false ? (
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={() => saveAddress()}
+              >
+                <Text style={styles.submitButtonText}>Submit</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.submitButton}>
+                <ActivityIndicator size={"small"} color="white" />
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    padding: 10,
+    backgroundColor: "#f8f9fa",
+    width: "100%",
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fff',
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#343a40",
+    marginBottom: 8,
+    textAlign: "center",
   },
-  backButton: {
-    padding: 5,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  rightHeaderPlaceholder: {
-    width: 24,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
+  addressRow: {
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    padding: 12,
     marginTop: 10,
-    fontSize: 16,
-    color: '#6200ee',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#555',
-    marginTop: 20,
-  },
-  emptySubText: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 10,
-    textAlign: 'center',
-  },
-  listContainer: {
-    padding: 15,
-    paddingBottom: 100, // Extra space for Add button
-  },
-  addressCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#000",
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#eee',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 1,
+    elevation: 2,
+    width:width*0.9,
+    alignSelf:"center"
   },
-  selectedAddressCard: {
-    borderColor: '#6200ee',
-    borderWidth: 2,
-  },
-  addressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  addressName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-  },
-  defaultBadge: {
-    backgroundColor: '#e0f2f1',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginLeft: 10,
-  },
-  defaultText: {
-    fontSize: 12,
-    color: '#00897b',
-    fontWeight: '600',
-  },
-  actionsContainer: {
-    flexDirection: 'row',
-  },
-  iconButton: {
-    padding: 5,
-    marginLeft: 10,
-  },
-  recipientName: {
+  addressText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 5,
+    color: "#333",
+    lineHeight: 24,
   },
-  addressLine: {
-    fontSize: 15,
-    color: '#666',
-    marginBottom: 2,
+  noDeliveryRow: {
+    padding: 12,
+    alignItems: "center",
   },
-  phoneNumber: {
-    fontSize: 15,
-    color: '#666',
-    marginTop: 6,
-  },
-  setDefaultButton: {
-    marginTop: 12,
-    backgroundColor: '#f0ebff',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  setDefaultText: {
+  noDeliveryText: {
     fontSize: 14,
-    color: '#6200ee',
-    fontWeight: '600',
+    color: "#6c757d",
   },
   addButton: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    borderRadius: 10,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  addButtonGradient: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 15,
+    backgroundColor: COLORS.services,
+    padding: 5,
+    borderRadius: 5,
+    alignSelf: "flex-end",
+    margin: 5,
+    marginRight: 10,
   },
   addButtonText: {
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 8,
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 2,
+    right: 4,
+    margin: 10,
+  },
+  input: {
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 5,
+    paddingHorizontal: 10,
+    fontSize: 16,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 10,
+  },
+  button: {
+    backgroundColor: COLORS.backgroundcolour,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 5,
+  },
+  buttonSelected: {
+    backgroundColor: COLORS.services,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
+  submitButton: {
+    backgroundColor: COLORS.title,
+    paddingVertical: 8,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 1,
+  },
+  label: {
+    fontWeight: "bold",
+    color: "#555",
+  },
+  value: {
+    color: "#000",
   },
 });
 
-export default AddressBookScreen;
+export default AddressScreen;

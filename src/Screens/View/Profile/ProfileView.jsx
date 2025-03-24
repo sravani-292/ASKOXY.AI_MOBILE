@@ -13,9 +13,9 @@ export default function ProfileSettings({ navigation }) {
   // App version info
  React.useEffect(() => {
     if(Platform.OS === 'ios'){
-      setVersion(jsonData.expo.ios.version);
+      setVersion(jsonData.expo.ios.buildNumber);
     }else{
-      setVersion(jsonData.expo.android.versionCode);
+      setVersion(jsonData.expo.android.versionCode.toString());
     }
  },[]);
 
@@ -84,8 +84,6 @@ export default function ProfileSettings({ navigation }) {
 
   const [formData, setFormData] = React.useState({});
   const [profileLoader, setProfileLoader] = React.useState(false);
-  const [whatsappVerified, setWhatsappVerified] = React.useState(false);
-  const [mobileVerified, setMobileVerified] = React.useState(false);
 
   const getInitials = (name) => {
     return name?.charAt(0).toUpperCase();
@@ -134,8 +132,6 @@ export default function ProfileSettings({ navigation }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      setWhatsappVerified(response.data.whatsappVerified);
-      setMobileVerified(response.data.mobileVerified);
       setProfileLoader(false);
       if (response.status === 200) {
         // setUser(response.data);
@@ -186,11 +182,11 @@ export default function ProfileSettings({ navigation }) {
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Text style={styles.avatarText}>{getInitials(formData.firstName)}</Text>
+            <Text style={styles.avatarText}>{getInitials(formData.firstName? formData.firstName : "")}</Text>
           </LinearGradient>
           
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{formData.firstName} {formData.lastName}</Text>
+            <Text style={styles.profileName}>{formData.firstName? formData.firstName : ""} {formData.lastName? formData.lastName : ""}</Text>
             <Text style={styles.profileEmail}>{formData.email}</Text>
           </View>
           
@@ -243,7 +239,7 @@ export default function ProfileSettings({ navigation }) {
         {/* Version Information */}
         <View style={styles.versionContainer}>
           <Feather name="code" size={14} color="#718096" style={styles.versionIcon} />
-          <Text style={styles.versionText}>Version {version.toString()}</Text>
+          <Text style={styles.versionText}>Version {version}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { toast, Toaster } from 'sonner-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -256,36 +257,47 @@ const ProfileScreen = () => {
   // Submit profile data
   const handleSubmit = async () => {
     // Reset all error states
-    setEmailError(false);
-    setWhatsappNumberError(false);
-    setAlternativeNumberError(false);
+    // setEmailError(false);
+    // setWhatsappNumberError(false);
+    // setAlternativeNumberError(false);
     
-    let hasErrors = false;
+    // let hasErrors = false;
     
-    // Field validation (email only needs to be validated if provided)
-    if (email && !validateEmail(email)) {
-      setEmailError(true);
-      toast.error("Please enter a valid email");
-      hasErrors = true;
-    }
+    // // Field validation (email only needs to be validated if provided)
+    // if (email && !validateEmail(email)) {
+    //   setEmailError(true);
+    //   toast.error("Please enter a valid email");
+    //   hasErrors = true;
+    // }
     
-    // Alternative number validation - only validate if provided
-    if (alternativeNumber && !validatePhoneNumber(alternativeNumber)) {
-      setAlternativeNumberError(true);
-      toast.error("Alternative number must be 10 digits");
-      hasErrors = true;
-    } else if (
-      alternativeNumber && 
-      (alternativeNumber === mobileNumber || alternativeNumber === whatsappNumber)
-    ) {
-      setAlternativeNumberError(true);
-      toast.error("Alternative number must be different from WhatsApp and mobile numbers");
-      hasErrors = true;
-    }
+    // // Alternative number validation - only validate if provided
+    // if (alternativeNumber && !validatePhoneNumber(alternativeNumber)) {
+    //   setAlternativeNumberError(true);
+    //   toast.error("Alternative number must be 10 digits");
+    //   hasErrors = true;
+    // } else if (
+    //   alternativeNumber && 
+    //   (alternativeNumber === mobileNumber || alternativeNumber === whatsappNumber)
+    // ) {
+    //   setAlternativeNumberError(true);
+    //   toast.error("Alternative number must be different from WhatsApp and mobile numbers");
+    //   hasErrors = true;
+    // }
     
-    if (hasErrors) {
+    // if (hasErrors) {
+    //   return;
+    // }
+
+    if(firstName=="" || firstName==null){
+      Alert.alert("First Name is required");
       return;
     }
+    
+    if(mobileNumber=="" || mobileNumber==null){
+      Alert.alert("Mobile Number is required");
+      return;
+    }
+  
 
     setIsLoading(true);
     
@@ -299,7 +311,7 @@ const ProfileScreen = () => {
       mobileNumber: mobileVerified ? mobileNumber : mobileNumber,
     };
     
-    try {
+    try { 
       const response = await axios.patch(
         BASE_URL + "user-service/profileUpdate",
         data,
@@ -312,14 +324,17 @@ const ProfileScreen = () => {
       );
       
       if (response.data.errorMessage) {
-        toast.error(response.data.errorMessage);
+        Alert.alert("Failed", response.data.errorMessage);
+        // toast.error(response.data.errorMessage);
       } else {
         getProfile();
-        toast.success("Profile saved successfully");
+        Alert.alert("Success", "Profile saved successfully");
+        // toast.success("Profile saved successfully");
       }
     } catch (error) {
       console.error(error.response);
-      toast.error(error.response?.data?.message || "Failed to update profile");
+      Alert.alert("Failed", error.response?.data?.message || "Failed to update profile");
+      // toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setIsLoading(false);
     }

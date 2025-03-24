@@ -86,8 +86,8 @@ const WriteToUs = ({ navigation, route }) => {
         ) {
           setFormData({
             ...formData,
-            name: `${response.data.firstName} ${response.data.lastName}`,
-            email: response.data.email,
+            name: `${response.data?.firstName} ${response.data?.lastName}`,
+            email: response.data?.email,
             mobileNumber:
               response.data?.whatsappNumber || response.data?.mobileNumber,
           });
@@ -160,12 +160,13 @@ const WriteToUs = ({ navigation, route }) => {
           userId: accessToken.userId,
         };
       } else {
+        if (route.params?.orderId) {
         data = {
           adminDocumentId: "",
           askOxyOfers: "FREESAMPLE",
           comments: "",
           email: formData.email,
-          id: route.params.ticketId,
+          id: "",
           mobileNumber: formData.mobileNumber,
           projectType: "ASKOXY",
           query: finalQuery,
@@ -177,34 +178,52 @@ const WriteToUs = ({ navigation, route }) => {
           userId: accessToken.userId,
         };
       }
+      else{
+        data = {
+          adminDocumentId: "",
+          askOxyOfers: "FREESAMPLE",
+          comments: finalQuery,
+          email: formData.email,
+          id: route.params.ticketId ,
+          mobileNumber: formData.mobileNumber,
+          projectType: "ASKOXY",
+          query: query,
+          queryStatus: "PENDING",
+          resolvedBy: "customer",
+          resolvedOn: "",
+          status: "",
+          userDocumentId: formData.documentId || "",
+          userId: accessToken.userId,
+        };
+      }
+      }
       console.log({ data });
-      // console.log("form data query",finalQuery);
 
-      // setFormData({...formData,loading:true})
-      //   axios.post(
-      //     BASE_URL + "user-service/write/saveData",
-      //     data
-      //     ,{
-      //   headers: {
-      //     Authorization: `Bearer ${accessToken.accessToken}`,
-      //   },
-      // })
-      //   .then(function (response) {
-      //     console.log(response.data)
-      //     Alert.alert("Success", "You have sucessfully submitted the query",[{
-      //       text:"ok",onPress:()=>navigation.navigate('Ticket History')
-      //     }]);
-      //     console.log("formdataquery",formData.query);
+      setFormData({...formData,loading:true})
+        axios.post(
+          BASE_URL + "user-service/write/saveData",
+          data
+          ,{
+        headers: {
+          Authorization: `Bearer ${accessToken.accessToken}`,
+        },
+      })
+        .then(function (response) {
+          console.log(response.data)
+          Alert.alert("Success", "You have sucessfully submitted the query",[{
+            text:"ok",onPress:()=>navigation.navigate('Ticket History')
+          }]);
+          // console.log("formdataquery",formData.query);
 
-      //     setFormData({...formData,loading:false,fileName:"",query:""})
+          setFormData({...formData,loading:false,fileName:"",query:""})
 
-      //   })
-      //   .catch(function (error) {
-      //     console.log(error.response)
-      //     Alert.alert("Failed", error.response.data.message)
-      //     setFormData({...formData,loading:false})
+        })
+        .catch(function (error) {
+          console.log(error.response)
+          Alert.alert("Failed", error.response.data.message)
+          setFormData({...formData,loading:false})
 
-      //   })
+        })
     }
   };
 

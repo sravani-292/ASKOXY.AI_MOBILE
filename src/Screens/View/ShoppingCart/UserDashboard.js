@@ -172,6 +172,23 @@ const UserDashboard = ({route}) => {
     }
   };
 
+  const arrangeCategories = (categories) => {
+    if (!categories || categories.length === 0) return [];
+    
+    // Find the exact "Sample Rice" category
+    const sampleRiceIndex = categories.findIndex(cat => 
+      cat.categoryName === "Sample Rice");
+    
+    // If "Sample Rice" category is found, move it to the first position
+    if (sampleRiceIndex !== -1) {
+      const result = [...categories];
+      const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
+      return [sampleRiceCategory, ...result];
+    }
+    
+    return categories;
+  };
+
   const handleAddToCart = async (item) => {
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
@@ -637,7 +654,7 @@ const UserDashboard = ({route}) => {
                     ALL ITEMS
                   </Text>
                 </TouchableOpacity>
-                {categories.map((category, index) => (
+                {arrangeCategories(categories).map((category, index) => (
                   <TouchableOpacity
                     // key={category.categoryName}
                     key={index}

@@ -1,12 +1,12 @@
 // App.js
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   ScrollView,
   Image,
-  Dimensions,
+  Dimensions, 
   Touchable,
   TouchableOpacity,
   Modal,
@@ -17,22 +17,24 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import axios  from "axios";
-import BASE_URL, { userStage } from "../../../../Config"
+import BASE_URL, { userStage } from "../../../../Config";
 const { width, height } = Dimensions.get("window");
 import { useSelector } from "react-redux";
 
 export default function FreeAIAndGenAI({navigation}) {
   const userData = useSelector((state) => state.counter);
   console.log("userData", userData);
+  const [profileData, setProfileData] = useState();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [mobileNumber, setMobileNumber] = useState("");
   const [mobileNumber_error, setMobileNumber_error] = useState(false);
   const [mobileNumberValid_error, setMobileNumberValid_error] = useState(false);
   const [loading, setLoading] = useState(false);
+  const[AlreadyInterested,setAlreadyInterested]=useState(false)
+
 
   function trainingfunc() {
-
     if (userData == null) {
       Alert.alert("Alert", "Please login to continue", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
@@ -47,29 +49,95 @@ export default function FreeAIAndGenAI({navigation}) {
   }
   }
 
+
+useEffect(()=>{
+ if(userData==null){
+      Alert.alert("Alert","Please login to continue",[
+        {text:"OK",onPress:()=>navigation.navigate("Login")},
+        {text:"Cancel"}
+      ])
+      return;
+    }else{
+      getCall()
+      getProfile()
+    }},[])
+
+    const getProfile = async () => {
+      axios({
+       method:"get",
+       url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
+      })
+      .then((response)=>{
+       console.log("profile details",response.data)
+       setProfileData(response.data)
+      })
+      .catch((error)=>{
+       console.log(error.response.data)
+      })
+     };
+
+  function getCall(){
+    let data={
+      userId: userData.userId
+    }
+    axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
+    .then((response)=>{
+      console.log(response.data)
+      const hasFreeAI = response.data.some(item => item.askOxyOfers === "FREEAI");
+
+  if (hasFreeAI) {
+    // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+    setAlreadyInterested(true)
+  } else {
+    // Alert.alert("No","askOxyOfers does not contain FREEAI");
+    setAlreadyInterested(false)
+  }
+    })
+    .catch((error)=>{
+      console.log(error.response)
+    })
+  }
+
   function interestedfunc() {
     // setModalVisible(true)
     if (userData == null) {
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-        { text: "Cancel" },
-      ]);
-      return;
-    } else {
+         Alert.alert("Alert", "Please login to continue", [
+           { text: "OK", onPress: () => navigation.navigate("Login") },
+           { text: "Cancel" },
+         ]);
+         return;
+       } 
+     
+       console.log("varalakshmi");
+     
+       let number = null; 
+     
+       if (profileData?.whatsappNumber && profileData?.mobileNumber) {
+         console.log("sravani");
+         number = profileData.whatsappNumber;
+         console.log("whatsapp number", number);
+       } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
+         number = profileData.whatsappNumber;
+       } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
+         number = profileData.mobileNumber;
+       }
+     
+       if (!number) {
+       console.log ("Error", "No valid phone number found.");
+         return;
+       }
+
       let data = {
         askOxyOfers: "FREEAI",
-        id: userData.userId,
-        mobileNumber: userData.whatsappNumber,
+        userId: userData.userId,
+        mobileNumber: number,
         projectType: "ASKOXY",
       };
       console.log(data);
       setLoading(true);
       axios({
         method: "post",
-        url: 
-        // userStage == "test" ? 
-        BASE_URL + "marketing-service/campgin/askOxyOfferes" ,
-        // : BASE_URL + "auth-service/auth/askOxyOfferes",
+        url: BASE_URL + "marketing-service/campgin/askOxyOfferes",
         data: data,
       })
         .then((response) => {
@@ -91,7 +159,7 @@ export default function FreeAIAndGenAI({navigation}) {
             Alert.alert("Failed", error.response.data);
           }
         });
-    }
+      
   }
 
   return (
@@ -126,6 +194,8 @@ export default function FreeAIAndGenAI({navigation}) {
           <Text style={styles.buttonText}>Our Training Guide</Text>
         </TouchableOpacity>
 
+{AlreadyInterested ==false?
+<>
         {loading == false ? (
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
@@ -142,6 +212,15 @@ export default function FreeAIAndGenAI({navigation}) {
             </Text>
           </View>
         )}
+        </>
+        :
+        <View
+            style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
+            onPress={() => interestedfunc()}
+          >
+            <Text style={styles.buttonText}>Already Participated</Text>
+          </View>
+        }
       </View>
 
       <Modal

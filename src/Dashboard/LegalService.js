@@ -74,26 +74,36 @@ const LegalService = ({ navigation }) => {
     }
 
   function legalServicefunc() {
+    console.log("sravani");
+    
     if (userData == null) {
       Alert.alert("Alert", "Please login to continue", [
         { text: "OK", onPress: () => navigation.navigate("Login") },
         { text: "Cancel" },
       ]);
       return;
-    } else {
-      if((profileData.whatsappNumber!=null || profileData.whatsappNumber!='') && 
-    (profileData.mobileNumber!=null || profileData.mobileNumber!='')) {
+    } 
+    console.log("varalakshmi");
+    let number =null;
+    
+    
+  if(profileData?.whatsappNumber && profileData?.mobileNumber)   {
   number=(profileData.whatsappNumber)
-  return false;
+  
 }
-else if(profileData.whatsappNumber!=null || profileData.whatsappNumber!='') {
+else if(profileData?.whatsappNumber && profileData?.whatsappNumber) {
   number=(profileData.whatsappNumber)
-  return false;
+ 
 }
-else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
+else if(profileData?.mobileNumber && profileData?.mobileNumber) {
   number=(profileData.mobileNumber)
-  return false;
+ 
 }
+
+if (!number) {
+  console.log ("Error", "No valid phone number found.");
+    return;
+  }
       let data = {
         askOxyOfers: "LEGALSERVICES",
         userId: userData.userId,
@@ -126,7 +136,7 @@ else if(profileData.mobileNumber!=null || profileData.mobileNumber!='') {
           }
     
         })
-    }
+      
   }
 
   return (

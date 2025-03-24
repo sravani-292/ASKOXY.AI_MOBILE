@@ -12,6 +12,7 @@ import {
   Platform,
   Dimensions,
   BackHandler,
+  useColorScheme,
 } from "react-native";
 import axios from "axios";
 import { TextInput } from "react-native-paper";
@@ -46,6 +47,7 @@ const Login = () => {
     loading: false,
   });
   const [isTelugu, setIsTelugu] = useState(true);
+  const theme = useColorScheme(); // Returns 'light' or 'dark'
 
   // console.log({ BASE_URL });
   const phoneInput = React.createRef();
@@ -76,7 +78,7 @@ const Login = () => {
   useFocusEffect(
     useCallback(() => {
       const checkLoginData = async () => {
-        console.log("expo");
+        console.log("0",theme);
 
         try {
           const loginData = await AsyncStorage.getItem("userData");
@@ -103,6 +105,7 @@ const Login = () => {
 
       checkLoginData();
       // getVersion();
+
     }, [currentScreen])
   );
 
@@ -787,6 +790,7 @@ const styles = StyleSheet.create({
     width: width / 1.2,
     alignSelf: "center",
     height: 45,
+    color:"black"
   },
   disabledInput: {
     backgroundColor: "#e8e8e8",

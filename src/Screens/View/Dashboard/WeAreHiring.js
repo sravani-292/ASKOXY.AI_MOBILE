@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
-import BASE_URL,{userStage} from "../../Config";
+import BASE_URL,{userStage} from "../../../../Config";
 import { MaterialIcons } from '@expo/vector-icons';
 
 

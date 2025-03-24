@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -20,29 +20,98 @@ const MyRotary = ({navigation}) => {
   const userData = useSelector((state) => state.counter);
   console.log({ userData });
   const [loading, setLoading] = useState(false);
+  const[AlreadyInterested,setAlreadyInterested]=useState(false)
+  const[profileData,setProfileData]=useState()
+  // const[number,setNumber]=useState()
+      console.log("userData", userData);
+      let number;
+
+  useEffect(()=>{
+ if(userData==null){
+      Alert.alert("Alert","Please login to continue",[
+        {text:"OK",onPress:()=>navigation.navigate("Login")},
+        {text:"Cancel"}
+      ])
+      return;
+    }else{
+      getCall()
+      getProfile()
+    }  },[])
+  
+    const getProfile = async () => {
+      axios({
+       method:"get",
+       url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
+      })
+      .then((response)=>{
+       console.log(response.data)
+       setProfileData(response.data)
+      })
+      .catch((error)=>{
+       console.log(error.response.data)
+      })
+     };
+
+
+    function getCall(){
+      let data={
+        userId: userData.userId
+      }
+      axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
+      .then((response)=>{
+        console.log(response.data)
+        const hasFreeAI = response.data.some(item => item.askOxyOfers === "ROTARIAN");
+  
+    if (hasFreeAI) {
+      // Alert.alert("Yes", "askOxyOfers contains FREEAI");
+      setAlreadyInterested(true)
+    } else {
+      // Alert.alert("No","askOxyOfers does not contain FREEAI");
+      setAlreadyInterested(false)
+    }
+      })
+      .catch((error)=>{
+        console.log(error.response)
+      })
+    }
   function interestedfunc() {
     if (userData == null) {
-      
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-        { text: "Cancel" },
-      ]);
-      return;
-    } else {
+         Alert.alert("Alert", "Please login to continue", [
+           { text: "OK", onPress: () => navigation.navigate("Login") },
+           { text: "Cancel" },
+         ]);
+         return;
+       } 
+     
+       console.log("varalakshmi");
+     
+       let number = null; 
+     
+       if (profileData?.whatsappNumber && profileData?.mobileNumber) {
+         console.log("sravani");
+         number = profileData.whatsappNumber;
+         console.log("whatsapp number", number);
+       } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
+         number = profileData.whatsappNumber;
+       } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
+         number = profileData.mobileNumber;
+       }
+     
+       if (!number) {
+       console.log ("Error", "No valid phone number found.");
+         return;
+       }
       let data = {
         askOxyOfers: "ROTARIAN",
-        id: userData.userId,
-        mobileNumber: userData.whatsappNumber,
+        userId: userData.userId,
+        mobileNumber: number,
         projectType: "ASKOXY",
       };
       console.log(data);
       setLoading(true);
       axios({
         method: "post",
-        url: 
-        // userStage == "test" ? 
-        BASE_URL + "marketing-service/campgin/askOxyOfferes" ,
-        // : BASE_URL + "auth-service/auth/askOxyOfferes",
+        url: BASE_URL + "marketing-service/campgin/askOxyOfferes",
         data: data,
       })
         .then((response) => {
@@ -67,7 +136,7 @@ const MyRotary = ({navigation}) => {
             Alert.alert("Failed", error.response.data);
           }
         });
-    }
+    
   }
   return (
     <ScrollView style={styles.container}>
@@ -103,6 +172,8 @@ const MyRotary = ({navigation}) => {
           </Text>
         </View>
 
+{AlreadyInterested==false?
+<>
         {/* Button */}
         {loading == false ? (
           <TouchableOpacity
@@ -120,6 +191,16 @@ const MyRotary = ({navigation}) => {
             </Text>
           </View>
         )}
+        </>
+        :
+        <View
+            style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
+          >
+            <Text style={styles.buttonText}>Already Participated</Text>
+          </View>
+        }
+
+
       </View>
     </ScrollView>
   );

@@ -13,7 +13,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import { COLORS } from "../../../../Redux/constants/theme";
-
+import AntDesign from "react-native-vector-icons/AntDesign";
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../../../Config";
 const { width, height } = Dimensions.get("window");
@@ -128,22 +128,24 @@ const OrderScreen = () => {
   };
 
   // Render each order
-  const renderOrder = ({ item }) => (
-    <TouchableOpacity
-      style={styles.orderList}
-      onPress={() => orderDetails(item)}
-    >
-      <View style={styles.imageContainer}>
-        <Image
-          source={require("../../../../assets/tick.png")}
-          style={styles.tickImage}
-        />
-      </View>
-      <View style={styles.orderInfo}>
-        {/* <Text style={styles.date}>{item?.orderDate?.slice(0, 10)}</Text> */}
+const renderOrder = ({ item }) => (
+  <>
+
+  <TouchableOpacity onPress={()=>orderDetails(item)}>
+    <View style={styles.orderView}>
         <Text style={styles.date}>
           {formatDate(item?.orderDate)}
         </Text>
+
+        <View style={styles.orderList}>
+          <View style={styles.imageContainer}>
+          <Image
+            source={require("../../../../assets/tick.png")}
+            style={styles.tickImage}
+          />
+        </View>
+        <View style={styles.orderInfo}>
+       
         <Text style={styles.orderId}>
           Order Id: <Text>{item.newOrderId}</Text>
         </Text>
@@ -160,8 +162,24 @@ const OrderScreen = () => {
           Status: {getOrderStatusText(item.orderStatus)}
         </Text>
       </View>
-    </TouchableOpacity>
-  );
+        </View>
+
+{item.timeSlot!=""?
+  <View style={{backgroundColor:"#f1f1f1", padding:10, borderRadius:10, marginTop:10}}>
+  <Text>
+    <AntDesign name="clockcircle" size={15} />
+    <Text style={{fontSize:16, fontWeight:"bold", marginLeft:10}}> {item.dayOfWeek} ({item.timeSlot})</Text>
+  </Text>
+</View>:null}
+
+
+    </View>
+  </TouchableOpacity>
+ 
+
+
+  </>
+);
 
   if (loading) {
     return (
@@ -229,17 +247,26 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#555",
   },
+  orderView:{
+    backgroundColor:"white",
+    width:width*0.9,
+    borderRadius:10,
+    padding:10,
+    alignSelf:"center",
+    margin:10,
+    elevation:5
+  },
   orderList: {
-    backgroundColor: "#fff",
+    // backgroundColor: "#fff",
     borderRadius: 10,
     padding: 15,
-    marginVertical: 10,
+    // marginVertical: 10,
     flexDirection: "row",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 5,
-    elevation: 3,
+    // shadowColor: "#000",
+    // shadowOpacity: 0.1,
+    // shadowOffset: { width: 0, height: 1 },
+    // shadowRadius: 5,
+    // elevation: 3,
     // paddingBottom:100
   },
   imageContainer: {

@@ -230,6 +230,23 @@ const profile =async()=>{
     );
   };
 
+  const arrangeCategories = (categories) => {
+    if (!categories || categories.length === 0) return [];
+    
+    // Find the exact "Sample Rice" category
+    const sampleRiceIndex = categories.findIndex(cat => 
+      cat.categoryName === "Sample Rice");
+    
+    // If "Sample Rice" category is found, move it to the first position
+    if (sampleRiceIndex !== -1) {
+      const result = [...categories];
+      const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
+      return [sampleRiceCategory, ...result];
+    }
+    
+    return categories;
+  };
+
 useEffect(()=>{
   getAllCampaign();
   getRiceCategories()
@@ -443,48 +460,59 @@ const handleCopy = async () => {
       </View>
 
       <FlatList
-        data={getCategories}
-        keyExtractor={(item,index) => index}
-        numColumns={2}
-        showsVerticalScrollIndicator={false}
-        columnWrapperStyle={{ justifyContent: "space-evenly", marginTop: 10 }}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              backgroundColor: "#ffff",
-              borderRadius: 10,
-              padding: 10,
-              width: "45%",
-              height: "100%",
-              marginBottom: 15,
-              position: "relative",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-            }}
-          >
-            <TouchableOpacity onPress={()=>navigation.navigate("Rice Products",{screen:"Rice Products",category:item.categoryName})}>
-            <Image
-              source={{ uri: item.categoryLogo }}
-              style={{ width: width/2.8, height: 150, borderRadius: 10 ,alignSelf:"center"}}
-            />
-            </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 5,alignSelf:"center" }}>{item.categoryName}</Text>
-           <TouchableOpacity style={{backgroundColor:"#b1a9c6",padding:10,borderRadius:10,marginTop:10,alignItems:"center",left:0,bottom:0,top:0,right:0}} 
-           
-            onPress={()=>navigation.navigate("Rice Products",{screen:"Rice Products",category:item.categoryName})}
-            >
-              <Text>Show Items</Text>
-           </TouchableOpacity>
-            
-          </View>
-        )}
-      />
+  data={arrangeCategories(getCategories)}
+  keyExtractor={(item, index) => index.toString()}
+  numColumns={2}
+  showsVerticalScrollIndicator={false}
+  columnWrapperStyle={{ justifyContent: "space-evenly", marginTop: 10 }}
+  renderItem={({ item }) => (
+    <View
+      style={{
+        backgroundColor: "#ffff",
+        borderRadius: 10,
+        padding: 10,
+        width: "45%",
+        height: "100%",
+        marginBottom: 15,
+        position: "relative",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+      }}
+    >
+      <TouchableOpacity onPress={() => navigation.navigate("Rice Products", { screen: "Rice Products", category: item.categoryName })}>
+        <Image
+          source={{ uri: item.categoryLogo }}
+          style={{ width: width/2.8, height: 150, borderRadius: 10, alignSelf: "center" }}
+        />
+      </TouchableOpacity>
+      <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 5, alignSelf: "center" }}>{item.categoryName}</Text>
+      <TouchableOpacity 
+        style={{
+          backgroundColor: "#b1a9c6",
+          padding: 10,
+          borderRadius: 10,
+          marginTop: 10,
+          alignItems: "center",
+          left: 0,
+          bottom: 0,
+          top: 0,
+          right: 0
+        }} 
+        onPress={() => navigation.navigate("Rice Products", { screen: "Rice Products", category: item.categoryName })}
+      >
+        <Text>Show Items</Text>
+      </TouchableOpacity>
+    </View>
+  )}
+/>
+      {userData!=null&&(
       <View style={{marginBottom:10,marginTop:height*0.05}}>
          <FreeSampleScreen />
          </View>
+      )}
 </View>
       
 </ScrollView>

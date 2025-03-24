@@ -135,8 +135,8 @@ const CheckOut = ({ navigation, route }) => {
           pincode: route.params.locationdata.pincode,
           address: route.params.locationdata.address,
           addressType: route.params.locationdata.type,
-          latitude: "",
-          longitude: "",
+          latitude: route.params.locationdata.latitude,
+          longitude: route.params.locationdata.longitude,
         });
       }
       return () => {
@@ -217,52 +217,7 @@ const CheckOut = ({ navigation, route }) => {
   };
 
   let alertShown = false;
-  // const handlePlaceOrder = async () => {
-  //   console.log({ grandTotal });
-  //   console.log("locationdata==================================", locationData);
-  //   console.log("addresslist", addressList);
-  //   const value =
-  //     locationData.address +
-  //     "," +
-  //     locationData.landMark +
-  //     "," +
-  //     locationData.pincode;
-  //   if (
-  //     !alertShown &&
-  //     (locationData.address == "" || locationData.address == null) &&
-  //     (addressList == null || addressList.length == 0)
-  //   ) {
-  //     Alert.alert(
-  //       "Address is Mandatory",
-  //       "Please select an address / Add new address before proceeding.",
-  //       [{ text: "OK", onPress: () => navigation.navigate("Address Book") }]
-  //     );
-  //     alertShown = true;
-  //     return false;
-  //   }
-  //   if (value != null || value != "") {
-  //     const { status, isWithin, distanceInKm, coord1 } = await getCoordinates(
-  //       value
-  //     );
-  //     // console.log("results for checkout",results);
-  //     if (isWithin == true) {
-  //       console.log("within radius");
-  //       if (grandTotal == 0 || grandTotal == null) {
-  //         setGrandStatus(true);
-  //         Alert.alert(
-  //           "Sorry",
-  //           "your cart is empty. Please add some items to your cart."
-  //         );
-  //         return false;
-  //       } else {
-  //         navigation.navigate("Order Summary", { addressData: locationData });
-  //       }
-  //     } else {
-  //       console.log("not within radius");
-  //       return false;
-  //     }
-  //   }
-  // };
+
 
   const handlePlaceOrder = async () => {
     console.log({ grandTotal });
