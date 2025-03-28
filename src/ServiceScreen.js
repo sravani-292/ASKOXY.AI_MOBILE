@@ -16,7 +16,7 @@ import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AccessToken } from "../Redux/action/index";
 import FreeSampleScreen from "./FreeSample";
-
+import RiceLoader from "./Screens/View/ShoppingCart/RiceLoader";
 
 const services = [
   { id: "1", name: "Oxyloans", image: require("../assets/oxyloans.jpg"),screen:"OXYLOANS" },
@@ -525,6 +525,7 @@ const handleCopy = async () => {
           loop
           style={{ width: 200, height: 200 }}
         />
+        {/* <RiceLoader/> */}
         </View>
         }
 

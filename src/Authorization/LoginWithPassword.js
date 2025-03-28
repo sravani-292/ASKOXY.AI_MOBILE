@@ -226,9 +226,8 @@ if(authMethod=="whatsapp"){
       style={{ flex: 1, backgroundColor: "#fff" }}
       behavior="padding"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={{ backgroundColor: "#fff", flex: 1 }}>
-          {/* Top Images */}
           <View>
             <View>
               <Image

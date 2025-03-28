@@ -373,7 +373,7 @@ const ProfileScreen = () => {
         </View>
       )}
       
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         
         {/* Personal Information Section */}
         <View style={styles.card}>

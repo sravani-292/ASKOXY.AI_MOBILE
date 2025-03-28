@@ -27,7 +27,7 @@ import { useNavigationState } from '@react-navigation/native';
 import { isWithinRadius } from "../Address/LocationService";
 import LottieView from "lottie-react-native";
 import { ScrollView } from "react-native-gesture-handler";
-
+import RiceLoader from "./RiceLoader";
 const Rice = () => {
   const userData = useSelector((state) => state.counter);
   const navigation = useNavigation();
@@ -216,12 +216,13 @@ const Rice = () => {
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
-        <LottieView 
+        {/* <LottieView 
           source={require("../../../../assets/AnimationLoading.json")}
           autoPlay
           loop
           style={{ width: 200, height: 200 }}
-        />
+        /> */}
+        <RiceLoader/>
       </View>
     );
   }

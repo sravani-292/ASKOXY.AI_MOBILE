@@ -13,11 +13,12 @@ import {
   Dimensions,
   BackHandler,
   useColorScheme,
+  TouchableWithoutFeedback,
+  Keyboard
 } from "react-native";
 import axios from "axios";
 import { TextInput } from "react-native-paper";
 import { StatusBar } from "expo-status-bar";
-// import { Ionicons } from '@expo/vector-icons';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import PhoneInput from "react-native-phone-number-input";
@@ -33,8 +34,7 @@ import BASE_URL, { userStage } from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
-// import dynamicLinks from '@react-native-firebase/dynamic-links';
-// import { initializeApp } from '@react-native-firebase/app';
+
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +47,7 @@ const Login = () => {
     loading: false,
   });
   const [isTelugu, setIsTelugu] = useState(true);
-  const theme = useColorScheme(); // Returns 'light' or 'dark'
+  const theme = useColorScheme(); 
 
   // console.log({ BASE_URL });
   const phoneInput = React.createRef();
@@ -143,7 +143,6 @@ const Login = () => {
 
 
   const handleSendOtp = async () => {
-    // console.log("sdmbv",authMethod,countryCode,whatsappNumber)
     if (authMethod === "whatsapp") {
       if (whatsappNumber == "" || whatsappNumber == null) {
         setWhatsappNumber_Error(true);
@@ -182,7 +181,9 @@ const Login = () => {
             registrationType: "sms",
           };
     console.log({ data });
-    setFormData({ ...formData, loading: true });
+    console.log("Before API call, loading:", formData.loading);
+    setFormData(prev => ({ ...prev, loading: true }));
+    console.log("After setting loading, loading:", formData.loading);
     axios({
       method: "post",
       url: BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
@@ -218,9 +219,7 @@ const Login = () => {
             onPress: () => navigation.navigate("RegisterScreen"),
           },
         ]);
-        // if (error.response.status == 400) {
-        //   navigation.navigate(userStage == "test1" ? "Register1" : "Register");
-        // }
+       
       });
   };
 
@@ -356,13 +355,14 @@ const Login = () => {
   };
 
   return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#fff" }}
       behavior="padding"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="always">
         <View style={{ backgroundColor: "#fff", flex: 1 }}>
-          {/* Top Images */}
+       
           <View>
             <View>
               <Image
@@ -424,8 +424,6 @@ const Login = () => {
              <TouchableOpacity
                onPress={() => setIsTelugu(!isTelugu)}
                style={{
-                //  position: "absolute",
-                //  bottom: 10,
                  right: 10,
                  padding: 4,
                  borderRadius: 5,
@@ -601,7 +599,6 @@ const Login = () => {
             {/* OTP Input (shown only after OTP is sent) */}
             {otpSent && (
               <View style={styles.inputContainer}>
-                {/* <Text style={styles.inputLabel}>Enter OTP</Text> */}
                 <TextInput
                   style={styles.input}
                   placeholder="Enter OTP code"
@@ -699,6 +696,7 @@ const Login = () => {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 };
 

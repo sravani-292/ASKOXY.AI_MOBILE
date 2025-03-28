@@ -60,9 +60,15 @@ const PaymentDetails = ({ navigation, route }) => {
   const [timeSlots, setTimeSlots] = useState([]); 
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); 
   const [selectedDate, setSelectedDate] = useState("");  
-  const [selectedDayName, setSelectedDayName] = useState("");  
+  const [selectedDayName, setSelectedDayName] = useState(""); 
+  const [days, setDays] = useState([]);
   const [showButtons, setShowButtons] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [orderDate, setOrderDate] = useState(new Date());
+  const [updatedDate, setUpdatedate] = useState();
+  
+  
+  const [slotsData,setSlotsData]=useState()
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -72,47 +78,84 @@ const PaymentDetails = ({ navigation, route }) => {
   const items = route.params?.items || [];
 
 
-const getDayOfWeek = (offset) => {
-  const targetDate = new Date();
-  targetDate.setDate(targetDate.getDate() + offset);
+// const getDayOfWeek = (offset) => {
+//   const targetDate = new Date();
+//   targetDate.setDate(targetDate.getDate() + offset);
   
-   const day = targetDate.getDate().toString().padStart(2, "0");
-   const month = (targetDate.getMonth() + 1).toString().padStart(2, "0"); 
-   const year = targetDate.getFullYear();
+//    const day = targetDate.getDate().toString().padStart(2, "0");
+//    const month = (targetDate.getMonth() + 1).toString().padStart(2, "0"); 
+//    const year = targetDate.getFullYear();
  
-   const formattedDate = `${day}-${month}-${year}`;
+//    const formattedDate = `${day}-${month}-${year}`;
 
-  const dayName = targetDate.toLocaleDateString("en-GB", { weekday: "long" });
+//   const dayName = targetDate.toLocaleDateString("en-GB", { weekday: "long" });
 
-  return { label: `${dayName} (${formattedDate})`, value: dayName.toUpperCase()
-};
-};
+//   return { label: `${dayName} (${formattedDate})`, value: dayName.toUpperCase()
+// };
+// };
 
-const days = [
-  getDayOfWeek(1),
-  getDayOfWeek(2),
-  getDayOfWeek(3),
-];
+// const days = [
+//   getDayOfWeek(1),
+//   getDayOfWeek(2),
+//   getDayOfWeek(3),
+// ];
 
-console.log(days);
+// console.log(days);
 
   
 
-  const fetchTimeSlots = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}order-service/fetchTimeSlotlist`
-      );
-      
+const fetchTimeSlots = async () => { 
+  try { 
+      const response = await axios.get(`${BASE_URL}order-service/fetchTimeSlotlist`);
       const data = response.data;
+      console.log({ data });
 
-      const filteredDays = data.filter(day => day);
-      setAvailableDays(filteredDays);
-      
-    } catch (error) {
+     setSlotsData(data)
+     let updatedOrderDate = new Date();
+     updatedOrderDate.setDate(updatedOrderDate.getDate() + 1);
+     setOrderDate(updatedOrderDate);
+     
+     const tomorrowDate = updatedOrderDate
+       .toLocaleDateString("en-GB") // "en-GB" gives "DD/MM/YYYY"
+       .split("/")
+       .join("-"); 
+     
+     console.log("New Date (Updatedate):", tomorrowDate);
+     setUpdatedate(tomorrowDate);
+     
+      // Get the next 7 days, starting from tomorrow
+      const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date(updatedOrderDate);
+          date.setDate(updatedOrderDate.getDate() + i);
+          const formattedDate = `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}-${date.getFullYear()}`;
+          return {
+              dayOfWeek: date.toLocaleDateString("en-GB", { weekday: "long" }).toUpperCase(),
+              formattedDate: formattedDate, 
+          };
+      });
+
+      console.log("Next seven days:", nextSevenDays);
+
+      const availableDays = nextSevenDays.filter(day => {
+          const matchedDay = data.find(d => d.dayOfWeek === day.dayOfWeek);
+          return matchedDay && matchedDay.isAvailable === true; 
+      }).slice(0, 3); 
+
+      console.log("Filtered available days:", availableDays);
+
+      const transformedDays = availableDays.map(day => ({
+          label: `${day.dayOfWeek} ( ${day.formattedDate})`,
+          value: day.dayOfWeek,
+      }));
+
+      console.log("Transformed days:", transformedDays);
+      setDays(transformedDays);
+  } catch (error) {
       console.error("Error fetching time slots:", error);
-    }
-  };
+  }
+};
   
   const checkOfferEligibility = async (customerId) => {
     try {
@@ -175,37 +218,38 @@ console.log(days);
 
   const handleDayChange = (selectedDay) => {
     setSelectedDay(selectedDay);
-  
-    // Find the offset for the selected day
-    const today = new Date();
-    const todayIndex = today.getDay();
-    const daysOfWeek = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
-    const selectedIndex = daysOfWeek.indexOf(selectedDay);
-    
-    let offset = (selectedIndex - todayIndex + 7) % 7;
-    if (offset === 0) offset = 7; 
-  
-    const targetDate = new Date();
-    targetDate.setDate(today.getDate() + offset);
-  
-    const formattedDate = [
-      targetDate.getDate().toString().padStart(2, "0"), 
-      (targetDate.getMonth() + 1).toString().padStart(2, "0"), 
-      targetDate.getFullYear(), 
-    ].join("-"); 
-    console.log(formattedDate); 
-  
-    setSelectedDate(formattedDate);
-    setSelectedDayName(selectedDay);
-  
-    const selectedDayData = availableDays.find(d => d.dayOfWeek === selectedDay);
-    setTimeSlots(selectedDayData ? [
-      selectedDayData.timeSlot1,
-      selectedDayData.timeSlot2,
-      selectedDayData.timeSlot3,
-      selectedDayData.timeSlot4,
-    ] : []);
-  };
+    console.log("selectedDay", selectedDay);
+    console.log("Days array before filtering:", days);
+    console.log("Available Days:", days.map((d) => `"${d.value}"`));
+    console.log("Selected Day:", `"${selectedDay}"`);
+
+    const selectedDayData = days.find(
+      (d) => d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
+    );
+
+    console.log({ selectedDayData });
+
+    if (selectedDayData) {
+      const fullDayData = slotsData.find((d) => d.dayOfWeek === selectedDay);
+
+      if (fullDayData) {
+        setSelectedDate(selectedDayData.formattedDate || ""); 
+        setTimeSlots(
+          [
+            fullDayData.timeSlot1,
+            fullDayData.timeSlot2,
+            fullDayData.timeSlot3,
+            fullDayData.timeSlot4,
+          ]
+          // .filter(Boolean) 
+        );
+      } else {
+        setTimeSlots([]);
+      }
+    } else {
+      setTimeSlots([]);
+    }
+};
 
 
   const totalCart = async () => {
@@ -350,7 +394,7 @@ console.log(days);
     // setDeliveryBoyFee(200);
   }, [grandTotalAmount, deliveryBoyFee]);
 
-  // get wallet amount
+  
   const getWalletAmount = async () => {
     try {
       const response = await axios.post(
@@ -385,10 +429,10 @@ console.log(days);
   };
 
  
-  // Handle checkbox toggle
+ 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-    // console.log({ newValue });
+   
     setUseWallet(newValue);
     getWalletAmount();
 
@@ -463,6 +507,7 @@ console.log(days);
     postData = {
       address: addressDetails.address,
       amount: grandTotalAmount,
+     
       customerId: customerId,
       flatNo: addressDetails.flatNo,
       landMark: addressDetails.landMark,
@@ -477,8 +522,8 @@ console.log(days);
       subTotal:subTotal,
       gstAmount:totalGstSum,
       orderFrom:"MOBILE",
-      dayOfWeek: selectedDayName,
-      expectedDeliveryDate: selectedDate,
+      dayOfWeek: selectedDay,
+      expectedDeliveryDate: updatedDate,
       timeSlot: selectedTimeSlot,
       latitude:addressDetails.latitude,
       longitude:addressDetails.longitude
@@ -556,8 +601,8 @@ console.log(days);
          
           const data = {
             mid: "1152305",
-            amount: grandTotalAmount,
-            // amount: 1,
+            // amount: grandTotalAmount,
+            amount: 1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -678,7 +723,7 @@ console.log(days);
   const getOffers = async () => {
     setLoading(true);
     try {
-      // Updated API URL and headers
+     
       const response = await axios.get(
       BASE_URL+"order-service/getAllCoupons",
         {
@@ -695,7 +740,7 @@ console.log(days);
       setLoading(false);
     }
   };
-  //for applying coupen
+ 
   const handleApplyCoupon = () => {
     const data = {
       couponCode: couponCode.toUpperCase(),
@@ -713,7 +758,7 @@ console.log(days);
       .then((response) => {
         // console.log("coupen applied", response.data);
         const { discount, grandTotal } = response.data;
-        // setGrandTotal(grandTotal);
+       
         setCoupenDetails(discount);
         Alert.alert(response.data.message);
         setCoupenApplied(response.data.couponApplied);
@@ -789,9 +834,9 @@ console.log(days);
             // console.log({ responseurl });
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
-            // console.log("Payment Result", data);
+            console.log("Payment Result", data);
             setPaymentStatus(data.paymentStatus);
-            // console.log(data.paymentStatus);
+            console.log(data.paymentStatus);
             if (
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILED"
@@ -1030,15 +1075,7 @@ console.log(days);
             </Picker>
           </View>
 
-          {/* <TouchableOpacity
-            style={[
-              styles.button,
-              selectedTimeSlot ? styles.buttonActive : styles.buttonDisabled,
-            ]}
-            disabled={!selectedTimeSlot}
-          >
-            <Text style={styles.buttonText}>Confirm</Text>
-          </TouchableOpacity> */}
+         
         </>
       )}
     </View> 

@@ -361,7 +361,7 @@ const ItemDetails = ({ route, navigation }) => {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, padding: 5 }}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
       >
         <View style={styles.infoContainer}>
           {/* Item Info */}

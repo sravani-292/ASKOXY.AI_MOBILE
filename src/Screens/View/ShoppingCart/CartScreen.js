@@ -484,7 +484,7 @@ useFocusEffect(
   };
 
   const removeCartItem = async (item) => {
-    console.log("item to remove", item);
+    console.log("item to remove", item.cartId);
     try {
       const response = await axios.delete(
         BASE_URL + "cart-service/cart/remove",
@@ -500,7 +500,8 @@ useFocusEffect(
       );
 
       console.log("Item",item.itemId)
-
+      console.log("removal response",response);
+      
       // if(item.itemId= (containerAddedPrice?hasWeight=="26kgs"?CONTAINER_TYPES.LARGE.id:CONTAINER_TYPES.SMALL.id:0)){
       //   console.log(containerAddedPrice?hasWeight=="26kgs"?CONTAINER_TYPES.LARGE.id:CONTAINER_TYPES.SMALL.id:0)
       //   setContainerAddedPrice(false)
@@ -528,7 +529,7 @@ useFocusEffect(
 
       
     } catch (error) {
-      console.error("Error removing cart item:", error);
+      console.error("Error removing cart item:", error.response);
     }
   };
 

@@ -153,7 +153,7 @@ const AddAddress = () => {
         style={{ justifyContent: "center", flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <ScrollView>
+        <ScrollView keyboardShouldPersistTaps="handled">
           <View style={{ borderColor: "black", borderWidth: 2, height: 400, borderRadius: 25 }}>
             <Text style={{ textAlign: "center", fontSize: 18, color: "green", fontWeight: "700", marginTop: 10 }}>
               Add your Address

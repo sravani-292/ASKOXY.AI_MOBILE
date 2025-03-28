@@ -20,7 +20,7 @@ import { useSelector } from "react-redux";
 import Checkbox from "expo-checkbox";
 import { COLORS } from "../../../../Redux/constants/theme";
 
-import BASE_URL,{userStage} from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
 const OrderDetails = () => {
@@ -42,8 +42,8 @@ const OrderDetails = () => {
   const [isExchangeComplete, setIsExchangeComplete] = useState(false);
   const [comments, setComments] = useState();
   const [orderFeedback, setOrderFeedback] = useState([]);
-  console.log("order id",order_id);
-  
+  console.log("order id", order_id);
+
   const emojis = [
     { emoji: "😡", label: "Very Bad", color: "#FFB3B3", value: "POOR" },
     { emoji: "😟", label: "Bad", color: "#FFD9B3", value: "BELOWAVERAGE" },
@@ -78,7 +78,7 @@ const OrderDetails = () => {
 
     axios({
       method: "post",
-      url: BASE_URL+"order-service/submitfeedback",
+      url: BASE_URL + "order-service/submitfeedback",
       data: data,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -90,7 +90,7 @@ const OrderDetails = () => {
           {
             text: "OK",
             onPress: () => {
-              feedbackGet(); 
+              feedbackGet();
             },
           },
         ]);
@@ -112,7 +112,9 @@ const OrderDetails = () => {
     setLoading(true);
     axios({
       method: "get",
-      url: BASE_URL+`order-service/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
+      url:
+        BASE_URL +
+        `order-service/feedback?feedbackUserId=${customerId}&orderid=${order_id}`,
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -123,7 +125,7 @@ const OrderDetails = () => {
         setLoading(false);
       })
       .catch((error) => {
-        console.log("error",error.response);
+        console.log("error", error.response);
       });
   };
 
@@ -133,10 +135,10 @@ const OrderDetails = () => {
 
   const getOrderDetails = async () => {
     console.log("getting order details");
-    
+
     const data = {
       method: "get",
-      url: BASE_URL+"order-service/getOrdersByOrderId/" + order_id,
+      url: BASE_URL + "order-service/getOrdersByOrderId/" + order_id,
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -146,20 +148,18 @@ const OrderDetails = () => {
     try {
       const response = await axios(data);
       // Update order data
-      console.log("order data",response.data);
-      
+      console.log("order data", response.data);
+
       setOrderData(response.data);
 
       const orderStatus = response.data[0].orderStatus;
       setOrderStatus(orderStatus);
-
     } catch (error) {
       // console.error("Error fetching order details:", error.response);
     }
   };
 
   const toggleExchangeItemSelection = (id, quantity) => {
-
     setSelectedCancelItems((prev) => ({
       ...prev,
       [id]: prev[id]
@@ -246,6 +246,7 @@ const OrderDetails = () => {
   const {
     customerName,
     customerMobile,
+    mobileNumber,
     grandTotal,
     orderItems,
     deliveryFee,
@@ -256,9 +257,9 @@ const OrderDetails = () => {
     walletAmount,
     subTotal,
     gstAmount,
-    discountAmount
+    discountAmount,
   } = orderDetails;
-  // console.log("Order details",orderDetails);
+  console.log("Order details", orderDetails);
 
   const toggleCancelItemSelection = (id) => {
     setSelectedCancelItems((prev) => ({
@@ -373,7 +374,7 @@ const OrderDetails = () => {
                     <Text style={styles.itemName}>{item.itemName}</Text>
                     <Text style={styles.itemDetail}>{item.quantity}</Text>
                     <Text style={styles.itemDetail}>
-                      ₹{item.price/item.quantity}
+                      ₹{item.price / item.quantity}
                     </Text>
 
                     <Text style={styles.itemDetail}>₹{item.price}</Text>
@@ -437,7 +438,6 @@ const OrderDetails = () => {
                           onPress={handleSubmit}
                           style={styles.sendBtn}
                         >
-                       
                           <Icon name="send" size={20} color="white" />
                         </TouchableOpacity>
                       ) : (
@@ -458,23 +458,30 @@ const OrderDetails = () => {
             ) : (
               // <Text>{orderstatus}</Text>
               <View>
-                 <Text style={styles.feedbackTitle}>Your Submitted Feedback</Text>
+                <Text style={styles.feedbackTitle}>
+                  Your Submitted Feedback
+                </Text>
 
                 <View>
-       
-  <View style={styles.feedbackContainer}>
-  <View style={styles.feedbackBox}>
-    <View style={styles.feedbackRow}>
-      <Text style={styles.feedbackLabel}>Feedback Status :</Text>
-      <Text style={styles.feedbackText}>{orderFeedback[0]?.feedbackStatus || "Not Available"}</Text>
-    </View>
-    <View style={styles.feedbackRow}>
-      <Text style={styles.feedbackLabel}>Comments :</Text>
-      <Text style={styles.feedbackText}>{orderFeedback[0]?.comments || "No comments provided"}</Text>
-    </View>
-  </View>
-</View>
-              </View>
+                  <View style={styles.feedbackContainer}>
+                    <View style={styles.feedbackBox}>
+                      <View style={styles.feedbackRow}>
+                        <Text style={styles.feedbackLabel}>
+                          Feedback Status :
+                        </Text>
+                        <Text style={styles.feedbackText}>
+                          {orderFeedback[0]?.feedbackStatus || "Not Available"}
+                        </Text>
+                      </View>
+                      <View style={styles.feedbackRow}>
+                        <Text style={styles.feedbackLabel}>Comments :</Text>
+                        <Text style={styles.feedbackText}>
+                          {orderFeedback[0]?.comments || "No comments provided"}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
               </View>
             )}
           </View>
@@ -490,10 +497,14 @@ const OrderDetails = () => {
           </Text>
           <Text style={styles.detailText}>
             Mobile:{" "}
-            <Text style={styles.detailValue}>{customerMobile}</Text>
+            <Text style={styles.detailValue}>
+              {mobileNumber ? mobileNumber : customerMobile}
+            </Text>
           </Text>
+
           <Text style={styles.detailText}>
-            Pincode: <Text style={styles.detailValue}>{orderAddress?.pincode}</Text>
+            Pincode:{" "}
+            <Text style={styles.detailValue}>{orderAddress?.pincode}</Text>
           </Text>
           <Text style={styles.detailText}>Address:</Text>
           <Text style={styles.detailValue}>
@@ -519,27 +530,27 @@ const OrderDetails = () => {
             <Text style={styles.value}>+{deliveryFee}</Text>
           </View>
           {/* Gst */}
-          {(gstAmount!=null && gstAmount!=0)&&(
-          <View style={styles.row}>
-            <Text style={styles.label}>GST:</Text>
-            <Text style={styles.value}>+{gstAmount.toFixed(2)}</Text>
-          </View>
+          {gstAmount != null && gstAmount != 0 && (
+            <View style={styles.row}>
+              <Text style={styles.label}>GST:</Text>
+              <Text style={styles.value}>+{gstAmount.toFixed(2)}</Text>
+            </View>
           )}
           {/* coupen value */}
-          {(couponValue != null && couponValue !=0) && (
+          {couponValue != null && couponValue != 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>Coupon Value:</Text>
               <Text style={styles.value}>-₹{couponValue}</Text>
             </View>
           )}
           {/* wallet amount */}
-          {(walletAmount != null && walletAmount!=0)&& (
+          {walletAmount != null && walletAmount != 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>Wallet Amount:</Text>
               <Text style={styles.value}>-₹{walletAmount}</Text>
             </View>
           )}
-            {(discountAmount != null && discountAmount!=0)&& (
+          {discountAmount != null && discountAmount != 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>Coupon Applied:</Text>
               <Text style={styles.value}>-₹{discountAmount}</Text>
@@ -548,7 +559,9 @@ const OrderDetails = () => {
           {/* Payment Type */}
           <View style={styles.row}>
             <Text style={styles.label}>Payment Type:</Text>
-            <Text style={styles.value}>{paymentType == 2 ? "ONLINE" : "COD"}</Text>
+            <Text style={styles.value}>
+              {paymentType == 2 ? "ONLINE" : "COD"}
+            </Text>
           </View>
           {/* Order Status */}
           <View style={styles.row}>
@@ -640,7 +653,9 @@ const OrderDetails = () => {
 
         <TouchableOpacity
           style={styles.cancelButton}
-          onPress={() => navigation.navigate("Write To Us",{orderId:order_id})}
+          onPress={() =>
+            navigation.navigate("Write To Us", { orderId: order_id })
+          }
         >
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>
@@ -872,7 +887,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#ddd",
   },
   itemName: {
-    paddingLeft:1,
+    paddingLeft: 1,
     fontSize: 13,
     flex: 1.5,
     color: "#000",
@@ -994,7 +1009,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-   
   },
   headerText1: {
     flex: 1,
@@ -1222,26 +1236,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     // backgroundColor: "#fff",
   },
-  heading:{
-    color:COLORS.services
+  heading: {
+    color: COLORS.services,
   },
   feedbackContainer: {
     marginVertical: 15,
     // paddingHorizontal: 10,
-      backgroundColor: "#dcdcdc",
-      width:width*0.9,
-      borderRadius:10
+    backgroundColor: "#dcdcdc",
+    width: width * 0.9,
+    borderRadius: 10,
   },
   feedbackTitle: {
     fontSize: 17,
     fontWeight: "bold",
     marginBottom: 10,
-    textAlign:"left"
+    textAlign: "left",
   },
   feedbackBox: {
     padding: 15,
-    borderRadius:40,
-    
+    borderRadius: 40,
   },
   feedbackRow: {
     flexDirection: "row",

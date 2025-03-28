@@ -154,7 +154,7 @@ const AbroadCategories = ({ navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} >
       {/* Top Heading */}
       <Text style={styles.topHeading}>
         🌍 World's #1 AI & Blockchain-Based Platform for University Admissions

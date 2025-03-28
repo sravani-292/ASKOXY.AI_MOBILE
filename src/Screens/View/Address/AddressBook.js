@@ -195,7 +195,6 @@ setSaveLoader(true)
     } else {
       console.log("Address not saved as it is outside the radius.");
       setSaveLoader(false)
-      // alert("Address not saved. It is outside the allowed distance.");
       setNewAddress({
         address: "",
         flatNo: "",
@@ -251,7 +250,7 @@ setSaveLoader(true)
       ) : (
         <>
           <View>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={styles.noteText}>
         <Text style={styles.noteLabel}>Note:</Text> Order will be delivered within a 20 km radius only
       </Text>            

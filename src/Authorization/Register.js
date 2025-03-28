@@ -426,7 +426,7 @@ const Register = () => {
       style={{ flex: 1, backgroundColor: "#fff" }}
       behavior="padding"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="always">
         <View style={{ backgroundColor: "#fff", flex: 1 }}>
           {/* Top Images */}
           <View>

@@ -35,7 +35,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
-
+import RiceLoader from "./RiceLoader";
 const UserDashboard = ({route}) => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -432,6 +432,7 @@ const UserDashboard = ({route}) => {
           loop
           style={{ width: 200, height: 200 }}
         />
+        {/* <RiceLoader/> */}
       </View>
     );
   }
@@ -889,8 +890,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 5,
-    width:120,
-    height:height/19,
+    width:width*0.35,
+    height:height/11,
     alignSelf:"center"
   },
   priceContainer: {
