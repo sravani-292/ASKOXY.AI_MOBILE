@@ -22,6 +22,7 @@ import BASE_URL, { userStage } from "../../../../Config";
 const { width, height } = Dimensions.get("window");
 import { Picker } from "@react-native-picker/picker";
 import { Modal } from "react-native-paper";
+import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
 
 const OrderScreen = () => {
@@ -138,7 +139,7 @@ const OrderScreen = () => {
           const matchedDay = data.find(
             (d) => d.dayOfWeek.toUpperCase() === day.dayOfWeek
           );
-          return matchedDay && matchedDay.isAvailable;
+          return matchedDay && matchedDay.isAvailable==true;
         })
         .slice(0, 3);
 
@@ -190,7 +191,7 @@ const OrderScreen = () => {
             fullDayData.timeSlot2,
             fullDayData.timeSlot3,
             fullDayData.timeSlot4,
-          ].filter(Boolean), // Remove empty values
+          ].filter(Boolean), 
         }));
       } else {
         setTimeSlots((prev) => ({
@@ -302,41 +303,43 @@ const OrderScreen = () => {
 
   const renderOrder = ({ item }) => (
     <>
-      <TouchableOpacity onPress={() => orderDetails(item)}>
-        <View style={styles.orderView}>
-          <Text style={styles.date}>{formatDate(item?.orderDate)}</Text>
+     
+ <View style={styles.orderView}>
+      <Text style={styles.date}>{formatDate(item?.orderDate)}</Text>
 
-          <View style={styles.orderList}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={require("../../../../assets/tick.png")}
-                style={styles.tickImage}
-              />
-            </View>
-            <View style={styles.orderInfo}>
-              <Text style={styles.orderId}>
-                Order Id: <Text>{item.newOrderId}</Text>
-              </Text>
-              <Text style={styles.orderAmount}>
-                Amount: Rs. {parseFloat(item.grandTotal).toFixed(2)}
-              </Text>
-              <Text style={styles.paymentType}>
-                Payment: {item.paymentType === 2 ? "ONLINE" : "COD"}
-                {item.paymentType === 2 && item.paymentStatus === 0 && (
-                  <Text style={styles.paymentPending}> (Pending)</Text>
-                )}
-              </Text>
-              <Text style={styles.status}>
-                Status: {getOrderStatusText(item.orderStatus)}
-              </Text>
-            </View>
-          </View>
+      <View style={styles.orderList}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../../../../assets/tick.png")}
+            style={styles.tickImage}
+          />
         </View>
-      </TouchableOpacity>
 
+        <View style={styles.orderInfo}>
+          <Text style={styles.orderId}>
+            Order Id: <Text>{item.newOrderId}</Text>
+          </Text>
+          <Text style={styles.orderAmount}>
+            Amount: Rs. {parseFloat(item.grandTotal).toFixed(2)}
+          </Text>
+          <Text style={styles.paymentType}>
+            Payment: {item.paymentType === 2 ? "ONLINE" : "COD"}
+            {item.paymentType === 2 && item.paymentStatus === 0 && (
+              <Text style={styles.paymentPending}> (Pending)</Text>
+            )}
+          </Text>
+          <Text style={styles.status}>
+            Status: {getOrderStatusText(item.orderStatus)}
+          </Text>
+        </View>
+        <TouchableOpacity onPress={() => orderDetails(item)} style={styles.arrowButton}>
+  <Ionicons name="chevron-forward" size={24} color="black" />
+</TouchableOpacity>
+
+      </View>
       <View style={{ width: width * 0.9, alignSelf: "center" }}>
         {item.timeSlot !== "" && (
-          <View style={styles.card1}>
+          <View style={styles.timeSlotContainer}>
             <View style={styles.infoContainer}>
               <AntDesign name="clockcircle" size={15} color="gray" />
               <Text style={styles.timeText}>
@@ -350,11 +353,11 @@ const OrderScreen = () => {
                       selectedOrderId === item.orderId ? null : item.orderId
                     )
                   }
-                  // onPress={() => toggleOrderSelection(item.orderId)}
+                
                   >
                   <Icon
                     name="edit"
-                    size={18}
+                    size={15}
                     color="#fff"
                     style={styles.icon}
                   />
@@ -362,26 +365,13 @@ const OrderScreen = () => {
               )}
             </View>
 
-            {/* {orderStatus < 3 && (
-        <TouchableOpacity
-          style={styles.updateButton}
-          onPress={() =>
-            setSelectedOrderId(
-              selectedOrderId === item.orderId ? null : item.orderId
-            )
-          }
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Icon name="edit" size={18} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Update</Text>
-          </View>
-        </TouchableOpacity>
-      )} */}
+          
 
             {selectedOrderId === item.orderId && (
               <View style={styles.pickerSection}>
                 <Text style={styles.label}>Select Day:</Text>
                 <View style={styles.pickerContainer}>
+                  <TouchableOpacity>
                   <Picker
                     selectedValue={selectedDay[selectedOrderId]}
                     onValueChange={(e)=>handleDayChange(e,item.orderId)}
@@ -401,6 +391,7 @@ const OrderScreen = () => {
                       />
                     ))}
                   </Picker>
+                  </TouchableOpacity>
                 </View>
 
                 {timeSlots[selectedOrderId]?.length > 0 && (
@@ -449,10 +440,10 @@ const OrderScreen = () => {
         )}
 
        
-        <View
-          style={{ height: 2, backgroundColor: COLORS.services, marginVertical: 12 }}
-        />
+       
       </View>
+    </View>
+    
     </>
   );
 
@@ -711,15 +702,15 @@ const styles = StyleSheet.create({
   },
   updateButton: {
     backgroundColor: COLORS.services,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
     borderRadius: 5,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "flex-end",
-    marginLeft: 5,
-    marginBottom: 5,
+    marginLeft: 15,
+   marginBottom:12
   },
   buttonText: {
     color: "#fff",
@@ -753,6 +744,27 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
+  arrowButton: {
+    padding: 10, 
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  timeSlotContainer: {
+    marginTop: 10,
+    padding: 12,
+    // backgroundColor:COLORS.quantitybutton,
+    backgroundColor:"#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  timeSlotText: {
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#333",
+  },
+  
 });
 
 export default OrderScreen;

@@ -398,18 +398,15 @@ const Register = () => {
 
     try {
       setWhatsappNumber(value);
-      //   if(value.length>13 || value.length<10){
-      //     setValidError(true)
-      //     return false;
-      // }
+    
       console.log({ value });
       const callingCode = phoneInput.getCallingCode(value);
       console.log(callingCode);
       setcountryCode(callingCode);
-      // setWhatsappNumber(value)
+      
       const isValid = /^[0-9]*$/.test(value);
       if (isValid) {
-        setErrorMessage(""); // Clear the error if input is valid
+        setErrorMessage(""); 
         setWhatsappNumber(value);
       } else {
         setErrorMessage(true);
@@ -417,7 +414,7 @@ const Register = () => {
       }
       // console.log(countryCode)
     } catch (error) {
-      // Handle any parsing errors
+      
     }
   };
 

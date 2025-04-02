@@ -224,7 +224,7 @@ const ItemDetails = ({ route, navigation }) => {
     console.log("removed items from cart", cartData);
     console.log("Item", item.itemId);
     const getRemoveId = getCartItemById(item.itemId);
-    // Output result
+   
     console.log("Item found:", getRemoveId);
 
     if (getRemoveId) {
@@ -345,7 +345,7 @@ const ItemDetails = ({ route, navigation }) => {
         <Image source={{ uri: item.itemImage }} style={styles.detailImage} />
         {/* Star Ratings */}
         <View style={styles.ratingContainer}>
-          {/* 4 Full Stars */}
+          
           {[...Array(4)].map((_, index) => (
             <FontAwesome key={index} name="star" size={20} color="gold" />
           ))}
@@ -364,7 +364,7 @@ const ItemDetails = ({ route, navigation }) => {
         showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
       >
         <View style={styles.infoContainer}>
-          {/* Item Info */}
+         
           <View style={styles.infoRow}>
             <Text style={styles.label}>Mrp:</Text>
             <Text style={styles.mrpvalue}>₹ {item.itemMrp}/-</Text>
@@ -377,7 +377,7 @@ const ItemDetails = ({ route, navigation }) => {
           <View style={styles.infoRow}>
             <Text style={styles.label}>Weight:</Text>
             <Text style={styles.value}>
-              {/* {item.quantity} {item.units} */}
+            
               {item.weight} {item.units}
             </Text>
           </View>
@@ -402,11 +402,11 @@ const ItemDetails = ({ route, navigation }) => {
             )}
           </View>
 
-          {/* Action Section */}
+        
           <View style={styles.actionRow}>
             {cartItems[item.itemId] > 0 || loadingItems[item.itemId] ? (
               <View style={styles.quantityContainer}>
-                {/* Decrease Button */}
+              
                 <TouchableOpacity
                   style={styles.quantityButton}
                   onPress={() => handleDecrease(item)}
@@ -415,7 +415,7 @@ const ItemDetails = ({ route, navigation }) => {
                   <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
 
-                {/* Loader or Quantity */}
+               
                 {loadingItems[item.itemId] ? (
                   <ActivityIndicator
                     size="small"
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     height: height / 3,
-    // flexDirection: 'row',
+   
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 10,

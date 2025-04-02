@@ -170,7 +170,7 @@ const CartScreen = () => {
 
   const handleNo = async() => {
     setModalVisible(false);
-    // Save user's decision
+    
     setContainerDecision('no');
     setContainerAddedPrice(false);
     
@@ -361,7 +361,7 @@ const CartScreen = () => {
       console.log("Error fetching cart data:", error);
     });
 }
-// ✅ Call fetchCartData when screen is focused
+
 useFocusEffect(
   useCallback(() => {
     fetchCartData();

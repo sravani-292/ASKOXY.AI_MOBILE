@@ -247,7 +247,7 @@ const Profile = ({ navigation }) => {
       return false;
     }
     if (formData.whatsappNumber.length > 10) {
-      //  setWhatsappNumber_Error(true);
+    
       setFormData({ ...formData, whatsappNumber_error: true });
       return false;
     }
@@ -327,7 +327,7 @@ const Profile = ({ navigation }) => {
         console.log("verification otp",response);
         
         console.log(response.data);
-        // if (response.data.status == false) {
+       
         if(response.status==200){
           Alert.alert("Success", "Whatsapp number verified successfully");
         }
@@ -477,7 +477,7 @@ const Profile = ({ navigation }) => {
               }}
             >
               Verify 
-              {/* Your WhatsApp Number */}
+            
             </Text>
             <MaterialCommunityIcons
               name="whatsapp"
@@ -488,7 +488,7 @@ const Profile = ({ navigation }) => {
           </View>
         </TouchableOpacity>)}
 
-        {/* Form Fields */}
+      
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <View style={styles.inputWrapper}>

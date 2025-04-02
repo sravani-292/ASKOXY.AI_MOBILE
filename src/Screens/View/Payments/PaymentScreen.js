@@ -11,6 +11,8 @@ import {
   TextInput,
   Dimensions,
   ScrollView,
+  Platform,
+  Modal
 } from "react-native";
 import {Picker} from '@react-native-picker/picker';
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
@@ -43,7 +45,6 @@ const PaymentDetails = ({ navigation, route }) => {
   const [coupenApplied, setCoupenApplied] = useState(false);
   const [walletTotal, setWalletTotal] = useState("");
   const [deliveryBoyFee,setDeliveryBoyFee] = useState(0);
-  // wallet states
   const [useWallet, setUseWallet] = useState(false);
   const [totalSum, setTotalSum] = useState("");
   const [walletAmount, setWalletAmount] = useState();
@@ -66,7 +67,8 @@ const PaymentDetails = ({ navigation, route }) => {
   const [orderId, setOrderId] = useState("");
   const [orderDate, setOrderDate] = useState(new Date());
   const [updatedDate, setUpdatedate] = useState();
-  
+  const [isDayPickerVisible, setIsDayPickerVisible] = useState(false);
+  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
   
   const [slotsData,setSlotsData]=useState()
   const [profileForm, setProfileForm] = useState({
@@ -78,29 +80,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const items = route.params?.items || [];
 
 
-// const getDayOfWeek = (offset) => {
-//   const targetDate = new Date();
-//   targetDate.setDate(targetDate.getDate() + offset);
-  
-//    const day = targetDate.getDate().toString().padStart(2, "0");
-//    const month = (targetDate.getMonth() + 1).toString().padStart(2, "0"); 
-//    const year = targetDate.getFullYear();
- 
-//    const formattedDate = `${day}-${month}-${year}`;
 
-//   const dayName = targetDate.toLocaleDateString("en-GB", { weekday: "long" });
-
-//   return { label: `${dayName} (${formattedDate})`, value: dayName.toUpperCase()
-// };
-// };
-
-// const days = [
-//   getDayOfWeek(1),
-//   getDayOfWeek(2),
-//   getDayOfWeek(3),
-// ];
-
-// console.log(days);
 
   
 
@@ -140,7 +120,7 @@ const fetchTimeSlots = async () => {
 
       const availableDays = nextSevenDays.filter(day => {
           const matchedDay = data.find(d => d.dayOfWeek === day.dayOfWeek);
-          return matchedDay && matchedDay.isAvailable === true; 
+          return matchedDay && matchedDay.isAvailable === false; 
       }).slice(0, 3); 
 
       console.log("Filtered available days:", availableDays);
@@ -1040,9 +1020,8 @@ const fetchTimeSlots = async () => {
           </View>
         )}
 
-{/* Delievery slots */}
        
- <View style={styles.container1}>
+ {/* <View style={styles.container1}>
       <Text style={styles.label}>Select Day:</Text>
       <View style={styles.pickerContainer}>
         <Picker
@@ -1050,7 +1029,6 @@ const fetchTimeSlots = async () => {
           onValueChange={handleDayChange}
           style={styles.picker}
         >
-          {/* <Picker.Item label="SELECT A DAY" value="" /> */}
           <Picker.Item label="SELECT A DAY" value="" enabled={false} color="gray" />
 
           {days.map((day) => (
@@ -1074,11 +1052,119 @@ const fetchTimeSlots = async () => {
               ))}
             </Picker>
           </View>
+          </>
+      )}
+    </View> */}
 
-         
+<View style={styles.container}>
+      {/* Select Day */}
+      <Text style={styles.label}>Select Day:</Text>
+      {Platform.OS === "ios" ? (
+        <TouchableOpacity
+          style={styles.iosPickerButton}
+          onPress={() => setIsDayPickerVisible(true)}
+          mode="dropdown"
+          
+        >
+          <Text style={styles.iosPickerText}>
+            {selectedDay ? selectedDay : "SELECT A DAY"}
+          </Text>
+        </TouchableOpacity>
+      ) : (
+        <Picker
+          selectedValue={selectedDay}
+          onValueChange={(value) => setSelectedDay(value)}
+          style={styles.picker}
+        >
+          <Picker.Item label="SELECT A DAY" value="" enabled={false} color="gray" />
+          {days.map((day) => (
+            <Picker.Item key={day.value} label={day.label} value={day.value} />
+          ))}
+        </Picker>
+      )}
+
+      {/* iOS Modal for Day Picker */}
+      {Platform.OS === "ios" && isDayPickerVisible && (
+        <Modal visible={isDayPickerVisible} animationType="slide" transparent>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Picker
+                selectedValue={selectedDay}
+                onValueChange={(value) => {
+                  setSelectedDay(value);
+                  setIsDayPickerVisible(false);
+                }}
+                 mode="dropdown" 
+              >
+                {/* Ensuring the days list is used */}
+                <Picker.Item label="SELECT A DAY" value="" enabled={false} color="gray" />
+                {days.length > 0 &&
+                  days.map((day) => (
+                    <Picker.Item key={day.value} label={day.label} value={day.value} />
+                  ))}
+              </Picker>
+              <TouchableOpacity onPress={() => setIsDayPickerVisible(false)}>
+                <Text style={styles.closeButton}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Select Time Slot */}
+      {timeSlots.length > 0 && (
+        <>
+          <Text style={styles.label}>Select Time Slot:</Text>
+          {Platform.OS === "ios" ? (
+            <TouchableOpacity
+              style={styles.iosPickerButton}
+              onPress={() => setIsTimePickerVisible(true)}
+            >
+              <Text style={styles.iosPickerText}>
+                {selectedTimeSlot ? selectedTimeSlot : "Select a time slot"}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Picker
+              selectedValue={selectedTimeSlot}
+              onValueChange={setSelectedTimeSlot}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select a time slot" value="" enabled={false} color="gray" />
+              {timeSlots.map((slot, index) => (
+                <Picker.Item key={index} label={slot} value={slot} />
+              ))}
+            </Picker>
+          )}
+
+          {/* iOS Modal for Time Slot Picker */}
+          {Platform.OS === "ios" && isTimePickerVisible && (
+            <Modal visible={isTimePickerVisible} animationType="slide" transparent>
+              <View style={styles.modalContainer}>
+                <View style={styles.modalContent}>
+                  <Picker
+                    selectedValue={selectedTimeSlot}
+                    onValueChange={(value) => {
+                      setSelectedTimeSlot(value);
+                      setIsTimePickerVisible(false);
+                    }}
+                  >
+                    <Picker.Item label="Select a time slot" value="" enabled={false} color="gray" />
+                    {timeSlots.map((slot, index) => (
+                      <Picker.Item key={index} label={slot} value={slot} />
+                    ))}
+                  </Picker>
+                  <TouchableOpacity onPress={() => setIsTimePickerVisible(false)}>
+                    <Text style={styles.closeButton}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
+          )}
         </>
       )}
-    </View> 
+    </View>
+     
         {/* Payment Methods */}
         <Text style={styles.paymentHeader}>Choose Payment Method</Text>
         <View style={styles.paymentOptions}>
@@ -1499,6 +1585,71 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  pickerContainer: {
+    borderWidth: Platform.OS === "android" ? 1 : 0,
+    borderColor: "gray",
+    borderRadius: 5,
+    marginBottom: 15,
+    overflow: "hidden",
+  },
+  iosPickerWrapper: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 5,
+    paddingVertical: 5,
+  },
+  picker: {
+    height: 50,
+    width: "100%",
+  },
+  container: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "center",
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  picker: {
+    height: 50,
+    width: "100%",
+  },
+  iosPickerButton: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  iosPickerText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+  },
+  closeButton: {
+    textAlign: "center",
+    padding: 10,
+    fontSize: 18,
+    color: "blue",
   },
 });
 

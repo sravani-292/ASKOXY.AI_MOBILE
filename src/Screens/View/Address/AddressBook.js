@@ -150,7 +150,7 @@ const AddressBook = ({ route }) => {
     console.log("value for saving api", value);
       const { status,isWithin, distanceInKm,coord1 } =await getCoordinates(value);
       console.log({status,isWithin,distanceInKm,coord1});
-setSaveLoader(true)
+      setSaveLoader(true)
     if (isWithin == true && coord1) {
       console.log("Address saved as it is within the radius.");
       try {

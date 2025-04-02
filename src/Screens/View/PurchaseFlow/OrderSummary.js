@@ -56,7 +56,6 @@ const OrderSummaryScreen = ({ navigation, route }) => {
       );
       const data = await response.json();
       setCartItems(data.customerCartResponseList);
-      // console.log("cartItems",data);
       
       setLoading(false)
     } catch (error) {
@@ -69,7 +68,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
 
 
   const getProfile = async () => {
-    // const mobile_No = AsyncStorage.getItem('mobileNumber');
+   
    
     try {
       const response = await axios({
@@ -80,14 +79,13 @@ const OrderSummaryScreen = ({ navigation, route }) => {
         },
         url: BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
       });
-      // console.log(response.data);
-
+      
       if (response.status === 200) {
         console.log("customerProfileDetails",response.data);
         setUser(response.data);
        
       }
-      // showToast(response.data.msg || 'Profile loaded successfully');
+     
     } catch (error) {
       console.error(error);
       showToast("Error loading profile");
@@ -98,11 +96,11 @@ const OrderSummaryScreen = ({ navigation, route }) => {
   const formatOrderDetails = () => {
     let orderDetails = "📦 *Order Summary* 📦\n\n";
   
-    // Define column headers with proper spacing
+   
     orderDetails += `Item Name               Quantity   Price\n`;
     orderDetails += `${"-".repeat(45)}\n`;
   
-    // Format each cart item with dynamic spacing
+    
     cartItems.forEach((item) => {
       const maxItemNameLength = 20;
       const itemName = item.itemName.length > maxItemNameLength
@@ -112,21 +110,21 @@ const OrderSummaryScreen = ({ navigation, route }) => {
       const quantity = item.cartQuantity.toString();
       const price = `₹${item.priceMrp.toFixed(2)}`;
   
-      // Add formatted item details with consistent spacing
+      
       orderDetails += `${itemName.padEnd(22)} ${quantity.padStart(8)} ${price.padStart(10)}\n`;
     });
   
-    // Calculate total price
+    
     const totalAmount = cartItems.reduce(
       (total, item) => total + item.priceMrp * item.cartQuantity,
       0
     );
   
-    // Add summary section
+    
     orderDetails += `${"-".repeat(45)}\n`;
     orderDetails += `🔢 Total Items: ${cartItems.length.toString().padStart(29)}\n`;
     orderDetails += `💸 Total Price: ₹${totalAmount.toFixed(2).padStart(10)}\n`;
-    // console.log(totalAmount)
+  
     return orderDetails;
   };
   
@@ -172,7 +170,7 @@ const handleContinuePress = () => {
     <Icon name="map-marker" size={20} color="#000" style={styles.addressIcon} />
     <Text style={styles.flatNoText}>{address.flatNo}</Text>
   </View>
-  {/* <View style={styles.addressDetailsContainer}> */}
+  
   <View style={{flexDirection:"row",width:width*0.6,flexWrap:"wrap"}}>
     <Text style={styles.addressDetails}>{address.landMark} ,</Text>
     <Text style={styles.addressDetails}>{address.address} ,</Text>

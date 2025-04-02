@@ -45,10 +45,9 @@ export const isWithinRadius = (coord1) => {
   console.log("Is within radius:", isWithin);
 
 
-  const distanceInKm = (distance / 1000).toFixed(2); // Convert to kilometers for display
+  const distanceInKm = (distance / 1000).toFixed(2); 
 
   if (isWithin) {
-    // Alert.alert("Success", `We can deliver to this address within the radius.`);
     return { status: "success", distanceInKm, isWithin,coord1 };
   } else {
        Alert.alert("Sorry!" ,`We’re unable to deliver to this address as it’s ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`)

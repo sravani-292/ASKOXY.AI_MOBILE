@@ -245,13 +245,13 @@ const UserDashboard = ({route}) => {
   };
 
   const removeItem = async (item) => {
-    // console.log("into the removal method",item);
+    
 
     const newQuantity = cartItems[item.itemId];
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    // console.log("cartitem", cartItem);
+   
   if(!cartItem){
     console.log("cart item is not found");
     Alert.alert("Item is not found in the cart");
@@ -386,7 +386,7 @@ const UserDashboard = ({route}) => {
 
         setTimeout(() => {
           setLoading(false);
-          // Auto-scroll to the first category
+        
       setTimeout(() => {
         if (scrollViewRef.current) {
           scrollViewRef.current.scrollTo({ x: 100, animated: true });
@@ -480,7 +480,7 @@ const UserDashboard = ({route}) => {
         "kgs",
       ];
 
-      // Get all items from all categories
+      
       const allItems = categories.flatMap(
         (category) => category.itemsResponseDtoList || []
       );
@@ -512,7 +512,7 @@ const UserDashboard = ({route}) => {
     }
   };
 
-  // Modify the handleClearText function
+ 
   const handleClearText = () => {
     setSearchText("");
     if (selectedCategory === "All CATEGORIES") {
@@ -586,7 +586,7 @@ const UserDashboard = ({route}) => {
               <View style={styles.cartIconContainer}>
                 <Icon name="cart-outline" size={35} color="#000" />
 
-                {/* Cart Count Badge */}
+              
                 {cartCount != 0 && (
                   <View
                     style={{
@@ -616,7 +616,7 @@ const UserDashboard = ({route}) => {
           )}
         </View>
 
-        {/* Category Buttons */}
+        
         <ScrollView horizontal>
           <View
             style={{

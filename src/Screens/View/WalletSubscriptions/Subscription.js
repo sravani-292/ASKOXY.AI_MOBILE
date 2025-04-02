@@ -16,7 +16,7 @@ import BASE_URL, { userStage } from "../../../../Config";
 import { useNavigation } from "@react-navigation/native";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
-
+import PremiumPlan from "./PremiumPlan";
 const { width, height } = Dimensions.get("window");
 
 const Subscription = () => {
@@ -33,6 +33,8 @@ const Subscription = () => {
   const [loadingPlanId, setLoadingPlanId] = useState(null);
   const [status, setStatus] = useState(true);
   const [noteResponse, setNoteResponse] = useState();
+  const [premiumModalVisible, setPremiumModalVisible] = useState(false);
+
   const navigation = useNavigation();
 
   const [profileForm, setProfileForm] = useState({
@@ -63,7 +65,9 @@ const Subscription = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        url: BASE_URL + `user-service/customerProfileDetails?customerId=${userData.userId}`,
+        url:
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${userData.userId}`,
       });
 
       if (response.status === 200) {
@@ -94,6 +98,7 @@ const Subscription = () => {
 
     try {
       const response = await axios(data);
+
       setLoading(false);
       setStatus(response.data.status);
       setNoteResponse(response.data.message);
@@ -102,25 +107,56 @@ const Subscription = () => {
     }
   };
 
+  const planNames = {
+    10000: "Starter",
+    20000: "Basic",
+    30000: "Silver",
+    40000: "Gold",
+    50000: "Platinum",
+    60000: "Diamond",
+    70000: "Elite",
+    90000: "Ultra",
+    99000: "Premium",
+  };
+
   const fetchSubscriptionData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(
-        BASE_URL + "order-service/getAllPlans",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await axios.get(BASE_URL + "order-service/getAllPlans", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      if (response.data) {
-        setLoading(false);
-        setSubscriptionHistoryData(response.data);
+      // console.log("Plans response:", response.data);
+
+      // if (response.data) {
+
+      //   const updatedPlans = response.data.map((plan) => ({
+      //     ...plan,
+      //     planName: planNames[plan.amount] || "Custom",
+      //     isPremium: planNames[plan.amount] === "Premium"
+      //   }));
+
+      //   setSubscriptionHistoryData(updatedPlans);
+      // }
+      console.log("Plans response:", response.data);
+
+      if (response.data && Array.isArray(response.data)) {
+        const updatedPlans = response.data.map((plan) => {
+          const planName = planNames[plan.amount] || "Custom";
+          return {
+            ...plan,
+            planName,
+            isPremium: planName === "Premium",
+          };
+        });
+
+        setSubscriptionHistoryData(updatedPlans);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching plans:", error);
     } finally {
       setLoading(false);
     }
@@ -144,7 +180,7 @@ const Subscription = () => {
       ]
     );
   };
-  
+
   let postData;
 
   function SubscriptionConfirmation(details) {
@@ -154,17 +190,13 @@ const Subscription = () => {
       customerId: userData.userId,
       planId: details.planId,
     };
-    
+
     axios
-      .post(
-        BASE_URL + "order-service/userSubscriptionAmount",
-        postData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+      .post(BASE_URL + "order-service/userSubscriptionAmount", postData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then(function (response) {
         setLoader(false);
         if (response.data.paymentId == null && response.data.status == false) {
@@ -184,6 +216,7 @@ const Subscription = () => {
           const data = {
             mid: "1152305",
             amount: details.amount,
+            // amount:1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -230,14 +263,14 @@ const Subscription = () => {
       terminalId: data.terminalId,
       req: newCipher,
     });
-    
+
     var requestOptions = {
       method: "POST",
       headers: myHeaders,
       body: raw,
       redirect: "follow",
     };
-    
+
     await fetch(
       "https://portal.getepay.in:8443/getepayPortal/pg/generateInvoice",
       requestOptions
@@ -248,7 +281,7 @@ const Subscription = () => {
         var responseurl = resultobj.response;
         var data = decryptEas(responseurl);
         data = JSON.parse(data);
-        
+
         Requery(data.paymentId);
         setPaymentId(data.paymentId);
 
@@ -283,7 +316,7 @@ const Subscription = () => {
       paymentStatus == "PENDING" ||
       paymentStatus == "" ||
       paymentStatus == null ||
-      paymentStatus == "undefined" 
+      paymentStatus == "undefined"
     ) {
       const data = setInterval(() => {
         Requery();
@@ -297,7 +330,7 @@ const Subscription = () => {
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
       paymentStatus === null ||
-      paymentStatus === undefined 
+      paymentStatus === undefined
     ) {
       const Config = {
         "Getepay Mid": 1152305,
@@ -355,7 +388,7 @@ const Subscription = () => {
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
             setPaymentStatus(data.paymentStatus);
-            
+
             if (
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILURE"
@@ -397,7 +430,6 @@ const Subscription = () => {
     }
   }
 
-  // New design implementation based on the image
   const renderPlan = ({ item, index }) => {
     // Calculate wallet balance based on the amount (using the pattern from the image)
     const walletBalance = item.amount * 1.09;
@@ -405,64 +437,97 @@ const Subscription = () => {
     const savings = originalPrice - item.amount;
     const monthlyLimit = item.limitAmount;
 
-    // Select different color for each card (using purple gradient as shown in image)
+   
     const cardColors = ["#9333ea", "#9333ea", "#9333ea"];
-    
+
     return (
       <>
-      {item.status && (
-      <View style={styles.newPlanContainer}>
-        {/* Wallet Balance Section */}
-        <View style={[styles.walletBalanceSection, { backgroundColor: cardColors[index % 3] }]}>
-          <Text style={styles.walletBalanceLabel}>Wallet Balance</Text>
-          <Text style={styles.walletBalanceAmount}>₹{walletBalance.toLocaleString()}</Text>
-        </View>
-        
-        {/* Subscription Price Section */}
-        <View style={styles.pricingSection}>
-          <Text style={styles.subscriptionPriceLabel}>Subscription Price</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.actualPrice}>₹{item.amount.toLocaleString()}</Text>
-            {/* <Text style={styles.originalPrice}>₹{originalPrice.toLocaleString()}</Text> */}
-            <View style={styles.savingsTag}>
-              <Text style={styles.savingsText}>Save ₹{savings.toLocaleString()}</Text>
+        {item.status && (
+          <View style={styles.planCard}>
+            <View style={styles.header}>
+              <Text style={styles.planTitle}> {`${item.planName}`} Plan</Text>
+              {item.planName == "Premium" && (
+                <Text style={styles.bestValue}>BEST VALUE</Text>
+              )}
             </View>
-          </View>
-        </View>
-        
-        {/* Features Section */}
-        <Text style={styles.featuresTitle}>Features</Text>
-        
-        {/* Monthly Usage Limit */}
-        <View style={styles.featureBox}>
-          <View style={styles.featureContent}>
-            <View style={styles.featureIconContainer}>
-              <Text style={styles.featureIcon}>⚡</Text>
+
+            <Text style={styles.priceLabel}>Pay</Text>
+            <Text style={styles.priceAmount}>
+              ₹{item.amount.toLocaleString()}
+            </Text>
+
+            <View style={styles.walletSection}>
+              <Text style={styles.walletLabel}>Get in your wallet</Text>
+              <Text style={styles.walletAmount}>
+                ₹{walletBalance.toLocaleString()}
+              </Text>
+              <View style={styles.bonusTag}>
+                <Text style={styles.bonusText}>
+                  + ₹{savings.toLocaleString()} bonus
+                </Text>
+              </View>
             </View>
-            <View style={styles.featureTextContainer}>
-              <Text style={styles.featureLabel}>Monthly Usage Limit</Text>
-              <Text style={styles.featureValue}>₹{monthlyLimit.toLocaleString()}</Text>
-            </View>
-          </View>
-        </View>
-        
-        {/* Button */}
-        <TouchableOpacity
-          style={[
-            styles.chooseButton,
-            { opacity: status ? 0.5 : 1 }
-          ]}
-          onPress={() => handleSubscription(item)}
-          disabled={status || loader}
+
+            <Text style={styles.benefitsTitle}>Benefits</Text>
+            {item.planName == "Premium" ? (
+              <>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>🔒</Text>
+                  <Text style={styles.benefitText}>
+                    <Text style={styles.boldText}>Minimum Lock Period: </Text>30
+                    days for first withdrawal; then withdraw ₹99,000 anytime
+                  </Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>⏳</Text>
+                  <Text style={styles.benefitText}>
+                    <Text style={styles.boldText}>Monthly Added: </Text>₹2,000
+                    to your wallet
+                  </Text>
+                </View>
+                <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>⚡</Text>
+                  <Text style={styles.benefitText}>Instant wallet credit</Text>
+                </View>
+              </>
+            ) : (
+              <View style={styles.benefitItem}>
+                <Text style={styles.benefitIcon}>⚡</Text>
+                <Text style={styles.benefitText}>Instant wallet credit</Text>
+              </View>
+            )}
+
+           {/* The conditional rendering of FAQ button */}
+      {item.planName === "Premium" && (
+        <TouchableOpacity 
+          style={styles.faqButton} 
+          onPress={() => setPremiumModalVisible(true)}
         >
-          {loader ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Text style={styles.chooseButtonText}>{status ? "Subscribed" : "Choose Plan"}</Text>
-          )}
+          <Text style={styles.faqText}>❓ FAQs</Text>
         </TouchableOpacity>
-      </View>
-       )}
+      )}
+      
+      {/* Add the modal at the bottom of your component */}
+      <PremiumPlan
+        visible={premiumModalVisible}
+        onClose={() => setPremiumModalVisible(false)}
+      />
+
+            <TouchableOpacity
+              style={[styles.chooseButton, { opacity: status ? 0.5 : 1 }]}
+              onPress={() => handleSubscription(item)}
+              disabled={status || loader}
+            >
+              {loader ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={styles.chooseButtonText}>
+                  {status ? "Subscribed" : "Choose Plan"}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
       </>
     );
   };
@@ -547,7 +612,7 @@ const styles = StyleSheet.create({
     color: "#777",
     marginTop: 20,
   },
-  
+
   // New styles for the cards based on the image
   newPlanContainer: {
     backgroundColor: "#fff",
@@ -564,7 +629,7 @@ const styles = StyleSheet.create({
   walletBalanceSection: {
     padding: 16,
     paddingVertical: 20,
-    backgroundColor: "#9333ea", // Purple color from image
+    backgroundColor: "#9333ea",
   },
   walletBalanceLabel: {
     color: "#fff",
@@ -674,6 +739,125 @@ const styles = StyleSheet.create({
     color: "#9333ea",
     fontSize: 16,
     fontWeight: "600",
+  },
+  // newly added styles
+
+  planCard: {
+    backgroundColor: "#F3E8FF",
+    padding: 20,
+    borderRadius: 10,
+    margin: 15,
+    // shadowColor: "#9333ea",
+    shadowColor:"#fff",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  header: {
+    // flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#9333ea",
+    textAlign:"center",
+    alignSelf:"center",alignItems:"center"
+  },
+  bestValue: {
+    fontSize: 12,
+    fontWeight: "bold",
+    backgroundColor: "#9333ea",
+    color: "#fff",
+    padding: 5,
+    borderRadius: 5,
+  },
+  priceLabel: {
+    fontSize: 14,
+    color: "#444",
+    marginTop: 10,
+  },
+  priceAmount: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#9333ea",
+  },
+  walletSection: {
+    backgroundColor: "#e9d5ff",
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 10,
+    alignItems: "center",
+  },
+  walletLabel: {
+    fontSize: 16,
+    color: "#444",
+  },
+  walletAmount: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#9333ea",
+  },
+  bonusTag: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 5,
+    marginTop: 5,
+  },
+  bonusText: {
+    color: "#166534",
+    fontWeight: "bold",
+  },
+  benefitsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#9333ea",
+    marginTop: 10,
+  },
+  benefitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 5,
+  },
+  benefitIcon: {
+    fontSize: 18,
+    marginRight: 5,
+  },
+  benefitText: {
+    fontSize: 14,
+    color: "#444",
+    flex: 1,
+  },
+  boldText: {
+    fontWeight: "bold",
+    color: "#9333ea",
+  },
+  faqButton: {
+    backgroundColor: "#e9d5ff",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  faqText: {
+    fontSize: 14,
+    color: "#9333ea",
+    fontWeight: "bold",
+  },
+  chooseButton: {
+    backgroundColor: "#9333ea",
+    padding: 12,
+    borderRadius: 5,
+    marginTop: 15,
+    alignItems: "center",
+  },
+  chooseButtonText: {
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "bold",
   },
 });
 

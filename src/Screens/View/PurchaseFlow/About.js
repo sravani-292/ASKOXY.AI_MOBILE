@@ -24,7 +24,7 @@ const[show,setShow]=useState(false)
 
 
   useEffect(() => {
-    // Blinking animation
+   
     Animated.loop(
       Animated.sequence([
         Animated.timing(blinkAnim, {
@@ -40,7 +40,7 @@ const[show,setShow]=useState(false)
       ])
     ).start();
     
-    // Subtle pulsing animation
+    
     Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnim, {
@@ -149,10 +149,10 @@ const[show,setShow]=useState(false)
 
 ]
 
-  // Brand colors
+ 
   const colors = {
-    primary: '#3d2a71', // Purple
-    secondary: '#ff8c00', // Orange
+    primary: '#3d2a71', 
+    secondary: '#ff8c00', 
     light: '#f8f5ff',
     white: '#ffffff',
     text: '#333333',
@@ -286,11 +286,7 @@ const[show,setShow]=useState(false)
           ))}
 </>
 :null}
-
-
-
-          
-        </View>
+     </View>
       </ScrollView>
     </SafeAreaView>
   );

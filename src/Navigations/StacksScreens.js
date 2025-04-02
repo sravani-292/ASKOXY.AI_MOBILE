@@ -34,7 +34,7 @@ import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
 import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
 import ChatGpt from "../Authorization/NewLogin";
 import CartScreen from "../Screens/View/ShoppingCart/CartScreen1";
-import DashboardStack from "../Screens/View/Dashboard/DashboardStack";
+
 import LinearGradient from "react-native-linear-gradient";
 import { COLORS } from "../../Redux/constants/theme";
 import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory"
@@ -64,7 +64,7 @@ import BarcodeScanner from "../Screens/View/Profile/BarcodeScanner";
 import AddressBookScreen from "../Screens/View/Profile/AddressScreen";
 import StoreLocatorScreen from "../StoreLocation";
 import AppUpdateScreen from "../../AppUpdateScreen";
-
+import PremiumPlan from "../Screens/View/WalletSubscriptions/PremiumPlan";
 
 
 export default function StacksScreens() {
@@ -132,11 +132,7 @@ export default function StacksScreens() {
       <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
       <Stack.Screen name="Subscription" component={Main}/>
-      {/* <Stack.Screen name="Subscription" component={Subscription} />
-      <Stack.Screen
-        name="Subscription History"
-        component={SubscriptionHistory}
-      /> */}
+     
       <Stack.Screen name="Terms and Conditions" component={About}/>
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
@@ -151,7 +147,6 @@ export default function StacksScreens() {
       <Stack.Screen name="Refund" component={Refund} />
       <Stack.Screen name="Rice Products" component={UserDashboard} />
       <Stack.Screen name="Write To Us" component={WriteToUs}/>
-      {/* <Stack.Screen name="Rice Products" component={Rice}/> */}
       <Stack.Screen name="ChatGpt" component={ChatGpt}/>
       <Stack.Screen name="Referral History" component={ReferralHistory}/>
 

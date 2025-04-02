@@ -24,6 +24,8 @@ import BASE_URL, { userStage } from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
 const OrderDetails = () => {
+  
+  
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
@@ -147,7 +149,7 @@ const OrderDetails = () => {
 
     try {
       const response = await axios(data);
-      // Update order data
+     
       console.log("order data", response.data);
 
       setOrderData(response.data);
@@ -190,7 +192,7 @@ const OrderDetails = () => {
       return;
     }
 
-    // console.log("Cancel Data:", result);
+   
 
     const data = {
       exchangeListItemRequest: result,
@@ -296,7 +298,7 @@ const OrderDetails = () => {
       return;
     }
 
-    // console.log("cancel Data:", result);
+   
     setLoading(true);
     const data = {
       userId: customerId,

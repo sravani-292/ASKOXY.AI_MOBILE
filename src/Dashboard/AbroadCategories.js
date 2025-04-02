@@ -48,7 +48,7 @@ const AbroadCategories = ({ navigation }) => {
         setProfileData(response.data);
       })
       .catch((error) => {
-        console.log(error.response.data);
+        console.log(error.response);
       });
   };
 

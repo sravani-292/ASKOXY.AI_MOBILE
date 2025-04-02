@@ -116,8 +116,7 @@ const Login = () => {
   useFocusEffect(
     useCallback(() => {
       const handleBackPress = () => {
-        // if (currentScreen === 'Login') {
-        // Custom behavior for Login screen
+        
         Alert.alert(
           "Exit",
           "Are you sure you want to exit?",
@@ -276,6 +275,7 @@ const Login = () => {
         console.log("response", response);
         setFormData({ ...formData, loading: false, otp: "" });
         if (response.data.primaryType == "CUSTOMER") {
+         
           if (response.data.accessToken != null) {
             setOtpSent(false);
             dispatch(AccessToken(response.data));
@@ -283,8 +283,7 @@ const Login = () => {
               "userData",
               JSON.stringify(response.data)
             );
-            // await AsyncStorage.setItem("mobileNumber", formData.mobileNumber);
-            // setFormData({ ...formData, otp: "" });
+            
 
             if (
               response.data.userStatus == "ACTIVE" ||
@@ -323,6 +322,9 @@ const Login = () => {
         if (error.response.status == 400) {
           Alert.alert("Failed", "Invalid Credentials");
         }
+        // if(error.response.status == 500){
+        //   Alert.alert("Error Occured,Please try it after some time")
+        // }
       });
   };
 
