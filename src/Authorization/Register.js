@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Dimensions,
   BackHandler,
@@ -91,6 +92,24 @@ const Register = () => {
       alert("Login successful!");
     }, 1500);
   };
+
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => setIsKeyboardOpen(true));
+    const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
+      setIsKeyboardOpen(false);
+      if (!otpSent) {
+        handleSendOtp()
+      } else{
+        handleVerifyOTP()
+      } 
+    });
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, [authMethod, phoneNumber, whatsappNumber, otpSent]);
 
   useFocusEffect(
     useCallback(() => {

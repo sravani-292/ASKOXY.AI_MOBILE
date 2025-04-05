@@ -152,7 +152,7 @@ useEffect(()=>{
                     <Text style={styles.blockchainText} numberOfLines={1} ellipsizeMode="middle">
                       {blockchainId} 
                     </Text>
-                    {/* <TouchableOpacity 
+                    <TouchableOpacity 
                       onPress={copyToClipboard} 
                       style={styles.copyButton}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -162,7 +162,7 @@ useEffect(()=>{
                         size={22} 
                         color="#3498db" 
                       />
-                    </TouchableOpacity> */}
+                    </TouchableOpacity>
                   </View>
                 </View>
 
@@ -357,6 +357,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    marginBottom: 30,
   },
   header: {
     padding: 20,
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    height: '80%',
+    height: '85%',
   },
   closeButton: {
     alignSelf: 'flex-end',
@@ -464,6 +466,7 @@ const styles = StyleSheet.create({
   },
   claimSection: {
     padding: 20,
+    marginBottom: 40,
   },
   input: {
     backgroundColor: '#F8F7FF',
@@ -485,7 +488,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    textAlign:"center/"
+    textAlign:"center"
   },
   magicSection: {
     padding: 20,

@@ -193,6 +193,36 @@ const TicketHistory = ({ navigation }) => {
                     </View>
                   </View>
 
+                  {queryStatus === "COMPLETED"  ? (
+<>
+                  <View style={styles.row}>
+                    <View>
+                      <Text style={styles.label}>Admin Comments</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.value}>
+                        {item?.comments}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* {item.userQueryDocumentStatus?.adminUploadedFilePath != null ? (
+                    <View style={styles.row}>
+                      <Text style={styles.label}>File</Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          openFile(item.userQueryDocumentStatus?.adminUploadedFilePath)
+                        }
+                      >
+                        <Text style={styles.value1}>
+                          {item.userQueryDocumentStatus?.adminUploadedFilePath}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null} */}
+                  </>
+                  ):null}
+
                   {queryStatus === "CANCELLED" ? (
                     <>
                       <View style={styles.row1}>
@@ -217,16 +247,16 @@ const TicketHistory = ({ navigation }) => {
                     </>
                   ) : null}
 
-                  {item.userQueryDocumentStatus?.fileName != null ? (
+                  {item.userQueryDocumentStatus?.adminUploadedFilePath != null ? (
                     <View style={styles.row}>
                       <Text style={styles.label}>File</Text>
                       <TouchableOpacity
                         onPress={() =>
-                          openFile(item.userQueryDocumentStatus?.filePath)
+                          openFile(item.userQueryDocumentStatus?.adminUploadedFilePath)
                         }
                       >
                         <Text style={styles.value1}>
-                          {item.userQueryDocumentStatus?.fileName}
+                          {item.userQueryDocumentStatus?.adminUploadedFilePath}
                         </Text>
                       </TouchableOpacity>
                     </View>

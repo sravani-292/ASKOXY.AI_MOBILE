@@ -491,17 +491,25 @@ const Subscription = () => {
                 </View>
               </>
             ) : (
+              <>
               <View style={styles.benefitItem}>
                 <Text style={styles.benefitIcon}>⚡</Text>
                 <Text style={styles.benefitText}>Instant wallet credit</Text>
               </View>
+              <View style={styles.benefitItem}>
+                  <Text style={styles.benefitIcon}>⏳</Text>
+                  <Text style={styles.benefitText}>
+                    <Text style={styles.boldText}>Monthly Use: </Text>₹{monthlyLimit.toLocaleString()}
+                  </Text>
+                </View>
+              </>
             )}
 
            {/* The conditional rendering of FAQ button */}
       {item.planName === "Premium" && (
         <TouchableOpacity 
           style={styles.faqButton} 
-          onPress={() => setPremiumModalVisible(true)}
+          onPress={() => setPremiumModalVisible(true)}  
         >
           <Text style={styles.faqText}>❓ FAQs</Text>
         </TouchableOpacity>
@@ -571,6 +579,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: "#fff",
+    marginBottom: 30,
   },
   header: {
     fontSize: 24,

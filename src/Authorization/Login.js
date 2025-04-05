@@ -73,7 +73,7 @@ const Login = () => {
   const [errorMessage, setErrorMessage] = useState(false);
   const [otpError, setOtpError] = useState(false);
   const [otpMessage, setOtpMessage] = useState(false);
-
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
  
   useFocusEffect(
     useCallback(() => {
@@ -140,8 +140,31 @@ const Login = () => {
     }, [currentScreen])
   );
 
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => setIsKeyboardOpen(true));
+    const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
+      setIsKeyboardOpen(false);
+      if (!otpSent) {
+        handleSendOtp()
+      }else{
+        handleVerifyOtp()
+      }
+    });
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, [authMethod, phoneNumber, whatsappNumber, otpSent]);
+
+
 
   const handleSendOtp = async () => {
+    // console.log("sdmbv",authMethod,countryCode,whatsappNumber)
+    if (Platform.OS !== 'web') {
+      Keyboard.dismiss();
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
     if (authMethod === "whatsapp") {
       if (whatsappNumber == "" || whatsappNumber == null) {
         setWhatsappNumber_Error(true);
@@ -223,6 +246,9 @@ const Login = () => {
   };
 
   const handleVerifyOtp = () => {
+    if(!otpSent){
+      return
+    }
     if (formData.otp == "" || formData.otp == null) {
       setOtpError(true);
       return false;
@@ -527,7 +553,10 @@ const Login = () => {
                     defaultCode="IN"
                     layout="first"
                     onChangeText={handlePhoneNumberChange}
-                    onSubmitEditing={handleSendOtp}
+                    onSubmitEditing={() => {
+                      Keyboard.dismiss(); // Dismiss keyboard first
+                      setTimeout(() => handleSendOtp(), 50); // Delay to ensure keyboard is fully dismissed
+                    }}
                   />
                 </View>
               ) : (
@@ -540,7 +569,7 @@ const Login = () => {
                   <TextInput
                     style={[styles.input, otpSent && styles.disabledInput]}
                     placeholder="Enter your phone number"
-                    keyboardType="numeric"
+                    keyboardType="number-pad"
                     value={phoneNumber}
                     onChangeText={(text) => {
                       setPhoneNumber(text.replace(/[ \-.,]/g, "")),
@@ -622,7 +651,7 @@ const Login = () => {
             )}
 
             {otpError && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
+              <Text style={{ color: "red", alignSelf: "center",width:width*0.25 }}>
                 Please enter OTP
               </Text>
             )}
@@ -645,16 +674,25 @@ const Login = () => {
               {!otpSent ? (
                 <>
                   <TouchableOpacity
-                    style={styles.submitButton}
-                    onPress={() => handleSendOtp()}
-                    disabled={loading}
-                  >
-                    {formData.loading ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <Text style={styles.submitText}>Send OTP</Text>
-                    )}
-                  </TouchableOpacity>
+                      style={styles.submitButton}
+                      onPress={() => {
+                        // Dismiss the keyboard
+                        Keyboard.dismiss();
+
+                        // Call handleSendOtp() after ensuring keyboard is dismissed
+                        setTimeout(() => {
+                          handleSendOtp();
+                        }, 50); // 50ms delay ensures API hits after keyboard closes
+                      }}
+                      disabled={loading}
+                    >
+                      {formData.loading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.submitText}>Send OTP</Text>
+                      )}
+                    </TouchableOpacity>
+
                 </>
               ) : (
                 <View style={styles.otpButtonsContainer}>

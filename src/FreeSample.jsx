@@ -13,7 +13,7 @@ const FreeSampleScreen = () => {
         <MaterialCommunityIcons name="gift-outline" size={28} color="#3d2a71" style={styles.icon} />
         <Text style={styles.title}>Free Sample</Text>
         <Text style={styles.description}>
-          Visit the nearest store and scan the barcode to get a free sample!
+          Visit the nearest stalls and scan the barcode to get a free sample!
         </Text>
         
         <View style={styles.buttonContainer}>

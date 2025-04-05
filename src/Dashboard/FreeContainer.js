@@ -1,5 +1,5 @@
 import React,{useState,useEffect} from "react";
-import { View, Text, TouchableOpacity, Alert, ScrollView, StyleSheet,ActivityIndicator,Dimensions,Image } from "react-native";
+import { View, Text, TouchableOpacity, Alert, ScrollView, StyleSheet,ActivityIndicator,Dimensions,Image, SafeAreaView } from "react-native";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../Config";
@@ -134,6 +134,8 @@ const FreeContainer = ({navigation}) => {
   }  
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f8f8" }}>
+    <View style={{ flex: 1, backgroundColor: "#f8f8f8" }}>
     <ScrollView contentContainerStyle={{ backgroundColor: "#f8f8f8" }}>
       <Text style={styles.header}>Free Rice Samples & Steel Container</Text>
       <Image
@@ -243,6 +245,8 @@ const FreeContainer = ({navigation}) => {
         }
       </View>
     </ScrollView>
+    </View>
+</SafeAreaView>
   );
 };
 
@@ -259,7 +263,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   image: {
-    height: 400,
+    height: height * 0.44,
     width: width*0.9 ,
     alignSelf:"center",
     // padding:10

@@ -109,7 +109,7 @@ useFocusEffect(
         // }
       })
       .catch((error) => {
-        Alert.alert("Failed", error.response.message)
+        // Alert.alert("Failed", error.response.message)
       })
   }
 
@@ -169,7 +169,8 @@ useFocusEffect(
       })
       .catch((error) => {
         setLoader(false);
-        Alert.alert("Failed", error.response.message);
+        console.log("error",error.response);
+        Alert.alert("Failed", error.response.data.error);
       });
   };
 

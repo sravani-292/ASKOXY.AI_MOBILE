@@ -37,7 +37,7 @@ export default function MainWallet() {
                 }
               }
             );
-            console.log(response);
+            console.log("customerWalletData",response.data);
             
             const { walletAmount, walletTransactions } = response.data;
             console.log("wallet transactions",response);
@@ -46,7 +46,7 @@ export default function MainWallet() {
             setWalletTxs(walletTransactions);
             console.log("wallet transactions",walletTxs);
             
-          } catch (error) {
+          } catch (error) {33333333333333333333333333333333333333333333122222222222222222222221
             console.log(error.response);
           } finally {
             setLoading(false);

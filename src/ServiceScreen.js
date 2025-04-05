@@ -1,35 +1,101 @@
-import React,{useState,useEffect,useCallback} from "react";
-import { View, Text, Image, TextInput, FlatList, TouchableOpacity,ScrollView,
-          BackHandler, Dimensions ,StyleSheet,Alert,Modal,
-          Linking} from "react-native";
-import { Ionicons, FontAwesome,MaterialCommunityIcons,MaterialIcons } from "@expo/vector-icons";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  Image,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  ScrollView,
+  BackHandler,
+  Dimensions,
+  StyleSheet,
+  Alert,
+  Modal,
+  Linking,
+} from "react-native";
+import {
+  Ionicons,
+  FontAwesome,
+  MaterialCommunityIcons,
+  MaterialIcons,
+} from "@expo/vector-icons";
 import axios from "axios";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import BASE_URL from "../Config"
-const{height,width}=Dimensions.get('window' || 'screen')
-import { useNavigationState } from '@react-navigation/native';
+import BASE_URL from "../Config";
+const { height, width } = Dimensions.get("window" || "screen");
+import { useNavigationState } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
 import LoginModal from "./Components/LoginModal";
 import UpdateChecker from "../until/Updates";
-import * as Clipboard from 'expo-clipboard';
+import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AccessToken } from "../Redux/action/index";
 import FreeSampleScreen from "./FreeSample";
-import RiceLoader from "./Screens/View/ShoppingCart/RiceLoader";
+import GoogleAnalyticsService from "./Components/GoogleAnalytic";
 
 const services = [
-  { id: "1", name: "Oxyloans", image: require("../assets/oxyloans.jpg"),screen:"OXYLOANS" },
-  { id: "1", name: "Free Rudraksha", image: require("../assets/freerudraksha.png"),screen:"FREE RUDRAKSHA" },
-  { id: "2", name: "Free Rice Samples", image: require("../assets/RiceSamples.png"),screen:"FREE CONTAINER" },
-  { id: "3", name: "Free AI & Gen AI", image: require("../assets/FreeAI.png") ,screen:"FREE AI & GEN AI"},
-  { id: "4", name: "Study Abroad", image: require("../assets/study abroad.png"),screen:"STUDY ABROAD" },
-  { id: "5", name: "Cryptocurrency", image: require("../assets/BMVCOIN1.png") ,screen:"Crypto Currency"},
-  { id: "6", name: "Legal Knowledge Hub", image: require("../assets/LegalHub.png"),screen:"LEGAL SERVICE" },
-  { id: "7", name: "My Rotary", image: require("../assets/Rotary.png"),screen:"MY ROTARY " },
-  { id: "8", name: "We are Hiring", image: require("../assets/Careerguidance.png") ,screen:"We Are Hiring"},
-  { id: "9", name: "Manufacturing Services", image: require("../assets/Machines.png") ,screen:"Machines"},
-
+  {
+    id: "1",
+    name: "Oxyloans",
+    image: require("../assets/oxyloans.jpg"),
+    screen: "OxyLoans",
+  },
+  {
+    id: "2",
+    name: "Free Rudraksha",
+    image: require("../assets/freerudraksha.png"),
+    screen: "FREE RUDRAKSHA",
+  },
+  {
+    id: "3",
+    name: "Free Rice Samples",
+    image: require("../assets/RiceSamples.png"),
+    screen: "FREE CONTAINER",
+  },
+  {
+    id: "4",
+    name: "Free AI & Gen AI",
+    image: require("../assets/FreeAI.png"),
+    screen: "FREE AI & GEN AI",
+  },
+  {
+    id: "5",
+    name: "Study Abroad",
+    image: require("../assets/study abroad.png"),
+    screen: "STUDY ABROAD",
+  },
+  {
+    id: "6",
+    name: "Cryptocurrency",
+    image: require("../assets/BMVCOIN1.png"),
+    screen: "Crypto Currency",
+  },
+  {
+    id: "7",
+    name: "Legal Knowledge Hub",
+    image: require("../assets/LegalHub.png"),
+    screen: "LEGAL SERVICE",
+  },
+  {
+    id: "8",
+    name: "My Rotary",
+    image: require("../assets/Rotary.png"),
+    screen: "MY ROTARY ",
+  },
+  {
+    id: "9",
+    name: "We are Hiring",
+    image: require("../assets/Careerguidance.png"),
+    screen: "We Are Hiring",
+  },
+  {
+    id: "10",
+    name: "Manufacturing Services",
+    image: require("../assets/Machines.png"),
+    screen: "Machines",
+  },
 ];
 
 const images = [
@@ -37,19 +103,20 @@ const images = [
   require("../assets/Images/r2.png"),
 ];
 
+const DEFAULT_IMAGE = 'https://www.askoxy.ai/static/media/askoxylogostatic.3e03c861742645ba9a15.png';
 
 const ServiceScreen = () => {
   const userData = useSelector((state) => state.counter);
   const navigation = useNavigation();
   const [activeIndex, setActiveIndex] = useState(0);
-  const[data,setData]=useState([])
-  const[getCategories,setGetCategories]=useState([])
-  const[loading,setLoading]=useState(false)
+  const [data, setData] = useState([]);
+  const [getCategories, setGetCategories] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [chainId, setChainId] = useState("");
   const [coin, setCoin] = useState("");
   const [loginModal, setLoginMobal] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [infoModalVisible, setInfoModalVisible] = useState(false)
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
   const dispatch = useDispatch();
 
   // const[loader,setLoader]=useState(false)
@@ -57,151 +124,151 @@ const ServiceScreen = () => {
     (state) => state.routes[state.index]?.name
   );
 
-useFocusEffect(
-  useCallback(() => {
-    const handleBackPress = () => {
-     
+  useFocusEffect(
+    useCallback(() => {
+      const handleBackPress = () => {
         Alert.alert(
-          'Exit App',
-          'Are you sure you want to exit?',
+          "Exit App",
+          "Are you sure you want to exit?",
           [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'OK', onPress: () => BackHandler.exitApp() },
+            { text: "Cancel", style: "cancel" },
+            { text: "OK", onPress: () => BackHandler.exitApp() },
           ],
           { cancelable: false }
-        )
+        );
 
-      return true;
-    };
+        return true;
+      };
 
-    // Add BackHandler event listener
-    BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+      // Add BackHandler event listener
+      BackHandler.addEventListener("hardwareBackPress", handleBackPress);
 
-    // Cleanup
-    return () => {
-      BackHandler.removeEventListener('hardwareBackPress', handleBackPress);
-    };
-  }, [currentScreen])
-)
+      // Cleanup
+      return () => {
+        BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
+      };
+    }, [currentScreen])
+  );
 
-useFocusEffect(
-  useCallback(() => {
-    checkLoginData()
-    getAllCampaign()
-    getRiceCategories()
-  }, [currentScreen])
-)
+  useFocusEffect(
+    useCallback(() => {
+      checkLoginData();
+      getAllCampaign();
+      getRiceCategories();
+    }, [currentScreen])
+  );
 
-const checkLoginData = async () => {
-  console.log("userData", userData);
-  if(userData && userData.accessToken){
-    setLoginMobal(false)
+  const checkLoginData = async () => {
+    console.log("userData", userData);
+    if (userData && userData.accessToken) {
+      setLoginMobal(false);
       navigation.navigate("Home");
-
-  }else{
-  try {
-    const loginData = await AsyncStorage.getItem("userData");
-    console.log("logindata",loginData);
-    if (loginData) {
-      const user = JSON.parse(loginData);
-      if (user.accessToken) {
-          console.log("Active");
-          setLoginMobal(false)
-          dispatch(AccessToken(user));
-          navigation.navigate("Home");
+    } else {
+      try {
+        const loginData = await AsyncStorage.getItem("userData");
+        console.log("logindata", loginData);
+        if (loginData) {
+          const user = JSON.parse(loginData);
+          if (user.accessToken) {
+            console.log("Active");
+            setLoginMobal(false);
+            dispatch(AccessToken(user));
+            navigation.navigate("Home");
+          }
+        } else {
+          navigation.navigate("Service Screen");
+        }
+      } catch (error) {
+        console.error("Error fetching login data", error.response);
       }
-    }else{
-      navigation.navigate("Service Screen");
     }
-  } catch (error) {
-    console.error("Error fetching login data", error.response);
-  }
-}
-}
+  };
 
-const profile =async()=>{
-  console.log("userData", userData);
-  userData!=null?(
-    axios({
-      method: "get",
-      url:
-        BASE_URL + `user-service/getProfile/${userData.userId}`,
-      headers: {
-        Authorization: `Bearer ${userData.accessToken}`,
-      },
-
-    })
-      .then((response) => {
-        // console.log("response", response.data);
-        setChainId(response.data.multiChainId)
-        setCoin(response.data.coinAllocated)
-        setLoginMobal(false)
-      })
-      .catch((error) => {
-        // console.log("error1", error);
-        setLoading(false)
-      })
-  )
-  :console.log("no user data");
-}
-
+  const profile = async () => {
+    console.log("userData", userData);
+    userData != null
+      ? axios({
+          method: "get",
+          url: BASE_URL + `user-service/getProfile/${userData.userId}`,
+          headers: {
+            Authorization: `Bearer ${userData.accessToken}`,
+          },
+        })
+          .then((response) => {
+            // console.log("response", response.data);
+            setChainId(response.data.multiChainId);
+            setCoin(response.data.coinAllocated);
+            setLoginMobal(false);
+          })
+          .catch((error) => {
+            // console.log("error1", error);
+            setLoading(false);
+          })
+      : console.log("no user data");
+  };
 
   function getAllCampaign() {
-    setLoading(true)
-    axios({
-      method: "get",
-      url:
-        BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
-         
-    })
+    setLoading(true);
+    axios
+      .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
       .then((response) => {
-        // console.log("response", response.data);
-        setLoading(false)
-        // setData(response.data.filter((item) => item.campaignStatus)); // Filter out inactive campaigns
-
-         // setImage(response.data.imageUrls);
-         const apiData = response.data.filter((item) => item.campaignStatus);
-         const apiScreens = apiData.map((item) => item.campaignType);
-         
-         const mergedData = [
-           ...apiData,
-           ...services.filter(service => 
-             !apiScreens.includes(service.screen)
-           )
-         ];
-        //  console.log({mergedData})
-         setData(mergedData);
+        // console.log("API Response:", response.data);
+        setLoading(false);
+  
+        if (!Array.isArray(response.data)) {
+          console.error("Invalid API response format");
+          setData(services);
+          return;
+        }
+  
+        // Filter only active campaigns
+        const activeCampaigns = response.data.filter((item) => item.campaignStatus === true);
+  
+        if (activeCampaigns.length === 0) {
+          console.warn("No active campaigns found.");
+          setData(services); // Fallback to default services
+          return;
+        }
+  
+        const campaignScreens = activeCampaigns.map((item) => item.campaignType);
+  
+        const mergedData = [
+          ...activeCampaigns,
+          ...services.filter((service) => !campaignScreens.includes(service.screen)),
+        ];
+  
+        console.log("Merged Data:", mergedData[0].imageUrls[0].imageUrl);
+        setData(mergedData);
       })
       .catch((error) => {
-        console.log("error1", error);
-        setData(services)
-        setLoading(false)
+        console.error("Error fetching campaigns", error);
+        setData(services);
+        setLoading(false);
       });
   }
-
+  
+  
 
   const handleScroll = (event) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
     setActiveIndex(index);
   };
 
-  function getRiceCategories(){
-    setLoading(true)
+  function getRiceCategories() {
+    setLoading(true);
     axios({
       method: "get",
-      url:
-         BASE_URL + "product-service/showItemsForCustomrs"
-          
+      url: BASE_URL + "product-service/showItemsForCustomrs",
     })
-    .then((response) => {
-      setLoading(false)
-      // console.log(response.data)
-      setGetCategories(response.data)
-    })
-    .catch((error) => {
-      setLoading(false)
-      console.log(error.response)
-  })
+      .then((response) => {
+        setLoading(false);
+        // console.log(response.data[0])
+        setGetCategories(response.data);
+      })
+      .catch((error) => {
+        setLoading(false);
+        console.log(error.response);
+      });
   }
 
   const handleLogout = () => {
@@ -232,232 +299,355 @@ const profile =async()=>{
 
   const arrangeCategories = (categories) => {
     if (!categories || categories.length === 0) return [];
-    
+
     // Find the exact "Sample Rice" category
-    const sampleRiceIndex = categories.findIndex(cat => 
-      cat.categoryName === "Sample Rice");
-    
+    const sampleRiceIndex = categories.findIndex(
+      (cat) => cat.categoryName === "Sample Rice"
+    );
+
     // If "Sample Rice" category is found, move it to the first position
     if (sampleRiceIndex !== -1) {
       const result = [...categories];
       const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
       return [sampleRiceCategory, ...result];
     }
-    
+
     return categories;
   };
 
-useEffect(()=>{
-  getAllCampaign();
-  getRiceCategories()
-  profile()
-  setLoginMobal(true)
-},[userData])
+  useEffect(() => {
+    getAllCampaign();
+    getRiceCategories();
+    profile();
+    setLoginMobal(true);
+    GoogleAnalyticsService.screenView("Service Screen");
 
-// Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
-const truncateId = (id) => {
-  return id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
-};
-const handleCopy = async () => {
-  try {
-    await Clipboard.setStringAsync(chainId);
-    setCopied(true);
-  } catch (error) {
-    console.error('Copy error:', error);
-  }
-};
+    // Log modal opened event
+    GoogleAnalyticsService.sendEvent("Service Screen", {
+      modal_type: "Service Screen",
+    });
+  }, [userData]);
 
+  // Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
+  const truncateId = (id) => {
+    return id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
+  };
+  const handleCopy = async () => {
+    try {
+      await Clipboard.setStringAsync(chainId);
+      setCopied(true);
+    } catch (error) {
+      console.error("Copy error:", error);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F5F5F5F5", padding: 5 }}>
-      {loading==false?
-    <>
-      {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", marginTop: 50,marginBottom:15,padding:10 }}>
-        
-        <Image
-          source={require('../assets/Images/logo1.png')}
-          style={{ width: 150, height: 50, marginRight: 10,marginBottom:-5 }}
-        />
-{userData!=null?
-        <TouchableOpacity onPress={()=>handleLogout()}  style={{ marginLeft: "auto" }}>
-          <MaterialCommunityIcons name="logout" size={25} color="#5e606c" />
-        </TouchableOpacity>
-        
-        :<TouchableOpacity onPress={()=>navigation.navigate("Login")}  style={{ marginLeft: "auto",color:"#5e606c" }}>
-        <MaterialCommunityIcons name="login" size={25} color="#5e606c" /><Text>Login</Text>
-      </TouchableOpacity>}
-
-      </View>
-      {/* <UpdateChecker/> */}
-      {userData!=null&&
-  <View style={styles.IDcontainer}>
-    <Text style={styles.label}>
-      Blockchain ID: <Text style={styles.value}>{truncateId(chainId)}</Text>
-    </Text>
-    <TouchableOpacity 
-      style={[styles.copyButton, copied ? styles.copiedButton : null,{marginLeft:-width*0.3}]} 
-      onPress={handleCopy}
-      activeOpacity={0.7}
-    >
-      <MaterialIcons 
-        name={copied ? "check" : "content-copy"} 
-        size={14} 
-        color="#FFFFFF" 
-      />
-    </TouchableOpacity>
-    <View style={styles.coinContainer}>
-      <Text style={styles.label}>
-        Coins: <Text style={styles.value}>{coin}</Text>
-      </Text>
-      <TouchableOpacity 
-        style={styles.infoButton}
-        onPress={() => setInfoModalVisible(true)}
-      >
-        <MaterialIcons 
-          name="info-outline" 
-          size={16} 
-          color="#4A90E2" 
-        />
-      </TouchableOpacity>
-    </View>
-  </View>
-}
-
-{/* BMVCoins Info Modal */}
-<Modal
-  animationType="fade"
-  transparent={true}
-  visible={infoModalVisible}
-  onRequestClose={() => setInfoModalVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContent}>
-      <View style={styles.modalHeader}>
-        <Text style={styles.modalTitle}>How to use BMVCoins?</Text>
-        <TouchableOpacity onPress={() => setInfoModalVisible(false)}>
-          <Text style={styles.closeButton}>✕</Text>
-        </TouchableOpacity>
-      </View>
-      
-      <Text style={styles.modalText}>
-        You can collect BMVCoins and use them to get discounts on rice bags, as well as other products and services.
-      </Text>
-      
-      <View style={styles.valueBox}>
-        <Text style={styles.valueTitle}>Current value:</Text>
-        <Text style={styles.valueText}>1,000 BMVCoins = ₹10 discount</Text>
-      </View>
-      
-      <Text style={styles.infoTitle}>Important information:</Text>
-      <View style={styles.bulletList}>
-        <Text style={styles.bulletPoint}>• A minimum of 20,000 BMVCoins is required for redemption.</Text>
-        <Text style={styles.bulletPoint}>• The discount value may change in the future.</Text>
-      </View>
-      
-      <TouchableOpacity 
-        style={styles.gotItButton}
-        onPress={() => setInfoModalVisible(false)}
-      >
-        <Text style={styles.gotItText}>Got it</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
-<ScrollView>
-      <View style={{marginBottom:height*0.05}}>
-      <FlatList
-        data={images}
-        keyExtractor={(_, index) => index.toString()}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        renderItem={({ item }) => (
-          <View style={styles.imageContainer}>
-          <Image source={item} style={{ width:"95%",height: "34%", }} />
-         </View>
-        )}
-      />
-
-      {/* Pagination Dots */}
-      <View style={{ flexDirection: "row", alignSelf: "center",marginTop:-height*0.13 }}>
-        {images.map((_, index) => (
+      {loading == false ? (
+        <>
+          {/* Header */}
           <View
-            key={index}
-            style={[
-              styles.dot,
-              activeIndex === index ? styles.activeDot : styles.inactiveDot,
-            ]}
-          />
-        ))}
-      </View>
-
-      {/* Car Brands Horizontal List */}
-      {services!=null || services!="" ?(
-      <View style={{marginBottom:10,height:180,}}>
-      <FlatList
-        data={services}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity
             style={{
+              flexDirection: "row",
               alignItems: "center",
-              margin: 20,
-              backgroundColor:"white",
-              height:80,
-              elevation:10,
-              borderRadius:100,
-              width:80
+              marginTop: 50,
+              marginBottom: 15,
+              padding: 10,
             }}
-            // onPress={() => navigation.navigate(item.screen || item.campaignType)} 
-             onPress={() => {
-                     if(item.screen!=="Crypto Currency")
-                      { 
-                        // console.log("campaignType",item.campaignType || item.screen);
-                        if(item.screen =="OXYLOANS"){
-                            Linking.openURL("https://www.oxyloans.com/");
-                        }else{
-                          navigation.navigate(item.screen || item.campaignType)
-                        }
-                        
-                      }
-                     else{
-                      if(userData==null || userData==undefined){
-                        Alert.alert("Alert","Please login to continue",[
-                          {text:"OK",onPress:()=>navigation.navigate("Login")},
-                          {text:"Cancel"}
-                        ])
-                      }
-                      else{
-                        navigation.navigate(item.screen || item.campaignType)
-                      }
-                     }
-                  }}  >
-              {item.image?
-            <Image source={item.image} style={{ width: 80, height: 80, resizeMode: "contain",borderRadius:100 }} />
-            : <Image source={require("../assets/icon.png")} style={{ width: 80, height: 80, resizeMode: "contain",borderRadius:100 }} />
-            }
-            <Text style={{ fontSize: 12, marginTop: 20 ,textAlign:"center"}}>{item.name || item.campaignType}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
-      </View>
-      
-      ):null}
+          >
+            <Image
+              source={require("../assets/Images/logo1.png")}
+              style={{
+                width: 150,
+                height: 50,
+                marginRight: 10,
+                marginBottom: -5,
+              }}
+            />
+            {userData != null ? (
+              <TouchableOpacity
+                onPress={() => handleLogout()}
+                style={{ marginLeft: "auto" }}
+              >
+                <MaterialCommunityIcons
+                  name="logout"
+                  size={25}
+                  color="#5e606c"
+                />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Login")}
+                style={{ marginLeft: "auto", color: "#5e606c",width:width*0.1 }}
+              >
+                <MaterialCommunityIcons
+                  name="login"
+                  size={25}
+                  color="#5e606c"
+                />
+                <Text style={{ width: width * 0.1 }}>Login</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {/* <UpdateChecker/> */}
+          {userData != null && (
+            <View style={styles.IDcontainer}>
+              <Text style={[styles.label, { width: width * 0.4 }]}>
+                Blockchain ID:{" "}
+                <Text style={styles.value}>{truncateId(chainId)}</Text>
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.copyButton,
+                  copied ? styles.copiedButton : null,
+                  { marginLeft: -width * 0.3 },
+                ]}
+                onPress={handleCopy}
+                activeOpacity={0.7}
+              >
+                <MaterialIcons
+                  name={copied ? "check" : "content-copy"}
+                  size={14}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+              <View style={styles.coinContainer}>
+                <Text style={[styles.label, { width: width * 0.2 }]}>
+                  Coins: <Text style={styles.value}>{coin}</Text>
+                </Text>
+                <TouchableOpacity
+                  style={styles.infoButton}
+                  onPress={() => setInfoModalVisible(true)}
+                >
+                  <MaterialIcons
+                    name="info-outline"
+                    size={16}
+                    color="#4A90E2"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
+          {/* BMVCoins Info Modal */}
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={infoModalVisible}
+            onRequestClose={() => setInfoModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>How to use BMVCoins?</Text>
+                  <TouchableOpacity onPress={() => setInfoModalVisible(false)}>
+                    <Text style={styles.closeButton}>✕</Text>
+                  </TouchableOpacity>
+                </View>
 
-      {/* Popular Categories List */}
-      <View style={{ flexDirection: "row", justifyContent: "space-between",padding:10 }}>
-        <Text style={{ fontSize: 18, fontWeight: "bold" }}>Popular Categories</Text>
-        <TouchableOpacity onPress={()=>navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}>
-          <Text style={{ fontSize: 14, color: "#3d2a71",fontWeight:"bold",marginRight:15 }}>View All</Text>
-        </TouchableOpacity>
-      </View>
+                <Text style={[styles.modalText, { width: width * 0.8 }]}>
+                  You can collect BMVCoins and use them to get discounts on rice
+                  bags, as well as other products and services.
+                </Text>
+
+                <View style={styles.valueBox}>
+                  <Text style={[styles.valueTitle, { width: width * 0.7 }]}>
+                    Current value:
+                  </Text>
+                  <Text style={[styles.valueText, { width: width * 0.7 }]}>
+                    1,000 BMVCoins = ₹10 discount
+                  </Text>
+                </View>
+
+                <Text style={[styles.infoTitle, { width: width * 0.8 }]}>
+                  Important information:
+                </Text>
+                <View style={styles.bulletList}>
+                  <Text style={[styles.bulletPoint, { width: width * 0.8 }]}>
+                    • A minimum of 20,000 BMVCoins is required for redemption.
+                  </Text>
+                  <Text style={[styles.bulletPoint, { width: width * 0.8 }]}>
+                    • The discount value may change in the future.
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.gotItButton}
+                  onPress={() => setInfoModalVisible(false)}
+                >
+                  <Text style={styles.gotItText}>Got it</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
+          <ScrollView>
+            <View style={{ marginBottom: height * 0.05 }}>
+              <FlatList
+                data={images}
+                keyExtractor={(_, index) => index.toString()}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={handleScroll}
+                renderItem={({ item }) => (
+                  <View style={styles.imageContainer}>
+                    <Image
+                      source={item}
+                      style={{ width: "95%", height: "34%" }}
+                    />
+                  </View>
+                )}
+              />
+
+              {/* Pagination Dots */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignSelf: "center",
+                  marginTop: -height * 0.13,
+                }}
+              >
+                {images.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      activeIndex === index
+                        ? styles.activeDot
+                        : styles.inactiveDot,
+                    ]}
+                  />
+                ))}
+              </View>
+
+              {/* Car Brands Horizontal List */}
+              {services != null || services != "" ? (
+                <View style={{ marginBottom: 10, height: 180 }}>
+                  <FlatList
+                    data={data}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={{
+                          alignItems: "center",
+                          margin: 20,
+                          backgroundColor: "white",
+                          height: 80,
+                          elevation: 10,
+                          borderRadius: 100,
+                          width: 80,
+                        }}
+                        // onPress={() => navigation.navigate(item.screen || item.campaignType)}
+                        onPress={() => {
+                          if (item.screen !== "Crypto Currency") {
+                            // console.log("campaignType",item.campaignType || item.screen);
+                            if(item.screen) {
+                              navigation.navigate(
+                                item.screen
+                              );
+                            }else {
+                              navigation.navigate("Campaign", { campaignType: item.campaignType });
+                            }
+                          } else {
+                            if (userData == null || userData == undefined) {
+                              Alert.alert("Alert", "Please login to continue", [
+                                {
+                                  text: "OK",
+                                  onPress: () => navigation.navigate("Login"),
+                                },
+                                { text: "Cancel" },
+                              ]);
+                            }  else if(item.screen) {
+                              navigation.navigate(
+                                item.screen
+                              );
+                            }else {
+                              navigation.navigate("Campaign", { campaignType: item.campaignType });
+                            }
+                          }
+                        }}
+                      >
+                        {item.image ? (
+                          <Image
+                            source={item.image}
+                            style={{
+                              width: 80,
+                              height: 80,
+                              resizeMode: "contain",
+                              borderRadius: 100,
+                            }}
+                          />
+                        ) :item.imageUrls ? (
+                          <Image
+                           source={{ uri: item.imageUrls[0].imageUrl || DEFAULT_IMAGE }}
+                            style={{
+                              width: 80,
+                              height: 80,
+                              resizeMode: "contain",
+                              borderRadius: 100,
+                           }}
+                          />
+                        ): (
+                          <Image
+                            source={require("../assets/icon.png")}
+                            style={{
+                              width: 80,
+                              height: 80,
+                              resizeMode: "contain",
+                              borderRadius: 100,
+                            }}
+                          />
+                        )}
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            marginTop: 20,
+                            textAlign: "center",
+                            width: width * 0.2,
+                          }}
+                        >
+                          {item.name || item.campaignType}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              ) : null}
+
+              {/* Popular Categories List */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  padding: 10,
+                }}
+              >
+                <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                  Popular Categories
+                </Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("Rice Products", {
+                      screen: "Rice Products",
+                      category: "All CATEGORIES",
+                    })
+                  }
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: "#3d2a71",
+                      fontWeight: "bold",
+                      marginRight: 15,
+                    }}
+                  >
+                    View All
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
       <FlatList
   data={arrangeCategories(getCategories)}
@@ -517,7 +707,9 @@ const handleCopy = async () => {
       
 </ScrollView>
 </>
+      )
 :
+(
 <View style={styles.loaderContainer}>
   <LottieView 
           source={require("../assets/AnimationLoading.json")}
@@ -527,14 +719,12 @@ const handleCopy = async () => {
         />
         {/* <RiceLoader/> */}
         </View>
-        }
+      )}
 
-        {userData==null?
-         <LoginModal visible={loginModal} onClose={() => setLoginMobal(false)} />
-         :null}
-       
-
-         </View>
+      {userData == null ? (
+        <LoginModal visible={loginModal} onClose={() => setLoginMobal(false)} />
+      ) : null}
+    </View>
   );
 };
 
@@ -554,17 +744,17 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   imageContainer: {
-    width:width,
+    width: width,
     justifyContent: "center",
     alignItems: "center",
     alignSelf: "center",
     height: height * 0.42,
-    marginTop:-height*0.12
+    marginTop: -height * 0.12,
   },
   image: {
-    width: width * 0.9, 
-    height: height * 0.6, 
-    resizeMode: "contain", 
+    width: width * 0.9,
+    height: height * 0.6,
+    resizeMode: "contain",
   },
   pagination: {
     flexDirection: "row",
@@ -588,23 +778,22 @@ const styles = StyleSheet.create({
     backgroundColor: "gray",
   },
   copyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#5e35b1',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#5e35b1",
     padding: 6,
     // paddingHorizontal: 12,
     borderRadius: 4,
     // marginLeft:40
   },
   copiedButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
     // marginLeft:40
-
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     marginLeft: 4,
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 14,
   },
   IDcontainer: {
@@ -627,9 +816,8 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 5,
-    flexDirection:"row",
-    justifyContent:"space-evenly",
-
+    flexDirection: "row",
+    justifyContent: "space-evenly",
   },
   value: {
     fontSize: 14,
@@ -644,6 +832,7 @@ const styles = StyleSheet.create({
   infoButton: {
     padding: 5,
     marginLeft: 5,
+    top:-1.5
   },
   modalOverlay: {
     flex: 1,
@@ -720,4 +909,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
   },
-})
+});

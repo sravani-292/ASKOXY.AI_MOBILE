@@ -65,6 +65,11 @@ import AddressBookScreen from "../Screens/View/Profile/AddressScreen";
 import StoreLocatorScreen from "../StoreLocation";
 import AppUpdateScreen from "../../AppUpdateScreen";
 import PremiumPlan from "../Screens/View/WalletSubscriptions/PremiumPlan";
+import CampaignScreen from "../Campaign";
+import OxyLoans from "../Dashboard/Oxyloans";
+import OfferLetters from "../Dashboard/offerletters";
+
+
 
 
 export default function StacksScreens() {
@@ -277,6 +282,14 @@ export default function StacksScreens() {
         // }}
       />
 
+      <Stack.Screen 
+        name="Campaign" 
+        component={CampaignScreen} 
+        options={({ route }) => ({ 
+          title: route.params?.campaignType || 'Campaigns' 
+        })}
+      />
+
       <Stack.Screen
         name="Invite a friend"
         component={ReferFriend}
@@ -305,6 +318,18 @@ export default function StacksScreens() {
         name="App Update"
         component={AppUpdateScreen}
         options={{ headerShown: false }}
+      />
+
+      <Stack.Screen
+        name="OxyLoans"
+        component={OxyLoans}
+        options={{ headerShown: true }}
+      />
+
+      <Stack.Screen
+       name="Offer Letters"
+       component={OfferLetters}
+       options={{ headerShown: true }}
       />
 
       

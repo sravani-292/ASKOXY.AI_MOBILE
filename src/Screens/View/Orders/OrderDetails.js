@@ -516,6 +516,23 @@ const OrderDetails = () => {
           </Text>
         </View>
 
+{/* Time Slot Details */}
+<Text style={styles.sectionTitle}>Selected Time Slot Details</Text>
+
+<View style={styles.section}>
+{orderDetails.timeSlot!="" ? 
+  <Text style={styles.detailText}>
+    Expected Time Slot :{" "}
+    <Text style={styles.detailValue}>{orderDetails.dayOfWeek} , {orderDetails.expectedDeliveryDate} , {orderDetails.timeSlot} </Text>
+  </Text>
+  :
+  <Text>No time Slot Selected</Text>
+  }
+</View>
+
+
+
+
         {/* Billing Details */}
         <Text style={styles.sectionTitle}>Billing Details</Text>
         <View style={styles.section}>

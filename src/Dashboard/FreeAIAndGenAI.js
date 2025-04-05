@@ -186,7 +186,7 @@ useEffect(()=>{
         <Text style={styles.bold}> Transform your future today!</Text> 🌐
       </Text>
 
-      <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-around",width:width*0.9,alignSelf:"center"}}>
         <TouchableOpacity
           style={[styles.button, { backgroundColor: "#0384d5" }]} // Add background color here
           onPress={() => trainingfunc()}

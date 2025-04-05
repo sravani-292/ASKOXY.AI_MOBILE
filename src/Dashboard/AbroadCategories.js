@@ -7,13 +7,14 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  Linking,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 const { height, width } = Dimensions.get("window");
 import axios from "axios";
 import BASE_URL, { userStage } from "../../Config";
 import { useSelector } from "react-redux";
-
+import { WebView } from 'react-native-webview';
 const AbroadCategories = ({ navigation }) => {
   const userData = useSelector((state) => state.counter);
   const [AlreadyInterested, setAlreadyInterested] = useState(false);
@@ -154,16 +155,79 @@ const AbroadCategories = ({ navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container} >
-      {/* Top Heading */}
+    <View style={styles.container} >
+     <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
       <Text style={styles.topHeading}>
         🌍 World's #1 AI & Blockchain-Based Platform for University Admissions
         🌟
       </Text>
 
       <View>
-        {/* Mission & Vision */}
+        
         <Text style={styles.missionHeading}>🎯 Our Mission & Vision</Text>
+
+      
+        <WebView
+        source={{ uri: 'https://youtube.com/embed/LLRFyQ5y3HY?autoplay=1&mute=1' }}
+        style={{ width: '100%', height: 300 }}
+        allowsFullscreenVideo
+      />
+        <View style={styles.card}>
+        <Text style={styles.heading}>🎓 Fulfill Your Dreams</Text>
+
+        <Text style={styles.bullet}>🎯 Upto 5% Cashback on University Fees</Text>
+        <Text style={styles.bullet}>🎯 100% Scholarship for Selected Students</Text>
+        <Text style={styles.bullet}>
+          🎯 Get Offer Letter in 10 Minutes - Share preferences on{' '}
+          <Text style={styles.bold}>ASKOXY.AI</Text> & get a sample offer letter.
+        </Text>
+        {AlreadyInterested == false ? (
+          <>
+            {loading == false ? (
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: "#6f2dbd" }]} 
+                onPress={() => interestedfunc()}
+              >
+                <Text style={[styles.buttonText, { color: "white" }]}>
+                  I'm Interested
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[styles.button, { backgroundColor: "#6f2dbd" }]} 
+              >
+                <Text style={styles.buttonText}>
+                  <ActivityIndicator size="small" color="#fff" />
+                </Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <View
+            style={[styles.button, { backgroundColor: "#9367c7" }]} 
+            onPress={() => interestedfunc()}
+          >
+            <Text style={[styles.buttonText, { color: "white" }]}>
+              Already Participated
+            </Text>
+          </View>
+        )}
+      </View>
+
+      
+      <Text style={styles.textBold}>
+        Study Abroad: <Text style={styles.text}>Get a 10-minute sample offer letter and enjoy up to 5% fee cashback!</Text>
+      </Text>
+
+      
+      <Text style={styles.paragraph}>
+        Welcome! <Text style={styles.bold}>ASKOXY.AI</Text> fuels your study abroad journey with data-driven insights. 
+        Answer questions on country, university, course, budget, UG/PG & academics to get personalized recommendations, 
+        a ROI scorecard, a 10-min sample offer letter & up to 5% fee cashback.
+      </Text>
+
+   
+    
         <Text
           style={{
             marginBottom: 10,
@@ -177,7 +241,23 @@ const AbroadCategories = ({ navigation }) => {
           To enable 1 million students to fulfill their abroad dream by 2030.
           Our vision is to connect all stakeholders seamlessly with high trust.
         </Text>
-        {/* Features */}
+        <View>
+      {/* <Text style={styles.title}>Students Studying Abroad</Text>
+      <Text style={styles.description}>
+        Join thousands of students making their study abroad dreams a reality. Discover top universities with{' '}
+        <Text style={styles.highlight}>StudentX.world, the World's 1st AI & Blockchain-powered platform</Text> for university admissions.
+        Access <Text style={styles.highlight}>bAnkD's innovative education loan marketplace</Text>, connecting students with leading Banks and NBFCs to finance their global education journey.
+      </Text> */}
+
+      {/* <View style={styles.buttonContainer}>
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#008CBA' }]} onPress={()=>navigation.navigate("Countries Dispaly")}>
+          <Text style={styles.buttonText}>StudentX.world</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.button, { backgroundColor: '#00C853' }]}>
+          <Text style={styles.buttonText}>BankD</Text>
+        </TouchableOpacity>
+      </View> */}
+    </View>
         <View style={styles.featureBox}>
           <Text style={styles.featureText}>
             🏠{" "}
@@ -208,6 +288,17 @@ const AbroadCategories = ({ navigation }) => {
             Spread across the UK, Europe, US, Canada, Australia, and New
             Zealand.
           </Text>
+          <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.button} onPress={()=>navigation.navigate("Offer Letters")}>
+          <Text style={styles.buttonText}>📄 View Offer Samples</Text>
+        </TouchableOpacity>
+
+        {/* <TouchableOpacity style={styles.button} onPress={()=>exploreGptfun()}> */}
+        <TouchableOpacity style={styles.button} onPress={()=>Linking.openURL('https://chatgpt.com/g/g-67bb1a92a0488191b4c44678cc6cd958-study-abroad-10-min-sample-offer-5-fee-cashback')}>
+          <Text style={styles.buttonText}>🌍 Study Abroad GPT</Text>
+        </TouchableOpacity>
+      </View>
+
         </View>
 
         <View style={styles.featureBox}>
@@ -222,44 +313,8 @@ const AbroadCategories = ({ navigation }) => {
       </View>
 
       <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: "#0384d5" }]} // Add background color here
-          onPress={() => exploreGptfun()}
-        >
-          <Text style={styles.buttonText}>Explore GPTS</Text>
-        </TouchableOpacity>
-
-        {AlreadyInterested == false ? (
-          <>
-            {loading == false ? (
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
-                onPress={() => interestedfunc()}
-              >
-                <Text style={[styles.buttonText, { color: "white" }]}>
-                  I'm Interested
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <View
-                style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
-              >
-                <Text style={styles.buttonText}>
-                  <ActivityIndicator size="small" color="#fff" />
-                </Text>
-              </View>
-            )}
-          </>
-        ) : (
-          <View
-            style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
-            onPress={() => interestedfunc()}
-          >
-            <Text style={[styles.buttonText, { color: "white" }]}>
-              Already Participated
-            </Text>
-          </View>
-        )}
+        
+       
       </View>
       {/* <View style={styles.featureBox}>
         <Text style={styles.featureText}>
@@ -346,7 +401,8 @@ const AbroadCategories = ({ navigation }) => {
           university’s orientation, and start your academic journey abroad!
         </Text>
       </View> */}
-    </ScrollView>
+     </ScrollView>
+    </View>
   );
 };
 
@@ -357,6 +413,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F9F9F9",
     paddingHorizontal: 15,
+  },
+  scrollContent: {
+    paddingHorizontal: 15,
+    paddingBottom: 50, 
   },
   topHeading: {
     fontSize: 22,
@@ -417,5 +477,94 @@ const styles = StyleSheet.create({
     color: "#333333",
     marginBottom: 15,
     lineHeight: 24,
+  },
+  // container: {
+  //   padding: 20,
+  //   backgroundColor: '#F4F2FF',
+  //   flexGrow: 1,
+   
+  // },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 20,
+    width: '100%',
+    elevation: 3,
+  },
+  heading: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#8B3DFF',
+    marginBottom: 10,
+  },
+  bullet: {
+    fontSize: 14,
+    marginBottom: 8,
+    color: '#444',
+  },
+  textBold: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 10,
+    color: '#000',
+  },
+  text: {
+    fontWeight: '400',
+    color: '#333',
+  },
+  paragraph: {
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 20,
+  },
+  bold: {
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    width: '100%',
+    flexWrap: 'wrap',
+  },
+  button: {
+    backgroundColor: '#8B3DFF',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+    marginVertical: 5,
+    flex: 1,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  video: {
+    width: '100%',
+    height: 300,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign:"center"
+  },
+  description: {
+    textAlign: 'center',
+    fontSize: 15,
+    color: '#333',
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  highlight: {
+    color: 'purple',
+    fontWeight: 'bold',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
   },
 });

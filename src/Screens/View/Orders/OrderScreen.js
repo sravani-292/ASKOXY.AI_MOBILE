@@ -10,6 +10,7 @@ import {
   Dimensions,
   RefreshControl,
   Button,
+  Modal,
   TouchableWithoutFeedback,
   ScrollView,
 } from "react-native";
@@ -21,7 +22,6 @@ import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../../../Config";
 const { width, height } = Dimensions.get("window");
 import { Picker } from "@react-native-picker/picker";
-import { Modal } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
 
@@ -42,171 +42,157 @@ const OrderScreen = () => {
   const navigation = useNavigation();
   const [slotLoader, setSlotLoader] = useState(false);
   const [slotsData, setSlotsData] = useState([]);
+  const[dateTimeModalVisible,setDateTimeModalVisible]=useState(false)
+  const [error, setError] = useState(null);
+  const [loader, setLoader] = useState(false);
+  const[selectedSlot,setSelectedSlot]=useState(null)
+  const [timeSlotData, setTimeSlotData] = useState([]);
+const[orderId,setOrderId]=useState('')
+
+
   useFocusEffect(
     useCallback(() => {
       getOrders();
-      fetchTimeSlots();
+      // fetchTimeSlot();
     }, [])
   );
 
-
-  const toggleOrderSelection = (orderId) => {
-    setSelectedOrderId((prevSelected) =>
-      prevSelected === orderId ? null : orderId
-    );
+  const getNextThreeDays = () => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+  
+    const nextThreeDays = [1, 2, 3, 4, 5, 6, 7].map(offset => {
+      const date = new Date();
+      date.setDate(date.getDate() + offset);
+      // console.log("dates",date)
+      return {
+        dayOfWeek: daysOfWeek[date.getDay()].toUpperCase(),
+        date: `${date.getDate()}-${months[date.getMonth()]}-${date.getFullYear()}`,
+        formattedDay: daysOfWeek[date.getDay()]
+      };
+    });
+  
+    return nextThreeDays;
   };
- 
-  {orderStatus < 3 && (
-    <TouchableOpacity
-      style={styles.updateButton}
-      onPress={() => toggleOrderSelection(item.orderId)}
-    >
-      <Icon name="edit" size={18} color="#fff" style={styles.icon} />
-    </TouchableOpacity>
-  )}
-  const handleSlotUpdate = async () => {
-    setSlotLoader(true);
-    console.log("for slot selection");
-    const data = {
-      dayOfWeek: selectedDay[selectedOrderId],
-      expectedDeliveryDate: updatedDate,
-      orderId: selectedOrderId,
-      timeSlot: selectedTimeSlot[selectedOrderId],
-      userId: customerId,
-    };
-    console.log("for updating timeslot", data);
-    axios
-      .patch(BASE_URL + `order-service/userSelectedDiffslot`, data, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      .then((response) => {
-        console.log(response.data);
-        setSlotLoader(false)
-        if (response.status == 200) {
-          alert("Time slot updated successfully!");
-          setSelectedOrderId(null);
-          getOrders();
-        } else {
-          alert("Failed to update time slot.");
+  
+  const fetchTimeSlot = (value) => {
+    setLoading(true);
+    setError(null);
+    console.log({value})
+    setOrderId(value)
+    axios({
+      method: "get",
+      url: BASE_URL + `order-service/fetchTimeSlotlist`,
+    })
+    .then((response) => {
+      // console.log("Response fetch time slot", response.data);
+      
+      // Get potential days
+      const potentialDays = getNextThreeDays();
+      
+      // Filter slots based on availability
+      const processedData = [];
+      
+      for (let dayInfo of potentialDays) {
+        // Find the corresponding slot for this day
+        const matchingSlot = response.data.find(
+          slot => slot.dayOfWeek === dayInfo.dayOfWeek && slot.isAvailable === false
+        );
+        
+        if (matchingSlot) {
+          const dayEntry = {
+            id: matchingSlot.id,
+            day: dayInfo.formattedDay,
+            date: dayInfo.date,
+            slots: [
+              { id: `${matchingSlot.id}-1`, time: matchingSlot.timeSlot1 },
+              { id: `${matchingSlot.id}-2`, time: matchingSlot.timeSlot2 },
+              { id: `${matchingSlot.id}-3`, time: matchingSlot.timeSlot3 },
+              { id: `${matchingSlot.id}-4`, time: matchingSlot.timeSlot4 }
+            ],
+            isAvailable: matchingSlot.isAvailable
+          };
+          
+          processedData.push(dayEntry);
+          
+          // Stop when we have exactly 3 days
+          if (processedData.length === 3) break;
         }
-      })
-      .catch((error) => {
-        console.log(error.response);
-      });
-  };
-
-  const fetchTimeSlots = async () => {
-    try {
-      const response = await axios.get(
-        `${BASE_URL}order-service/fetchTimeSlotlist`
-      );
-      const data = response.data;
-      console.log({ data });
-      setSlotsData(data);
-      let updatedOrderDate = new Date();
-      updatedOrderDate.setDate(updatedOrderDate.getDate() + 1);
-
-      const tomorrowDate = updatedOrderDate
-        .toLocaleDateString("en-GB") // "en-GB" gives "DD/MM/YYYY"
-        .split("/")
-        .join("-");
-
-      console.log("New Date (Updatedate):", tomorrowDate);
-      setUpdatedate(tomorrowDate);
-
-      const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(updatedOrderDate);
-        date.setDate(updatedOrderDate.getDate() + i);
-        const formattedDate = `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
-          .toString()
-          .padStart(2, "0")}-${date.getFullYear()}`;
-        return {
-          dayOfWeek: date
-            .toLocaleDateString("en-GB", { weekday: "long" })
-            .toUpperCase(),
-          formattedDate: formattedDate,
-        };
-      });
-
-      console.log("Next seven days:", nextSevenDays);
-
-      const availableDays = nextSevenDays
-        .filter((day) => {
-          const matchedDay = data.find(
-            (d) => d.dayOfWeek.toUpperCase() === day.dayOfWeek
-          );
-          return matchedDay && matchedDay.isAvailable==true;
-        })
-        .slice(0, 3);
-
-      console.log("Filtered available days:", availableDays);
-
-      const transformedDays = availableDays.map((day) => ({
-        label: `${day.dayOfWeek} ( ${day.formattedDate})`,
-        value: day.dayOfWeek,
-      }));
-
-      console.log("Transformed days:", transformedDays);
-      setDays(transformedDays);
-    } catch (error) {
-      console.error("Error fetching time slots:", error);
-    }
-  };
-
-  const handleDayChange = (selectedDay, order_id) => {
-    setSelectedDay((prev) => ({
-      ...prev,
-      [order_id]: selectedDay,
-    }));
-  
-    console.log("selectedDay", selectedDay);
-    console.log("Days array before filtering:", days);
-    console.log(
-      "Available Days:",
-      days.map((d) => `"${d.value}"`)
-    );
-    console.log("Selected Day:", `"${selectedDay}"`);
-  
-    const selectedDayData = days.find(
-      (d) =>
-        d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
-    );
-  
-    console.log({ selectedDayData });
-  
-    if (selectedDayData) {
-      const fullDayData = slotsData.find((d) => d.dayOfWeek === selectedDay);
-  
-      if (fullDayData) {
-        setSelectedDate(selectedDayData.formattedDate || "");
-  
-        setTimeSlots((prev) => ({
-          ...prev,
-          [order_id]: [
-            fullDayData.timeSlot1,
-            fullDayData.timeSlot2,
-            fullDayData.timeSlot3,
-            fullDayData.timeSlot4,
-          ].filter(Boolean), 
-        }));
-      } else {
-        setTimeSlots((prev) => ({
-          ...prev,
-          [order_id]: [],
-        }));
       }
-    } else {
-      setTimeSlots((prev) => ({
-        ...prev,
-        [order_id]: [],
-      }));
-    }
+      
+      // Ensure we always have 3 days
+      while (processedData.length < 3) {
+        console.warn("Not enough days with unavailable slots");
+        // You might want to handle this case, perhaps by adding placeholder days
+        processedData.push({
+          id: null,
+          day: 'No Slot',
+          date: 'N/A',
+          slots: [],
+          isAvailable: true
+        });
+      }
+      
+      setTimeSlotData(processedData);
+      setDateTimeModalVisible(true);
+      setLoading(false);
+    })
+    .catch((error) => {
+      console.error("Error fetching time slots", error);
+      setLoading(false);
+      Alert.alert("Error", "Failed to fetch time slots");
+    });
   };
   
+  // Handling slot selection remains the same
+  const handleSlotSelect = (day, date, time) => {
+    const selection = { day, date, time };
+    setSelectedSlot({day,date,time})
+    console.log("Selected delivery slot:", selection);
+    
+    let data = {
+      "dayOfWeek": day.toUpperCase(),
+      "expectedDeliveryDate": date,
+      "orderId": orderId,
+      "timeSlot": time,
+      "userId": customerId
+    };
+    
+    console.log("Sending data:", data);
+    setLoader(true)
+    axios({
+      method: "patch",
+      url: BASE_URL + `order-service/userSelectedDiffslot`,
+      data: data
+    })
+    .then((response) => {
+      console.log("Update Time Slot", response.data);
+      setDateTimeModalVisible(false);
+      getOrders();
+      setLoader(false)
+      Alert.alert("Success", "Successfully updated time slot");
+    })
+    .catch((error) => {
+      console.log("Update Time Slot Error", error.response);
+      setDateTimeModalVisible(false);
+      setLoader(false)
+      Alert.alert("Error", "Failed to update time slot");
+    });
+  };
+  // Flatten data for ScrollView approach
+  const flattenedData = timeSlotData.flatMap(dateObj => {
+    return [
+      { type: 'header', day: dateObj.day, date: dateObj.date },
+      ...dateObj.slots.map(slot => ({ 
+        type: 'slot', 
+        ...slot, 
+        day: dateObj.day, 
+        date: dateObj.date 
+      }))
+    ];
+  });  
+  
+
 
   const onRefresh = () => {
     getOrders();
@@ -230,10 +216,11 @@ const OrderScreen = () => {
         }
       );
 
-      console.log("Order data", response.data);
+      // console.log("Order data", response.data);
 
       if (response.data) {
         setOrders(response.data);
+        console.log("orders",orders.orderId)
         response.data.forEach((item) => {
           console.log(item.newOrderId, item.orderStatus);
           console.log("orderdate", item.orderDate);
@@ -339,104 +326,113 @@ const OrderScreen = () => {
       </View>
       <View style={{ width: width * 0.9, alignSelf: "center" }}>
         {item.timeSlot !== "" && (
+          <>
           <View style={styles.timeSlotContainer}>
             <View style={styles.infoContainer}>
               <AntDesign name="clockcircle" size={15} color="gray" />
               <Text style={styles.timeText}>
                 {item.expectedDeliveryDate} {item.dayOfWeek} ({item.timeSlot})
               </Text>
-              {orderStatus < 3 && (
-                <TouchableOpacity
-                  style={styles.updateButton}
-                  onPress={() =>
-                    setSelectedOrderId(
-                      selectedOrderId === item.orderId ? null : item.orderId
-                    )
-                  }
-                
-                  >
-                  <Icon
-                    name="edit"
-                    size={15}
-                    color="#fff"
-                    style={styles.icon}
-                  />
-                </TouchableOpacity>
-              )}
             </View>
 
           
 
-            {selectedOrderId === item.orderId && (
-              <View style={styles.pickerSection}>
-                <Text style={styles.label}>Select Day:</Text>
-                <View style={styles.pickerContainer}>
-                  <TouchableOpacity>
-                  <Picker
-                    selectedValue={selectedDay[selectedOrderId]}
-                    onValueChange={(e)=>handleDayChange(e,item.orderId)}
-                    style={styles.picker}
+              {(item.orderStatus =="1" || item.orderStatus=="2") && (
+              <TouchableOpacity
+                  style={styles.updateButton}
+                  onPress={() =>fetchTimeSlot(item.orderId)
+                    // setSelectedOrderId(
+                    //   selectedOrderId === item.orderId ? null : item.orderId
+                    // )
+                  }
                   >
-                    <Picker.Item
-                      label="SELECT A DAY"
-                      value=""
-                      enabled={false}
-                      color="gray"
-                    />
-                    {days.map((day) => (
-                      <Picker.Item
-                        key={day.value}
-                        label={day.label}
-                        value={day.value}
-                      />
-                    ))}
-                  </Picker>
-                  </TouchableOpacity>
-                </View>
+                    <Text style={{color:"#0384d5"}}>Update Time Slot</Text>
+                  {/* <Icon
+                    name="edit"
+                    size={15}
+                    color="#fff"
+                    style={styles.icon}
+                  /> */}
+                </TouchableOpacity>
+               )} 
 
-                {timeSlots[selectedOrderId]?.length > 0 && (
-                  <>
-                    <Text style={styles.label}>Select Time Slot:</Text>
-                    <View style={styles.pickerContainer}>
-                      <Picker
-                        selectedValue={selectedTimeSlot}
-                        onValueChange={(e)=>setSelectedTimeSlot(prev=>({...prev,[selectedOrderId]:e}))}
-                        style={styles.picker}
-                      >
-                        <Picker.Item
-                          label="Select a time slot"
-                          value=""
-                          enabled={false}
-                          color="gray"
-                        />
-                        {timeSlots[selectedOrderId].map((slot, index) => (
-                          <Picker.Item key={index} label={slot} value={slot} />
-                        ))}
-                      </Picker>
-                    </View>
-                    {selectedTimeSlot[selectedOrderId] && (
-                      <TouchableOpacity
-                        style={[
-                          styles.updateButton1,
-                          slotLoader && { opacity: 0.7 },
-                        ]}
-                        onPress={handleSlotUpdate}
-                        disabled={slotLoader}
-                      >
-                        <Text style={styles.buttonText1}>
-                          {slotLoader ? (
-                            <ActivityIndicator size="small" color="#ffffff" />
-                          ) : (
-                            "Save Changes"
-                          )}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </>
-                )}
-              </View>
+
+
+            {selectedOrderId === item.orderId && (
+              // <View style={styles.pickerSection}>
+              //   <Text style={styles.label}>Select Day:</Text>
+              //   <View style={styles.pickerContainer}>
+              //     <TouchableOpacity>
+              //     <Picker
+              //       selectedValue={selectedDay[selectedOrderId]}
+              //       onValueChange={(e)=>handleDayChange(e,item.orderId)}
+              //       style={styles.picker}
+              //     >
+              //       <Picker.Item
+              //         label="SELECT A DAY"
+              //         value=""
+              //         enabled={false}
+              //         color="gray"
+              //       />
+              //       {days.map((day) => (
+              //         <Picker.Item
+              //           key={day.value}
+              //           label={day.label}
+              //           value={day.value}
+              //         />
+              //       ))}
+              //     </Picker>
+              //     </TouchableOpacity>
+              //   </View>
+
+              //   {timeSlots[selectedOrderId]?.length > 0 && (
+              //     <>
+              //       <Text style={styles.label}>Select Time Slot:</Text>
+              //       <View style={styles.pickerContainer}>
+              //         <Picker
+              //           selectedValue={selectedTimeSlot}
+              //           onValueChange={(e)=>setSelectedTimeSlot(prev=>({...prev,[selectedOrderId]:e}))}
+              //           style={styles.picker}
+              //         >
+              //           <Picker.Item
+              //             label="Select a time slot"
+              //             value=""
+              //             enabled={false}
+              //             color="gray"
+              //           />
+              //           {timeSlots[selectedOrderId].map((slot, index) => (
+              //             <Picker.Item key={index} label={slot} value={slot} />
+              //           ))}
+              //         </Picker>
+              //       </View>
+              //       {selectedTimeSlot[selectedOrderId] && (
+              //         <TouchableOpacity
+              //           style={[
+              //             styles.updateButton1,
+              //             slotLoader && { opacity: 0.7 },
+              //           ]}
+              //           onPress={handleSlotUpdate}
+              //           disabled={slotLoader}
+              //         >
+              //           <Text style={styles.buttonText1}>
+              //             {slotLoader ? (
+              //               <ActivityIndicator size="small" color="#ffffff" />
+              //             ) : (
+              //               "Save Changes"
+              //             )}
+              //           </Text>
+              //         </TouchableOpacity>
+              //       )}
+              //     </>
+              //   )}
+              // </View>
+              setDateTimeModalVisible(true)
             )}
+
           </View>
+
+        
+          </>
         )}
 
        
@@ -480,6 +476,73 @@ const OrderScreen = () => {
           </>
         )}
       </View>
+
+      {/* Update Date / Time Slot */}
+<Modal
+      animationType="slide"
+      transparent={true}
+      visible={dateTimeModalVisible}
+      onRequestClose={() => setDateTimeModalVisible(false)}
+    >
+      <View style={styles.modalContainer1}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Delivery time slot</Text>
+            <TouchableOpacity onPress={() => setDateTimeModalVisible(false)}>
+              <Text style={styles.closeButton}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {loader ? (
+            <View style={styles.loadingOverlay}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator 
+                size="large" 
+                color="#4CAF50" 
+                style={styles.loadingIndicator}
+              />
+              <Text style={styles.loadingTitle}>Confirming Time Slot</Text>
+              {selectedSlot && (
+                <View style={styles.selectedSlotDetails}>
+                  <Text style={styles.loadingSubtitle}>
+                    {selectedSlot.time} - {selectedSlot.day}, {selectedSlot.date}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : (
+            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={true}>
+              {flattenedData.map((item, index) => {
+                if (item.type === 'header') {
+                  return (
+                    <View key={`header-${index}`} style={styles.sectionHeader}>
+                      <Text style={styles.dayText}>{item.day}</Text>
+                      <Text style={styles.dayText}>{item.date}</Text>
+                    </View>
+                  );
+                } else {
+                  return (
+                    <TouchableOpacity
+                      key={`slot-${item.id}`}
+                      style={styles.timeSlotButton}
+                      onPress={() => handleSlotSelect(item.day, item.date, item.time)}
+                    >
+                      <Text style={styles.timeSlotText}>{item.time}</Text>
+                      <View style={styles.divider} />
+                    </TouchableOpacity>
+                  );
+                }
+              })}
+            </ScrollView>
+          )}
+        </View>
+      </View>
+    </Modal>
     </>
   );
 };
@@ -701,16 +764,16 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   updateButton: {
-    backgroundColor: COLORS.services,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    // backgroundColor: COLORS.services,
+    // paddingVertical: 5,
+    // paddingHorizontal: 8,
+    // borderRadius: 5,
+    // flexDirection: "row",
+    // alignItems: "center",
+    // justifyContent: "center",
     alignSelf: "flex-end",
     marginLeft: 15,
-   marginBottom:12
+  //  marginBottom:12
   },
   buttonText: {
     color: "#fff",
@@ -757,12 +820,132 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
+    width:width*0.8,
+    alignSelf:"center"
   },
   timeSlotText: {
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
     color: "#333",
+  },
+  modalContainer1: {
+    flex: 1,
+    // backgroundColor:"black",
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    height:height/1
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    height: height/2,
+    borderRadius: 10,
+    width:width*0.9,
+    alignSelf:"center"
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eeeeee',
+  },
+  modalTitle1: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#333333',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  sectionHeader: {
+    padding: 15,
+    backgroundColor: '#ffffff',
+    flexDirection:"row",
+    justifyContent:"space-between"
+  },
+  dayText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#666666',
+    marginTop: 5,
+  },
+  timeSlotButton: {
+    padding: 15,
+    backgroundColor: '#ffffff',
+  },
+  timeSlotText: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#eeeeee',
+    marginTop: 15,
+  },
+  selectedInfo: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#e6f7ff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#91d5ff',
+  },
+  selectedTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333333',
+  },
+  selectedText: {
+    fontSize: 14,
+    color: '#333333',
+    marginBottom: 5,
+  },
+  selectedSlotDetails: {
+    backgroundColor: '#F0F0F0',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  loadingOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.9)', // Semi-transparent white overlay
+  },
+  loadingContainer: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  loadingIndicator: {
+    marginBottom: 15,
+  },
+  loadingTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
   },
   
 });
