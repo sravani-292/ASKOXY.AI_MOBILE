@@ -136,7 +136,7 @@ const FreeContainer = ({navigation}) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f8f8" }}>
     <View style={{ flex: 1, backgroundColor: "#f8f8f8" }}>
-    <ScrollView contentContainerStyle={{ backgroundColor: "#f8f8f8" }}>
+    <ScrollView contentContainerStyle={{ backgroundColor: "#f8f8f8" }} keyboardShouldPersistTaps="always">
       <Text style={styles.header}>Free Rice Samples & Steel Container</Text>
       <Image
         source={require("../../assets/container.jpg")}

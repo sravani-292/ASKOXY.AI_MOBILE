@@ -233,6 +233,7 @@ const OrderSummaryScreen = ({ navigation, route }) => {
             </View>
           )}
           showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
         />
       )}
 

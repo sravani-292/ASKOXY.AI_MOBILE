@@ -79,19 +79,19 @@ const Register = () => {
   
 
   // Handle OTP verification
-  const handleVerifyOTP = () => {
-    if (!otp) {
-      alert("Please enter the OTP");
-      return;
-    }
+  // const handleVerifyOTP = () => {
+  //   if (!formData.otp) {
+  //     Alert.alert("Please enter the OTP");
+  //     return;
+  //   }
 
-    setLoading(true);
+  //   setLoading(true);
 
-    setTimeout(() => {
-      setLoading(false);
-      alert("Login successful!");
-    }, 1500);
-  };
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     alert("Login successful!");
+  //   }, 1500);
+  // };
 
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   useEffect(() => {
@@ -101,7 +101,7 @@ const Register = () => {
       if (!otpSent) {
         handleSendOtp()
       } else{
-        handleVerifyOTP()
+        handleVerifyOtp()
       } 
     });
 
@@ -349,8 +349,9 @@ const Register = () => {
     })
       .then(async (response) => {
         console.log("response", response.data.userStatus);
-        setFormData({ ...formData, loading: false, otp: "" });
+       
         if (response.data.primaryType == "CUSTOMER") {
+          setFormData({ ...formData, loading: false, otp: "", otp_error: false,validOtpError: false });
           if (response.data.accessToken != null) {
             setOtpSent(false);
             dispatch(AccessToken(response.data));
@@ -388,6 +389,7 @@ const Register = () => {
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
+        
         console.log(error.response);
         if (error.response.status == 409) {
           Alert.alert("Failed", error.response.data.message);
@@ -491,6 +493,7 @@ const Register = () => {
                     setOtpSent(false),
                     setWhatsappNumber(""),
                     setWhatsappNumber_Error(false),
+                    setError1("")
                     setPhoneNumber(""),
                     setPhoneNumber_Error(false),
                     setOtpMessage(false)
@@ -522,6 +525,7 @@ const Register = () => {
                     setOtpSent(false),
                     setWhatsappNumber(""),
                     setWhatsappNumber_Error(false),
+                    setError1("")
                     setPhoneNumber_Error(false),
                     setPhoneNumber(""),
                     setOtpMessage(false)
@@ -620,12 +624,14 @@ const Register = () => {
                   style={styles.input}
                   placeholder="Enter OTP code"
                   keyboardType="number-pad"
+                  autoFocus={true}
                   value={formData.otp}
                   onChangeText={(numeric) => {
                     setFormData({
                       ...formData,
                       otp: numeric,
                       validOtpError: false,
+                      otp_error:false
                     }),
                       setOtpError(false),
                       setOtpMessage(false)
@@ -635,8 +641,8 @@ const Register = () => {
               </View>
             )}
 
-            {otpError && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
+            {formData.otp_error && (
+              <Text style={{ color: "red",textAlign:"center"}}>
                 Please enter OTP
               </Text>
             )}

@@ -98,7 +98,7 @@ useEffect(()=>{
   return (
     <>
       <SafeAreaView style={styles.container}>
-        <ScrollView>
+        <ScrollView keyboardShouldPersistTaps="always">
           {/* <LinearGradient
             colors={['#1E3A8A', '#2563EB']}
             style={styles.header}
@@ -254,7 +254,7 @@ useEffect(()=>{
                 <MaterialIcons name="close" size={24} color="#9333EA" />
               </TouchableOpacity>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
                 <LinearGradient
                   colors={['#9333EA', '#7C3AED']}
                   style={styles.modalHeader}

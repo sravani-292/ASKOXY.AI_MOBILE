@@ -34,7 +34,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AccessToken } from "../Redux/action/index";
 import FreeSampleScreen from "./FreeSample";
 import GoogleAnalyticsService from "./Components/GoogleAnalytic";
-
+import NetworkAlert from "./Authorization/NetworkAlert";
 const services = [
   {
     id: "1",
@@ -346,6 +346,7 @@ const ServiceScreen = () => {
       {loading == false ? (
         <>
           {/* Header */}
+          {/* <NetworkAlert/> */}
           <View
             style={{
               flexDirection: "row",
@@ -400,7 +401,7 @@ const ServiceScreen = () => {
                 style={[
                   styles.copyButton,
                   copied ? styles.copiedButton : null,
-                  { marginLeft: -width * 0.3 },
+                  { marginLeft: -width * 0.1 },
                 ]}
                 onPress={handleCopy}
                 activeOpacity={0.7}
@@ -481,24 +482,21 @@ const ServiceScreen = () => {
             </View>
           </Modal>
 
-          <ScrollView>
-            <View style={{ marginBottom: height * 0.05 }}>
-              <FlatList
-                data={images}
-                keyExtractor={(_, index) => index.toString()}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleScroll}
-                renderItem={({ item }) => (
-                  <View style={styles.imageContainer}>
-                    <Image
-                      source={item}
-                      style={{ width: "95%", height: "34%" }}
-                    />
-                  </View>
-                )}
-              />
+<ScrollView showsVerticalScrollIndicator={false} >
+      <View style={{marginBottom:height*0.05}}> 
+      <FlatList
+        data={images}
+        keyExtractor={(_, index) => index.toString()}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        renderItem={({ item }) => (
+          <View style={styles.imageContainer}>
+          <Image source={item} style={{ width:"95%",height: "34%", }} />
+         </View>
+        )}
+      />
 
               {/* Pagination Dots */}
               <View
@@ -779,12 +777,12 @@ const styles = StyleSheet.create({
   },
   copyButton: {
     flexDirection: "row",
-    alignItems: "center",
+   
     backgroundColor: "#5e35b1",
     padding: 6,
-    // paddingHorizontal: 12,
+    
     borderRadius: 4,
-    // marginLeft:40
+    marginLeft:150
   },
   copiedButton: {
     backgroundColor: "#4CAF50",

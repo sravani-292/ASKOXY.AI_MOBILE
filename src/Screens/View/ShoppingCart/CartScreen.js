@@ -248,6 +248,8 @@ const CartScreen = () => {
       )
 
       .then((response) => {
+        console.log("cart api response",response);
+        
         console.log("cart screen cart data", response.data);
         setLoading(false);
         const cartData = response?.data?.customerCartResponseList;
@@ -653,6 +655,7 @@ useFocusEffect(
                 styles.cartItem,
                 item.quantity === 0 && styles.outOfStockCard,
               ]}
+               keyboardShouldPersistTaps="always"
             >
               {isLimitedStock[item.itemId] == "lowStock" && (
                 <View style={styles.limitedStockBadge}>
@@ -718,8 +721,8 @@ useFocusEffect(
                           % OFF)
                         </Text>
                         <Text style={styles.itemWeight}>
-                          Weight: {item.weight} {item.units}
-                        </Text>
+  Weight: {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
+</Text>
                         {isLimitedStock[item.itemId] !== "outOfStock" && (
                           <View style={styles.quantityContainer}>
                             <TouchableOpacity

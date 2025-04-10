@@ -16,7 +16,7 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import Checkbox from "expo-checkbox"; // Assuming you're using expo-checkbox
+import Checkbox from "expo-checkbox"; 
 import BASE_URL from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
@@ -64,7 +64,7 @@ const OrderDetails = () => {
       setOrderStatus(orderStatus);
 
       console.log("Fetched order details:", response.data);
-      // console.log("Order status (direct from response):", orderStatus);
+     
     } catch (error) {
       // console.error("Error fetching order details:", error.response);
     }
@@ -252,7 +252,7 @@ const OrderDetails = () => {
 
   return (
     <>
-      <ScrollView style={styles.container}>
+      <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
         {/* Header */}
         <View style={styles.receiptHeader}>
           <Text
@@ -299,7 +299,7 @@ const OrderDetails = () => {
                   </Text>
                 </View>
               )}
-              ItemSeparatorComponent={() => <View style={styles.separator} />} // Line separator
+              ItemSeparatorComponent={() => <View style={styles.separator} />} 
             />
           </View>
           </>
@@ -371,7 +371,7 @@ const OrderDetails = () => {
         </View>
       ) : null}
 
-      {/* // yesterday changes */}
+   
 
       <View
         style={{

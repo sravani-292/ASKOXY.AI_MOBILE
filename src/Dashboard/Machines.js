@@ -12,7 +12,7 @@ const{width,height}=Dimensions.get("window")
 
 const Machines = ({navigation}) => {
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
       {/* Image Section */}
       <View style={styles.imageContainer}>
         <Image

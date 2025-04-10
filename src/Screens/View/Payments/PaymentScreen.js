@@ -28,6 +28,7 @@ import BASE_URL,{userStage}from "../../../../Config";
 import { err } from "react-native-svg";
 import { Dropdown } from "react-native-element-dropdown";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Ionicons } from '@expo/vector-icons';
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
@@ -70,7 +71,8 @@ const PaymentDetails = ({ navigation, route }) => {
   const [updatedDate, setUpdatedate] = useState();
   const [isDayPickerVisible, setIsDayPickerVisible] = useState(false);
   const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
-  
+  const [isConfirmed,setIsConfirmed]=useState(false);
+  const [isChecked, setIsChecked] = useState(false);
   const [slotsData,setSlotsData]=useState()
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
@@ -121,7 +123,7 @@ const fetchTimeSlots = async () => {
 
       const availableDays = nextSevenDays.filter(day => {
           const matchedDay = data.find(d => d.dayOfWeek === day.dayOfWeek);
-          return matchedDay && matchedDay.isAvailable === false; 
+          return matchedDay && matchedDay.isAvailable === true; 
       }).slice(0, 3); 
 
       console.log("Filtered available days:", availableDays);
@@ -495,8 +497,8 @@ const fetchTimeSlots = async () => {
       landMark: addressDetails.landMark,
       orderStatus: selectedPaymentMode,
       pincode: addressDetails.pincode,
-      latitude:addressDetails.latitude,
-      longitude:addressDetails.longitude,
+      latitude: addressDetails.latitude ?? 0,
+      longitude:addressDetails.longitude?? 0,
       walletAmount: usedWalletAmount,
       couponCode: coupon,
       couponValue: coupenDetails,
@@ -954,7 +956,7 @@ const fetchTimeSlots = async () => {
   return (
     <View style={styles.container}>
       {/* Apply Coupon Section */}
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="always"
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
@@ -1098,6 +1100,20 @@ const fetchTimeSlots = async () => {
 
         {/* Payment Details */}
         <View style={styles.paymentDetails}>
+        <TouchableOpacity
+      style={styles.checkboxContainer}
+      onPress={() => setIsChecked(!isChecked)}
+    >
+      <Ionicons
+        name={isChecked ? 'checkbox' : 'square-outline'}
+        size={24}
+        color={isChecked ? 'green' : 'gray'}
+      />
+       <Text style={styles.label}>
+        I confirm that the exchange can be taken within{' '}
+        <Text style={{ fontWeight: 'bold' }}>10 days</Text> after the order has been delivered.
+      </Text>
+    </TouchableOpacity>
           <Text style={styles.detailsHeader}>Payment Details</Text>
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>Sub Total</Text>

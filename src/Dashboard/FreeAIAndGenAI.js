@@ -163,7 +163,7 @@ useEffect(()=>{
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="always">
       <Text style={styles.header}>Our Offer: Free AI & Gen AI Training</Text>
       {/* <View style={styles.shadowContainer}> */}
       <Image source={require("../../assets/genai.png")} style={styles.img} />

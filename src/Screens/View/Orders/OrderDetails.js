@@ -24,8 +24,6 @@ import BASE_URL, { userStage } from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
 const OrderDetails = () => {
-  
-  
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
@@ -149,7 +147,7 @@ const OrderDetails = () => {
 
     try {
       const response = await axios(data);
-     
+
       console.log("order data", response.data);
 
       setOrderData(response.data);
@@ -192,8 +190,6 @@ const OrderDetails = () => {
       return;
     }
 
-   
-
     const data = {
       exchangeListItemRequest: result,
       exchangeQuantity: 1,
@@ -201,10 +197,10 @@ const OrderDetails = () => {
       type: "exchange",
       userId: customerId,
     };
-    // console.log("exchange data", data);
+    console.log("exchange data", data);
     setLoading(true);
     axios({
-      url: `${BASE_URL}erice-service/order/exchangeOrder`,
+      url: `${BASE_URL}order-service/exchangeOrder`,
       method: "patch",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -212,7 +208,7 @@ const OrderDetails = () => {
       data: data,
     })
       .then((res) => {
-        // console.log(" exchange response", res);
+        console.log(" exchange response", res);
         Alert.alert("Success", res.data.type, [
           {
             text: "OK",
@@ -260,8 +256,26 @@ const OrderDetails = () => {
     subTotal,
     gstAmount,
     discountAmount,
+    orderHistory,
   } = orderDetails;
-  console.log("Order details", orderDetails);
+console.log("Order details", orderDetails);
+console.log("Order history", orderHistory);
+
+  const isExchangeEligible = (orderHistory) => {
+    const deliveredRecord = orderHistory.find(
+      (history) => history.deliveredDate !== null
+    );
+    if (!deliveredRecord) return false;
+
+    const deliveredDate = new Date(deliveredRecord.deliveredDate);
+    const today = new Date();
+    const diffInDays = (today - deliveredDate) / (1000 * 60 * 60 * 24);
+
+    return diffInDays <= 10;
+  };
+  
+const canExchange = isExchangeEligible(orderHistory);
+console.log("can exchange", canExchange);
 
   const toggleCancelItemSelection = (id) => {
     setSelectedCancelItems((prev) => ({
@@ -298,7 +312,6 @@ const OrderDetails = () => {
       return;
     }
 
-   
     setLoading(true);
     const data = {
       userId: customerId,
@@ -312,7 +325,6 @@ const OrderDetails = () => {
       method: "post",
       headers: {
         Authorization: `Bearer ${token}`,
-        // "Content-Type": "application/json",
       },
       data: data,
     })
@@ -328,15 +340,13 @@ const OrderDetails = () => {
         getOrderDetails();
         setLoading(false);
       })
-      .catch((err) => {
-        // console.log("error cancel", err.response);
-      });
+      .catch((err) => {});
   };
 
   return (
     <>
+   
       <ScrollView style={styles.container}>
-        {/* Header */}
         <View style={styles.receiptHeader}>
           <Text
             style={{
@@ -400,7 +410,7 @@ const OrderDetails = () => {
                 </Text>
                 <View style={styles.section}>
                   <View>
-                    {/* <Text style={styles.inputLabel}>Rate your experience</Text> */}
+                  
                     <View style={styles.emojiContainer}>
                       {emojis.map((item, index) => (
                         <TouchableOpacity
@@ -458,7 +468,6 @@ const OrderDetails = () => {
                 </View>
               </View>
             ) : (
-              // <Text>{orderstatus}</Text>
               <View>
                 <Text style={styles.feedbackTitle}>
                   Your Submitted Feedback
@@ -516,53 +525,49 @@ const OrderDetails = () => {
           </Text>
         </View>
 
-{/* Time Slot Details */}
-<Text style={styles.sectionTitle}>Selected Time Slot Details</Text>
+        {/* Time Slot Details */}
+        <Text style={styles.sectionTitle}>Selected Time Slot Details</Text>
 
-<View style={styles.section}>
-{orderDetails.timeSlot!="" ? 
-  <Text style={styles.detailText}>
-    Expected Time Slot :{" "}
-    <Text style={styles.detailValue}>{orderDetails.dayOfWeek} , {orderDetails.expectedDeliveryDate} , {orderDetails.timeSlot} </Text>
-  </Text>
-  :
-  <Text>No time Slot Selected</Text>
-  }
-</View>
+        <View style={styles.section}>
+          {orderDetails.timeSlot != "" ? (
+            <Text style={styles.detailText}>
+              Expected Time Slot :{" "}
+              <Text style={styles.detailValue}>
+                {orderDetails.dayOfWeek} , {orderDetails.expectedDeliveryDate} ,{" "}
+                {orderDetails.timeSlot}{" "}
+              </Text>
+            </Text>
+          ) : (
+            <Text>No time Slot Selected</Text>
+          )}
+        </View>
 
-
-
-
-        {/* Billing Details */}
         <Text style={styles.sectionTitle}>Billing Details</Text>
         <View style={styles.section}>
-          {/* Subtotal */}
           <View style={styles.row}>
             <Text style={styles.label}>Sub Total:</Text>
             <Text style={styles.value}>₹{subTotal}</Text>
           </View>
 
-          {/* Delivery Fee */}
-
           <View style={styles.row}>
             <Text style={styles.label}>Delivery Fee:</Text>
             <Text style={styles.value}>+{deliveryFee}</Text>
           </View>
-          {/* Gst */}
+
           {gstAmount != null && gstAmount != 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>GST:</Text>
-              <Text style={styles.value}>+{gstAmount.toFixed(2)}</Text>
+              <Text style={styles.value}>+{gstAmount?.toFixed(2)}</Text>
             </View>
           )}
-          {/* coupen value */}
+
           {couponValue != null && couponValue != 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>Coupon Value:</Text>
               <Text style={styles.value}>-₹{couponValue}</Text>
             </View>
           )}
-          {/* wallet amount */}
+
           {walletAmount != null && walletAmount != 0 && (
             <View style={styles.row}>
               <Text style={styles.label}>Wallet Amount:</Text>
@@ -575,20 +580,19 @@ const OrderDetails = () => {
               <Text style={styles.value}>-₹{discountAmount}</Text>
             </View>
           )}
-          {/* Payment Type */}
+
           <View style={styles.row}>
             <Text style={styles.label}>Payment Type:</Text>
             <Text style={styles.value}>
               {paymentType == 2 ? "ONLINE" : "COD"}
             </Text>
           </View>
-          {/* Order Status */}
+
           <View style={styles.row}>
             <Text style={styles.label}>Order Status:</Text>
             <Text style={styles.value}>{status}</Text>
           </View>
 
-          {/* Grand Total */}
           <View style={styles.grandTotalRow}>
             <Text style={styles.grandTotalLabel}>Grand Total:</Text>
             <Text style={styles.grandTotalValue}>₹{grandTotal.toFixed(2)}</Text>
@@ -616,7 +620,6 @@ const OrderDetails = () => {
         {orderstatus !== "6" && orderItems.length != 0 && (
           <View>
             {orderstatus == 1 || orderstatus == 2 || orderstatus == 3 ? (
-              // ["1", "2", "3"].includes(orderstatus) && (
               <View
                 style={{
                   flex: 1,
@@ -635,7 +638,7 @@ const OrderDetails = () => {
                   </View>
                 </TouchableOpacity> */}
               </View>
-            ) : orderstatus == 4 ? (
+            ) : (orderstatus == 4 && canExchange) ? (
               <View
                 style={{
                   flex: 1,
@@ -645,26 +648,15 @@ const OrderDetails = () => {
                   paddingHorizontal: 20,
                 }}
               >
-                {/* <TouchableOpacity
+                <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setIsExchangeVisible(true)}
                 >
                   <View>
                     <Text style={styles.cancelButtonText}>Exchange Order</Text>
                   </View>
-                </TouchableOpacity> */}
-                {/* {isExchangeVisible && (
-                  <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => setIsExchangeVisible(false)}
-                  >
-                    <View>
-                      <Text style={styles.cancelButtonText}>
-                        Exchange Order
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )} */}
+                </TouchableOpacity>
+             
               </View>
             ) : null}
           </View>
@@ -776,7 +768,7 @@ const OrderDetails = () => {
               <Text style={styles.modalTitle}>Exchange Items</Text>
               <FlatList
                 data={orderItems}
-                keyExtractor={(item) => item.itemId.toString()}
+                keyExtractor={(item) => item.itemId}
                 renderItem={({ item }) => (
                   <View>
                     <View style={styles.itemRow}>

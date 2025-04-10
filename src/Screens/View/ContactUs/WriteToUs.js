@@ -304,7 +304,7 @@ const WriteToUs = ({ navigation, route }) => {
       </TouchableOpacity>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1, padding: 5 }} keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1, padding: 5 }} keyboardShouldPersistTaps="always"
       >
         <Text style={styles.header}>Write a Query</Text>
         <TextInput

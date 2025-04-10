@@ -168,7 +168,7 @@ export default function WeAreHiring({navigation}) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView>
+      <ScrollView keyboardShouldPersistTaps="always">
         <View style={styles.header}>
           <Text style={styles.title}>Digital Ambassadors</Text>
           <Text style={styles.subtitle}>

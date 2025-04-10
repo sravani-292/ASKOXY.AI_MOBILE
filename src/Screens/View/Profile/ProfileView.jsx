@@ -173,7 +173,7 @@ export default function ProfileSettings({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
-      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always">
         {/* Profile Header */}
         <View style={styles.profileHeader}>
         <LinearGradient

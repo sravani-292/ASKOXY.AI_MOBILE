@@ -168,7 +168,7 @@ const[show,setShow]=useState(false)
         {/* <Text style={[styles.headerSubtitle, { color: colors.primary }]}>Referral Process in ASKOXY.ai</Text> */}
       </View>
       
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="always">
         <View style={styles.faqContainer}>
         <Animated.View style={[
       styles.buttonContainer,

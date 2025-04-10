@@ -957,9 +957,10 @@ const UserDashboard = ({route}) => {
                 </View>
 
                 <View style={styles.weightContainer}>
-                  <Text style={styles.weightText}>
-                    {item.weight} {item.units}
-                  </Text>
+                 
+                  <Text style={styles.itemWeight}>
+  Weight: {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
+            </Text>
                 </View>
 
                 <View style={styles.priceContainer}>

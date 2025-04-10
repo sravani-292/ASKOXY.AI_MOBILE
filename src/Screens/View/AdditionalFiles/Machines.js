@@ -13,7 +13,7 @@ import BASE_URL from "../../../../Config";
 
 const Machines = () => {
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
       {/* Image Section */}
       <View style={styles.imageContainer}>
         <Image

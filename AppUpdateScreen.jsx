@@ -9,12 +9,14 @@ import {
   ScrollView,
   Alert,
   Linking,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import BASE_URL from './Config';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS } from "./Redux/constants/theme";
 
 const json = require('./app.json');
 
@@ -35,6 +37,8 @@ const AppUpdateScreen = () => {
     if (Platform.OS === "ios") {
       setPlatform("IOS");
       // For iOS, store the build number as an integer
+      console.log("ANDROID build number:", json.expo?.ios?.buildNumber);
+      
       setCurrentVersion(parseInt(json.expo?.ios?.buildNumber || "1", 10));
     } else {
       setPlatform("ANDROID");
@@ -54,7 +58,7 @@ const AppUpdateScreen = () => {
   }, [platform]);
 
   const checkForUpdates = async () => {
-    // Don't check if platform is not set yet
+   
     if (!platform) return;
     console.log("Checking for updates...");
     setChecking(true);
@@ -64,7 +68,8 @@ const AppUpdateScreen = () => {
       const response = await axios.get(
         `${BASE_URL}product-service/getAllVersions?userType=CUSTOMER&versionType=${platform}`
       );
-  
+      console.log("update response:", response);
+      
       const data = response.data;
       
       console.log("Update data:", data);
@@ -82,6 +87,9 @@ const AppUpdateScreen = () => {
         if (Array.isArray(data) && data.length > 0) {
           // Find the latest version in the array by version code/build number
           latestVersion = data.reduce((latest, current) => {
+            console.log("current version:", current.version);
+            console.log("latest version:", latest.version);
+            
             const currentVersionNum = parseInt(current.version, 10);
             const latestVersionNum = parseInt(latest.version, 10);
             return (currentVersionNum > latestVersionNum) ? current : latest;
@@ -199,8 +207,10 @@ const AppUpdateScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="auto" />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always">
         <View style={styles.content}>
+          {/* <Image src={require("./assets/UpdateImage2")}/> */}
+          <Image source={require('./assets/UpdateImage2.jpg')} style={{ width: 250, height: 250, marginBottom: 20 }} />
           <Text style={styles.title}>App Update</Text>
           
           <View style={styles.infoCard}>
@@ -255,12 +265,12 @@ const AppUpdateScreen = () => {
                 <Text style={styles.infoValue}>{updateStatus.newBuild}</Text>
               </View>
               
-              {updateStatus.versionType && (
+              {/* {updateStatus.versionType && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>Platform:</Text>
                   <Text style={styles.infoValue}>{updateStatus.versionType}</Text>
                 </View>
-              )}
+              )} */}
               
               {updateStatus.createdOn && updateStatus.createdOn !== "Unknown" && (
                 <View style={styles.infoRow}>
@@ -269,12 +279,12 @@ const AppUpdateScreen = () => {
                 </View>
               )}
               
-              {updateStatus.userType && (
+              {/* {updateStatus.userType && (
                 <View style={styles.infoRow}>
                   <Text style={styles.infoLabel}>User Type:</Text>
                   <Text style={styles.infoValue}>{updateStatus.userType}</Text>
                 </View>
-              )}
+              )} */}
               
               <TouchableOpacity style={styles.downloadButton} onPress={handleUpdate}>
                 <Text style={styles.buttonText}>Update Now</Text>
@@ -350,7 +360,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 24,
-    color: '#333',
+    color: COLORS.services,
   },
   infoCard: {
     width: '100%',
@@ -397,7 +407,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   updateAvailableTitle: {
-    color: '#4287f5',
+    color: COLORS.services,
     fontWeight: 'bold',
     fontSize: 20,
     marginBottom: 8,
@@ -415,7 +425,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   downloadButton: {
-    backgroundColor: '#4287f5',
+    backgroundColor:COLORS.services,
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',

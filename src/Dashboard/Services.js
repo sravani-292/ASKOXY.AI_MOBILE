@@ -9,28 +9,27 @@ import {
   Modal,
   ActivityIndicator,
   TextInput,
-  Alert
+  Alert,
 } from "react-native";
-import React,{useEffect, useState,useCallback} from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useDispatch,useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
 // import { AccessToken } from "../../Redux/action/index";
-import Icon from "react-native-vector-icons/Ionicons"
-import BASE_URL,{userStage} from "../../Config";
+import Icon from "react-native-vector-icons/Ionicons";
+import BASE_URL, { userStage } from "../../Config";
 import { Asktoken } from "../../Redux/action";
 const { height, width } = Dimensions.get("window");
 import axios from "axios";
 
-
 const Services = () => {
   const navigation = useNavigation();
   const userData = useSelector((state) => state.counter);
-// console.log({userData})
+  // console.log({userData})
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisible1, setModalVisible1] = useState(false);
-  const[loading,setLoading]=useState(false)
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     whatsappNumber: "",
@@ -47,7 +46,7 @@ const Services = () => {
     saveaddressbtn: true,
   });
 
-  const [data, setData] = useState([])
+  const [data, setData] = useState([]);
 
   const [showWhatsappLoginModal, setShowWhatsappLoginModal] = useState(false);
 
@@ -77,51 +76,47 @@ const Services = () => {
     }, [])
   );
 
-
-    useEffect(() => {
-      getAllCampaign();
-    }, []);
+  useEffect(() => {
+    getAllCampaign();
+  }, []);
 
   function getAllCampaign() {
-      setLoading(true)
-      axios({
-        method: "get",
-        url:
-          userStage == "test"
-            ? BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
-            : null,
-      })
-        .then((response) => {
-          // console.log("response", response.data);
-          setLoading(false)
-          setData(response.data.filter((item) => item.campaignStatus)); // Filter out inactive campaigns
+    setLoading(true);
+    axios({
+      method: "get",
+      url:
+        userStage == "test"
+          ? BASE_URL + "marketing-service/campgin/getAllCampaignDetails"
+          : null,
+    })
+      .then((response) => {
+        // console.log("response", response.data);
+        setLoading(false);
+        setData(response.data.filter((item) => item.campaignStatus)); // Filter out inactive campaigns
 
-           // setImage(response.data.imageUrls);
-        })
-        .catch((error) => {
-          console.log("error", error.response);
-          setLoading(false)
-        });
-    }
+        // setImage(response.data.imageUrls);
+      })
+      .catch((error) => {
+        console.log("error", error.response);
+        setLoading(false);
+      });
+  }
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
       onPress={() => {
-         if(item.campaignType!="Crypto Currency")
-          { 
-            navigation.navigate(item.campaignType)
+        if (item.campaignType != "Crypto Currency") {
+          navigation.navigate(item.campaignType);
+        } else {
+          if (userData == null) {
+            Alert.alert("Alert", "Please login to continue", [
+              { text: "OK", onPress: () => navigation.navigate("Login") },
+              { text: "Cancel" },
+            ]);
+          } else {
+            navigation.navigate(item.campaignType);
           }
-         else{
-          if(userData==null){
-            Alert.alert("Alert","Please login to continue",[
-              {text:"OK",onPress:()=>navigation.navigate("Login")},
-              {text:"Cancel"}
-            ])
-          }
-          else{
-            navigation.navigate(item.campaignType)
-          }
-         }
+        }
       }}
       style={{ alignItems: "center", marginTop: 20 }}
     >
@@ -143,8 +138,7 @@ const Services = () => {
     </TouchableOpacity>
   );
 
-
-	function footer() {
+  function footer() {
     return (
       <View style={{ alignSelf: "center" }}>
         <Text></Text>
@@ -154,7 +148,11 @@ const Services = () => {
   return (
     <View style={{ flex: 1, alignItems: "center", backgroundColor: "#c0c0c0" }}>
       {loading == true ? (
-        <ActivityIndicator size="large" color="#3d2a71" style={{ marginTop: 20 }} />
+        <ActivityIndicator
+          size="large"
+          color="#3d2a71"
+          style={{ marginTop: 20 }}
+        />
       ) : (
         <FlatList
           data={data}
@@ -162,6 +160,7 @@ const Services = () => {
           numColumns={2}
           ListFooterComponent={footer}
           ListFooterComponentStyle={styles.footerStyle}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>

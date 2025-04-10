@@ -14,7 +14,7 @@ const { width } = Dimensions.get("window");
 
 const LegalService = () => {
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
       {/* Image Section */}
       <View style={styles.imageContainer}>
         <Image

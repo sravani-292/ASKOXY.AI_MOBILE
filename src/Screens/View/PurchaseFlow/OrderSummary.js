@@ -200,7 +200,10 @@ const handleContinuePress = () => {
                   {/* Quantity :<Text>{item.itemQuantity} x {item.cartQuantity} kg </Text> */}
                   Quantity : <Text> { item.cartQuantity} </Text>
                 </Text>
-                <Text>Weight :<Text> {item.weight} {item.units}</Text></Text>
+                {/* <Text>Weight :<Text> {item.weight} {item.units}</Text></Text> */}
+                 <Text style={styles.itemWeight}>
+                 Weight: {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
+               </Text>
                 <Text>Price: <Text>{item.cartQuantity} x {item.itemPrice} </Text></Text>
                 <Text>Total Price : ₹{item.cartQuantity  * item.itemPrice}</Text>
               </View>

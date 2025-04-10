@@ -1,13 +1,13 @@
 import { createStackNavigator } from "@react-navigation/stack";
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
-
+import React, { useState, useEffect } from "react";
+import { StyleSheet, Text, View, Platform, ActivityIndicator } from "react-native";
+import axios from "axios";
+import BASE_URL from "../../Config";
 // Screens imports
-import Services from "../Dashboard/Services"
-// import Login from "../Authorization/NewLogin"
+import Services from "../Dashboard/Services";
 import Login from "../Authorization/Login";
 import Register from "../Authorization/Register";
-import About from "../Screens/View/PurchaseFlow/About"
+import About from "../Screens/View/PurchaseFlow/About";
 import LoginWithPassword from "../Authorization/LoginWithPassword";
 import Refund from "../Screens/View/Payments/Refund";
 import Activated from "../Authorization/Activated";
@@ -37,10 +37,9 @@ import CartScreen from "../Screens/View/ShoppingCart/CartScreen1";
 
 import LinearGradient from "react-native-linear-gradient";
 import { COLORS } from "../../Redux/constants/theme";
-import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory"
+import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory";
 import Main from "../Screens/View/WalletSubscriptions/Main";
 import ProfileScreen from "../Screens/View/Profile/ProfileScreen";
-
 
 import Rudraksha from "../Dashboard/Rudraksha";
 import FreeAIAndGenAI from "../Dashboard/FreeAIAndGenAI";
@@ -48,17 +47,16 @@ import LegalService from "../Dashboard/LegalService";
 import Machines from "../Dashboard/Machines";
 import MyRotary from "../Dashboard/MyRotary";
 import AbroadCategories from "../Dashboard/AbroadCategories";
-import FreeContainer from "../Dashboard/FreeContainer"
+import FreeContainer from "../Dashboard/FreeContainer";
 import WeAreHiring from "../Dashboard/WeAreHiring";
-import CryptoCurrency from "../Dashboard/CryptoCurrency"
-
+import CryptoCurrency from "../Dashboard/CryptoCurrency";
 
 import Explore from "../Dashboard/ExploreGpts/Explore";
 import UniversityGPT from "../Dashboard/ExploreGpts/UniversityGpt";
-
-
-
-import ServiceScreen from "../ServiceScreen"
+import CountriesDisplay from "../Dashboard/StudentX/CountriesDisplay";
+import UniversitiesDisplay from "../Dashboard/StudentX/UniversitiesDisplay";
+import UniversityDetails from "../Dashboard/StudentX/UniversitiesDetails";
+import ServiceScreen from "../ServiceScreen";
 import ReferFriend from "../Screens/View/Referral Links/ReferFriend";
 import BarcodeScanner from "../Screens/View/Profile/BarcodeScanner";
 import AddressBookScreen from "../Screens/View/Profile/AddressScreen";
@@ -68,18 +66,109 @@ import PremiumPlan from "../Screens/View/WalletSubscriptions/PremiumPlan";
 import CampaignScreen from "../Campaign";
 import OxyLoans from "../Dashboard/Oxyloans";
 import OfferLetters from "../Dashboard/offerletters";
+const json = require("../../app.json");
 
-
-
+const LoadingScreen = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator size="large" color={COLORS.services} />
+    <Text style={{ marginTop: 20 }}>Checking for updates...</Text>
+  </View>
+);
 
 export default function StacksScreens() {
   const Stack = createStackNavigator();
+  const [platform, setPlatform] = useState("");
+  const [updateStatus, setUpdateStatus] = useState(null);
+  const [currentVersion, setCurrentVersion] = useState("");
+  const [displayVersion, setDisplayVersion] = useState("");
+  const [lastChecked, setLastChecked] = useState("");
+  const [isCheckingForUpdates, setIsCheckingForUpdates] = useState(true);
+  const [needsUpdate, setNeedsUpdate] = useState(false);
+
+  useEffect(() => {
+    // Set platform and current version
+    if (Platform.OS === "ios") {
+      setPlatform("IOS");
+      setCurrentVersion(parseInt(json.expo?.ios?.buildNumber || "1", 10));
+    } else {
+      setPlatform("ANDROID");
+      setCurrentVersion(parseInt(json.expo?.android?.versionCode || "1", 10));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (platform) {
+      checkForUpdate();
+    }
+  }, [platform]);
+
+  const checkForUpdate = async () => {
+    if (!platform) return;
+    try {
+      setIsCheckingForUpdates(true);
+      const response = await axios.get(
+        `${BASE_URL}product-service/getAllVersions?userType=CUSTOMER&versionType=${platform}`
+      );
+      
+      const data = response.data;
+      
+      // Process the update data - handle both array and single object response
+      if (data) {
+        let latestVersion;
+        
+        if (Array.isArray(data) && data.length > 0) {
+          latestVersion = data.reduce((latest, current) => {
+            const currentVersionNum = parseInt(current.version, 10);
+            const latestVersionNum = parseInt(latest.version, 10);
+            return currentVersionNum > latestVersionNum ? current : latest;
+          }, data[0]);
+        } else {
+          // Single object response
+          latestVersion = data;
+        }
+        
+        // Parse the server version as integer for proper comparison
+        const latestVersionNum = parseInt(latestVersion.version, 10);
+        
+       
+        const updateRequired = latestVersionNum > currentVersion;
+        
+        console.log(
+          "Update needed:",
+          updateRequired,
+          "Latest:",
+          latestVersionNum,
+          "Current:",
+          currentVersion
+        );
+        
+        // Set the update status
+        setUpdateStatus({ available: updateRequired });
+        setNeedsUpdate(updateRequired);
+      } else {
+      
+        setUpdateStatus({ available: false });
+        setNeedsUpdate(false);
+      }
+    } catch (err) {
+      console.error("Error checking for updates:", err);
+     
+      setUpdateStatus({ available: false });
+      setNeedsUpdate(false);
+    } finally {
+      setIsCheckingForUpdates(false);
+    }
+  };
+
+ 
+  if (isCheckingForUpdates) {
+    return <LoadingScreen />;
+  }
+
+ 
   return (
-    
     <Stack.Navigator
-      // initialRouteName="Crypto Currency"
-      initialRouteName="App Update"
-      // initialRouteName ="Service Screen"
+      initialRouteName={needsUpdate ? "App Update" : "Service Screen"}
       screenOptions={{
         headerShown: true,
         headerTintColor: "white",
@@ -87,20 +176,15 @@ export default function StacksScreens() {
         headerMode: "float",
         headerShown: true,
         headerStyle: {
-          backgroundColor:COLORS.services,
+          backgroundColor: COLORS.services,
         },
       }}
     >
-     <Stack.Screen
+      <Stack.Screen
         name="Login"
         component={Login}
         options={{ headerShown: false }}
       />
-      {/* <Stack.Screen
-      name="mobileLogin"
-      component={MobileLogin}
-      options={{ headerShown: false }}
-      /> */}
 
       <Stack.Screen name="Active" component={Activated} />
       <Stack.Screen
@@ -114,16 +198,15 @@ export default function StacksScreens() {
         options={{ headerShown: false }}
       />
 
-
       <Stack.Screen
         name="SplashScreen"
         component={SplashScreen}
-        options={{ headerShown: false}}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Home"
         component={Tabs}
-        options={{ headerShown: false}}
+        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Rice Product Detail"
@@ -133,27 +216,27 @@ export default function StacksScreens() {
           headerShown: true,
         })}
       />
-      <Stack.Screen name="Services" component={Services}/>
+      <Stack.Screen name="Services" component={Services} />
       <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
-      <Stack.Screen name="Subscription" component={Main}/>
-     
-      <Stack.Screen name="Terms and Conditions" component={About}/>
+      <Stack.Screen name="Subscription" component={Main} />
+
+      <Stack.Screen name="Terms and Conditions" component={About} />
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
       <Stack.Screen name="Checkout" component={CheckOut} />
       <Stack.Screen name="Splash Screen" component={SplashScreen} />
       <Stack.Screen name="Order Summary" component={OrderSummary} />
       <Stack.Screen name="Payment Details" component={PaymentDetails} />
-      <Stack.Screen name="Order Details" component={OrderDetails}  />
+      <Stack.Screen name="Order Details" component={OrderDetails} />
       <Stack.Screen name="Ticket History" component={TicketHistory} />
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
-      <Stack.Screen name="Item Details" component={ItemDetails}  />
+      <Stack.Screen name="Item Details" component={ItemDetails} />
       <Stack.Screen name="Refund" component={Refund} />
       <Stack.Screen name="Rice Products" component={UserDashboard} />
-      <Stack.Screen name="Write To Us" component={WriteToUs}/>
-      <Stack.Screen name="ChatGpt" component={ChatGpt}/>
-      <Stack.Screen name="Referral History" component={ReferralHistory}/>
+      <Stack.Screen name="Write To Us" component={WriteToUs} />
+      <Stack.Screen name="ChatGpt" component={ChatGpt} />
+      <Stack.Screen name="Referral History" component={ReferralHistory} />
 
       <Stack.Screen
         name="My Cancelled Item Details"
@@ -166,45 +249,20 @@ export default function StacksScreens() {
       <Stack.Screen name="Support" component={Support} />
       <Stack.Screen name="Container Policy" component={ContainerPolicy} />
 
-
       <Stack.Screen
         name="FREE RUDRAKSHA"
         component={Rudraksha}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
       <Stack.Screen
         name="FREE AI & GEN AI"
         component={FreeAIAndGenAI}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
-      {/* <Stack.Screen
-        name="Study Abroad"
-        component={AbroadCategories}
-        options={{
-          headerStyle: { backgroundColor: "#3d2a71" },
-          headerRight: ({ navigation }) => (
-            <View>
-             
-              <Dropdown
-                style={styles.dropdown}
-                data={data}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Gpt"
-                value={selectGpt}
-                onChange={(item) => {
-                  setSelectGpt(item.value);
-                  
-                }}
-              />
-            </View>
-          ), 
-        }}
-      /> */}
       <Stack.Screen
         name="STUDY ABROAD"
         component={AbroadCategories}
@@ -216,41 +274,44 @@ export default function StacksScreens() {
         name="LEGAL SERVICE"
         component={LegalService}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
       <Stack.Screen
         name="Machines"
         component={Machines}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
       <Stack.Screen
         name="MY ROTARY "
         component={MyRotary}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
       <Stack.Screen
         name="FREE CONTAINER"
         component={FreeContainer}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
       <Stack.Screen
         name="We Are Hiring"
         component={WeAreHiring}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
-      <Stack.Screen name="Crypto Currency" component={CryptoCurrency} 
-      options={{
-          headerStyle: { backgroundColor: "#3d2a71" }, 
-        }} />
+      <Stack.Screen
+        name="Crypto Currency"
+        component={CryptoCurrency}
+        options={{
+          headerStyle: { backgroundColor: "#3d2a71" },
+        }}
+      />
       <Stack.Screen
         name="GPTs"
         component={Explore}
@@ -265,7 +326,21 @@ export default function StacksScreens() {
           headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
-
+      <Stack.Screen
+        name="Countries"
+        component={CountriesDisplay}
+        options={{ headerShown: true }}
+      />
+      <Stack.Screen
+        name="Universities Display"
+        component={UniversitiesDisplay}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Universities Details"
+        component={UniversityDetails}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="Profile Edit"
         component={ProfileScreen}
@@ -275,18 +350,14 @@ export default function StacksScreens() {
       <Stack.Screen
         name="Service Screen"
         component={ServiceScreen}
-        options={{headerShown: false}}
-        // options={{
-        //   headerStyle: { backgroundColor: "white" },
-        //   headerTintColor: "blue", // Change this to your preferred color
-        // }}
+        options={{ headerShown: false }}
       />
 
-      <Stack.Screen 
-        name="Campaign" 
-        component={CampaignScreen} 
-        options={({ route }) => ({ 
-          title: route.params?.campaignType || 'Campaigns' 
+      <Stack.Screen
+        name="Campaign"
+        component={CampaignScreen}
+        options={({ route }) => ({
+          title: route.params?.campaignType || "Campaigns",
         })}
       />
 
@@ -302,9 +373,9 @@ export default function StacksScreens() {
         options={{ headerShown: true }}
       />
 
-      <Stack.Screen 
-        name="Saved Address" 
-        component={AddressBookScreen} 
+      <Stack.Screen
+        name="Saved Address"
+        component={AddressBookScreen}
         options={{ headerShown: true }}
       />
 
@@ -327,12 +398,10 @@ export default function StacksScreens() {
       />
 
       <Stack.Screen
-       name="Offer Letters"
-       component={OfferLetters}
-       options={{ headerShown: true }}
+        name="Offer Letters"
+        component={OfferLetters}
+        options={{ headerShown: true }}
       />
-
-      
     </Stack.Navigator>
   );
 }

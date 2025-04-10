@@ -361,7 +361,7 @@ const ItemDetails = ({ route, navigation }) => {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, padding: 5 }}
-        showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always"
       >
         <View style={styles.infoContainer}>
          
@@ -376,9 +376,12 @@ const ItemDetails = ({ route, navigation }) => {
 
           <View style={styles.infoRow}>
             <Text style={styles.label}>Weight:</Text>
-            <Text style={styles.value}>
+            {/* <Text style={styles.value}>
             
               {item.weight} {item.units}
+            </Text> */}
+              <Text style={styles.itemWeight}>
+               {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
             </Text>
           </View>
           {item.itemDescription && (

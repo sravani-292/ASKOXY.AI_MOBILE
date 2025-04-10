@@ -453,7 +453,7 @@ const Profile = ({ navigation }) => {
      
       <ScrollView
         showsVerticalScrollIndicator={false}
-        style={styles.scrollView} keyboardShouldPersistTaps="handled"
+        style={styles.scrollView} keyboardShouldPersistTaps="always"
       >
         {isSame == false &&(
         <TouchableOpacity

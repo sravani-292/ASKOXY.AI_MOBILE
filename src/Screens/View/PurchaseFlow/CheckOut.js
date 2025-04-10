@@ -694,9 +694,12 @@ const CheckOut = ({ navigation, route }) => {
                             )}
                             % OFF)
                           </Text>
-                          <Text style={styles.itemWeight}>
+                          {/* <Text style={styles.itemWeight}>
                             Weight: {item.weight} {item.units}
-                          </Text>
+                          </Text> */}
+                          <Text style={styles.itemWeight}>
+                                         {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
+                         </Text>
                           <View style={styles.quantityContainer}>
                             <TouchableOpacity
                               style={styles.quantityButton}
@@ -770,6 +773,7 @@ const CheckOut = ({ navigation, route }) => {
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             style={{ flex: 1 }}
+              keyboardShouldPersistTaps="always"
           />
         ) : (
           <View>
@@ -787,16 +791,14 @@ const CheckOut = ({ navigation, route }) => {
       )}
 
       <View style={{ marginTop: 30 }}>
-        {/* <Text style={styles.grandTotalText1}> ₹{grandTotal}</Text> */}
-
-        <TouchableOpacity
+       <TouchableOpacity
           style={[
             styles.placeOrderButton,
-            // { backgroundColor: addressData ? "#fd7e14" : "#d3d3d3" },
+           
           ]}
           onPress={() => handlePlaceOrder()}
         >
-          <Text style={styles.placeOrderButtonText}>CONTINUE</Text>
+       <Text style={styles.placeOrderButtonText}>CONTINUE</Text>
         </TouchableOpacity>
       </View>
     </View>

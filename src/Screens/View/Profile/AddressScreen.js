@@ -151,7 +151,7 @@ const AddressScreen = ({ route }) => {
       ) : (
         <>
           <View>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
               <Text style={styles.title}>Your Delivery Addresses</Text>
               <View>
                 <TouchableOpacity

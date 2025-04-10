@@ -41,7 +41,8 @@
     },
     "plugins": [
       "expo-font",
-      "expo-localization"
+      "expo-localization",
+      "react-native-video"
     ],
     "extra": {
       "eas": {

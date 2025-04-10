@@ -65,7 +65,7 @@ const WalletPage = ({ route }) => {
   <Text style={styles.walletAmount}> ₹ {walletAmount || 0}</Text>
   </View>
 </View>
-<ScrollView contentContainerStyle={styles.container}>
+<ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="always">
   <View>
 {/* {walletTxs.length > 0 ? ( */}
   <FlatList

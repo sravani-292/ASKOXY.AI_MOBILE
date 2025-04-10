@@ -13,7 +13,7 @@ import BASE_URL from "../../../../Config";
 
 const MyRotary = () => {
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} keyboardShouldPersistTaps="always">
       {/* Banner Section */}
       <View style={styles.imageContainer}>
         <Image

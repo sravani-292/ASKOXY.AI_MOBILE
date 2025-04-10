@@ -250,7 +250,7 @@ const AddressBook = ({ route }) => {
       ) : (
         <>
           <View>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
             <Text style={styles.noteText}>
         <Text style={styles.noteLabel}>Note:</Text> Order will be delivered within a 20 km radius only
       </Text>            

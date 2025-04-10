@@ -218,6 +218,7 @@ const Login = () => {
           loading: false,
         });
         if (response.data.mobileOtpSession) {
+          setWhatsappNumber_Error(false);
           setMessage(true);
           setMobileOtpSession(response.data.mobileOtpSession);
           setSaltSession(response.data.salt);
@@ -229,7 +230,11 @@ const Login = () => {
         }
       })
       .catch((error) => {
-        console.log("error", error.response);
+        console.log("error", error.response.status);
+
+        // if (error.response.status == 409||error.response.status == 500) {
+        //   Alert.alert("Sorry", "Error occurred. Please try again after some time.");
+        // }
         setOtpSent(false);
         setFormData({
           ...formData,
@@ -300,6 +305,7 @@ const Login = () => {
       .then(async (response) => {
         console.log("response", response);
         setFormData({ ...formData, loading: false, otp: "" });
+        setOtpError(false);
         if (response.data.primaryType == "CUSTOMER") {
          
           if (response.data.accessToken != null) {
@@ -341,7 +347,10 @@ const Login = () => {
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
-        console.log(error.response);
+        
+        console.log("login error",error.response.status);
+        console.log("login error",error.response);
+        
         if (error.response.status == 409) {
           Alert.alert("Failed", error.response.data.message);
         }
@@ -651,7 +660,7 @@ const Login = () => {
             )}
 
             {otpError && (
-              <Text style={{ color: "red", alignSelf: "center",width:width*0.25 }}>
+              <Text style={{ color: "red", alignSelf: "center",width:width*0.35 }}>
                 Please enter OTP
               </Text>
             )}
@@ -725,7 +734,7 @@ const Login = () => {
                   navigation.navigate("RegisterScreen"),
                     setOtpSent(false),
                     setWhatsappNumber(""),
-                    setPhoneNumber_Error(""),
+                    setPhoneNumber_Error(false),
                     setFormData({ ...formData, loading: false, otp: "" });
                 }}
               >
