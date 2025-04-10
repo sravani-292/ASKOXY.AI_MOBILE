@@ -12,6 +12,7 @@ import {
   Modal,
   Dimensions,
   KeyboardAvoidingView,
+  Linking,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
@@ -19,7 +20,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import Checkbox from "expo-checkbox";
 import { COLORS } from "../../../../Redux/constants/theme";
-
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import BASE_URL, { userStage } from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
@@ -42,7 +43,8 @@ const OrderDetails = () => {
   const [isExchangeComplete, setIsExchangeComplete] = useState(false);
   const [comments, setComments] = useState();
   const [orderFeedback, setOrderFeedback] = useState([]);
-  console.log("order id", order_id);
+  const[deliveryBoyDetails,setDeliveryBoyDetails]=useState([])
+  // console.log("order id", order_id);
 
   const emojis = [
     { emoji: "😡", label: "Very Bad", color: "#FFB3B3", value: "POOR" },
@@ -103,9 +105,33 @@ const OrderDetails = () => {
       });
   };
 
+
+  function deliveryBoyDetailsfunc() {
+    let data = {
+      orderId: order_id,
+      orderStatus: status,
+    };
+    axios({
+      method: "post",
+      // url:BASE_URL+`erice-service/order/deliveryBoyAssigneData`,
+      url:BASE_URL + `order-service/deliveryBoyAssigneData`,
+      data: data,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        // console.log("deliveryBoyAssigneData Response", response.data[0]);
+        setDeliveryBoyDetails(response.data[0]);
+      })
+      .catch((err) => {
+        console.log("deliveryBoyAssigneData error", err.response);
+      });
+  }
   useEffect(() => {
     // handleSubmit()
     feedbackGet();
+    deliveryBoyDetailsfunc()
   }, []);
 
   const feedbackGet = async () => {
@@ -120,7 +146,7 @@ const OrderDetails = () => {
       },
     })
       .then((response) => {
-        console.log("feedbackGet", response);
+        // console.log("feedbackGet", response);
         setOrderFeedback(response.data);
         setLoading(false);
       })
@@ -147,8 +173,8 @@ const OrderDetails = () => {
 
     try {
       const response = await axios(data);
-
-      console.log("order data", response.data);
+     
+      console.log("order data", response);
 
       setOrderData(response.data);
 
@@ -258,24 +284,7 @@ const OrderDetails = () => {
     discountAmount,
     orderHistory,
   } = orderDetails;
-console.log("Order details", orderDetails);
-console.log("Order history", orderHistory);
-
-  const isExchangeEligible = (orderHistory) => {
-    const deliveredRecord = orderHistory.find(
-      (history) => history.deliveredDate !== null
-    );
-    if (!deliveredRecord) return false;
-
-    const deliveredDate = new Date(deliveredRecord.deliveredDate);
-    const today = new Date();
-    const diffInDays = (today - deliveredDate) / (1000 * 60 * 60 * 24);
-
-    return diffInDays <= 10;
-  };
-  
-const canExchange = isExchangeEligible(orderHistory);
-console.log("can exchange", canExchange);
+  // console.log("Order details", orderDetails);
 
   const toggleCancelItemSelection = (id) => {
     setSelectedCancelItems((prev) => ({
@@ -340,7 +349,21 @@ console.log("can exchange", canExchange);
         getOrderDetails();
         setLoading(false);
       })
-      .catch((err) => {});
+      .catch((err) => {
+        // console.log("error cancel", err.response);
+      });
+  };
+
+
+  const makeCall = (phoneNumber) => {
+    const cleanedNumber = phoneNumber.replace(/\D/g, '');
+    const phoneUrl = `tel:${cleanedNumber}`;
+    
+    Linking.openURL(phoneUrl)
+      .catch((error) => {
+        Alert.alert('Error', 'Failed to open the phone dialer.');
+        console.error('Error:', error);
+      });
   };
 
   return (
@@ -542,6 +565,43 @@ console.log("can exchange", canExchange);
           )}
         </View>
 
+{orderstatus=="5"?
+<View>
+  <Text style={styles.sectionTitle}>Rejected Reason</Text>
+  <View style={styles.section}>
+    <Text>{orderDetails.reason} </Text>
+  </View>
+</View>
+:null}
+
+
+{/* Delivery Boy Details */}
+{orderstatus === "3" || orderstatus=="PickedUp"? (
+<>
+<Text style={styles.sectionTitle}>Delivery Boy Details</Text>
+<View>
+  <View style={styles.section1}>
+  <View style={{width: width*0.65}}>
+  <Text>
+        Delivery Boy Name: <Text style={{fontWeight: 'bold'}}>{deliveryBoyDetails?.deliveryBoyName}</Text>
+      </Text>
+      <Text>
+        Delivery Boy Mobile Number: <Text style={{fontWeight: 'bold'}}>{deliveryBoyDetails?.deliveryBoyMobile}</Text>
+      </Text>
+    </View>
+    
+    <TouchableOpacity 
+      style={{backgroundColor: '#4CAF50', borderRadius: 5, width: 40, height: 40, justifyContent: 'center', alignItems: 'center'}} 
+      onPress={() => makeCall(deliveryBoyDetails.deliveryBoyMobile)}
+    >
+      <FontAwesome name="phone" size={18} color="#fff" />
+    </TouchableOpacity>
+  </View>
+</View>
+</>
+ ):null}
+
+        {/* Billing Details */}
         <Text style={styles.sectionTitle}>Billing Details</Text>
         <View style={styles.section}>
           <View style={styles.row}>
@@ -875,6 +935,20 @@ const styles = StyleSheet.create({
     elevation: 3,
     width: width * 0.9,
   },
+  section1: {
+    backgroundColor: "#dcdcdc",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    elevation: 3,
+    width: width * 0.9,
+    flexDirection:"row",
+    justifyContent:"space-between"
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -897,6 +971,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
   },
+
   itemName: {
     paddingLeft: 1,
     fontSize: 13,
@@ -967,6 +1042,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginVertical: 10,
   },
+  callButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 5,
+    // paddingHorizontal: 16,
+    borderRadius: 6,
+    backgroundColor: '#4CAF50',
+  },
+ 
   emojiBox: {
     // width: 65,
     // height: 65,

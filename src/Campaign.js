@@ -23,13 +23,66 @@ import { useSelector } from 'react-redux';
 
 // Default services as fallback
 const services = [
-    {
-      id: "1",
-      name: "Oxyloans",
-      image: require("../assets/oxyloans.jpg"),
-      screen: "OXYLOANS",
-    },
-    // ... other services ...
+  {
+    id: "1",
+    name: "Earn upto 1.7% Monthly RoI",
+    image: require("../assets/oxyloans.jpg"),
+    screen: "OxyLoans",
+  },
+  {
+    id: "2",
+    name: "Free Rudraksha",
+    image: require("../assets/freerudraksha.png"),
+    screen: "FREE RUDRAKSHA",
+  },
+  {
+    id: "3",
+    name: "Free Rice Samples",
+    image: require("../assets/RiceSamples.png"),
+    screen: "FREE CONTAINER",
+  },
+  {
+    id: "4",
+    name: "Free AI & Gen AI",
+    image: require("../assets/FreeAI.png"),
+    screen: "FREE AI & GEN AI",
+  },
+  {
+    id: "5",
+    name: "Study Abroad",
+    image: require("../assets/study abroad.png"),
+    screen: "STUDY ABROAD",
+  },
+  {
+    id: "6",
+    name: "Cryptocurrency",
+    image: require("../assets/BMVCOIN1.png"),
+    screen: "Crypto Currency",
+  },
+  {
+    id: "7",
+    name: "Legal Knowledge Hub",
+    image: require("../assets/LegalHub.png"),
+    screen: "LEGAL SERVICE",
+  },
+  {
+    id: "8",
+    name: "My Rotary",
+    image: require("../assets/Rotary.png"),
+    screen: "MY ROTARY ",
+  },
+  {
+    id: "9",
+    name: "We are Hiring",
+    image: require("../assets/Careerguidance.png"),
+    screen: "We Are Hiring",
+  },
+  {
+    id: "10",
+    name: "Manufacturing Services",
+    image: require("../assets/Machines.png"),
+    screen: "Machines",
+  },
 ];
 
 // Default placeholder image
@@ -134,7 +187,7 @@ const ImageCarousel = ({ images }) => {
 };
 
 // Single Campaign Card component
-const SingleCampaignCard = ({ item, fadeAnim, handleComirmation, handleWriteToUs, getImages,navigation,AlreadyInterested }) => {
+const SingleCampaignCard = ({ item, fadeAnim, handleComirmation, handleWriteToUs, getImages,navigation,AlreadyInterested,userData }) => {
   // Determine the title and description based on item type
   const title = item.campaignType || item.name || 'Unnamed Campaign';
   const description = item.campaignDescription || `Learn more about our ${item.name || 'services'}.`;
@@ -206,13 +259,14 @@ const SingleCampaignCard = ({ item, fadeAnim, handleComirmation, handleWriteToUs
                 </LinearGradient>
               </TouchableOpacity>
             )}
+            {userData&&(
             <TouchableOpacity 
               style={[styles.button, styles.secondaryButton]} 
               onPress={() => navigation.navigate("Write To Us")}
               activeOpacity={0.8}
             >
               <Text style={styles.secondaryButtonText}>Write to Us</Text>
-            </TouchableOpacity>
+            </TouchableOpacity>)}
           </View>
         </View>
       </LinearGradient>
@@ -232,7 +286,8 @@ export default function CampaignScreen({ route, navigation }) {
    const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-   
+  const userData = useSelector(state => state.counter);
+
      useEffect(()=>{
     if(userData==null){
          Alert.alert("Alert","Please login to continue",[
@@ -281,7 +336,7 @@ export default function CampaignScreen({ route, navigation }) {
         })
       }
 
-  const userData = useSelector(state => state.counter);
+ 
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -634,6 +689,7 @@ Thank you!
             getImages={getImages}
             navigation={navigation}
             AlreadyInterested={AlreadyInterested}
+            userData={userData}
           />
         )}
       </ScrollView>

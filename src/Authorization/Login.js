@@ -654,7 +654,7 @@ const Login = () => {
                       setOtpMessage(false);
                   }}
                   maxLength={authMethod === "whatsapp" ? 4 : 6}
-                  onSubmitEditing={handleVerifyOtp}
+                  onSubmitEditing={()=>handleVerifyOtp()}
                 />
               </View>
             )}

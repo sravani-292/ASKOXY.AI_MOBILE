@@ -1,11 +1,14 @@
 import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {GA4_API_SECRET} from '@env'; 
 
 class GoogleAnalyticsService {
    // Using static readonly for constants
    private static readonly MEASUREMENT_ID: string = 'G-7F5MXCYZ7W';
-   private static readonly API_SECRET: string = process.env.GOOGLE_ANALYTICS_API_SECRET;
+   private static readonly API_SECRET: string = GA4_API_SECRET;
+
+   
 
    static async sendEvent(eventName: string, eventParams: Record<string, any> = {}): Promise<boolean> {
      try {
@@ -39,11 +42,11 @@ class GoogleAnalyticsService {
            body: JSON.stringify(baseParams)
          }
        );
-
        return response.ok;
      } catch (error) {
        console.error('Google Analytics tracking error:', error);
        return false;
+
      }
    }
 

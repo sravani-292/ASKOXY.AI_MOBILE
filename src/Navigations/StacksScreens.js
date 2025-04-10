@@ -66,6 +66,8 @@ import PremiumPlan from "../Screens/View/WalletSubscriptions/PremiumPlan";
 import CampaignScreen from "../Campaign";
 import OxyLoans from "../Dashboard/Oxyloans";
 import OfferLetters from "../Dashboard/offerletters";
+import StudyAbroad from "../StudyAbroad";
+import AllService from "../AllService";
 const json = require("../../app.json");
 
 const LoadingScreen = () => (
@@ -216,7 +218,7 @@ export default function StacksScreens() {
           headerShown: true,
         })}
       />
-      <Stack.Screen name="Services" component={Services} />
+      {/* <Stack.Screen name="Services" component={Services}/> */}
       <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
       <Stack.Screen name="Subscription" component={Main} />
@@ -400,8 +402,20 @@ export default function StacksScreens() {
       <Stack.Screen
         name="Offer Letters"
         component={OfferLetters}
+       options={{ headerShown: true }}
+      />
+
+      <Stack.Screen
+        name="Study"
+        component={StudyAbroad}
         options={{ headerShown: true }}
       />
+
+<Stack.Screen
+   name="Services"
+   component={AllService}
+    options={{ headerShown: true }}
+  />
     </Stack.Navigator>
   );
 }

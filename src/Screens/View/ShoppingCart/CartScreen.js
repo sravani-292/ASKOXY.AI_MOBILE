@@ -360,7 +360,7 @@ const CartScreen = () => {
       }
     })
     .catch((error) => {
-      console.log("Error fetching cart data:", error);
+      console.log("Error fetching cart data:", error.response);
     });
 }
 

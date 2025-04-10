@@ -768,6 +768,8 @@ const UserDashboard = ({route}) => {
                   </View>
                 </TouchableOpacity>
                 {arrangeCategories(categories).map((category, index) => (
+                  <>
+                  {category.categoryName !== "Sample Rice" && (
                   <TouchableOpacity
                     key={index}
                     onPress={() => filterByCategory(category.categoryName)}
@@ -792,6 +794,8 @@ const UserDashboard = ({route}) => {
                       </Text>
                     </View>
                   </TouchableOpacity>
+                  )}
+                  </>
                 ))}
               </ScrollView>
             </View>

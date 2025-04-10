@@ -80,16 +80,16 @@ const Register = () => {
 
   // Handle OTP verification
   // const handleVerifyOTP = () => {
-  //   if (!formData.otp) {
-  //     Alert.alert("Please enter the OTP");
-  //     return;
-  //   }
+  //   // if (!formData.otp) {
+  //   //   alert("Please enter the OTP");
+  //   //   return;
+  //   // }
 
   //   setLoading(true);
 
   //   setTimeout(() => {
   //     setLoading(false);
-  //     alert("Login successful!");
+  //     // alert("Login successful!");
   //   }, 1500);
   // };
 
@@ -101,7 +101,9 @@ const Register = () => {
       if (!otpSent) {
         handleSendOtp()
       } else{
+        if(formData.otp.length!==0){
         handleVerifyOtp()
+        }
       } 
     });
 
@@ -249,10 +251,7 @@ const Register = () => {
     })
       .then((response) => {
         console.log("response", response.data);
-        setFormData({
-          ...formData,
-          loading: false,
-        });
+       
         if (response.data.mobileOtpSession) {
           setMessage(true);
           setMobileOtpSession(response.data.mobileOtpSession);
@@ -263,20 +262,25 @@ const Register = () => {
         } else {
           Alert, alert("Failed", "Failed to send OTP.Try again");
         }
-      })
-      .catch((error) => {
-        console.log("error", error.response);
-        setOtpSent(false);
         setFormData({
           ...formData,
           loading: false,
         });
+      })
+      .catch((error) => {
+        console.log("error", error.response);
+        setOtpSent(false);
+       
         Alert.alert("Sorry", error.response.data.message, [
           {
             text: "ok",
             onPress: () => navigation.navigate("Login"),
           },
         ]);
+        setFormData({
+          ...formData,
+          loading: false,
+        });
 
         // if (error.response.status == 400) {
         //   navigation.navigate(userStage == "test1" ? "Register1" : "Register");
@@ -626,6 +630,7 @@ const Register = () => {
                   keyboardType="number-pad"
                   autoFocus={true}
                   value={formData.otp}
+                  onSubmitEditing={()=>handleVerifyOtp()}
                   onChangeText={(numeric) => {
                     setFormData({
                       ...formData,
@@ -642,12 +647,12 @@ const Register = () => {
             )}
 
             {formData.otp_error && (
-              <Text style={{ color: "red",textAlign:"center"}}>
+              <Text style={{ color: "red", alignSelf: "center",width:100 }}>
                 Please enter OTP
               </Text>
             )}
             {formData.validOtpError && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
+              <Text style={{ color: "red", alignSelf: "center",width:100 }}>
                 Invalid OTP
               </Text>
             )}
@@ -785,12 +790,11 @@ const styles = StyleSheet.create({
     marginTop: -95,
   },
   logingreenView: {
-    flex: 2,
+    flex: 3,
     backgroundColor: "#3d2a71",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     marginTop: - height / 11,
-    // height: height/2,
   },
   loginTxt: {
     color: "white",

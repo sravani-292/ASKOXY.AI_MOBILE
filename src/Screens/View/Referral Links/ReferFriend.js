@@ -209,7 +209,8 @@ useFocusEffect(
               <Text style={styles.offerTitle}>Enter Referee Details</Text>
             </View>
             <Text style={styles.offerDescription}>
-              Please enter the phone number of the person you want to refer.
+            Share via WhatsApp
+            Enter your friend's number to open your whatsapp app with a pre-filled message. No numbers are stored or collected.
             </Text>
             <View style={styles.phoneInputWrapper}>
               <PhoneInput
@@ -240,7 +241,7 @@ useFocusEffect(
                   style={styles.submitButton}
                   onPress={() => SubmitReferNumber()}
                 >
-                  <Text style={styles.submitButtonText}>Submit</Text>
+                  <Text style={styles.submitButtonText}>Open WhatsApp with Text</Text>
                 </TouchableOpacity>
               ) : (
                 <View style={styles.submitButton}>

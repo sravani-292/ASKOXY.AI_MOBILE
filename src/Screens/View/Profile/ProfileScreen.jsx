@@ -287,7 +287,7 @@ const ProfileScreen = () => {
     // if (hasErrors) {
     //   return;
     // }
-
+// console.log({mobileNumber})
     if(firstName=="" || firstName==null){
       Alert.alert("First Name is required");
       return;
@@ -298,6 +298,10 @@ const ProfileScreen = () => {
       return;
     }
   
+    if(mobileNumber==alternativeNumber){
+      Alert.alert("Mobile Number and Alternative Number should not be same");
+      return;
+    }
 
     setIsLoading(true);
     

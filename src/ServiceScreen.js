@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Image,
-  TextInput,
   FlatList,
   TouchableOpacity,
   ScrollView,
@@ -12,60 +11,57 @@ import {
   StyleSheet,
   Alert,
   Modal,
-  Linking,
+  StatusBar,
+  SafeAreaView,
 } from "react-native";
-import {
-  Ionicons,
-  FontAwesome,
-  MaterialCommunityIcons,
-  MaterialIcons,
-} from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import BASE_URL from "../Config";
-const { height, width } = Dimensions.get("window" || "screen");
 import { useNavigationState } from "@react-navigation/native";
 import LottieView from "lottie-react-native";
 import LoginModal from "./Components/LoginModal";
-import UpdateChecker from "../until/Updates";
 import * as Clipboard from "expo-clipboard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AccessToken } from "../Redux/action/index";
 import FreeSampleScreen from "./FreeSample";
 import GoogleAnalyticsService from "./Components/GoogleAnalytic";
-import NetworkAlert from "./Authorization/NetworkAlert";
+
+const { height, width } = Dimensions.get("window");
+
 const services = [
   {
     id: "1",
-    name: "Oxyloans",
-    image: require("../assets/oxyloans.jpg"),
+    name: "Earn upto 24% Yearly RoI",
+    image: require("../assets/service_icons/earn.png"),
     screen: "OxyLoans",
   },
   {
     id: "2",
-    name: "Free Rudraksha",
-    image: require("../assets/freerudraksha.png"),
-    screen: "FREE RUDRAKSHA",
-  },
-  {
-    id: "3",
-    name: "Free Rice Samples",
-    image: require("../assets/RiceSamples.png"),
-    screen: "FREE CONTAINER",
-  },
-  {
-    id: "4",
-    name: "Free AI & Gen AI",
-    image: require("../assets/FreeAI.png"),
-    screen: "FREE AI & GEN AI",
-  },
-  {
-    id: "5",
     name: "Study Abroad",
-    image: require("../assets/study abroad.png"),
+    image: require("../assets/service_icons/StudyAboard.jpg"),
     screen: "STUDY ABROAD",
   },
+  // {
+  //   id: "3",
+  //   name: "Buy Villa @36Lakhs",
+  //   image: require("../assets/service_icons/villa.png"),
+  //   screen: "FREE AI & GEN AI",
+  // },
+  
+  // {
+  //   id: "4",
+  //   name: "Order Rice Online",
+  //   image: require("../assets/RiceSamples.png"),
+  //   screen: "Rice Products",
+  // },
+  // {
+  //   id: "5",
+  //   name: "Study Abroad",
+  //   image: require("../assets/study abroad.png"),
+  //   screen: "STUDY ABROAD",
+  // },
   {
     id: "6",
     name: "Cryptocurrency",
@@ -98,7 +94,7 @@ const services = [
   },
 ];
 
-const images = [
+const bannerImages = [
   require("../assets/Images/r1.png"),
   require("../assets/Images/r2.png"),
 ];
@@ -114,12 +110,11 @@ const ServiceScreen = () => {
   const [loading, setLoading] = useState(false);
   const [chainId, setChainId] = useState("");
   const [coin, setCoin] = useState("");
-  const [loginModal, setLoginMobal] = useState(false);
+  const [loginModal, setLoginModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const dispatch = useDispatch();
 
-  // const[loader,setLoader]=useState(false)
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
   );
@@ -136,14 +131,10 @@ const ServiceScreen = () => {
           ],
           { cancelable: false }
         );
-
         return true;
       };
 
-      // Add BackHandler event listener
       BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-
-      // Cleanup
       return () => {
         BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
       };
@@ -159,19 +150,16 @@ const ServiceScreen = () => {
   );
 
   const checkLoginData = async () => {
-    console.log("userData", userData);
     if (userData && userData.accessToken) {
-      setLoginMobal(false);
+      setLoginModal(false);
       navigation.navigate("Home");
     } else {
       try {
         const loginData = await AsyncStorage.getItem("userData");
-        console.log("logindata", loginData);
         if (loginData) {
           const user = JSON.parse(loginData);
           if (user.accessToken) {
-            console.log("Active");
-            setLoginMobal(false);
+            setLoginModal(false);
             dispatch(AccessToken(user));
             navigation.navigate("Home");
           }
@@ -179,32 +167,30 @@ const ServiceScreen = () => {
           navigation.navigate("Service Screen");
         }
       } catch (error) {
-        console.error("Error fetching login data", error.response);
+        console.error("Error fetching login data", error);
       }
     }
   };
 
   const profile = async () => {
-    console.log("userData", userData);
-    userData != null
-      ? axios({
+    if (userData) {
+      try {
+        const response = await axios({
           method: "get",
           url: BASE_URL + `user-service/getProfile/${userData.userId}`,
           headers: {
             Authorization: `Bearer ${userData.accessToken}`,
           },
-        })
-          .then((response) => {
-            // console.log("response", response.data);
-            setChainId(response.data.multiChainId);
-            setCoin(response.data.coinAllocated);
-            setLoginMobal(false);
-          })
-          .catch((error) => {
-            // console.log("error1", error);
-            setLoading(false);
-          })
-      : console.log("no user data");
+        });
+        
+        setChainId(response.data.multiChainId);
+        setCoin(response.data.coinAllocated);
+        setLoginModal(false);
+      } catch (error) {
+        setLoading(false);
+        console.error("Error fetching profile:", error);
+      }
+    }
   };
 
   function getAllCampaign() {
@@ -212,7 +198,6 @@ const ServiceScreen = () => {
     axios
       .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
       .then((response) => {
-        // console.log("API Response:", response.data);
         setLoading(false);
   
         if (!Array.isArray(response.data)) {
@@ -225,7 +210,6 @@ const ServiceScreen = () => {
         const activeCampaigns = response.data.filter((item) => item.campaignStatus === true);
   
         if (activeCampaigns.length === 0) {
-          console.warn("No active campaigns found.");
           setData(services); // Fallback to default services
           return;
         }
@@ -237,7 +221,6 @@ const ServiceScreen = () => {
           ...services.filter((service) => !campaignScreens.includes(service.screen)),
         ];
   
-        console.log("Merged Data:", mergedData[0].imageUrls[0].imageUrl);
         setData(mergedData);
       })
       .catch((error) => {
@@ -246,13 +229,6 @@ const ServiceScreen = () => {
         setLoading(false);
       });
   }
-  
-  
-
-  const handleScroll = (event) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width);
-    setActiveIndex(index);
-  };
 
   function getRiceCategories() {
     setLoading(true);
@@ -262,12 +238,11 @@ const ServiceScreen = () => {
     })
       .then((response) => {
         setLoading(false);
-        // console.log(response.data[0])
         setGetCategories(response.data);
       })
       .catch((error) => {
         setLoading(false);
-        console.log(error.response);
+        console.error("Error fetching rice categories:", error);
       });
   }
 
@@ -278,7 +253,6 @@ const ServiceScreen = () => {
       [
         {
           text: "Cancel",
-          onPress: () => console.log("Logout cancelled"),
           style: "cancel",
         },
         {
@@ -297,139 +271,323 @@ const ServiceScreen = () => {
     );
   };
 
+  // const arrangeCategories = (categories) => {
+  //   if (!categories || categories.length === 0) return [];
+
+  //   // Find the exact "Sample Rice" category
+  //   const sampleRiceIndex = categories.findIndex(
+  //     (cat) => cat.categoryName === "Sample Rice"
+  //   );
+
+  //   // If "Sample Rice" category is found, move it to the first position
+  //   if (sampleRiceIndex !== -1) {
+  //     const result = [...categories];
+  //     const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
+  //     return [sampleRiceCategory, ...result];
+  //   }
+
+  //   return categories;
+  // };
+
   const arrangeCategories = (categories) => {
-    if (!categories || categories.length === 0) return [];
+  if (!categories || categories.length === 0) return [];
 
-    // Find the exact "Sample Rice" category
-    const sampleRiceIndex = categories.findIndex(
-      (cat) => cat.categoryName === "Sample Rice"
-    );
+  // Remove the "Sample Rice" category if it exists
+  return categories.filter(cat => cat.categoryName !== "Sample Rice");
+};
 
-    // If "Sample Rice" category is found, move it to the first position
-    if (sampleRiceIndex !== -1) {
-      const result = [...categories];
-      const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
-      return [sampleRiceCategory, ...result];
+  const handleScroll = (event) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    setActiveIndex(index);
+  };
+
+  // Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
+  const truncateId = (id) => {
+    return id && id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
+  };
+  
+  const handleCopy = async () => {
+    try {
+      await Clipboard.setStringAsync(chainId);
+      setCopied(true);
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Copy error:", error);
     }
-
-    return categories;
   };
 
   useEffect(() => {
     getAllCampaign();
     getRiceCategories();
     profile();
-    setLoginMobal(true);
+    setLoginModal(true);
     GoogleAnalyticsService.screenView("Service Screen");
-
-    // Log modal opened event
     GoogleAnalyticsService.sendEvent("Service Screen", {
       modal_type: "Service Screen",
     });
   }, [userData]);
 
-  // Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
-  const truncateId = (id) => {
-    return id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
-  };
-  const handleCopy = async () => {
-    try {
-      await Clipboard.setStringAsync(chainId);
-      setCopied(true);
-    } catch (error) {
-      console.error("Copy error:", error);
-    }
-  };
+  const renderServiceItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.serviceItem}
+      onPress={() => {
+        if (item.screen !== "Crypto Currency") {
+          if (item.screen) {
+            navigation.navigate(item.screen);
+          } else {
+            navigation.navigate("Campaign", { campaignType: item.campaignType });
+          }
+        } else {
+          if (userData == null || userData == undefined) {
+            Alert.alert("Login Required", "Please login to continue", [
+              {
+                text: "Login",
+                onPress: () => navigation.navigate("Login"),
+              },
+              { text: "Cancel" },
+            ]);
+          } else if (item.screen) {
+            navigation.navigate(item.screen);
+          } else {
+            navigation.navigate("Campaign", { campaignType: item.campaignType });
+          }
+        }
+      }}
+    >
+      <View style={styles.serviceIconContainer}>
+        {item.image ? (
+          <Image
+            source={item.image}
+            style={styles.serviceImage}
+          />
+        ) : item.imageUrls ? (
+          <Image
+            source={{ uri: item.imageUrls[0].imageUrl || DEFAULT_IMAGE }}
+            style={styles.serviceImage}
+          />
+        ) : (
+          <Image
+            source={require("../assets/icon.png")}
+            style={styles.serviceImage}
+          />
+        )}
+      </View>
+      <Text numberOfLines={2} style={styles.serviceName}>
+        {item.name || item.campaignType}
+      </Text>
+    </TouchableOpacity>
+  );
+  
+
+  const renderCategoryItem = ({ item }) => (
+    <TouchableOpacity 
+      style={styles.categoryCard}
+      onPress={() => navigation.navigate("Rice Products", { 
+        screen: "Rice Products", 
+        category: item.categoryName 
+      })}
+    >
+      <Image
+        source={{ uri: item.categoryLogo }}
+        style={styles.categoryImage}
+      />
+      <View style={styles.categoryContent}>
+        <Text style={styles.categoryName}>{item.categoryName}</Text>
+        <View style={styles.viewItemsButton}>
+          <Text style={styles.viewItemsText}>Browse Collection</Text>
+          <MaterialIcons name="arrow-forward-ios" size={14} color="#FFFFFF" />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#F5F5F5F5", padding: 5 }}>
-      {loading == false ? (
+    <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#4A148C" barStyle="light-content" />
+      
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <LottieView 
+            source={require("../assets/AnimationLoading.json")}
+            autoPlay
+            loop
+            style={{ width: 200, height: 200 }}
+          />
+        </View>
+      ) : (
         <>
           {/* Header */}
-          {/* <NetworkAlert/> */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              marginTop: 50,
-              marginBottom: 15,
-              padding: 10,
-            }}
-          >
+          <View style={styles.header}>
             <Image
-              source={require("../assets/Images/logo1.png")}
-              style={{
-                width: 150,
-                height: 50,
-                marginRight: 10,
-                marginBottom: -5,
-              }}
+              source={require("../assets/Images/logo2.png")}
+              style={styles.logo}
             />
-            {userData != null ? (
-              <TouchableOpacity
-                onPress={() => handleLogout()}
-                style={{ marginLeft: "auto" }}
-              >
-                <MaterialCommunityIcons
-                  name="logout"
-                  size={25}
-                  color="#5e606c"
-                />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => navigation.navigate("Login")}
-                style={{ marginLeft: "auto", color: "#5e606c",width:width*0.1 }}
-              >
-                <MaterialCommunityIcons
-                  name="login"
-                  size={25}
-                  color="#5e606c"
-                />
-                <Text style={{ width: width * 0.1 }}>Login</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {/* <UpdateChecker/> */}
-          {userData != null && (
-            <View style={styles.IDcontainer}>
-              <Text style={[styles.label, { width: width * 0.4 }]}>
-                Blockchain ID:{" "}
-                <Text style={styles.value}>{truncateId(chainId)}</Text>
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.copyButton,
-                  copied ? styles.copiedButton : null,
-                  { marginLeft: -width * 0.1 },
-                ]}
-                onPress={handleCopy}
-                activeOpacity={0.7}
-              >
-                <MaterialIcons
-                  name={copied ? "check" : "content-copy"}
-                  size={14}
-                  color="#FFFFFF"
-                />
-              </TouchableOpacity>
-              <View style={styles.coinContainer}>
-                <Text style={[styles.label, { width: width * 0.2 }]}>
-                  Coins: <Text style={styles.value}>{coin}</Text>
-                </Text>
+            <View style={styles.headerRightContainer}>
+              {userData ? (
                 <TouchableOpacity
-                  style={styles.infoButton}
-                  onPress={() => setInfoModalVisible(true)}
+                  onPress={handleLogout}
+                  style={styles.authButton}
                 >
-                  <MaterialIcons
-                    name="info-outline"
-                    size={16}
-                    color="#4A90E2"
-                  />
+                  <MaterialCommunityIcons name="account-arrow-right-outline" size={22} color="#FFFFFF" />
+                  <Text style={styles.authButtonText}>Logout</Text>
                 </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Login")}
+                  style={styles.authButton}
+                >
+                  <MaterialCommunityIcons name="account-arrow-left-outline" size={22} color="#FFFFFF" />
+                  <Text style={styles.authButtonText}>Login</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Banner Carousel */}
+            <View style={styles.bannerContainer}>
+              <FlatList
+                data={bannerImages}
+                keyExtractor={(_, index) => index.toString()}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={handleScroll}
+                renderItem={({ item }) => (
+                  <View style={styles.bannerImageContainer}>
+                    <Image source={item} style={styles.bannerImage} />
+                  </View>
+                )}
+              />
+
+              {/* Pagination Dots */}
+              <View style={styles.paginationContainer}>
+                {bannerImages.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.paginationDot,
+                      activeIndex === index ? styles.activeDot : styles.inactiveDot,
+                    ]}
+                  />
+                ))}
               </View>
             </View>
-          )}
 
+            {/* User Info Section */}
+            {userData && (
+              <View style={styles.userInfoCard}>
+                <View style={styles.userInfoHeader}>
+                  <FontAwesome5 name="user-circle" size={20} color="#4A148C" />
+                  <Text style={styles.userInfoTitle}>Account Information</Text>
+                </View>
+                
+                <View style={styles.userInfoDivider} />
+                
+                <View style={styles.infoRow}>
+                  <View style={styles.blockchainIdContainer}>
+                    <Text style={styles.infoLabel}>Blockchain ID:</Text>
+                    <Text style={styles.infoValue}>{truncateId(chainId)}</Text>
+                    <TouchableOpacity
+                      style={[styles.copyButton, copied ? styles.copiedButton : null]}
+                      onPress={handleCopy}
+                    >
+                      <MaterialIcons
+                        name={copied ? "check" : "content-copy"}
+                        size={16}
+                        color="#FFFFFF"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={styles.coinContainer}>
+                    <Text style={styles.infoLabel}>BMV Coins:</Text>
+                    <View style={styles.coinBadge}>
+                      <Text style={styles.coinValue}>{coin}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.infoButton}
+                      onPress={() => setInfoModalVisible(true)}
+                    >
+                      <MaterialIcons name="info-outline" size={18} color="#4A148C" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* Services Section */}
+<View style={styles.sectionContainer}>
+  <View style={styles.sectionHeaderRow}>
+    <Text style={styles.sectionTitle}>Our Services</Text>
+    <TouchableOpacity
+      onPress={() => navigation.navigate("Services")}
+      style={styles.viewAllButton}
+    >
+      <Text style={styles.viewAllText}>View All</Text>
+      <MaterialIcons name="chevron-right" size={18} color="#4A148C" />
+    </TouchableOpacity>
+  </View>
+  
+  <View style={styles.servicesGridContainer}>
+    <FlatList
+      data={data}
+      // numColumns={3}  
+      horizontal
+      showsVerticalScrollIndicator={false}
+      keyExtractor={(item, index) => (item.id || index.toString())}
+      renderItem={renderServiceItem}
+      contentContainerStyle={styles.servicesGridContent}
+      scrollEnabled={true}
+    />
+  </View>
+</View>
+
+
+            {/* Categories Section */}
+            <View style={styles.sectionContainer}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Popular Categories</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate("Rice Products", {
+                      screen: "Rice Products",
+                      category: "All CATEGORIES",
+                    })
+                  }
+                  style={styles.viewAllButton}
+                >
+                  <Text style={styles.viewAllText}>View All</Text>
+                  <MaterialIcons name="chevron-right" size={18} color="#4A148C" />
+                </TouchableOpacity>
+              </View>
+              
+              <FlatList
+                data={arrangeCategories(getCategories)}
+                keyExtractor={(item, index) => index.toString()}
+                numColumns={2}
+                scrollEnabled={false}
+                showsVerticalScrollIndicator={false}
+                columnWrapperStyle={styles.categoriesColumnWrapper}
+                renderItem={renderCategoryItem}
+              />
+            </View>
+
+            {/* Free Sample Section */}
+            {userData && (
+              <View style={styles.freeSampleContainer}>
+                <FreeSampleScreen />
+              </View>
+            )}
+          </ScrollView>
+          
           {/* BMVCoins Info Modal */}
           <Modal
             animationType="fade"
@@ -440,36 +598,44 @@ const ServiceScreen = () => {
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>How to use BMVCoins?</Text>
-                  <TouchableOpacity onPress={() => setInfoModalVisible(false)}>
-                    <Text style={styles.closeButton}>✕</Text>
+                  <View style={styles.modalTitleContainer}>
+                    <FontAwesome5 name="coins" size={20} color="#4A148C" />
+                    <Text style={styles.modalTitle}>About BMVCoins</Text>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.closeButton}
+                    onPress={() => setInfoModalVisible(false)}
+                  >
+                    <Ionicons name="close" size={22} color="#FFFFFF" />
                   </TouchableOpacity>
                 </View>
 
-                <Text style={[styles.modalText, { width: width * 0.8 }]}>
-                  You can collect BMVCoins and use them to get discounts on rice
-                  bags, as well as other products and services.
+                <Text style={styles.modalText}>
+                  Collect BMVCoins and redeem them for discounts on rice bags and other products across our platform.
                 </Text>
 
                 <View style={styles.valueBox}>
-                  <Text style={[styles.valueTitle, { width: width * 0.7 }]}>
-                    Current value:
-                  </Text>
-                  <Text style={[styles.valueText, { width: width * 0.7 }]}>
-                    1,000 BMVCoins = ₹10 discount
-                  </Text>
+                  <Text style={styles.valueTitle}>Current Exchange Rate:</Text>
+                  <View style={styles.exchangeRate}>
+                    <FontAwesome5 name="coins" size={18} color="#F1C40F" />
+                    <Text style={styles.valueText}>1,000 BMVCoins = ₹10 discount</Text>
+                  </View>
                 </View>
 
-                <Text style={[styles.infoTitle, { width: width * 0.8 }]}>
-                  Important information:
-                </Text>
+                <Text style={styles.infoTitle}>Important information:</Text>
                 <View style={styles.bulletList}>
-                  <Text style={[styles.bulletPoint, { width: width * 0.8 }]}>
-                    • A minimum of 20,000 BMVCoins is required for redemption.
-                  </Text>
-                  <Text style={[styles.bulletPoint, { width: width * 0.8 }]}>
-                    • The discount value may change in the future.
-                  </Text>
+                  <View style={styles.bulletPoint}>
+                    <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.bulletIcon} />
+                    <Text style={styles.bulletText}>
+                      A minimum of 20,000 BMVCoins is required for redemption.
+                    </Text>
+                  </View>
+                  <View style={styles.bulletPoint}>
+                    <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.bulletIcon} />
+                    <Text style={styles.bulletText}>
+                      Exchange rates subject to change. Check app for latest values.
+                    </Text>
+                  </View>
                 </View>
 
                 <TouchableOpacity
@@ -482,355 +648,235 @@ const ServiceScreen = () => {
             </View>
           </Modal>
 
-<ScrollView showsVerticalScrollIndicator={false} >
-      <View style={{marginBottom:height*0.05}}> 
-      <FlatList
-        data={images}
-        keyExtractor={(_, index) => index.toString()}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        renderItem={({ item }) => (
-          <View style={styles.imageContainer}>
-          <Image source={item} style={{ width:"95%",height: "34%", }} />
-         </View>
-        )}
-      />
-
-              {/* Pagination Dots */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignSelf: "center",
-                  marginTop: -height * 0.13,
-                }}
-              >
-                {images.map((_, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.dot,
-                      activeIndex === index
-                        ? styles.activeDot
-                        : styles.inactiveDot,
-                    ]}
-                  />
-                ))}
-              </View>
-
-              {/* Car Brands Horizontal List */}
-              {services != null || services != "" ? (
-                <View style={{ marginBottom: 10, height: 180 }}>
-                  <FlatList
-                    data={data}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={{
-                          alignItems: "center",
-                          margin: 20,
-                          backgroundColor: "white",
-                          height: 80,
-                          elevation: 10,
-                          borderRadius: 100,
-                          width: 80,
-                        }}
-                        // onPress={() => navigation.navigate(item.screen || item.campaignType)}
-                        onPress={() => {
-                          if (item.screen !== "Crypto Currency") {
-                            // console.log("campaignType",item.campaignType || item.screen);
-                            if(item.screen) {
-                              navigation.navigate(
-                                item.screen
-                              );
-                            }else {
-                              navigation.navigate("Campaign", { campaignType: item.campaignType });
-                            }
-                          } else {
-                            if (userData == null || userData == undefined) {
-                              Alert.alert("Alert", "Please login to continue", [
-                                {
-                                  text: "OK",
-                                  onPress: () => navigation.navigate("Login"),
-                                },
-                                { text: "Cancel" },
-                              ]);
-                            }  else if(item.screen) {
-                              navigation.navigate(
-                                item.screen
-                              );
-                            }else {
-                              navigation.navigate("Campaign", { campaignType: item.campaignType });
-                            }
-                          }
-                        }}
-                      >
-                        {item.image ? (
-                          <Image
-                            source={item.image}
-                            style={{
-                              width: 80,
-                              height: 80,
-                              resizeMode: "contain",
-                              borderRadius: 100,
-                            }}
-                          />
-                        ) :item.imageUrls ? (
-                          <Image
-                           source={{ uri: item.imageUrls[0].imageUrl || DEFAULT_IMAGE }}
-                            style={{
-                              width: 80,
-                              height: 80,
-                              resizeMode: "contain",
-                              borderRadius: 100,
-                           }}
-                          />
-                        ): (
-                          <Image
-                            source={require("../assets/icon.png")}
-                            style={{
-                              width: 80,
-                              height: 80,
-                              resizeMode: "contain",
-                              borderRadius: 100,
-                            }}
-                          />
-                        )}
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            marginTop: 20,
-                            textAlign: "center",
-                            width: width * 0.2,
-                          }}
-                        >
-                          {item.name || item.campaignType}
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  />
-                </View>
-              ) : null}
-
-              {/* Popular Categories List */}
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  padding: 10,
-                }}
-              >
-                <Text style={{ fontSize: 18, fontWeight: "bold" }}>
-                  Popular Categories
-                </Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("Rice Products", {
-                      screen: "Rice Products",
-                      category: "All CATEGORIES",
-                    })
-                  }
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      color: "#3d2a71",
-                      fontWeight: "bold",
-                      marginRight: 15,
-                    }}
-                  >
-                    View All
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-      <FlatList
-  data={arrangeCategories(getCategories)}
-  keyExtractor={(item, index) => index.toString()}
-  numColumns={2}
-  showsVerticalScrollIndicator={false}
-  columnWrapperStyle={{ justifyContent: "space-evenly", marginTop: 10 }}
-  renderItem={({ item }) => (
-    <View
-      style={{
-        backgroundColor: "#ffff",
-        borderRadius: 10,
-        padding: 10,
-        width: "45%",
-        height: "100%",
-        marginBottom: 15,
-        position: "relative",
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-      }}
-    >
-      <TouchableOpacity onPress={() => navigation.navigate("Rice Products", { screen: "Rice Products", category: item.categoryName })}>
-        <Image
-          source={{ uri: item.categoryLogo }}
-          style={{ width: width/2.8, height: 150, borderRadius: 10, alignSelf: "center" }}
-        />
-      </TouchableOpacity>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 5, alignSelf: "center" }}>{item.categoryName}</Text>
-      <TouchableOpacity 
-        style={{
-          backgroundColor: "#b1a9c6",
-          padding: 10,
-          borderRadius: 10,
-          marginTop: 10,
-          alignItems: "center",
-          left: 0,
-          bottom: 0,
-          top: 0,
-          right: 0
-        }} 
-        onPress={() => navigation.navigate("Rice Products", { screen: "Rice Products", category: item.categoryName })}
-      >
-        <Text>Show Items</Text>
-      </TouchableOpacity>
-    </View>
-  )}
-/>
-      {userData!=null&&(
-      <View style={{marginBottom:10,marginTop:height*0.05}}>
-         <FreeSampleScreen />
-         </View>
+          {userData == null && (
+            <LoginModal visible={loginModal} onClose={() => setLoginModal(false)} />
+          )}
+        </>
       )}
-</View>
-      
-</ScrollView>
-</>
-      )
-:
-(
-<View style={styles.loaderContainer}>
-  <LottieView 
-          source={require("../assets/AnimationLoading.json")}
-          autoPlay
-          loop
-          style={{ width: 200, height: 200 }}
-        />
-        {/* <RiceLoader/> */}
-        </View>
-      )}
-
-      {userData == null ? (
-        <LoginModal visible={loginModal} onClose={() => setLoginMobal(false)} />
-      ) : null}
-    </View>
+    </SafeAreaView>
   );
 };
 
-export default ServiceScreen;
-
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F5F7",
+    paddingTop: StatusBar.currentHeight,
+  },
+  scrollContent: {
+    paddingBottom: 34,
+  },
   loaderContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    color: "#3e2723",
     backgroundColor: "rgba(255, 255, 255, 0.9)",
-    zIndex: 1,
   },
-  imageContainer: {
-    width: width,
-    justifyContent: "center",
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    alignSelf: "center",
-    height: height * 0.42,
-    marginTop: -height * 0.12,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: "#4A148C",
+    elevation: 4,
   },
-  image: {
-    width: width * 0.9,
-    height: height * 0.6,
+  headerRightContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  logo: {
+    width: 140,
+    height: 40,
     resizeMode: "contain",
+    tintColor: "#FFFFFF",
   },
-  pagination: {
+  authButton: {
     flexDirection: "row",
-    position: "absolute",
-    bottom: 20,
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    margin: 10,
-  },
-  activeDot: {
-    backgroundColor: "#3d2a71",
-    width: 30,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-  },
-  inactiveDot: {
-    backgroundColor: "gray",
-  },
-  copyButton: {
-    flexDirection: "row",
-   
-    backgroundColor: "#5e35b1",
-    padding: 6,
-    
-    borderRadius: 4,
-    marginLeft:150
-  },
-  copiedButton: {
-    backgroundColor: "#4CAF50",
-    // marginLeft:40
-  },
-  buttonText: {
+  authButtonText: {
+    marginLeft: 6,
     color: "#FFFFFF",
-    marginLeft: 4,
-    fontWeight: "500",
+    fontWeight: "600",
     fontSize: 14,
   },
-  IDcontainer: {
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
+  bannerContainer: {
+    height: 140,
+    position: "relative",
+    marginTop: 16,
+  },
+  bannerImageContainer: {
+    width: width,
+    height: 140,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  bannerImage: {
+    width: width - 32,
+    height: 140,
+    borderRadius: 16,
+    resizeMode: "cover",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 12,
+    left: 0,
+    right: 0,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: "#4A148C",
+    width: 20,
+  },
+  inactiveDot: {
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+  },
+  userInfoCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    margin: 16,
     elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  userInfoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  userInfoTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#4A148C",
+    marginLeft: 10,
+  },
+  userInfoDivider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 12,
+  },
+  infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginHorizontal: 10,
-    marginTop: 10,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
+  blockchainIdContainer: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
+    alignItems: "center",
+    flex: 1,
   },
-  value: {
+  infoLabel: {
     fontSize: 14,
-    fontWeight: "normal",
-    color: "#007bff",
-    // marginRight:10
+    fontWeight: "500",
+    color: "#757575",
+    marginRight: 6,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#4A148C",
+  },
+  copyButton: {
+    backgroundColor: "#4A148C",
+    padding: 6,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  copiedButton: {
+    backgroundColor: "#4CAF50",
   },
   coinContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
+  coinBadge: {
+    backgroundColor: "#F1F6FF",
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginHorizontal: 6,
+  },
+  coinValue: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#4A148C",
+  },
   infoButton: {
-    padding: 5,
-    marginLeft: 5,
-    top:-1.5
+    padding: 4,
+  },
+  sectionContainer: {
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#212121",
+  },
+  servicesListContainer: {
+    paddingVertical: 8,
+  },
+  categoriesColumnWrapper: {
+    justifyContent: "space-between",
+  },
+  categoryCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    overflow: "hidden",
+    width: (width - 40) / 2,
+    marginBottom: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  categoryImage: {
+    width: "100%",
+    height: 160,
+    resizeMode: "cover",
+  },
+  categoryContent: {
+    padding: 12,
+  },
+  categoryName: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginBottom: 8,
+    color: "#212121",
+  },
+  viewItemsButton: {
+    backgroundColor: "#4A148C",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  viewItemsText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 12,
+  },
+  freeSampleContainer: {
+    marginTop: 24,
+    marginBottom: 24,
   },
   modalOverlay: {
     flex: 1,
@@ -840,7 +886,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     width: "90%",
     maxWidth: 400,
@@ -849,62 +895,147 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  modalTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "bold",
-    color: "#8A2BE2",
+    color: "#4A148C",
+    marginLeft: 10,
   },
   closeButton: {
-    fontSize: 24,
-    color: "#888",
+    backgroundColor: "#4A148C",
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalText: {
     fontSize: 16,
-    color: "#555",
-    marginBottom: 20,
+    color: "#424242",
+    marginBottom: 16,
     lineHeight: 24,
   },
   valueBox: {
-    backgroundColor: "#F8F4FF",
-    borderRadius: 8,
+    backgroundColor: "#F1F6FF",
+    borderRadius: 12,
     padding: 16,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   valueTitle: {
     fontSize: 16,
-    color: "#555",
-    marginBottom: 8,
+    color: "#212121",
+    marginBottom: 12,
+    fontWeight: "600",
+  },
+  exchangeRate: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   valueText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#555",
+    color: "#4A148C",
+    marginLeft: 10,
   },
   infoTitle: {
     fontSize: 16,
-    color: "#555",
-    marginBottom: 8,
+    fontWeight: "600",
+    color: "#212121",
+    marginBottom: 12,
   },
   bulletList: {
     marginBottom: 20,
   },
   bulletPoint: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 6,
-    lineHeight: 24,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 10,
+  },
+  bulletIcon: {
+    marginRight: 8,
+    marginTop: 2,
+  },
+  bulletText: {
+    fontSize: 15,
+    color: "#424242",
+    lineHeight: 22,
+    flex: 1,
   },
   gotItButton: {
-    backgroundColor: "#8A2BE2",
-    borderRadius: 24,
-    padding: 14,
-    alignItems: "center",
-  },
-  gotItText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "500",
-  },
-});
+    backgroundColor: "#4A148C",
+    borderRadius: 8,
+    paddingVertical: 14,
+      alignItems: "center",
+    },
+    gotItText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    servicesGridContainer: {
+      marginTop: 10,
+    },
+    servicesGridContent: {
+      paddingVertical: 8,
+    },
+    serviceItem: {
+      alignItems: "center",
+      width: (width - 64) / 3,
+      marginBottom: 20,
+    },
+    serviceIconContainer: {
+      width: 100,
+      height: 100,
+      borderRadius: 18,
+      backgroundColor: "#FFFFFF",
+      justifyContent: "center",
+      alignItems: "center",
+      elevation: 6,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.16,
+      shadowRadius: 6,
+      borderWidth: 1,
+      borderColor: "rgba(74, 20, 140, 0.1)",
+    },
+    serviceImage: {
+      width: 80,
+      height: 80,
+      resizeMode: "contain",
+    },
+    serviceName: {
+      fontSize: 12,
+      textAlign: "center",
+      marginTop: 8,
+      color: "#424242",
+      fontWeight: "500",
+      height: 32,
+    },
+    sectionHeaderRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 16,
+    },
+    viewAllButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      backgroundColor: "rgba(74, 20, 140, 0.08)",
+      borderRadius: 20,
+    },
+    viewAllText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: "#4A148C",
+    },
+  });
+  
+  export default ServiceScreen;
