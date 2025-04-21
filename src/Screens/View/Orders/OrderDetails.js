@@ -20,7 +20,7 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 import Checkbox from "expo-checkbox";
 import { COLORS } from "../../../../Redux/constants/theme";
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import BASE_URL, { userStage } from "../../../../Config";
 
 const { width, height } = Dimensions.get("window");
@@ -43,7 +43,9 @@ const OrderDetails = () => {
   const [isExchangeComplete, setIsExchangeComplete] = useState(false);
   const [comments, setComments] = useState();
   const [orderFeedback, setOrderFeedback] = useState([]);
-  const[deliveryBoyDetails,setDeliveryBoyDetails]=useState([])
+  const [deliveryBoyDetails, setDeliveryBoyDetails] = useState([]);
+  const [canExchange, setCanExchange] = useState(false);
+  const [exchangeInfo, setExchangeInfo] = useState(null);
   // console.log("order id", order_id);
 
   const emojis = [
@@ -105,7 +107,6 @@ const OrderDetails = () => {
       });
   };
 
-
   function deliveryBoyDetailsfunc() {
     let data = {
       orderId: order_id,
@@ -114,7 +115,7 @@ const OrderDetails = () => {
     axios({
       method: "post",
       // url:BASE_URL+`erice-service/order/deliveryBoyAssigneData`,
-      url:BASE_URL + `order-service/deliveryBoyAssigneData`,
+      url: BASE_URL + `order-service/deliveryBoyAssigneData`,
       data: data,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -131,7 +132,7 @@ const OrderDetails = () => {
   useEffect(() => {
     // handleSubmit()
     feedbackGet();
-    deliveryBoyDetailsfunc()
+    deliveryBoyDetailsfunc();
   }, []);
 
   const feedbackGet = async () => {
@@ -173,10 +174,11 @@ const OrderDetails = () => {
 
     try {
       const response = await axios(data);
-     
+
       console.log("order data", response);
 
       setOrderData(response.data);
+      checkExchangeEligibility(response.data);
 
       const orderStatus = response.data[0].orderStatus;
       setOrderStatus(orderStatus);
@@ -184,6 +186,76 @@ const OrderDetails = () => {
       // console.error("Error fetching order details:", error.response);
     }
   };
+
+ 
+
+  function checkExchangeEligibility(orderData) {
+    console.log("Starting exchange eligibility check");
+    
+   
+    const order = Array.isArray(orderData) ? orderData[0] : orderData;
+    
+    console.log("Processing order:", order.orderId);
+    
+    // Check if orderHistory exists and is an array
+    if (!order.orderHistory || !Array.isArray(order.orderHistory)) {
+      console.log("Order history is missing or not an array");
+      setCanExchange(false);
+      return;
+    }
+    
+    console.log("Order history length:", order.orderHistory.length);
+    
+   
+    let deliveredDateEntry = null;
+    
+    //iterate through order history to find the delivered date----
+    for (let i = 0; i < order.orderHistory.length; i++) {
+      const entry = order.orderHistory[i];
+      console.log(`Checking entry ${i}:`, entry);
+      
+      if (entry && entry.deliveredDate) {
+        console.log(`Found delivered date entry at index ${i}:`, entry.deliveredDate);
+        deliveredDateEntry = entry;
+        break;
+      }
+    }
+    
+    if (!deliveredDateEntry) {
+      console.log("No delivered date entry found");
+      setCanExchange(false);
+      return;
+    }
+    
+    // Parse the delivery date
+    const deliveredDate = new Date(deliveredDateEntry.deliveredDate);
+    console.log("Delivered date:", deliveredDate);
+    
+    
+    const exchangeEndDate = new Date(deliveredDate);
+    exchangeEndDate.setDate(deliveredDate.getDate() + 10);
+    console.log("Exchange end date:", exchangeEndDate);
+    
+   
+    const currentDate = new Date();
+    console.log("Current date:", currentDate);
+    
+   
+    const canExchange = currentDate >= deliveredDate && currentDate <= exchangeEndDate;
+    console.log("Can exchange:", canExchange);
+    
+   
+    setCanExchange(canExchange);
+    
+    
+    // setExchangeInfo({
+    //   deliveredDate,
+    //   exchangeEndDate,
+    //   message: canExchange 
+    //     ? "Item eligible for exchange" 
+    //     : "Exchange period has expired"
+    // });
+  }
 
   const toggleExchangeItemSelection = (id, quantity) => {
     setSelectedCancelItems((prev) => ({
@@ -238,7 +310,7 @@ const OrderDetails = () => {
         Alert.alert("Success", res.data.type, [
           {
             text: "OK",
-            onPress: () => navigation.navigate("My Exchanged Item Details"),
+            onPress: () => navigation.navigate("My Orders"),
           },
         ]);
         setIsExchangeVisible(false);
@@ -354,21 +426,19 @@ const OrderDetails = () => {
       });
   };
 
-
   const makeCall = (phoneNumber) => {
-    const cleanedNumber = phoneNumber.replace(/\D/g, '');
+    const cleanedNumber = phoneNumber.replace(/\D/g, "");
     const phoneUrl = `tel:${cleanedNumber}`;
-    
-    Linking.openURL(phoneUrl)
-      .catch((error) => {
-        Alert.alert('Error', 'Failed to open the phone dialer.');
-        console.error('Error:', error);
-      });
+
+    Linking.openURL(phoneUrl).catch((error) => {
+      Alert.alert("Error", "Failed to open the phone dialer.");
+      console.error("Error:", error);
+    });
   };
 
   return (
     <>
-   
+     
       <ScrollView style={styles.container}>
         <View style={styles.receiptHeader}>
           <Text
@@ -433,7 +503,6 @@ const OrderDetails = () => {
                 </Text>
                 <View style={styles.section}>
                   <View>
-                  
                     <View style={styles.emojiContainer}>
                       {emojis.map((item, index) => (
                         <TouchableOpacity
@@ -565,41 +634,53 @@ const OrderDetails = () => {
           )}
         </View>
 
-{orderstatus=="5"?
-<View>
-  <Text style={styles.sectionTitle}>Rejected Reason</Text>
-  <View style={styles.section}>
-    <Text>{orderDetails.reason} </Text>
-  </View>
-</View>
-:null}
+        {orderstatus == "5" ? (
+          <View>
+            <Text style={styles.sectionTitle}>Rejected Reason</Text>
+            <View style={styles.section}>
+              <Text>{orderDetails.reason} </Text>
+            </View>
+          </View>
+        ) : null}
 
+        {/* Delivery Boy Details */}
+        {orderstatus === "3" || orderstatus == "PickedUp" ? (
+          <>
+            <Text style={styles.sectionTitle}>Delivery Boy Details</Text>
+            <View>
+              <View style={styles.section1}>
+                <View style={{ width: width * 0.65 }}>
+                  <Text>
+                    Delivery Boy Name:{" "}
+                    <Text style={{ fontWeight: "bold" }}>
+                      {deliveryBoyDetails?.deliveryBoyName}
+                    </Text>
+                  </Text>
+                  <Text>
+                    Delivery Boy Mobile Number:{" "}
+                    <Text style={{ fontWeight: "bold" }}>
+                      {deliveryBoyDetails?.deliveryBoyMobile}
+                    </Text>
+                  </Text>
+                </View>
 
-{/* Delivery Boy Details */}
-{orderstatus === "3" || orderstatus=="PickedUp"? (
-<>
-<Text style={styles.sectionTitle}>Delivery Boy Details</Text>
-<View>
-  <View style={styles.section1}>
-  <View style={{width: width*0.65}}>
-  <Text>
-        Delivery Boy Name: <Text style={{fontWeight: 'bold'}}>{deliveryBoyDetails?.deliveryBoyName}</Text>
-      </Text>
-      <Text>
-        Delivery Boy Mobile Number: <Text style={{fontWeight: 'bold'}}>{deliveryBoyDetails?.deliveryBoyMobile}</Text>
-      </Text>
-    </View>
-    
-    <TouchableOpacity 
-      style={{backgroundColor: '#4CAF50', borderRadius: 5, width: 40, height: 40, justifyContent: 'center', alignItems: 'center'}} 
-      onPress={() => makeCall(deliveryBoyDetails.deliveryBoyMobile)}
-    >
-      <FontAwesome name="phone" size={18} color="#fff" />
-    </TouchableOpacity>
-  </View>
-</View>
-</>
- ):null}
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#4CAF50",
+                    borderRadius: 5,
+                    width: 40,
+                    height: 40,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={() => makeCall(deliveryBoyDetails.deliveryBoyMobile)}
+                >
+                  <FontAwesome name="phone" size={18} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        ) : null}
 
         {/* Billing Details */}
         <Text style={styles.sectionTitle}>Billing Details</Text>
@@ -659,7 +740,6 @@ const OrderDetails = () => {
           </View>
         </View>
       </ScrollView>
-
       {orderstatus === "6" ? (
         <View style={styles.footer}>
           <Text style={styles.cancelButtonText1}>
@@ -667,9 +747,7 @@ const OrderDetails = () => {
           </Text>
         </View>
       ) : null}
-
       {/* // yesterday changes */}
-
       <View
         style={{
           flexDirection: "row",
@@ -698,7 +776,7 @@ const OrderDetails = () => {
                   </View>
                 </TouchableOpacity> */}
               </View>
-            ) : (orderstatus == 4 && canExchange) ? (
+            ) : orderstatus == 4 && canExchange ? (
               <View
                 style={{
                   flex: 1,
@@ -708,15 +786,14 @@ const OrderDetails = () => {
                   paddingHorizontal: 20,
                 }}
               >
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setIsExchangeVisible(true)}
                 >
                   <View>
                     <Text style={styles.cancelButtonText}>Exchange Order</Text>
                   </View>
-                </TouchableOpacity>
-             
+                </TouchableOpacity> */}
               </View>
             ) : null}
           </View>
@@ -731,7 +808,6 @@ const OrderDetails = () => {
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>
       </View>
-
       {isModalVisible && (
         <Modal visible={isModalVisible} transparent animationType="slide">
           <View style={styles.overlay}>
@@ -806,7 +882,6 @@ const OrderDetails = () => {
           </View>
         </Modal>
       )}
-
       {orderstatus === "4" ? (
         <View style={styles.footer1}>
           <TouchableOpacity
@@ -820,7 +895,6 @@ const OrderDetails = () => {
           </TouchableOpacity>
         </View>
       ) : null}
-
       {isExchangeVisible && (
         <Modal visible={isExchangeVisible} transparent animationType="slide">
           <View style={styles.overlay}>
@@ -946,8 +1020,8 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
     width: width * 0.9,
-    flexDirection:"row",
-    justifyContent:"space-between"
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   sectionTitle: {
     fontSize: 18,
@@ -1043,15 +1117,15 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   callButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: 5,
     // paddingHorizontal: 16,
     borderRadius: 6,
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
- 
+
   emojiBox: {
     // width: 65,
     // height: 65,

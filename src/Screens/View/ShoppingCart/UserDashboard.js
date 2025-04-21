@@ -62,6 +62,7 @@ const UserDashboard = ({route}) => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
   const [weightRange, setWeightRange] = useState({ min: 0, max: 100 });
   const [sortOrder, setSortOrder] = useState("weightAsc");
+  const [showOffer, setShowOffer] = useState(false);
 
   const scrollViewRef = useRef(null);
   
@@ -171,6 +172,7 @@ const UserDashboard = ({route}) => {
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
       setCartCount(totalCartCount);
+    await  checkAndShowOneKgOfferModal();
       
       setLoadingItems((prevState) => ({
         ...prevState,
@@ -180,6 +182,93 @@ const UserDashboard = ({route}) => {
       // console.error("Error fetching cart items:", error.response.status);
     }
   };
+
+  const checkAndShowOneKgOfferModal = async () => {
+
+    console.log("checking one kg offer modal");
+    
+    const oneKgBags = cartData.filter(
+      item =>
+        parseFloat(item.weight?.toString() || "0") === 1 &&
+        item.cartQuantity < item.quantity // ✅ In stock
+    );
+  
+    const has1kg = oneKgBags.length > 0;
+    const anyOneKgHasTwoOrMore = oneKgBags.some(item => item.cartQuantity >= 2);
+  
+    let offeravail = 0;
+  
+    try {
+      const response = await axios.get(
+        `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
+      );
+  
+      if (response.data) {
+        offeravail = response.data.cartQuantity;
+      }
+  
+      if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+        const cheapestBag = oneKgBags.reduce((min, curr) =>
+          parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
+        );
+          console.log("cheapest bag", cheapestBag);
+          
+        Alert.alert(
+          '🎁 1+1 Offer!',
+          `You're eligible for a free ${cheapestBag.itemName}!`,
+          [
+            {
+              text: 'Add Free Bag',
+              onPress: async () => {
+                await addFreeOneKgBag(
+                  cheapestBag,
+                  cartData,
+                );
+              },
+            },
+            {
+              text: 'No Thanks',
+              style: 'cancel',
+            },
+          ]
+        );
+      }
+    } catch (error) {
+      console.error("Error checking 1kg offer:", error);
+    }
+  };
+
+
+  const addFreeOneKgBag = async (item) => {
+    try {
+      // const currentQuantity = cartData[item.itemId] || 0;
+      // const newQuantity = currentQuantity + 1;
+
+      console.log("item ID", item.itemId);
+      await axios.patch(
+        `${BASE_URL}cart-service/cart/incrementCartData`,
+        {
+          // cartQuantity: newQuantity,
+          customerId,
+          itemId: item.itemId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      Alert.alert('Success', `🎉 1+1 Offer applied! Free ${item.itemName} added.`);
+      await fetchCartItems();
+  
+    } catch (error) {
+      console.error("Error applying free 1kg bag:", error.response);
+      message.error("Failed to add the free bag. Try again.");
+    }
+  };
+  
+  
 
   const arrangeCategories = (categories) => {
     if (!categories || categories.length === 0) return [];

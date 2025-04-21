@@ -145,9 +145,9 @@ const Login = () => {
     const keyboardDidHideListener = Keyboard.addListener("keyboardDidHide", () => {
       setIsKeyboardOpen(false);
       if (!otpSent) {
-        handleSendOtp()
+        // handleSendOtp()
       }else{
-        handleVerifyOtp()
+        // handleVerifyOtp()
       }
     });
 

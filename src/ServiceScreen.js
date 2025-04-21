@@ -113,6 +113,7 @@ const ServiceScreen = () => {
   const [loginModal, setLoginModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [studyAbroad,setStudyAbroad] = useState([])
   const dispatch = useDispatch();
 
   const currentScreen = useNavigationState(
@@ -193,6 +194,61 @@ const ServiceScreen = () => {
     }
   };
 
+  // function getAllCampaign() {
+  //   setLoading(true);
+  //   axios
+  //     .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
+  //     .then((response) => {
+  //       // console.log("campaign details",response);
+  //       setLoading(false);
+  
+  //       if (!Array.isArray(response.data)) {
+  //         console.error("Invalid API response format");
+  //         setData(services);
+  //         return;
+  //       }
+  //       
+  //       const studyAbroadCampaigns = response.data.filter((item)=>item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION")&& item.campaignStatus===true)
+  //       console.log("studyAbroadCampaigns",studyAbroadCampaigns);
+
+       
+
+  //       const activeCampaigns = response.data.filter((item) => item.campaignStatus === true);
+  //       //insert study abroad related campaigns into STUDY ABROAD service
+  //       const updatedServices = services.map((item) => {
+  //         if(item.screen==="STUDY ABROAD"){
+  //           return{
+  //             ...item,
+  //             campaigns : studyAbroadCampaigns
+  //           }
+  //         }
+  //         return;
+  //       });
+  //       setData(updatedServices);
+  //       console.log("updatedServices",updatedServices);
+  //       if (activeCampaigns.length === 0) {
+  //         setData(services); 
+  //         return;
+  //       }
+  
+  //       const campaignScreens = activeCampaigns.map((item) => item.campaignType);
+  
+  //       const mergedData = [
+  //         ...activeCampaigns,
+  //         ...services.filter((service) => !campaignScreens.includes(service.screen)),
+  //       ];
+  //         console.log("mergedData",mergedData);
+             
+  //       setData(mergedData);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error fetching campaigns", error);
+  //       setData(services);
+  //       setLoading(false);
+  //     });
+  // }
+
+
   function getAllCampaign() {
     setLoading(true);
     axios
@@ -206,21 +262,44 @@ const ServiceScreen = () => {
           return;
         }
   
-        // Filter only active campaigns
-        const activeCampaigns = response.data.filter((item) => item.campaignStatus === true);
+        const allCampaigns = response.data;
   
-        if (activeCampaigns.length === 0) {
-          setData(services); // Fallback to default services
-          return;
-        }
+        // for getting Study Abroad campaigns
+        const studyAbroadCampaigns = allCampaigns.filter(
+          (item) =>
+            item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION") &&
+            item.campaignStatus === true
+        );
   
-        const campaignScreens = activeCampaigns.map((item) => item.campaignType);
+        //  Filter all active campaigns
+        const activeCampaigns = allCampaigns.filter(
+          (item) => item.campaignStatus === true
+        );
   
+        //  Build updated services: attach preview campaign only to STUDY ABROAD
+        const updatedServices = services.map((service) => {
+          if (service.screen === "STUDY ABROAD") {
+            return {
+              ...service,
+              previewCampaign: studyAbroadCampaigns[0], // show one preview campaign
+              campaigns: studyAbroadCampaigns,          // pass all campaigns for navigation
+            };
+          }
+          return service;
+        });
+  
+        //  Filter out campaigns that are already handled (like STUDY ABROAD ones)
+        const filteredCampaigns = activeCampaigns.filter(
+          (item) => !item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION")
+        );
+  
+        // 🧠 Merge updatedServices with remaining campaigns
         const mergedData = [
-          ...activeCampaigns,
-          ...services.filter((service) => !campaignScreens.includes(service.screen)),
+          ...updatedServices,
+          ...filteredCampaigns
         ];
   
+        // console.log("Merged Data:", mergedData);
         setData(mergedData);
       })
       .catch((error) => {
@@ -229,6 +308,7 @@ const ServiceScreen = () => {
         setLoading(false);
       });
   }
+  
 
   function getRiceCategories() {
     setLoading(true);
@@ -238,6 +318,8 @@ const ServiceScreen = () => {
     })
       .then((response) => {
         setLoading(false);
+        // console.log("Rice Categories:", response.data);
+        
         setGetCategories(response.data);
       })
       .catch((error) => {
@@ -303,7 +385,7 @@ const ServiceScreen = () => {
 
   // Function to truncate the ID (Example: "0x1234567890abcdef" → "0x12...ef")
   const truncateId = (id) => {
-    return id && id.length > 6 ? `${id.slice(0, 4)}...${id.slice(-4)}` : id;
+    return id && id.length > 4 ? `${id.slice(0, 6)}...${id.slice(-4)}` : id;
   };
   
   const handleCopy = async () => {
@@ -337,8 +419,12 @@ const ServiceScreen = () => {
       onPress={() => {
         if (item.screen !== "Crypto Currency") {
           if (item.screen) {
-            navigation.navigate(item.screen);
-          } else {
+         
+          navigation.navigate(item.screen, {
+            campaigns: item.campaigns,
+          });
+          
+        } else {
             navigation.navigate("Campaign", { campaignType: item.campaignType });
           }
         } else {
@@ -508,7 +594,7 @@ const ServiceScreen = () => {
                   </View>
                   
                   <View style={styles.coinContainer}>
-                    <Text style={styles.infoLabel}>BMV Coins:</Text>
+                    <Text style={styles.infoLabel1}>BMV Coins:</Text>
                     <View style={styles.coinBadge}>
                       <Text style={styles.coinValue}>{coin}</Text>
                     </View>
@@ -571,7 +657,7 @@ const ServiceScreen = () => {
               
               <FlatList
                 data={arrangeCategories(getCategories)}
-                keyExtractor={(item, index) => index.toString()}
+                keyExtractor={(item, index) => index}
                 numColumns={2}
                 scrollEnabled={false}
                 showsVerticalScrollIndicator={false}
@@ -771,20 +857,30 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    // flexDirection: "row",
+    // justifyContent: "space-between",
+    // alignItems: "center",
+    alignItems: "flex-start",
   },
   blockchainIdContainer: {
+    marginTop:10,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems:"flex-start",
     flex: 1,
+    marginBottom:5
   },
   infoLabel: {
     fontSize: 14,
     fontWeight: "500",
     color: "#757575",
-    marginRight: 6,
+    // marginRight: 6,
+    // justifyContent:"flex-start"
+  },
+   infoLabel1: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#757575",
+    alignItems:"flex-start",
   },
   infoValue: {
     fontSize: 14,
@@ -795,14 +891,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#4A148C",
     padding: 6,
     borderRadius: 6,
-    marginLeft: 8,
+    marginLeft:width/3
   },
   copiedButton: {
     backgroundColor: "#4CAF50",
   },
   coinContainer: {
+    // marginTop:50,
     flexDirection: "row",
-    alignItems: "center",
+  justifyContent:"flex-start"
   },
   coinBadge: {
     backgroundColor: "#F1F6FF",
@@ -810,6 +907,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     marginHorizontal: 6,
+    // marginLeft:width/2.5
   },
   coinValue: {
     fontSize: 14,
@@ -818,6 +916,7 @@ const styles = StyleSheet.create({
   },
   infoButton: {
     padding: 4,
+    marginLeft:width/2.5
   },
   sectionContainer: {
     marginTop: 24,

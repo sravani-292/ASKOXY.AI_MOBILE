@@ -32,7 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
-  console.log("payment screen", route.params);
+  // console.log("payment screen", route.params);
     // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
@@ -123,7 +123,7 @@ const fetchTimeSlots = async () => {
 
       const availableDays = nextSevenDays.filter(day => {
           const matchedDay = data.find(d => d.dayOfWeek === day.dayOfWeek);
-          return matchedDay && matchedDay.isAvailable === true; 
+          return matchedDay && matchedDay.isAvailable === false; 
       }).slice(0, 3); 
 
       console.log("Filtered available days:", availableDays);
@@ -473,6 +473,14 @@ const fetchTimeSlots = async () => {
     if(loading==true){
       return;
     }
+    if (!isChecked) {
+      Alert.alert(
+        "Confirmation Required",
+        "Please confirm that the exchange can be taken within 10 days after delivery."
+      );
+      return;
+    }
+
     let wallet;
     if (useWallet) {
       wallet = walletAmount;
@@ -1109,10 +1117,18 @@ const fetchTimeSlots = async () => {
         size={24}
         color={isChecked ? 'green' : 'gray'}
       />
-       <Text style={styles.label}>
-        I confirm that the exchange can be taken within{' '}
-        <Text style={{ fontWeight: 'bold' }}>10 days</Text> after the order has been delivered.
-      </Text>
+      <Text style={styles.label1}>
+              I confirm that the exchange can be taken within{" "}
+              <Text
+                style={[
+                  styles.label1,
+                  { fontWeight: "bold", textTransform: "capitalize" },
+                ]}
+              >
+                10 days
+              </Text>{" "}
+              after the order has been delivered.
+            </Text>
     </TouchableOpacity>
           <Text style={styles.detailsHeader}>Payment Details</Text>
           <View style={styles.paymentRow}>
@@ -1516,6 +1532,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "blue",
   },
+  label1: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+    marginLeft: 18,
+  },
 });
 
 export default PaymentDetails;

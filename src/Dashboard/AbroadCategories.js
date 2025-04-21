@@ -8,17 +8,26 @@ import {
     TouchableOpacity,
     Alert,
     Linking,
+    Image,
   } from "react-native";
   import React, { useState, useEffect } from "react";
   const { height, width } = Dimensions.get("window");
   import axios from "axios";
+  import { MaterialIcons } from '@expo/vector-icons';
   import BASE_URL, { userStage } from "../../Config";
   import { useSelector } from "react-redux";
   import { WebView } from 'react-native-webview';
-  const AbroadCategories = ({ navigation }) => {
+  import { Route } from "lucide-react-native";
+  const AbroadCategories = ({ navigation ,route}) => {
+
+    const [loadingStates, setLoadingStates] = useState({});
+    const DEFAULT_IMAGE = 'https://www.askoxy.ai/static/media/askoxylogostatic.3e03c861742645ba9a15.png';
+    console.log("abroad categories",route.params);
+    
     const userData = useSelector((state) => state.counter);
     const [AlreadyInterested, setAlreadyInterested] = useState(false);
     const [profileData, setProfileData] = useState();
+    const [data, setData] = useState([]);
     console.log("userData", userData);
     let number;
   
@@ -34,6 +43,7 @@ import {
       } else {
         getCall();
         getProfile();
+        getAllCampaign();
       }
     }, []);
   
@@ -141,6 +151,55 @@ import {
         });
     }
     
+
+    function getAllCampaign() {
+        setLoading(true);
+        axios
+          .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
+          .then((response) => {
+            setLoading(false);
+      
+            if (!Array.isArray(response.data)) {
+              console.error("Invalid API response format");
+              setData(services);
+              return;
+            }
+      
+            const allCampaigns = response.data;
+      
+            // for getting Study Abroad campaigns
+            const studyAbroadCampaigns = allCampaigns.filter(
+              (item) =>
+                item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION") &&
+                item.campaignStatus === true
+            );
+      
+            //  Filter all active campaigns
+            const activeCampaigns = allCampaigns.filter(
+              (item) => item.campaignStatus === true
+            );
+      
+            
+            const filteredCampaigns = activeCampaigns.filter(
+              (item) => !item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION")
+            );
+      
+            // 🧠 Merge updatedServices with remaining campaigns
+            const mergedData = [
+              // ...updatedServices,
+              ...studyAbroadCampaigns,
+              
+            ];
+      
+            console.log("Merged Data:", mergedData);
+            setData(mergedData);
+          })
+          .catch((error) => {
+            console.error("Error fetching campaigns", error);
+            setData(services);
+            setLoading(false);
+          });
+      }
   
     function exploreGptfun() {
       if (userData == null) {
@@ -319,92 +378,93 @@ import {
           
          
         </View>
-        {/* <View style={styles.featureBox}>
-          <Text style={styles.featureText}>
-            🎓 **Free Lifetime Access** {"\n"}
-            For students to access our platform.
-          </Text>
+        {data.map((campaign, index) => (
+        <View key={index} style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.heading}>{campaign.campaignType}</Text>
+            {/* <TouchableOpacity 
+              style={styles.viewAllButton}
+              onPress={() => navigation.navigate("AllCampaigns", { type: campaign.campaignType })}
+            >
+              <Text style={styles.viewAllText}>View all</Text>
+              <MaterialIcons name="arrow-forward" size={16} color="#6f2dbd" />
+            </TouchableOpacity> */}
+          </View>
+          
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {campaign.imageUrls && campaign.imageUrls.length > 0 ? (
+              campaign.imageUrls.map((img, idx) => {
+                const imageUri = typeof img === "string" ? img : img?.imageUrl;
+                const imageSource = imageUri ? { uri: imageUri } : require("../../assets/Images/E.jpeg");
+                
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.imageTouchable}
+                    onPress={() => navigation.navigate("Campaign", campaign)}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={imageSource}
+                      style={styles.image}
+                      resizeMode="cover"
+                    />
+                    {/* <View style={styles.imageOverlay}>
+                      <Text style={styles.campaignTitle} numberOfLines={2}>
+                        {campaign.title || `Campaign ${idx + 1}`}
+                      </Text>
+                    </View> */}
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <TouchableOpacity
+                style={styles.imageTouchable}
+                onPress={() => navigation.navigate("Campaign", campaign)}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={require("../../assets/Images/E.jpeg")}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+                <View style={styles.imageOverlay}>
+                  <Text style={styles.campaignTitle} numberOfLines={2}>
+                    {campaign.title || "Campaign"}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </ScrollView>
+          
+          {/* {campaign.alreadyInterested ? (
+            <View style={styles.interestedBadge}>
+              <MaterialIcons name="check-circle" size={16} color="#fff" />
+              <Text style={styles.interestedText}>Interested</Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.interestButton}
+              onPress={() => handleInterested(campaign.id)}
+              disabled={loadingStates[campaign.id]}
+            >
+              {loadingStates[campaign.id] ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <MaterialIcons name="star" size={16} color="#fff" />
+                  <Text style={styles.interestButtonText}>I'm Interested</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )} */}
         </View>
-  
-        <Text style={styles.processHeading}>
-          📋 End-to-End Process of Studying Abroad
-        </Text>
-  
-        <View style={styles.processBox}>
-          <Text style={styles.processText}>
-            1️⃣ **Research & Choose Your Destination** 🌍{"\n"}
-            Begin by identifying countries and universities that align with your
-            study goals. Research the culture, courses, and living expenses to
-            make an informed decision.
-          </Text>
-  
-          <Text style={styles.processText}>
-            2️⃣ **Prepare for Standardized Tests** 📝{"\n"}
-            Prepare for tests like GRE, IELTS, TOEFL. Start early to improve your
-            skills and practice regularly.
-          </Text>
-  
-          <Text style={styles.processText}>
-            3️⃣ **Shortlist Universities** 📚{"\n"}
-            Research universities that offer programs in your field. Evaluate them
-            based on ranking, location, and scholarships.
-          </Text>
-  
-          <Text style={styles.processText}>
-            4️⃣ **Apply to Universities** 📨{"\n"}
-            Submit applications to your selected universities, along with your
-            transcripts, recommendation letters, and personal statement.
-          </Text>
-  
-          <Text style={styles.processText}>
-            5️⃣ **Apply for Scholarships** 💰{"\n"}
-            Look for scholarships from universities, governments, and
-            organizations to reduce financial costs.
-          </Text>
-  
-          <Text style={styles.processText}>
-            6️⃣ **Attend Interviews/Assessments** 🎤{"\n"}
-            Be ready for interviews or assessments if required. Showcase your
-            motivations and readiness for studying abroad.
-          </Text>
-  
-          <Text style={styles.processText}>
-            7️⃣ **Receive Admission Offers** 🎓{"\n"}
-            Once accepted, evaluate your offers based on funding, program fit, and
-            overall benefits.
-          </Text>
-  
-          <Text style={styles.processText}>
-            8️⃣ **Accept Offer & Confirm Enrollment** 📝{"\n"}
-            After receiving your offers, accept the one that best fits your goals.
-            Confirm your enrollment and pay any necessary deposits.
-          </Text>
-  
-          <Text style={styles.processText}>
-            9️⃣ **Apply for a Student Visa** 🛂{"\n"}
-            Apply for your student visa by gathering the required documents like
-            proof of admission and financial support.
-          </Text>
-  
-          <Text style={styles.processText}>
-            🔟 **Arrange Accommodation & Travel** ✈️🏠{"\n"}
-            Book your flight and secure accommodation. Many universities offer
-            on-campus housing.
-          </Text>
-  
-          <Text style={styles.processText}>
-            1️⃣1️⃣ **Pre-Departure Orientation & Packing** 📦{"\n"}
-            Attend pre-departure orientations and pack everything you need,
-            including important documents and essentials.
-          </Text>
-  
-          <Text style={styles.processText}>
-            1️⃣2️⃣ **Travel & Settle In** ✈️{"\n"}
-            After receiving your visa, fly to your destination, attend your
-            university’s orientation, and start your academic journey abroad!
-          </Text>
-        </View> */}
-       </ScrollView>
+      ))}
+ </ScrollView>
       </View>
     );
   };
@@ -481,20 +541,16 @@ import {
       marginBottom: 15,
       lineHeight: 24,
     },
-    // container: {
+   
+    // card: {
+    //   backgroundColor: '#ffffff',
+    //   borderRadius: 10,
     //   padding: 20,
-    //   backgroundColor: '#F4F2FF',
-    //   flexGrow: 1,
-     
+    //   marginBottom: 20,
+    //   width: '100%',
+    //   elevation: 3,
+    //   height:height
     // },
-    card: {
-      backgroundColor: '#ffffff',
-      borderRadius: 10,
-      padding: 20,
-      marginBottom: 20,
-      width: '100%',
-      elevation: 3,
-    },
     heading: {
       fontSize: 20,
       fontWeight: '700',
@@ -570,4 +626,117 @@ import {
       gap: 10,
       marginTop: 10,
     },
+   
+  image: {
+    width: width / 2,
+    height: height / 3, 
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+    alignSelf: 'center', 
+  },
+  
+  container: {
+    padding: 12,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 20,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  heading: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#6f2dbd',
+    marginRight: 4,
+  },
+  scrollContent: {
+    paddingVertical: 8,
+  },
+  imageTouchable: {
+    // marginRight: 12,
+    width: width *0.6 , 
+    height: height/3.5,
+    borderRadius: 50,
+   overflow:"visible",
+    position: 'relative',
+    alignSelf:"center",
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: 8,
+  },
+  campaignTitle: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  interestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#6f2dbd',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  interestButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  interestedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
+  interestedText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+    
   });

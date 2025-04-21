@@ -65,8 +65,9 @@ const CartScreen = () => {
 
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [showCode, setShowCode] = useState(false);
-  const scaleValue = new Animated.Value(0); // Initial scale value for zoom-in animation
+  const [showOfferAvail, setShowOfferAvail] = useState(false);
+  const [showOffer, setShowOffer] = useState(false);
+  const scaleValue = new Animated.Value(1); // Initial scale value for zoom-in animation
 
   const CONTAINER_TYPES = {
     SMALL: {
@@ -288,6 +289,7 @@ const CartScreen = () => {
 
         setCartData(cartData);
         FreeContainerfunc(cartData)
+        // checkAndApplyOffers(cartData);
         setCartItems(cartItemsMap);
         setIsLimitedStock(limitedStockMap);
         setLoading(false);
@@ -307,21 +309,18 @@ const CartScreen = () => {
 
  // ✅ Accept cartData as a parameter
  function FreeContainerfunc(cartData) {
-  // if (containerDecision) {
-  //   console.log("User already made container decision:", containerDecision);
-  //   return;
-  // }
   axios
     .get(BASE_URL + `cart-service/cart/ContainerInterested/${customerId}`)
     .then((response) => {
       console.log("Cart API called successfully", response.data);
 
       // Check if freeContainerStatus is "Interested" - if so, never show the alert
-      if (response.data.freeContainerStatus === "Interested") {
-        console.log("User already interested in container, no alert will be shown.");
-        setModalVisible(false);
-        return;
-      }
+      // if (response.data.freeContainerStatus === "Interested") {
+      //   console.log("User already interested in container, no alert will be shown.");
+      //   setModalVisible(false);
+      //   return;
+      // }
+      
 
       // ✅ Ensure cartData is valid
       if (!cartData || cartData.length === 0) {
@@ -333,7 +332,7 @@ const CartScreen = () => {
       if (response.data.freeContainerStatus === null) {
         let has10kg = cartData.some(item => item.weight === 10);
         let has26kg = cartData.some(item => item.weight === 26);
-
+        let has1kg = cartData.some(item => item.weight === 1);
         // ✅ If the cart has more than 0 items, show alerts based on weight
         if (cartData.length > 0) {
           if (has10kg && has26kg) {
@@ -350,6 +349,35 @@ const CartScreen = () => {
             setHasWeight("10kgs");
             setContainerAddedPrice(true);
             setModalVisible(true);
+          }else if (has1kg){
+            const oneKgBags = cartData.filter(
+              item => parseFloat(item.weight?.toString() || "0") === 1
+            );
+            const anyOneKgHasTwoOrMore = oneKgBags.some(
+              item => item.cartQuantity >= 2
+            );
+    
+            let offeravail = 0;
+    
+            axios
+              .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
+              .then((response) => {
+                console.log("One kg offer API response", response.data);
+                if (response.data) {
+                  offeravail = response.data.cartQuantity;
+                } 
+              })
+            
+            if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+              setShowOffer(true);
+            }
+    
+            if (has1kg) {
+              console.log("1kg Bags in Cart:");
+              oneKgBags.forEach(bag => {
+                console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
+              });
+            }
           }
           // else {
           //   Alert.alert("No eligible bag found");
@@ -357,12 +385,212 @@ const CartScreen = () => {
         }
       } else {
         console.log("User container status is not null or 'Interested', no alert triggered.");
+        setModalVisible(false);
+        let has1kg = cartData.some(item => item.weight === 1);
+        console.log("has1kg", has1kg);
+        const oneKgBags = cartData.filter(
+          item => parseFloat(item.weight?.toString() || "0") === 1
+        );
+        const anyOneKgHasTwoOrMore = oneKgBags.some(
+          item => item.cartQuantity >= 2
+        );
+
+        let offeravail = 0;
+
+        axios
+          .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
+          .then((response) => {
+            console.log("One kg offer API response", response.data);
+            if (response.data) {
+              offeravail = response.data.cartQuantity;
+            } 
+          })
+          console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
+        if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+          setShowOffer(true);
+        }
+
+        if (has1kg) {
+          console.log("1kg Bags in Cart:");
+          oneKgBags.forEach(bag => {
+            console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
+          });
+        }
+        
+        console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
+        
       }
     })
     .catch((error) => {
       console.log("Error fetching cart data:", error.response);
+      let has1kg = cartData.some(item => item.weight === 1);
+        console.log("has1kg", has1kg);
+        const oneKgBags = cartData.filter(
+          item => parseFloat(item.weight?.toString() || "0") === 1
+        );
+        const anyOneKgHasTwoOrMore = oneKgBags.some(
+          item => item.cartQuantity >= 2
+        );
+     let offeravail = 0;
+        axios
+        .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
+        .then((response) => {
+          console.log("One kg offer API response", response.data);
+          if (response.data) {
+            offeravail = response.data.cartQuantity;
+          } 
+        })
+        console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
+        
+        if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+          setShowOffer(true);
+        }
+
+        if (has1kg) {
+          console.log("1kg Bags in Cart:");
+          oneKgBags.forEach(bag => {
+            console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
+          });
+        }
+        
+        console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
     });
 }
+
+
+const handleAddCheapest1kgBag = async () => {
+  try {
+    // 1. Filter all 1kg bags
+    const oneKgBags = cartData.filter(
+      item => parseFloat(item.weight?.toString() || "0") === 1
+    );
+
+    if (oneKgBags.length === 0) {
+      // message.info("No 1kg bag found in the cart.");
+      return;
+    }
+
+    // 2. Find the one with the lowest itemPrice
+    const cheapestBag = oneKgBags.reduce((min, curr) =>
+      parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
+    );
+
+    const currentQuantity = cartItems[cheapestBag.itemId] || 0;
+    const newQuantity = currentQuantity + 1;
+
+    // 3. Call API to increase quantity
+    await axios.patch(
+      `${BASE_URL}cart-service/cart/incrementCartData`,
+      {
+        cartQuantity: newQuantity,
+        customerId,
+        itemId: cheapestBag.itemId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    setShowOffer(false)
+    // message.success(`Added 1 more of ${cheapestBag.itemName}`);
+    await fetchCartData(); // refresh cart
+  } catch (error) {
+    console.error("Failed to add 1kg item:", error);
+    // setShowOffer(false)
+    // message.error("Could not update the cart.");
+  }
+};
+
+
+// const checkAndApplyOffers = async (cartData) => {
+//   if (!cartData || cartData.length === 0) return;
+
+//   const alreadyApplied = await AsyncStorage.getItem('offersApplied');
+//   if (alreadyApplied === 'true') {
+//     console.log("⏭️ Offers already applied, skipping.");
+//     return;
+//   }
+
+//   let containerStatus = null;
+//   let oneKgEligible = false;
+
+//   const has10kg = cartData.some(item => item.weight === 10);
+//   const has26kg = cartData.some(item => item.weight === 26);
+//   const containerExists = cartData.some(item =>
+//     item.itemId === CONTAINER_TYPES.LARGE.id ||
+//     item.itemId === CONTAINER_TYPES.SMALL.id
+//   );
+
+//   try {
+//     const [containerRes, oneKgRes] = await Promise.all([
+//       axios.get(`${BASE_URL}cart-service/cart/ContainerInterested/${customerId}`),
+//       axios.get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
+//     ]);
+
+//     containerStatus = containerRes.data?.freeContainerStatus;
+//     oneKgEligible = oneKgRes.data?.eligible === true;
+//   } catch (error) {
+//     console.log("⚠️ Offer API error, falling back to local logic.");
+//     containerStatus = null;
+//     oneKgEligible = cartData.some(item => item.weight === 1);
+//   }
+
+//   let offerApplied = false;
+
+//   if (!containerExists && containerStatus === null && (has10kg || has26kg)) {
+//     const containerId = has26kg ? CONTAINER_TYPES.LARGE.id : CONTAINER_TYPES.SMALL.id;
+
+//     try {
+//       await axios.post(
+//         `${BASE_URL}cart-service/cart/add_Items_ToCart`,
+//         { customerId, itemId: containerId },
+//         { headers: { Authorization: `Bearer ${token}` } }
+//       );
+//       console.log("✅ Container added");
+//       offerApplied = true;
+//     } catch (err) {
+//       console.log("❌ Failed to add container");
+//     }
+//   }
+
+//   if (oneKgEligible) {
+//     const oneKgItems = cartData
+//       .filter(item => item.weight === 1)
+//       .sort((a, b) => a.itemPrice - b.itemPrice);
+
+//     if (oneKgItems.length > 0) {
+//       const cheapest1kgItem = oneKgItems[0];
+//       try {
+//         await axios.patch(
+//           `${BASE_URL}cart-service/cart/incrementCartData`,
+//           { customerId, itemId: cheapest1kgItem.itemId },
+//           { headers: { Authorization: `Bearer ${token}` } }
+//         );
+//         console.log("✅ 1kg quantity increased");
+//         offerApplied = true;
+//       } catch (err) {
+//         console.log("❌ Failed to increase 1kg");
+//       }
+//     }
+//   }
+
+//   if (offerApplied) {
+//     await AsyncStorage.setItem('offersApplied', 'true');
+
+//     setBannerMessage("🎁 Offers Applied Successfully!");
+//     setShowBanner(true);
+//     setTimeout(() => {
+//       setShowBanner(false);
+//       setBannerMessage("");
+//     }, 3000);
+//   }
+
+//   fetchCartData();
+//   totalCart();
+// };
+
 
 useFocusEffect(
   useCallback(() => {
@@ -934,6 +1162,42 @@ useFocusEffect(
           </Animated.View>
         </View>
       </Modal>
+
+
+      <Modal
+      visible={showOffer}
+      transparent
+      animationType="fade"
+      onRequestClose={()=>setShowOffer(false)}
+      onDismiss={() => {
+        scaleValue.setValue(100); 
+      }}
+    >
+      <View style={styles.modalContainer} pointerEvents="auto">
+      <Animated.View
+        style={[
+          styles.modalContent,
+          {
+            transform: [{ scale: scaleValue }],
+          },
+        ]}
+        pointerEvents="auto"
+      >
+          <Text style={styles.offerTitle}>🎁 Special Offer!</Text>
+          <Text style={styles.offerText}>
+            Buy 1kg and Get 1kg Absolutely FREE! 🛍
+          </Text>
+          {/* <Text style={{textAlign:"center",marginBottom:10}}>Increase any item quantity by 1kg in this cart only this avaliditiy for 1kg bag</Text> */}
+          <Text style={styles.noteText}><Text style={{fontWeight:"bold"}}>Note:</Text>
+          This 1kg + 1kg Free Offer is available only once per user and applies only to 1kg bags.
+          Once used, the offer cannot be claimed again. Grab it while it lasts!</Text>
+          <TouchableOpacity style={styles.okButton} onPress={()=>{setShowOfferAvail(true),handleAddCheapest1kgBag()}}>
+            <Text style={styles.okButtonText}>Claim Offer</Text>
+          </TouchableOpacity>
+      </Animated.View>
+      </View>
+    </Modal>
+
     </View>
   );
 };
@@ -1371,7 +1635,40 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#212529',
     textAlign: 'right',
+  },
+  offerText: {
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  okButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  
+  },
+  offerTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    width: '100%',
+    textAlign: 'center',
+  },
+  okButton: {
+    backgroundColor: '#2196F3',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#777',
+    textAlign: 'center',
+    marginBottom: 20,
+    fontStyle: 'italic',
   }
+
 });
 
 export default CartScreen;

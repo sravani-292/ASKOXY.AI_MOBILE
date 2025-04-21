@@ -24,63 +24,74 @@ export default function ProfileSettings({ navigation }) {
    const customerId = userData.userId;
 
   // Updated settings menu items with new options
-  const menuItems = [
-    { 
-      id: 1, 
-      icon: 'map-pin', 
-      type: 'Feather', 
-      label: 'Address', 
-      showArrow: true,
-      navigation: "Saved Address",
-      gradient: ['#FF7676', '#FF4848']
-    },
-    { 
-      id: 2, 
-      icon: 'user-plus', 
-      type: 'Feather', 
-      label: 'Invite', 
-      showArrow: true,
-      navigation: "Invite a friend", 
-      gradient: ['#7B61FF', '#5A3FFF']
-    },
-    { 
+  const menuItems = 
+    [
+      { 
+        id: 1, 
+        icon: 'map-pin', 
+        type: 'Feather', 
+        label: 'Address', 
+        showArrow: true,
+        navigation: "Saved Address",
+        gradient: ['#36D1DC', '#5B86E5'] // teal to blue, location-friendly
+      },
+      { 
+        id: 2, 
+        icon: 'user-plus', 
+        type: 'Feather', 
+        label: 'Invite', 
+        showArrow: true,
+        navigation: "Invite a friend", 
+        gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
+      },
+      { 
         id: 3, 
         icon: 'refresh-cw', 
         type: 'Feather', 
         label: 'Referral History',
         navigation: "Referral History",  
         showArrow: true,
-        gradient: ['#6673FF', '#4D5DFF']
+        gradient: ['#00C9FF', '#92FE9D'] // fresh and clean, reflects activity
       },
-    { id: 4, type: 'divider' },
-    { 
-      id: 5, 
-      icon: 'credit-card', 
-      type: 'Feather', 
-      label: 'Subscription',
-      navigation: "Subscription", 
-      showArrow: true,
-      gradient: ['#42C2FF', '#00A3FF']
-    },
-    { 
-      id: 6, 
-      icon: 'help-circle', 
-      type: 'Feather', 
-      label: 'FAQ\'s', 
-      showArrow: true,
-      navigation: "Terms and Conditions",
-      gradient: ['#FF5C5C', '#FF3E3E']
-    },
-    { 
+      { id: 4, type: 'divider' },
+      { 
+        id: 5, 
+        icon: 'credit-card', 
+        type: 'Feather', 
+        label: 'Subscription',
+        navigation: "Subscription", 
+        showArrow: true,
+        gradient: ['#F7971E', '#FFD200'] // gold/yellow hues, finance-friendly
+      },
+      { 
+        id: 6, 
+        icon: 'help-circle', 
+        type: 'Feather', 
+        label: 'FAQ\'s', 
+        showArrow: true,
+        navigation: "Terms and Conditions",
+        gradient: ['#36D1DC', '#5B86E5'] // consistent with helpful/support tone
+      },
+      { 
         id: 7, 
         icon: 'phone', 
         type: 'Feather', 
         label: 'Contact Us', 
         showArrow: true,
         navigation: 'Write To Us',
-        gradient: ['#FF9D66', '#FF7D3D']
+        gradient: ['#00B4DB', '#0083B0'] // professional blue gradient
       },
-  ];
+      {
+        id: 8, 
+        icon: 'user-x', 
+        type: 'Feather', 
+        label: 'DeActivate Account', 
+        showArrow: true,
+        navigation: 'Active',
+        gradient: ['#FF4B2B', '#FF416C'] // serious red-pink for account closure
+      }
+    ];
+    
 
   const [formData, setFormData] = React.useState({});
   const [profileLoader, setProfileLoader] = React.useState(false);
@@ -135,6 +146,8 @@ export default function ProfileSettings({ navigation }) {
       setProfileLoader(false);
       if (response.status === 200) {
         // setUser(response.data);
+        console.log("response", response.data);
+        
         setFormData({
           firstName: response.data.firstName,
           lastName: response.data.lastName,

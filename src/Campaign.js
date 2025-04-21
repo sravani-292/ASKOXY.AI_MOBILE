@@ -93,6 +93,9 @@ const { width,height } = Dimensions.get('window');
 
 // ImageCarousel as a separate functional component
 const ImageCarousel = ({ images }) => {
+
+  // console.log("campaigns params",route.params);
+  
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
 
@@ -132,7 +135,7 @@ const ImageCarousel = ({ images }) => {
             <Image
               source={{ uri: image }}
               style={styles.carouselImage}
-              resizeMode="cover"
+              resizeMode="contain"
               defaultSource={{ uri: DEFAULT_IMAGE }}
             />
             <LinearGradient
@@ -275,6 +278,8 @@ const SingleCampaignCard = ({ item, fadeAnim, handleComirmation, handleWriteToUs
 };
 
 export default function CampaignScreen({ route, navigation }) {
+  console.log("campaign screen",route.params);
+  
   const [campaignData, setCampaignData] = useState([]);
   const [currentCampaign, setCurrentCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -341,8 +346,11 @@ export default function CampaignScreen({ route, navigation }) {
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   
-  // Get specific campaignId or campaignType from route params if available
-  const { campaignId, campaignType } = route.params || {};
+// Get specific campaignId or campaignType from route params if available
+const { campaignId, campaignType } = route.params || {};
+console.log("campaingId",campaignId);
+console.log("campainType",campaignType);
+
 
   useEffect(() => {
     loadCampaigns();
@@ -355,7 +363,7 @@ export default function CampaignScreen({ route, navigation }) {
     }).start();
   }, []);
 
-  // Effect to set current campaign when campaigns are loaded
+ 
   useEffect(() => {
     
     if (campaignData.length > 0) {
@@ -589,6 +597,8 @@ export default function CampaignScreen({ route, navigation }) {
             data: data,
           })
             .then((response) => {
+              console.log(" study abroad intrested Success", response);
+              
               console.log(response.data);
               setLoading(false);
               Alert.alert(
@@ -751,9 +761,11 @@ const styles = StyleSheet.create({
     height: 60,
   },
   carouselImage: {
-    width: width - 32, // Account for container padding
+    // width: width - 32,
+    width:width*0.9,
     height: height*0.63,
     alignSelf: 'center',
+    resizeMode:"contain"
   },
   paginationContainer: {
     flexDirection: 'row',

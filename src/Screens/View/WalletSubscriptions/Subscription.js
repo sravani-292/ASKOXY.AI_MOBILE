@@ -215,8 +215,8 @@ const Subscription = () => {
           setTransactionId(response.data.paymentId);
           const data = {
             mid: "1152305",
-            // amount: details.amount,
-            amount:1,
+            amount: details.amount,
+            // amount:1,
             merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
@@ -506,20 +506,22 @@ const Subscription = () => {
             )}
 
            {/* The conditional rendering of FAQ button */}
-      {item.planName === "Premium" && (
-        <TouchableOpacity 
-          style={styles.faqButton} 
-          onPress={() => setPremiumModalVisible(true)}  
-        >
-          <Text style={styles.faqText}>❓ FAQs</Text>
-        </TouchableOpacity>
-      )}
-      
-      {/* Add the modal at the bottom of your component */}
-      <PremiumPlan
-        visible={premiumModalVisible}
-        onClose={() => setPremiumModalVisible(false)}
-      />
+           {item.planName === "Premium" && (
+          <>
+    <TouchableOpacity 
+      style={styles.faqButton} 
+      onPress={() => setPremiumModalVisible(true)}  
+    >
+      <Text style={styles.faqText}>❓ FAQs</Text>
+    </TouchableOpacity>
+
+    <PremiumPlan
+      visible={premiumModalVisible}
+      onClose={() => setPremiumModalVisible(false)}
+    />
+  </>
+)}
+
 
             <TouchableOpacity
               style={[styles.chooseButton, { opacity: status ? 0.5 : 1 }]}

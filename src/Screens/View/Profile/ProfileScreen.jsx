@@ -15,7 +15,6 @@ import { toast, Toaster } from 'sonner-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';
 import CountryPicker from 'react-native-country-picker-modal';
-
 import BASE_URL from '../../../../Config';
 import { useSelector } from 'react-redux';
 

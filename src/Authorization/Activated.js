@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert,Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import axios from 'axios';
-
-import BASEURL from '../../Config';
+const { width } = Dimensions.get('window');
 
 export default function AccountStatusScreen() {
   const userData = useSelector((state) => state.counter);
-  const [isActive, setIsActive] = useState();
+  const [isActive, setIsActive] = useState(true); // Default to true (active)
   const navigation = useNavigation();
+
 
   // Fetch the account status when the screen is focused
   useFocusEffect(
@@ -21,86 +20,64 @@ export default function AccountStatusScreen() {
   );
 
   const fetchAccountStatus = async () => {
-    console.log("User Data ", userData);
-    console.log("Account status ", userData.userStatus);
-    if (userData.userStatus == "ACTIVE" || userData.userStatus == null) {
-      setIsActive(true);
-    } else {
-      setIsActive(false);
+    try {
+      const status = await AsyncStorage.getItem('userStatus');
+      if (status === 'INACTIVE') {
+        setIsActive(false);
+      } else {
+        setIsActive(true); // default is ACTIVE or null
+      }
+    } catch (e) {
+      console.error('Error fetching status from storage:', e);
     }
   };
 
-  // Prompt user to confirm activation or deactivation
-  const toggleAccountStatus = async () => {
+  const toggleAccountStatus = () => {
     Alert.alert(
       `${!isActive ? 'Activate' : 'Deactivate'} Account`,
       `Are you sure you want to ${!isActive ? 'activate' : 'deactivate'} your account?`,
       [
-        {
-          text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: () => handleAccountToggle(),
-        },
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'OK', onPress: handleAccountToggle }
       ]
     );
   };
 
-  // Handle the activation or deactivation process
   const handleAccountToggle = async () => {
     try {
-      const response = await axios({
-        url: `${BASEURL}erice-service/order/userStatus`,
-        data: { userStatus: !isActive ? 'ACTIVE' : 'INACTIVE', userId: userData.userId },
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${userData.accessToken}`,
-        },
-      });
+      const newStatus = !isActive ? 'ACTIVE' : 'INACTIVE';
 
-      if (response.status === 200) {
-        const message = !isActive
-          ? 'Your account has been activated. You can now use the app as usual.'
-          : `Your account has been deactivated. It will be deleted within 3 to 4 working days unless reactivated. Please contact support for further assistance.`;
+      // Store new status locally (simulate API)
+      await AsyncStorage.setItem('userStatus', newStatus);
 
-        Alert.alert('Success', message, [
-          {
-            text: 'OK',
-            onPress: () => {
-              // Clear local user data and navigate to Login
-              AsyncStorage.removeItem('userData');
-              navigation.navigate('Login');
-            },
-          },
-        ]);
+      const message = !isActive
+        ? 'Your account has been activated. You can now use the app as usual.'
+        : 'Your account has been deactivated. It will be deleted within 3 to 4 working days unless reactivated. Please contact support for further assistance.';
 
-        // Update local state
-        setIsActive(!isActive);
-      } else {
-        Alert.alert('Error', response.data.message || 'Failed to update account status.');
-      }
+      Alert.alert('Success', message, [
+        {
+          text: 'OK',
+          onPress: async () => {
+            await AsyncStorage.removeItem('userData'); // logout
+            navigation.navigate('Login');
+          }
+        }
+      ]);
+
+      setIsActive(!isActive);
     } catch (error) {
-      console.error('Error updating account status:', error.response);
-      const errorMessage = error.response?.data?.message || 'An unexpected error occurred while updating your account status.';
-      Alert.alert('Error', errorMessage);
+      console.error('Error updating account status:', error);
+      Alert.alert('Error', 'Something went wrong while updating your account status.');
     }
   };
 
-  // Navigate to the Support Screen
   const navigateToSupport = () => {
     navigation.navigate('Support');
   };
 
   return (
     <View style={styles.container}>
-      {/* Support button at the top-right corner */}
-      <TouchableOpacity
-        style={styles.supportTopButton}
-        onPress={navigateToSupport}
-      >
+      <TouchableOpacity style={styles.supportTopButton} onPress={navigateToSupport}>
         <Text style={styles.supportTopButtonText}>Support</Text>
       </TouchableOpacity>
 
@@ -112,19 +89,13 @@ export default function AccountStatusScreen() {
         </Text>.
       </Text>
 
-      {/* Display a note about account deletion */}
       <Text style={styles.note}>
-        {isActive
-          ? 'You can deactivate your account. Deactivation allows you to reactivate your account anytime within 10 days.'
-          : 'Your account will be permanently deleted within 3-4 working days unless reactivated.'}
+      You can deactivate your account. Deactivation allows you to reactivate your account anytime within 7 days.
+      If not reactivated, your account will be permanently deleted within 7 to 10 working days.
       </Text>
 
-      {/* Allow users to toggle their account status */}
       <TouchableOpacity
-        style={[
-          styles.statusButton,
-          isActive ? styles.deactivateButton : styles.activateButton,
-        ]}
+        style={[styles.statusButton, isActive ? styles.deactivateButton : styles.activateButton]}
         onPress={toggleAccountStatus}
       >
         <Text style={styles.statusButtonText}>
@@ -138,8 +109,8 @@ export default function AccountStatusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center', // Center content vertically
-    alignItems: 'center', // Center content horizontally
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f5f5f5',
     padding: 20,
   },
@@ -155,6 +126,7 @@ const styles = StyleSheet.create({
     color: '#555',
     textAlign: 'center',
     marginBottom: 20,
+    width: width * 0.8,
   },
   note: {
     fontSize: 14,
@@ -182,11 +154,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  // Styles for the top-right support button
   supportTopButton: {
     position: 'absolute',
     top: 10,
-    right: 10, // Position button at the right side
+    right: 10,
     paddingVertical: 10,
     paddingHorizontal: 15,
     backgroundColor: '#4CAF50',

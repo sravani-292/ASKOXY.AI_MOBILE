@@ -37,7 +37,7 @@ const ServicesScreen = ({ navigation }) => {
     {
       id: "1",
       name: "Earn upto 1.7% Monthly RoI",
-      image: require("../assets/oxyloans.jpg"),
+      image: require("../assets/service_icons/earn.png"),
       screen: "OxyLoans",
     },
     {
@@ -129,6 +129,14 @@ const ServicesScreen = ({ navigation }) => {
           return;
         }
   
+
+
+        const studyAbroadCampaigns = response.data.filter(
+          (item) =>
+            item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION") &&
+            item.campaignStatus === true
+        );
+  
         // Filter only active campaigns
         const activeCampaigns = response.data.filter((item) => item.campaignStatus === true);
         console.log("Active campaigns:", activeCampaigns.length);
@@ -149,13 +157,29 @@ const ServicesScreen = ({ navigation }) => {
             screen: null // This indicates it's a campaign item, not a service
           };
         });
+        const updatedServices = services.map((service) => {
+          if (service.screen === "STUDY ABROAD") {
+            return {
+              ...service,
+              previewCampaign: studyAbroadCampaigns[0], // show one preview campaign
+              campaigns: studyAbroadCampaigns,          // pass all campaigns for navigation
+            };
+          }
+          return service;
+        });
   
+        //  Filter out campaigns that are already handled (like STUDY ABROAD ones)
+        const filteredCampaigns = activeCampaigns.filter(
+          (item) => !item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION")
+        );
         const campaignScreens = activeCampaigns.map((item) => item.campaignType);
   
         // Merge campaigns with services that don't overlap
         const mergedData = [
-          ...formattedCampaigns,
-          ...services.filter((service) => !campaignScreens.includes(service.screen)),
+          // ...formattedCampaigns,
+          ...filteredCampaigns,
+          ...updatedServices,
+         ...services.filter((service) => !campaignScreens.includes(service.screen)),
         ];
   
         console.log("Merged data length:", mergedData.length);
@@ -184,7 +208,15 @@ const ServicesScreen = ({ navigation }) => {
         ]);
         return;
       }
-      navigation.navigate(item.screen);
+      if (item.screen) {
+         
+        navigation.navigate(item.screen, {
+          campaigns: item.campaigns,
+        });
+        
+      }
+      else{
+      navigation.navigate(item.screen);}
     } else if (item.screen) {
       // For regular services
       navigation.navigate(item.screen);
@@ -221,7 +253,7 @@ const ServicesScreen = ({ navigation }) => {
         <Image 
           source={imageSource} 
           style={styles.serviceImage} 
-          resizeMode="cover"
+          resizeMode="contain"
           defaultSource={DEFAULT_IMAGE} // Add a default placeholder image
         />
         <View style={styles.serviceInfo}>
@@ -372,6 +404,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   serviceImage: {
+    marginTop:20,
     width: '100%',
     height: 120,
   },

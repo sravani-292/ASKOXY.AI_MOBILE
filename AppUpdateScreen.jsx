@@ -210,7 +210,7 @@ const AppUpdateScreen = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always">
         <View style={styles.content}>
           {/* <Image src={require("./assets/UpdateImage2")}/> */}
-          <Image source={require('./assets/UpdateImage2.jpg')} style={{ width: 250, height: 250, marginBottom: 20 }} />
+          {/* <Image source={require('./assets/UpdateImage2.jpg')} style={{ width: 250, height: 250, marginBottom: 20 }} /> */}
           <Text style={styles.title}>App Update</Text>
           
           <View style={styles.infoCard}>
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
     justifyContent: 'center',
-    marginTop: 30,
+    marginTop: 50,
     // alignItems: 'center',
     // alignSelf: 'center',
   },

@@ -1,5 +1,5 @@
 const config=(value,value1)=>{
-    var userStage="test"
+    var userStage="test1"
 	var BASE_URL;
  if(userStage=="test1"){
 	//Live
@@ -16,4 +16,4 @@ const config=(value,value1)=>{
 
 export default config();
 
-export const userStage = "test";
+export const userStage = "test1";

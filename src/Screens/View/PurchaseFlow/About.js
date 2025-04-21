@@ -61,7 +61,7 @@ const[show,setShow]=useState(false)
     {
       id: 1,
       question: 'How does the referral program work?',
-      answer: 'Our referral program allows you to invite friends to join our platform. When your referral signs up using your unique link, places an order for rice, and does not cancel it, you (the referrer) will receive a ₹100 cashback reward.'
+      answer: 'Our referral program allows you to invite friends to join our platform. When your referral signs up using your unique link, places an order for rice, and does not cancel it, you (the referrer) will receive a ₹50 cashback reward.'
     },
     {
       id: 2,
@@ -76,7 +76,7 @@ const[show,setShow]=useState(false)
     {
       id: 4,
       question: 'What rewards do I get for referring a friend?',
-      answer: 'Apart from getting a free steel container, you will also receive ₹100 cashback in your AskOxy.ai wallet when you successfully refer someone.'
+      answer: 'Apart from getting a free steel container, you will also receive ₹50 cashback in your AskOxy.ai wallet when you successfully refer someone.'
     },
     {
       id: 5,
@@ -91,7 +91,7 @@ const[show,setShow]=useState(false)
     {
       id: 7,
       question: 'Is there a limit to the number of people I can refer?',
-      answer: 'No, you can refer as many friends as you like. You will receive *₹100 cashback for each successful referral, subject to promotional terms.'
+      answer: 'No, you can refer as many friends as you like. You will receive 50 cashback for each successful referral, subject to promotional terms.'
     },
     {
       id: 8,
@@ -124,7 +124,7 @@ const[show,setShow]=useState(false)
     {
       id:3,
       question:"What is the Free Steel Container offer?",
-      answer:"Customers who purchase a 26kg rice bag will receive a FREE steel rice container. However, the container remains the property of OXY Group* until ownership is earned."
+      answer:"Customers who purchase a 26kg rice bag will receive a FREE steel rice container. However, the container remains the property of OXY Group  until ownership is earned."
     },
     {
       id:4,
