@@ -12,64 +12,74 @@ import {
   Pressable,
   ActivityIndicator,
   SafeAreaView,
-  BackHandler,
-  RefreshControl,
   Modal,
+  Animated,
+  Easing,
+  TouchableWithoutFeedback
 } from "react-native";
-import React, {
-  useEffect,
-  useState,
-  useCallback,
-  useLayoutEffect,
-  useRef,
-} from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import BASE_URL, { userStage } from "../../../../Config";
-import useCart from "./useCart";
+import BASE_URL from "../../../../Config";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigationState } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
-import { Ionicons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
-import RiceLoader from "./RiceLoader";
+import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 
-const UserDashboard = ({route}) => {
+const UserDashboard = ({ route }) => {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [allItems, setAllItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(route?.params?.category || "All CATEGORIES");
+  const [selectedCategory, setSelectedCategory] = useState(
+    route?.params?.category || "All CATEGORIES"
+  );
   const navigation = useNavigation();
   const [loadingItems, setLoadingItems] = useState({});
-  const [cartCount, setCartCount] = useState();
+  const [cartCount, setCartCount] = useState(0);
   const [cartItems, setCartItems] = useState({});
   const [cartData, setCartData] = useState([]);
-  const [loader, setLoader] = useState(false);
-  const [seletedState, setSelectedState] = useState(null);
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [removalLoading, setRemovalLoading] = useState({});
   const [searchText, setSearchText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const [user, setUser] = useState();
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
   const [weightRange, setWeightRange] = useState({ min: 0, max: 100 });
   const [sortOrder, setSortOrder] = useState("weightAsc");
+  const [selectedWeightFilter, setSelectedWeightFilter] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
   const [showOffer, setShowOffer] = useState(false);
+  const [offerItems, setOfferItems] = useState();
+  const [has5kgsOffer, setHas5kgsOffer] = useState(false);
+  const [offeravail5kgs, setOfferavail5kgs] = useState(false);
 
   const scrollViewRef = useRef(null);
-  
-  const currentScreen = useNavigationState(
-    (state) => state.routes[state.index]?.name
-  );
 
+  const userData = useSelector((state) => state.counter);
+  const token = userData?.accessToken;
+  const customerId = userData?.userId;
+  const scaleValue = new Animated.Value(1);
+
+  useEffect(() => {
+    if (showOffer) {
+      Animated.timing(scaleValue, {
+        toValue: 1, // Fully expanded
+        duration: 500, // Animation duration
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showOffer]);
+
+  // Handle Item Actions
   const handleAdd = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await handleAddToCart(item);
@@ -87,7 +97,7 @@ const UserDashboard = ({route}) => {
     await decrementQuantity(item);
     setTimeout(() => {
       setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-    }, 5000);
+    }, 1000); // Reduced timeout for better UX
   };
 
   const handleRemove = async (item) => {
@@ -96,40 +106,31 @@ const UserDashboard = ({route}) => {
     setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
-  const userData = useSelector((state) => state.counter);
-  const token = userData?.accessToken;
-  const customerId = userData?.userId;
-
+  // Focus effect for fetching cart items
   useFocusEffect(
     useCallback(() => {
       if (userData) {
         fetchCartItems();
       }
-      console.log(route?.params?.category);
-      
-    }, [])
+      getAllCategories();
+    }, [userData])
   );
- 
-  const onRefresh = () => {
-    getAllCategories();
-  };
 
+  // Fetch cart items
   const fetchCartItems = async () => {
-    console.log("sravani cart items");
-
+    if (!customerId || !token) return;
+        console.log("Fetching cart items...");
     try {
       const response = await axios.get(
-        BASE_URL +
-          `cart-service/cart/customersCartItems?customerId=${customerId}`,
+        `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      // console.log("cart response", response?.data?.customerCartResponseList);
 
-      const cartData = response?.data?.customerCartResponseList;
+      const cartData = response?.data?.customerCartResponseList || [];
       const totalCartCount = cartData.reduce(
         (total, item) => total + item.cartQuantity,
         0
@@ -149,14 +150,11 @@ const UserDashboard = ({route}) => {
           item.cartQuantity === undefined ||
           item.quantity === undefined
         ) {
-          console.error("Invalid item in cartData:", item);
           return acc;
         }
         acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
-
-      console.log("cart items map", cartItemsMap);
 
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
@@ -167,90 +165,144 @@ const UserDashboard = ({route}) => {
         return acc;
       }, {});
 
-     console.log({limitedStockMap})
+      const has1kg = cartData.some((item) => item.weight === 1);
+      const has5kg = cartData.some((item) => item.weight === 5);
+      console.log("has1kg", has1kg);
+      console.log("has5kg", has5kg);
+      
+      // Set state
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
       setCartCount(totalCartCount);
-    await  checkAndShowOneKgOfferModal();
-      
-      setLoadingItems((prevState) => ({
-        ...prevState,
-        [cartData.itemId]: false,
-      }));
+
+      // Show offer modals or handle logic
+      if (has1kg ) {
+         checkAndShowOneKgOfferModal(cartData);
+      }
+       if (has5kg) {
+         checkAndShowFiveKgOfferModal(cartData);
+      }
     } catch (error) {
-      // console.error("Error fetching cart items:", error.response.status);
+      console.error("Error fetching cart items:", error.response);
     }
   };
 
-  const checkAndShowOneKgOfferModal = async () => {
+  // Handle image error
+  const handleImageError = (itemId) => {
+    setImageErrors((prev) => ({ ...prev, [itemId]: true }));
+  };
 
-    console.log("checking one kg offer modal");
-    
+  // Check for 1kg offer
+  const checkAndShowOneKgOfferModal = async (cartData) => {
+    if (!cartData || cartData.length === 0) return;
+
+    console.log("Checking for 1kg offer...");
+
     const oneKgBags = cartData.filter(
-      item =>
+      (item) =>
         parseFloat(item.weight?.toString() || "0") === 1 &&
-        item.cartQuantity < item.quantity // ✅ In stock
+        item.cartQuantity < item.quantity
     );
-  
+
     const has1kg = oneKgBags.length > 0;
-    const anyOneKgHasTwoOrMore = oneKgBags.some(item => item.cartQuantity >= 2);
-  
+    const anyOneKgHasTwoOrMore = oneKgBags.some(
+      (item) => item.cartQuantity > 2
+    );
+
     let offeravail = 0;
-  
+
     try {
       const response = await axios.get(
         `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
       );
-  
+
       if (response.data) {
         offeravail = response.data.cartQuantity;
       }
-  
+
+      console.log("Offer availability:", offeravail);
+      console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
       if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
         const cheapestBag = oneKgBags.reduce((min, curr) =>
           parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
         );
-          console.log("cheapest bag", cheapestBag);
-          
-        Alert.alert(
-          '🎁 1+1 Offer!',
-          `You're eligible for a free ${cheapestBag.itemName}!`,
-          [
-            {
-              text: 'Add Free Bag',
-              onPress: async () => {
-                await addFreeOneKgBag(
-                  cheapestBag,
-                  cartData,
-                );
-              },
-            },
-            {
-              text: 'No Thanks',
-              style: 'cancel',
-            },
-          ]
+        
+        console.log(
+          "cheapest bag",
+          has1kg && !anyOneKgHasTwoOrMore && offeravail < 2
         );
+        setOfferItems(cheapestBag);
+        setShowOffer(true);
       }
     } catch (error) {
       console.error("Error checking 1kg offer:", error);
     }
   };
 
+  const checkAndShowFiveKgOfferModal = async (cartData) => {
+    if (!cartData || cartData.length === 0 || !customerId) return;
 
+    console.log("Checking for 5kg offer...");
+
+    const fiveKgBags = cartData.filter(
+      (item) =>
+        parseFloat(item.weight?.toString() || "0") === 5 &&
+        item.cartQuantity < item.quantity
+    );
+    
+    // console.log("fiveKgBags", fiveKgBags);
+    
+    const has5kg = fiveKgBags.length > 0;
+    const alreadyAddedTwoOrMore = fiveKgBags.some(
+      (item) => item.cartQuantity < 2
+    );
+
+    // console.log("alreadyAddedTwoOrMoreFiveKgs", alreadyAddedTwoOrMore);
+
+    // console.log("has5kg", has5kg);
+
+    if (!has5kg || !alreadyAddedTwoOrMore) return;
+
+    try {
+      // const offerKey = `used_5kg_offer_${customerId}`;
+      console.log(`used_5kg_offer_${customerId}`);
+      
+   const response = await axios.get(
+        `${BASE_URL}cart-service/cart/freeTicketsforCustomer?customerId=${customerId}`
+      );
+        console.log("offeravail5kgs", offeravail5kgs);
+        const cheapestBag = fiveKgBags.reduce((min, curr) => {
+          const currPrice = parseFloat(curr.itemPrice?.toString() || "0");
+          const minPrice = parseFloat(min.itemPrice?.toString() || "0");
+          return currPrice < minPrice ? curr : min;
+        });
+        
+        if(response.data && response.data.freeTickets === null && alreadyAddedTwoOrMore && !offeravail5kgs){
+          setOfferItems(cheapestBag);
+          console.log("cheapest bag", cheapestBag);
+          // Trigger modal
+          setHas5kgsOffer(true); 
+        }
+    } catch (error) {
+      console.error("Error checking 5kg offer:", error.response.data);
+    }
+  };
+
+  // Add free 1kg bag to cart
   const addFreeOneKgBag = async (item) => {
     try {
-      // const currentQuantity = cartData[item.itemId] || 0;
-      // const newQuantity = currentQuantity + 1;
+      if(!customerId || !token){
+        Alert.alert("Error", "Authentication required. Please login again.");
+        return;
+      }
 
-      console.log("item ID", item.itemId);
+      if(offerItems && offerItems.weight === 1){
       await axios.patch(
         `${BASE_URL}cart-service/cart/incrementCartData`,
         {
-          // cartQuantity: newQuantity,
           customerId,
-          itemId: item.itemId,
+          itemId: offerItems.itemId,
         },
         {
           headers: {
@@ -259,39 +311,42 @@ const UserDashboard = ({route}) => {
           },
         }
       );
-      Alert.alert('Success', `🎉 1+1 Offer applied! Free ${item.itemName} added.`);
+      Alert.alert(
+        "Success",
+        `🎉 1+1 Offer applied! Free ${offerItems.itemName} added.`,
+        [
+          { text: "OK", onPress: () => setShowOffer(false) },
+        ]
+      );
       await fetchCartItems();
-  
+    }
     } catch (error) {
-      console.error("Error applying free 1kg bag:", error.response);
-      message.error("Failed to add the free bag. Try again.");
+      console.error("Error applying free 1kg bag:", error);
+      Alert.alert("Error", "Failed to add the free bag. Try again.");
     }
   };
-  
-  
 
+  // Arrange categories with Sample Rice first
   const arrangeCategories = (categories) => {
     if (!categories || categories.length === 0) return [];
-    
-    // Find the exact "Sample Rice" category
-    const sampleRiceIndex = categories.findIndex(cat => 
-      cat.categoryName === "Sample Rice");
-    
-    // If "Sample Rice" category is found, move it to the first position
+
+    const sampleRiceIndex = categories.findIndex(
+      (cat) => cat.categoryName === "Sample Rice"
+    );
+
     if (sampleRiceIndex !== -1) {
       const result = [...categories];
       const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
       return [sampleRiceCategory, ...result];
     }
-    
+
     return categories;
   };
 
-  // Helper function to parse weight for sorting
+  // Parse weight for sorting
   const parseWeight = (weightStr) => {
     if (!weightStr) return 0;
-    
-    // Try to extract numeric value
+
     const numMatch = weightStr.toString().match(/(\d+(\.\d+)?)/);
     if (numMatch) {
       return parseFloat(numMatch[0]);
@@ -299,18 +354,18 @@ const UserDashboard = ({route}) => {
     return 0;
   };
 
-  // Sort items by weight in ascending order (changed from descending)
+  // Sort items by various criteria
   const sortItems = (items, order) => {
     return [...items].sort((a, b) => {
-      // First priority: in-stock items
+      // Priority: in-stock items
       if (a.quantity > 0 && b.quantity === 0) return -1;
       if (a.quantity === 0 && b.quantity > 0) return 1;
-      
-      // Second priority: sort by selected order
+
+      // Sort by selected order
       if (order === "weightAsc") {
         const weightA = parseWeight(a.weight);
         const weightB = parseWeight(b.weight);
-        return weightA - weightB; // Changed to ascending
+        return weightA - weightB;
       } else if (order === "weightDesc") {
         const weightA = parseWeight(a.weight);
         const weightB = parseWeight(b.weight);
@@ -320,25 +375,43 @@ const UserDashboard = ({route}) => {
       } else if (order === "priceDesc") {
         return b.itemPrice - a.itemPrice;
       }
-      
+
       return 0;
     });
   };
 
-  // Apply all filters and sorting
-  const applyFiltersAndSort = (items) => {
-    // Filter by price and weight
-    const filtered = items.filter(item => {
+  // Apply filters and sorting
+  const applyFiltersAndSort = (
+    items,
+    currentWeightFilter = selectedWeightFilter
+  ) => {
+    let filteredByWeight = items;
+
+    // Apply weight filter if selected
+    if (currentWeightFilter !== null) {
+      filteredByWeight = items.filter((item) => {
+        const itemWeight = parseWeight(item.weight);
+        return Math.abs(itemWeight - currentWeightFilter) < 0.1;
+      });
+    }
+
+    // Filter by price and weight range
+    const filtered = filteredByWeight.filter((item) => {
       const itemPrice = parseFloat(item.itemPrice);
       const itemWeight = parseWeight(item.weight);
-      return (itemPrice >= priceRange.min && itemPrice <= priceRange.max) && 
-             (itemWeight >= weightRange.min && itemWeight <= weightRange.max);
+      return (
+        itemPrice >= priceRange.min &&
+        itemPrice <= priceRange.max &&
+        itemWeight >= weightRange.min &&
+        itemWeight <= weightRange.max
+      );
     });
-    
+
     // Sort the filtered items
     return sortItems(filtered, sortOrder);
   };
 
+  // Add item to cart
   const handleAddToCart = async (item) => {
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
@@ -349,65 +422,69 @@ const UserDashboard = ({route}) => {
     }
 
     const data = { customerId: customerId, itemId: item.itemId };
-       console.log("added data",data);
-       
+
     try {
       const response = await axios.post(
-        BASE_URL + "cart-service/cart/add_Items_ToCart",
+        `${BASE_URL}cart-service/cart/add_Items_ToCart`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-    
-      console.log("item added response", response.data);
-      
 
-  if (response.data.errorMessage == "Item added to cart successfully") {
+      if (response.data.errorMessage === "Item added to cart successfully") {
         Alert.alert("Success", "Item added to cart successfully");
-
-        fetchCartItems();
+        await fetchCartItems();
       } else {
-        setLoader(false);
         Alert.alert("Alert", response.data.errorMessage);
       }
+      GoogleAnalyticsService.viewItem(
+        item.itemId,
+        item.itemName,
+        item.itemPrice,
+      );
+      GoogleAnalyticsService.addToCart(item.itemId, item.itemName, item.itemPrice, 1);
     } catch (error) {
-      setLoader(false);
+      console.error("Error adding item to cart:", error);
+      Alert.alert("Error", "Failed to add item to cart. Please try again.");
     }
   };
 
+  // Increment quantity in cart
   const incrementQuantity = async (item) => {
     const data = {
       customerId: customerId,
       itemId: item.itemId,
     };
     try {
-      const response = await axios.patch(
-        BASE_URL + "cart-service/cart/incrementCartData",
+      await axios.patch(
+        `${BASE_URL}cart-service/cart/incrementCartData`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       await fetchCartItems();
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error incrementing item quantity:", error);
+      Alert.alert("Error", "Failed to update item quantity. Please try again.");
+    }
   };
 
+  // Remove item from cart
   const removeItem = async (item) => {
-    const newQuantity = cartItems[item.itemId];
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-   
-  if(!cartItem){
-    console.log("cart item is not found");
-    Alert.alert("Item is not found in the cart");
-    return;
-  }
+
+    if (!cartItem) {
+      Alert.alert("Error", "Item is not found in the cart");
+      return;
+    }
+
     try {
       const response = await axios.delete(
-        BASE_URL + "cart-service/cart/remove",
+        `${BASE_URL}cart-service/cart/remove`,
         {
           data: {
             id: cartItem.cartId,
@@ -419,37 +496,33 @@ const UserDashboard = ({route}) => {
         }
       );
 
-      console.log(" removal response", response);
-      
-      console.log(" removal response", response.status);
-       
-      if (response.status==200) {
-        const updatedCart = cartData.filter(c => c.itemId !== item.itemId);
+      if (response.status === 200) {
+        const updatedCart = cartData.filter((c) => c.itemId !== item.itemId);
         setCartData([...updatedCart]);
 
-        await fetchCartItems(); 
-        
+        await fetchCartItems();
+
         if (updatedCart.length === 0) {
-            console.log("Cart is now empty. Resetting states.");
-            setCartData([]);
-            setCartItems({});
-            setIsLimitedStock({});
-            setCartCount(0);
+          setCartData([]);
+          setCartItems({});
+          setIsLimitedStock({});
+          setCartCount(0);
         }
-        Alert.alert("Success",response.data);
+        Alert.alert("Success", response.data);
       }
     } catch (error) {
-      console.log(error.response);
+      console.error("Error removing item:", error);
+      Alert.alert("Error", "Failed to remove item. Please try again.");
     }
   };
 
+  // Decrement quantity in cart
   const decrementQuantity = async (item) => {
     const newQuantity = cartItems[item.itemId];
 
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    console.log("customer cart items", cartItem);
 
     if (newQuantity === 1) {
       handleRemove(item);
@@ -460,121 +533,76 @@ const UserDashboard = ({route}) => {
       };
       try {
         await axios.patch(
-          BASE_URL + "cart-service/cart/decrementCartData",
+          `${BASE_URL}cart-service/cart/decrementCartData`,
           data,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        fetchCartItems();
+        await fetchCartItems();
       } catch (error) {
-        console.log("Error decrementing item quantity:", error.response);
+        console.error("Error decrementing item quantity:", error);
+        Alert.alert(
+          "Error",
+          "Failed to update item quantity. Please try again."
+        );
       }
     }
   };
 
-  const getProfile = async () => {
-    try {
-      const response = await axios({
-        method: "GET",
-        url:
-          BASE_URL +
-          `user-service/customerProfileDetails?customerId=${customerId}`,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.status === 200) {
-        setUser(response.data);
-      }
-    } catch (error) {
-      console.error("ERROR", error.response);
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      getAllCategories();
-    };
-
-    fetchData();
-  }, []);
-
-  // Get an appropriate icon based on item name or category
-  const getItemIcon = (item) => {
-    const itemNameLower = item.itemName.toLowerCase();
-    
-    if (itemNameLower.includes("rice")) {
-      return <MaterialIcons name="rice-bowl" size={20} color="#6b21a8" />;
-    } else if (itemNameLower.includes("wheat") || itemNameLower.includes("flour")) {
-      return <FontAwesome name="leaf" size={18} color="#6b21a8" />;
-    } else if (itemNameLower.includes("oil")) {
-      return <FontAwesome name="tint" size={18} color="#6b21a8" />;
-    } else if (itemNameLower.includes("sugar")) {
-      return <FontAwesome name="cube" size={18} color="#6b21a8" />;
-    } else if (itemNameLower.includes("dal") || itemNameLower.includes("lentil")) {
-      return <MaterialIcons name="food-bank" size={20} color="#6b21a8" />;
-    } else {
-      return <MaterialIcons name="shopping-bag" size={18} color="#6b21a8" />;
-    }
-  };
-
+  // Get all categories and items
   const getAllCategories = () => {
     setLoading(true);
     axios
-      .get(BASE_URL + "product-service/showItemsForCustomrs")
+      .get(`${BASE_URL}product-service/showItemsForCustomrs`)
       .then((response) => {
         setCategories(response.data);
-        
+
         // Get all items
         const items = response.data.flatMap(
           (category) => category.itemsResponseDtoList || []
         );
-        
+
         setAllItems(items);
-        
+
         if (selectedCategory === "All CATEGORIES") {
-          console.log({selectedCategory});
-          
-          // Apply filters and sorting (now in ascending order by default)
           setFilteredItems(sortItems(items, "weightAsc"));
         } else {
-          console.log({selectedCategory});
           const filtered = response.data
             .filter(
               (cat) =>
                 cat.categoryName.trim().toLowerCase() ===
-              selectedCategory.trim().toLowerCase()
+                selectedCategory.trim().toLowerCase()
             )
             .flatMap((cat) => cat.itemsResponseDtoList || []);
-          
-          // Apply filters and sorting (now in ascending order by default)
+
           setFilteredItems(sortItems(filtered, "weightAsc"));
         }
 
         setTimeout(() => {
           setLoading(false);
-        
+
           setTimeout(() => {
             if (scrollViewRef.current) {
               scrollViewRef.current.scrollTo({ x: 100, animated: true });
             }
           }, 100);
-           
-        }, 1500);
+        }, 1000);
       })
       .catch((error) => {
-        console.log(error);
+        console.error("Error fetching categories:", error);
         setLoading(false);
+        Alert.alert("Error", "Failed to fetch categories. Please try again.");
       });
   };
 
+  // Filter by category
   const filterByCategory = (category) => {
     setSelectedCategory(category);
+    setSelectedWeightFilter(null);
 
     if (category === "All CATEGORIES") {
-      // Apply filters and sorting
-      setFilteredItems(applyFiltersAndSort(allItems));
+      setFilteredItems(applyFiltersAndSort(allItems, null));
     } else {
       const filtered = categories
         .filter(
@@ -583,16 +611,18 @@ const UserDashboard = ({route}) => {
             category.trim().toLowerCase()
         )
         .flatMap((cat) => cat.itemsResponseDtoList || []);
-      
-      // Apply filters and sorting
-      setFilteredItems(applyFiltersAndSort(filtered));
+
+      setFilteredItems(applyFiltersAndSort(filtered, null));
     }
   };
 
-  // Apply filters and update items
-  const applyFilters = () => {
+  // Filter by weight
+  const filterByWeight = (weight) => {
+    const newWeightFilter = selectedWeightFilter === weight ? null : weight;
+    setSelectedWeightFilter(newWeightFilter);
+
     let itemsToFilter = [];
-    
+
     if (selectedCategory === "All CATEGORIES") {
       itemsToFilter = allItems;
     } else {
@@ -604,8 +634,27 @@ const UserDashboard = ({route}) => {
         )
         .flatMap((cat) => cat.itemsResponseDtoList || []);
     }
-    
-    setFilteredItems(applyFiltersAndSort(itemsToFilter));
+
+    setFilteredItems(applyFiltersAndSort(itemsToFilter, newWeightFilter));
+  };
+
+  // Apply filters
+  const applyFilters = () => {
+    let itemsToFilter = [];
+
+    if (selectedCategory === "All CATEGORIES") {
+      itemsToFilter = allItems;
+    } else {
+      itemsToFilter = categories
+        .filter(
+          (cat) =>
+            cat.categoryName.trim().toLowerCase() ===
+            selectedCategory.trim().toLowerCase()
+        )
+        .flatMap((cat) => cat.itemsResponseDtoList || []);
+    }
+
+    setFilteredItems(applyFiltersAndSort(itemsToFilter, selectedWeightFilter));
     setFilterModalVisible(false);
   };
 
@@ -614,34 +663,17 @@ const UserDashboard = ({route}) => {
     setPriceRange({ min: 0, max: 10000 });
     setWeightRange({ min: 0, max: 100 });
     setSortOrder("weightAsc");
-    
-    // Reapply the default sorting and filtering
+    setSelectedWeightFilter(null);
+
     filterByCategory(selectedCategory);
     setFilterModalVisible(false);
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <LottieView
-          source={require("../../../../assets/AnimationLoading.json")}
-          autoPlay
-          loop
-          style={{ width: 200, height: 200 }}
-        />
-        {/* <RiceLoader/> */}
-      </View>
-    );
-  }
-
-  function footer() {
-    return <View style={styles.footer} />;
-  }
-
+  // Filter items by search
   const filterItemsBySearch = (searchText) => {
     if (!searchText.trim()) {
       if (selectedCategory === "All CATEGORIES") {
-        setFilteredItems(applyFiltersAndSort(allItems));
+        setFilteredItems(applyFiltersAndSort(allItems, selectedWeightFilter));
       } else {
         const filtered = categories
           .filter(
@@ -650,19 +682,15 @@ const UserDashboard = ({route}) => {
               selectedCategory.trim().toLowerCase()
           )
           .flatMap((cat) => cat.itemsResponseDtoList || []);
-        setFilteredItems(applyFiltersAndSort(filtered));
+        setFilteredItems(applyFiltersAndSort(filtered, selectedWeightFilter));
       }
     } else {
       let normalizedSearchText = searchText.toLowerCase().trim();
-
       normalizedSearchText = normalizedSearchText
         .replace(/(\d+)(kgs|kg)/g, "$1 kgs")
         .replace(/\s+/g, " ");
 
-      // Split search input into words
       const searchWords = normalizedSearchText.split(" ");
-
-      // Define packaging-related keywords
       const packagingKeywords = [
         "bag",
         "bags",
@@ -674,12 +702,10 @@ const UserDashboard = ({route}) => {
         "kgs",
       ];
 
-      
       const allItems = categories.flatMap(
         (category) => category.itemsResponseDtoList || []
       );
 
-      // Filter items based on name, weight, or packaging type
       const searchResults = allItems.filter((item) => {
         const itemName = item.itemName.toLowerCase();
         const itemWeight = item.weight
@@ -687,30 +713,28 @@ const UserDashboard = ({route}) => {
           : "";
         const itemUnits = item.units ? item.units.toLowerCase() : "";
 
-        // Normalize item weight + units (e.g., "10kg" → "10 kgs" and "10 kg")
         const combinedWeightUnit = `${itemWeight} ${itemUnits}`.trim();
         const normalizedItemName = itemName.replace(/(\d+)(kgs|kg)/g, "$1 kgs");
 
-        // Create a combined searchable text
         const searchableText =
           `${normalizedItemName} ${itemWeight} ${itemUnits} ${combinedWeightUnit} ${packagingKeywords.join(
             " "
           )}`.trim();
 
-        // Check if all words in search input exist in searchable text
         return searchWords.every((word) => searchableText.includes(word));
       });
 
-      // Set filtered results and apply filters and sorting
-      setFilteredItems(applyFiltersAndSort(searchResults));
+      setFilteredItems(
+        applyFiltersAndSort(searchResults, selectedWeightFilter)
+      );
     }
   };
 
- 
+  // Clear search
   const handleClearText = () => {
     setSearchText("");
     if (selectedCategory === "All CATEGORIES") {
-      setFilteredItems(applyFiltersAndSort(allItems));
+      setFilteredItems(applyFiltersAndSort(allItems, selectedWeightFilter));
     } else {
       const filtered = categories
         .filter(
@@ -719,24 +743,338 @@ const UserDashboard = ({route}) => {
             selectedCategory.trim().toLowerCase()
         )
         .flatMap((cat) => cat.itemsResponseDtoList || []);
-      setFilteredItems(applyFiltersAndSort(filtered));
+      setFilteredItems(applyFiltersAndSort(filtered, selectedWeightFilter));
     }
   };
 
+  // Get appropriate icon for item
+  const getItemIcon = (item) => {
+    const itemNameLower = item.itemName.toLowerCase();
+
+    if (itemNameLower.includes("rice")) {
+      return <MaterialIcons name="rice-bowl" size={20} color="#6b21a8" />;
+    } else if (
+      itemNameLower.includes("wheat") ||
+      itemNameLower.includes("flour")
+    ) {
+      return <FontAwesome name="leaf" size={18} color="#6b21a8" />;
+    } else if (itemNameLower.includes("oil")) {
+      return <FontAwesome name="tint" size={18} color="#6b21a8" />;
+    } else if (itemNameLower.includes("sugar")) {
+      return <FontAwesome name="cube" size={18} color="#6b21a8" />;
+    } else if (
+      itemNameLower.includes("dal") ||
+      itemNameLower.includes("lentil")
+    ) {
+      return <MaterialIcons name="food-bank" size={20} color="#6b21a8" />;
+    } else {
+      return <MaterialIcons name="shopping-bag" size={18} color="#6b21a8" />;
+    }
+  };
+
+
+
+  // Render item
+  // Updated renderItem function with improved layout structure
+  const renderItem = ({ item }) => (
+    <View style={styles.itemContainer}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("Item Details", { item })}
+      >
+        <View style={styles.itemImageContainer}>
+          {item.itemMrp > item.itemPrice && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>
+                {Math.round(
+                  ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
+                )}
+                % OFF
+              </Text>
+            </View>
+          )}
+
+          {imageErrors[item.itemId] ? (
+            <View style={styles.fallbackImageContainer}>
+              <MaterialIcons
+                name="image-not-supported"
+                size={40}
+                color="#aaa"
+              />
+              <Text style={styles.fallbackImageText}>{item.itemName}</Text>
+            </View>
+          ) : (
+            <Image
+              source={{
+                uri: item.itemImage || "https://via.placeholder.com/150",
+              }}
+              style={styles.itemImage}
+              resizeMode="contain"
+              onError={() => handleImageError(item.itemId)}
+            />
+          )}
+
+          {/* Stock indicator */}
+          {item.quantity === 0 && (
+            <View style={styles.outOfStockBadge}>
+              <Text style={styles.outOfStockText}>Out of Stock</Text>
+            </View>
+          )}
+          {item.quantity > 0 && item.quantity <= 5 && (
+            <View style={styles.limitedStockBadge}>
+              <Text style={styles.limitedStockText}>Limited Stock</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      <View style={styles.itemDetailsContainer}>
+        <View style={styles.itemInfoContainer}>
+          <View style={styles.iconNameContainer}>
+            {getItemIcon(item)}
+            <Text style={styles.itemName} numberOfLines={2}>
+              {item.itemName}
+            </Text>
+          </View>
+
+          <Text style={styles.itemWeight}>
+            Weight: {item.weight}{" "}
+            {item.weight === 1 ? item.units.replace(/s$/, "") : item.units}
+          </Text>
+        </View>
+
+        <View style={styles.priceContainer}>
+          <Text style={styles.itemPrice}>₹{item.itemPrice}</Text>
+          {item.itemMrp > item.itemPrice && (
+            <Text style={styles.itemMRP}>₹{item.itemMrp}</Text>
+          )}
+        </View>
+
+        <View style={styles.buttonContainer}>
+          {item.quantity === 0 ? (
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: "#D3D3D3" }]}
+              disabled={true}
+            >
+              <Text style={styles.addButtonText}>Out of Stock</Text>
+            </TouchableOpacity>
+          ) : cartItems[item.itemId] ? (
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                onPress={() => handleDecrease(item)}
+                disabled={
+                  loadingItems[item.itemId] || removalLoading[item.itemId]
+                }
+                style={[
+                  styles.quantityButton,
+                  {
+                    backgroundColor:
+                      loadingItems[item.itemId] || removalLoading[item.itemId]
+                        ? "#CBD5E0"
+                        : "#f87171",
+                  },
+                ]}
+              >
+                <Text style={styles.quantityButtonText}>-</Text>
+              </TouchableOpacity>
+
+              <View style={styles.quantityTextContainer}>
+                {loadingItems[item.itemId] || removalLoading[item.itemId] ? (
+                  <ActivityIndicator size="small" color="#6b21a8" />
+                ) : (
+                  <Text style={styles.quantityText}>
+                    {cartItems[item.itemId]}
+                  </Text>
+                )}
+              </View>
+
+              <TouchableOpacity
+                onPress={() => handleIncrease(item)}
+                disabled={
+                  loadingItems[item.itemId] ||
+                  removalLoading[item.itemId] ||
+                  cartItems[item.itemId] >= item.quantity
+                }
+                style={[
+                  styles.quantityButton,
+                  loadingItems[item.itemId] ||
+                  removalLoading[item.itemId] ||
+                  cartItems[item.itemId] >= item.quantity
+                    ? {
+                        backgroundColor: "#CBD5E0",
+                      }
+                    : {
+                        backgroundColor: "#6b21a8",
+                      },
+                ]}
+              >
+                <Text style={styles.quantityButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => handleAdd(item)}
+              disabled={loadingItems[item.itemId]}
+              style={styles.addButton}
+            >
+              {loadingItems[item.itemId] ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.addButtonText}>Add to Cart</Text>
+              )}
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+
+  const HandleOneKgOffer = () => {
+    return (
+       <Modal
+              animationType="fade"
+              transparent={true}
+              visible={showOffer}
+              onRequestClose={() => setShowOffer(false)}
+            >
+              <TouchableWithoutFeedback onPress={() => setShowOffer(false)}>
+                <View style={oneKgModal.modalOverlay}>
+                  <TouchableWithoutFeedback>
+                    <View style={oneKgModal.offerModalContainer}>
+                      <View style={oneKgModal.offerModalHeader}>
+                        <Text style={oneKgModal.offerModalTitle}>🎁 Special Offer!</Text>
+                        <TouchableOpacity
+                          style={oneKgModal.closeButton}
+                          onPress={() => setShowOffer(false)}
+                        >
+                          <MaterialIcons name="close" size={24} color="#000" />
+                        </TouchableOpacity>
+                      </View>
+                      
+                      <View style={oneKgModal.offerModalBody}>
+                        <Image
+                          source={require("../../../../assets/offer.png")}
+                          style={oneKgModal.offerImage}
+                          resizeMode="contain"
+                        />
+                        
+                        <Text style={oneKgModal.offerModalText}>
+                        Buy 1kg and Get 1kg Absolutely FREE! 🛍
+                        </Text>
+                        <Text style={oneKgModal.noteText}><Text style={{fontWeight:"bold"}}>📍 Note:</Text>
+                          The 1kg + 1kg Free Offer is valid only once per user and applies exclusively to 1kg rice bags.
+                          This offer can only be redeemed once per address and is applicable on the first successful delivery only.
+                          Once claimed, it cannot be reused. Grab it while it lasts!</Text>
+                          <Text style={oneKgModal.noteText}>📍 గమనిక: 1+1 కేజీ రైస్ ఆఫర్ ఒకే చిరునామాకు ఒక్కసారి మాత్రమే — మొదటి విజయవంతమైన డెలివరీకి మాత్రమే వర్తిస్తుంది.
+                        </Text>
+                      </View>
+                      
+                      <View style={oneKgModal.offerModalFooter}>
+                        <TouchableOpacity
+                          style={[oneKgModal.offerModalButton, oneKgModal.offerCancelButton]}
+                          onPress={() => setShowOffer(false)}
+                        >
+                          <Text style={oneKgModal.offerButtonTextCancel}>No, Thanks</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                          style={[oneKgModal.offerModalButton, oneKgModal.offerConfirmButton]}
+                          onPress={async () => {
+                                      setShowOffer(false);
+                                      setOfferItems();
+                                      addFreeOneKgBag();
+                                    }}
+                        >
+                          <Text style={oneKgModal.offerButtonTextConfirm}>Claim Offer</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
+    )
+  }
+
+  const HandleFreeTicketOffer = () => {
+    return (
+      <Modal
+        visible={has5kgsOffer}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setHas5kgsOffer(false)}
+        onDismiss={() => {
+          scaleValue.setValue(100);
+        }}
+      >
+        <View style={modalStyles.modalContainer} pointerEvents="auto">
+          <Animated.View
+            style={[
+              modalStyles.modalContent,
+              {
+                transform: [{ scale: scaleValue }],
+              },
+            ]}
+            pointerEvents="auto"
+          >
+            <Text style={modalStyles.offerTitle}>🎁 Special Offer!</Text>
+
+            <Text style={modalStyles.offerText}>
+              🎉 Congratulations! You're eligible for a{" "}
+              <Text style={{ fontWeight: "bold" }}>Free PVR Movie Ticket</Text>{" "}
+              to watch{" "}
+              <Text style={{ fontWeight: "bold" }}>HIT: The Third Case</Text>{" "}
+              with your purchase of a{" "}
+              <Text style={{ fontWeight: "bold" }}>5KG rice bag</Text>!{"\n\n"}
+              ✅ Offer valid only once per user{"\n"}
+              🎟 Applicable exclusively on 5KG rice bags{"\n"}
+              🚚 Redeemable on your first successful delivery only{"\n"}
+              ❗ Once claimed, the offer cannot be reused{"\n\n"}
+              🔥 Grab yours while it lasts — enjoy the movie on us!
+            </Text>
+            <TouchableOpacity
+              style={modalStyles.okButton}
+              onPress={async () => {
+                setHas5kgsOffer(false);
+                setOfferavail5kgs(true);
+                setOfferItems();
+              }}
+            >
+              <Text style={modalStyles.okButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
+    );
+  };
+  // Render loading state
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <LottieView
+          source={require("../../../../assets/AnimationLoading.json")}
+          autoPlay
+          loop
+          style={{ width: 200, height: 200 }}
+        />
+      </View>
+    );
+  }
+
+  // Footer component
+  function footer() {
+    return <View style={styles.footer} />;
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
-      <View style={{ padding: 10 }}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            width: width * 0.9,
-          }}
-        >
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.searchFilterRow}>
           <View
             style={[
               styles.searchContainer,
-              cartData == null ? styles.fullWidth : styles.reducedWidth,
+              !cartData || cartData.length === 0
+                ? styles.fullWidth
+                : styles.reducedWidth,
             ]}
           >
             <Icon
@@ -771,449 +1109,467 @@ const UserDashboard = ({route}) => {
           </View>
 
           {/* Filter Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setFilterModalVisible(true)}
           >
             <Icon name="filter" size={24} color="#6b21a8" />
           </TouchableOpacity>
 
-          {userData != null && cartCount > 0 && (
+          {userData && cartCount > 0 && (
             <Pressable
               onPress={() => navigation.navigate("Home", { screen: "My Cart" })}
+              style={styles.cartIconContainer}
             >
-              <View style={styles.cartIconContainer}>
-                <Icon name="cart-outline" size={35} color="#000" />
+              <Icon name="cart-outline" size={32} color="#000" />
 
-              
-                {cartCount != 0 && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      marginBottom: 20,
-                      right: -4,
-                      top: -5,
-                      backgroundColor: COLORS.services,
-                      borderRadius: 10,
-                      paddingHorizontal: 5,
-                      paddingVertical: 1,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "#FFF",
-                        fontSize: 12,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {cartCount}
-                    </Text>
-                  </View>
-                )}
-              </View>
+              {cartCount > 0 && (
+                <View style={styles.cartBadge}>
+                  <Text style={styles.cartBadgeText}>{cartCount}</Text>
+                </View>
+              )}
             </Pressable>
           )}
         </View>
 
-        
-        <ScrollView horizontal>
-          <View
-            style={{
-              alignSelf: "center",
-              alignItems: "center",
-              alignSelf: "center",
-            }}
+        {/* Weight Filter Buttons */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.weightFilterContainer}
+          contentContainerStyle={styles.weightFilterContent}
+        >
+          <TouchableOpacity
+            style={[
+              styles.weightFilterButton,
+              selectedWeightFilter === 1 && styles.selectedWeightFilterButton,
+            ]}
+            onPress={() => filterByWeight(1)}
           >
-            <View
-              style={{
-                flexDirection: "column",
-                marginBottom: 5,
-                marginRight: 30,
-                height: height / 19,
-                alignSelf: "center",
-                marginTop: 15,
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+            <Text
+              style={
+                selectedWeightFilter === 1
+                  ? styles.selectedWeightFilterText
+                  : styles.weightFilterText
+              }
             >
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} ref={scrollViewRef}>
-                <TouchableOpacity
-                  onPress={() => filterByCategory("All CATEGORIES")}
-                >
-                  <View 
-                  style={[
-                      styles.firstrow,
-                      {
-                        backgroundColor:
-                          selectedCategory === "All CATEGORIES"
-                            ? COLORS.title
-                            : "lightgray",
-                      },
-                    ]}>
-                      <Icon name="albums" size={20} color="#6b21a8"  style={{marginRight: 8}}/>
-                  <Text style={styles.categoryText}>
-                    ALL ITEMS
-                  </Text>
-                  </View>
-                </TouchableOpacity>
-                {arrangeCategories(categories).map((category, index) => (
-                  <>
-                  {category.categoryName !== "Sample Rice" && (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => filterByCategory(category.categoryName)}
-                  >
-                    <View
-                      style={[
-                        styles.firstrow,
-                        {
-                          backgroundColor:
-                            selectedCategory === category.categoryName
-                              ? COLORS.title
-                              : "lightgray",
-                        },
-                      ]}
-                    >
-                      <Image
-                        source={{ uri: category.categoryLogo }}
-                        style={styles.categoryImage}
-                      />
-                      <Text style={styles.categoryText}>
-                        {category.categoryName.trim().toUpperCase()}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  )}
-                  </>
-                ))}
-              </ScrollView>
-            </View>
-          </View>
+              1kg
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.weightFilterButton,
+              selectedWeightFilter === 5 && styles.selectedWeightFilterButton,
+            ]}
+            onPress={() => filterByWeight(5)}
+          >
+            <Text
+              style={
+                selectedWeightFilter === 5
+                  ? styles.selectedWeightFilterText
+                  : styles.weightFilterText
+              }
+            >
+              5kg
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.weightFilterButton,
+              selectedWeightFilter === 10 && styles.selectedWeightFilterButton,
+            ]}
+            onPress={() => filterByWeight(10)}
+          >
+            <Text
+              style={
+                selectedWeightFilter === 10
+                  ? styles.selectedWeightFilterText
+                  : styles.weightFilterText
+              }
+            >
+              10kg
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.weightFilterButton,
+              selectedWeightFilter === 26 && styles.selectedWeightFilterButton,
+            ]}
+            onPress={() => filterByWeight(26)}
+          >
+            <Text
+              style={
+                selectedWeightFilter === 26
+                  ? styles.selectedWeightFilterText
+                  : styles.weightFilterText
+              }
+            >
+              26kg
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
 
-        {/* Filter Modal */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={filterModalVisible}
-          onRequestClose={() => setFilterModalVisible(false)}
+        {/* Category Horizontal Scroll */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          ref={scrollViewRef}
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Filter & Sort</Text>
-              
-              {/* Sort Options */}
-              <Text style={styles.sectionTitle}>Sort By</Text>
-              <View style={styles.sortOptions}>
-                <TouchableOpacity 
-                  style={[styles.sortOption, sortOrder === "weightAsc" && styles.selectedSortOption]}
-                  onPress={() => setSortOrder("weightAsc")}
-                >
-                  <Text style={styles.sortOptionText}>Weight (Low to High)</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.sortOption, sortOrder === "weightDesc" && styles.selectedSortOption]}
-                  onPress={() => setSortOrder("weightDesc")}
-                >
-                  <Text style={styles.sortOptionText}>Weight (High to Low)</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.sortOption, sortOrder === "priceAsc" && styles.selectedSortOption]}
-                  onPress={() => setSortOrder("priceAsc")}
-                >
-                  <Text style={styles.sortOptionText}>Price (Low to High)</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.sortOption, sortOrder === "priceDesc" && styles.selectedSortOption]}
-                  onPress={() => setSortOrder("priceDesc")}
-                >
-                  <Text style={styles.sortOptionText}>Price (High to Low)</Text>
-                </TouchableOpacity>
-              </View>
-              
-              {/* Price Range */}
-              {/* <Text style={styles.sectionTitle}>Price Range (₹)</Text>
-              <View style={styles.rangeInputContainer}>
-                <TextInput
-                  style={styles.rangeInput}
-                  placeholder="Min"
-                  keyboardType="numeric"
-                  value={priceRange.min.toString()}
-                  onChangeText={(text) => setPriceRange({...priceRange, min: parseInt(text) || 0})}
-                />
-                <Text style={styles.rangeText}>to</Text>
-                <TextInput
-                  style={styles.rangeInput}
-                  placeholder="Max"
-                  keyboardType="numeric"
-                  value={priceRange.max.toString()}
-                  onChangeText={(text) => setPriceRange({...priceRange, max: parseInt(text) || 10000})}
-                />
-              </View> */}
-              
-              {/* Weight Range */}
-              {/* <Text style={styles.sectionTitle}>Weight Range (kg)</Text>
-              <View style={styles.rangeInputContainer}>
-                <TextInput
-                  style={styles.rangeInput}
-                  placeholder="Min"
-                  keyboardType="numeric"
-                  value={weightRange.min.toString()}
-                  onChangeText={(text) => setWeightRange({...weightRange, min: parseInt(text) || 0})}
-                />
-                <Text style={styles.rangeText}>to</Text>
-                <TextInput
-                  style={styles.rangeInput}
-                  placeholder="Max"
-                  keyboardType="numeric"
-                  value={weightRange.max.toString()}
-                  onChangeText={(text) => setWeightRange({...weightRange, max: parseInt(text) || 100})}
-                />
-              </View> */}
-              
-              {/* Buttons */}
-              <View style={styles.modalButtonContainer}>
-                <TouchableOpacity 
-                  style={styles.resetButton}
-                  onPress={resetFilters}
-                >
-                  <Text style={styles.resetButtonText}>Reset</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.applyButton}
-                  onPress={applyFilters}
-                >
-                  <Text style={styles.applyButtonText}>Apply</Text>
-                </TouchableOpacity>
-              </View>
-              
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setFilterModalVisible(false)}
+          <View style={styles.categoriesRow}>
+            <TouchableOpacity
+              style={[
+                styles.categoryButton,
+                selectedCategory === "All CATEGORIES" &&
+                  styles.selectedCategoryButton,
+              ]}
+              onPress={() => filterByCategory("All CATEGORIES")}
+            >
+              <Text
+                style={[
+                  styles.categoryButtonText,
+                  selectedCategory === "All CATEGORIES" &&
+                    styles.selectedCategoryText,
+                ]}
               >
+                All Categories
+              </Text>
+            </TouchableOpacity>
+
+            {arrangeCategories(categories).map((category, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === category.categoryName &&
+                    styles.selectedCategoryButton,
+                ]}
+                onPress={() => filterByCategory(category.categoryName)}
+              >
+                <Text
+                  style={[
+                    styles.categoryButtonText,
+                    selectedCategory === category.categoryName &&
+                      styles.selectedCategoryText,
+                  ]}
+                >
+                  {category.categoryName}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Filter Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={filterModalVisible}
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Filter & Sort</Text>
+              <TouchableOpacity onPress={() => setFilterModalVisible(false)}>
                 <Icon name="close" size={24} color="#000" />
               </TouchableOpacity>
             </View>
-          </View>
-        </Modal>
 
-        <FlatList
-          data={filteredItems}
-          keyExtractor={(item) => item.itemId}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          showsVerticalScrollIndicator={false}
-          ListFooterComponent={footer}
-          ListEmptyComponent={() => (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No Items Found</Text>
-            </View>
-          )}
-          renderItem={({ item }) => (
-            <View style={styles.itemCard}>
-{isLimitedStock[item.itemId] === "lowStock" &&(
-                  <View style={styles.limitedStockBadge}>
-                    <Text style={styles.limitedStockText}>
-                      {item.quantity > 1
-                        ? `${item.quantity} items left`
-                        : `${item.quantity} item left`}
-                    </Text>
+            {/* <View style={styles.filterSection}>
+                <Text style={styles.sectionTitle}>Price Range</Text>
+                <View style={styles.rangeContainer}>
+                  <View style={styles.rangeInputContainer}>
+                    <Text style={styles.rangeLabel}>Min</Text>
+                    <TextInput
+                      style={styles.rangeInput}
+                      value={priceRange.min.toString()}
+                      onChangeText={(text) => setPriceRange({...priceRange, min: parseInt(text) || 0})}
+                      keyboardType="numeric"
+                    />
                   </View>
-                )}
-                <TouchableOpacity onPress={() => navigation.navigate("Item Details", { item })}>
-              <View style={styles.imageContainer}>
-                {/* Discount Badge */}
-                {item.itemMrp > item.itemPrice && (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>
-                      {Math.round(
-                        ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
-                      )}
-                      % OFF
-                    </Text>
+                  <View style={styles.rangeInputContainer}>
+                    <Text style={styles.rangeLabel}>Max</Text>
+                    <TextInput
+                      style={styles.rangeInput}
+                      value={priceRange.max.toString()}
+                      onChangeText={(text) => setPriceRange({...priceRange, max: parseInt(text) || 0})}
+                      keyboardType="numeric"
+                    />
                   </View>
-                )}
-                <Image
-                  source={{ uri: item.itemImage  }}
-                  style={styles.itemImage}
-                  resizeMode="contain"
-                />
-              </View>
-              </TouchableOpacity>
-
-              <View style={styles.itemInfo}>
-                <View style={styles.itemNameContainer}>
-                  {getItemIcon(item)}
-                  <Text style={styles.itemName} numberOfLines={2}>
-                    {item.itemName}
-                  </Text>
                 </View>
+              </View> */}
 
-                <View style={styles.weightContainer}>
-                 
-                  <Text style={styles.itemWeight}>
-  Weight: {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
-            </Text>
-                </View>
-
-                <View style={styles.priceContainer}>
-                  <Text style={styles.priceText}>₹{item.itemPrice}</Text>
-                  {item.itemMrp > item.itemPrice && (
-                    <Text style={styles.mrpText}>₹{item.itemMrp}</Text>
-                  )}
-                </View>
-
-                {item.quantity === 0 ? (
-                  <View style={styles.outOfStockButton}>
-                    <Text style={styles.outOfStockText}>Out of Stock</Text>
+            {/* <View style={styles.filterSection}>
+                <Text style={styles.sectionTitle}>Weight Range</Text>
+                <View style={styles.rangeContainer}>
+                  <View style={styles.rangeInputContainer}>
+                    <Text style={styles.rangeLabel}>Min</Text>
+                    <TextInput
+                      style={styles.rangeInput}
+                      value={weightRange.min.toString()}
+                      onChangeText={(text) => setWeightRange({...weightRange, min: parseFloat(text) || 0})}
+                      keyboardType="numeric"
+                    />
                   </View>
-                ) : cartItems[item.itemId] ? (
-                  <View style={styles.quantityContainer}>
-                    <TouchableOpacity
-                      onPress={() => handleDecrease(item)}
-                      disabled={loadingItems[item.itemId]}
-                      style={styles.quantityButton}
-                    >
-                      <Text style={styles.quantityButtonText}>-</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.quantityTextContainer}>
-                      {loadingItems[item.itemId] ? (
-                        <ActivityIndicator size="small" color="#6b21a8" />
-                      ) : (
-                        <Text style={styles.quantityText}>
-                          {cartItems[item.itemId]}
-                        </Text>
-                      )}
-                    </View>
-
-                    <TouchableOpacity
-                      onPress={() => handleIncrease(item)}
-                      disabled={
-                        loadingItems[item.itemId] ||
-                        isLimitedStock[item.itemId] === "outOfStock" ||
-                        cartItems[item.itemId] >= item.quantity
-                      }
-                      style={styles.quantityButton}
-                    >
-                      <Text style={styles.quantityButtonText}>+</Text>
-                    </TouchableOpacity>
+                  <View style={styles.rangeInputContainer}>
+                    <Text style={styles.rangeLabel}>Max</Text>
+                    <TextInput
+                      style={styles.rangeInput}
+                      value={weightRange.max.toString()}
+                      onChangeText={(text) => setWeightRange({...weightRange, max: parseFloat(text) || 0})}
+                      keyboardType="numeric"
+                    />
                   </View>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => handleAdd(item)}
-                    disabled={loadingItems[item.itemId]}
+                </View>
+              </View> */}
+
+            <View style={styles.filterSection}>
+              <Text style={styles.sectionTitle}>Sort By</Text>
+              <View style={styles.sortOptions}>
+                <TouchableOpacity
+                  style={[
+                    styles.sortOption,
+                    sortOrder === "weightAsc" && styles.selectedSortOption,
+                  ]}
+                  onPress={() => setSortOrder("weightAsc")}
+                >
+                  <Text
+                    style={
+                      sortOrder === "weightAsc"
+                        ? styles.selectedSortText
+                        : styles.sortText
+                    }
                   >
-                    {loadingItems[item.itemId] ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <Text style={styles.addButtonText}>ADD</Text>
-                    )}
-                  </TouchableOpacity>
-                )}
-
-                {isLimitedStock[item.itemId] === "lowStock" && (
-                  <Text style={styles.limitedStockText}>Limited Stock!</Text>
-                )}
+                    Weight (Low to High)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.sortOption,
+                    sortOrder === "weightDesc" && styles.selectedSortOption,
+                  ]}
+                  onPress={() => setSortOrder("weightDesc")}
+                >
+                  <Text
+                    style={
+                      sortOrder === "weightDesc"
+                        ? styles.selectedSortText
+                        : styles.sortText
+                    }
+                  >
+                    Weight (High to Low)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.sortOption,
+                    sortOrder === "priceAsc" && styles.selectedSortOption,
+                  ]}
+                  onPress={() => setSortOrder("priceAsc")}
+                >
+                  <Text
+                    style={
+                      sortOrder === "priceAsc"
+                        ? styles.selectedSortText
+                        : styles.sortText
+                    }
+                  >
+                    Price (Low to High)
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.sortOption,
+                    sortOrder === "priceDesc" && styles.selectedSortOption,
+                  ]}
+                  onPress={() => setSortOrder("priceDesc")}
+                >
+                  <Text
+                    style={
+                      sortOrder === "priceDesc"
+                        ? styles.selectedSortText
+                        : styles.sortText
+                    }
+                  >
+                    Price (High to Low)
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
-          )}
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetFilters}
+              >
+                <Text style={styles.resetButtonText}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.applyButton}
+                onPress={applyFilters}
+              >
+                <Text style={styles.applyButtonText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Items Grid */}
+      {filteredItems.length === 0 ? (
+        <View style={styles.noResultsContainer}>
+          <Icon name="search" size={60} color="#6b21a8" />
+          <Text style={styles.noResultsText}>No items found</Text>
+          <Text style={styles.noResultsSubText}>
+            Try adjusting your search or filters
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          contentContainerStyle={styles.listContainer}
+          data={filteredItems}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.itemId.toString()}
+          numColumns={2}
+          ListFooterComponent={footer}
+          showsVerticalScrollIndicator={false}
         />
-      </View>
+      )}
+
+      {/*1kg + 1kg Offer Modal */}
+      <HandleOneKgOffer />
+      
+
+      {/*Free movie ticket Offer Modal */}
+      <HandleFreeTicketOffer />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  loaderContainer: {
+  container: {
     flex: 1,
-    justifyContent: "center",
+    backgroundColor: "#f9fafb",
+  },
+  header: {
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+  },
+  searchFilterRow: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
+    marginBottom: 10,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
     paddingHorizontal: 10,
-    marginVertical: 5,
-    height: 45,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 8,
+    backgroundColor: "#fff",
+    height: 42,
   },
   fullWidth: {
-    width: "85%",
+    flex: 0.9,
   },
   reducedWidth: {
-    width: "80%",
+    flex: 0.95,
   },
   searchIcon: {
     marginRight: 8,
   },
   input: {
     flex: 1,
+    height: 40,
     fontSize: 16,
-    height: 45,
   },
   clearButton: {
-    padding: 5,
+    padding: 4,
   },
   filterButton: {
-    backgroundColor: "#f0e6ff",
-    height: 45,
-    width: 45,
+    marginLeft: 8,
+    padding: 8,
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginLeft: 10,
-    marginTop: 5,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    backgroundColor: "#fff",
   },
   cartIconContainer: {
-    marginTop: 8,
-    marginHorizontal: 8,
+    marginLeft: 8,
+    position: "relative",
   },
-  firstrow: {
-    borderRadius: 20,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    marginHorizontal: 5,
-    paddingHorizontal: 15,
-    flexDirection: "row",
-  },
-  categoryImage: {
+  cartBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "#6b21a8",
+    borderRadius: 10,
     width: 20,
     height: 20,
-    marginRight: 8,
-  },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "white",
-  },
-  row: {
-    flex: 1,
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  itemCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    width: "48%",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    padding: 10,
-    marginVertical: 5,
-    marginHorizontal: 5,
-  },
-  imageContainer: {
-    height: 120,
     justifyContent: "center",
     alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  categoriesRow: {
+    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    backgroundColor: "#f3f4f6",
+  },
+  selectedCategoryButton: {
+    backgroundColor: "#6b21a8",
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    color: "#4b5563",
+  },
+  selectedCategoryText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  listContainer: {
+    padding: 8,
+    paddingBottom: 100,
+  },
+  itemContainer: {
+    flex: 0.5,
+    margin: 8,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    overflow: "hidden",
+    height: 320, // Fixed height for consistent card sizes
+    width: (width - 40) / 2, // Calculate exact width for 2 columns with margins
+  },
+  itemImageContainer: {
+    width: "100%",
+    height: 140,
     position: "relative",
+    backgroundColor: "#f9fafb",
+    alignItems: "center",
+    justifyContent: "center",
   },
   discountBadge: {
     position: "absolute",
@@ -1234,213 +1590,399 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  itemInfo: {
-    paddingVertical: 8,
+  // Improved item details container with fixed layout
+  itemDetailsContainer: {
+    padding: 12,
+    flex: 1,
+    height: 180, // Fixed height for content area
+    justifyContent: "flex-start", // Start from top instead of space-between
   },
-  itemNameContainer: {
+  // New container for name and weight
+  itemInfoContainer: {
+    height: 80, // Fixed height for name and weight section
+  },
+  iconNameContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 5,
+    alignItems: "flex-start", // Align to top
+    marginBottom: 8,
+    height: 40, // Fixed height for name area
   },
   itemName: {
     fontSize: 14,
     fontWeight: "600",
-    marginLeft: 5,
+    color: "#1f2937",
+    marginLeft: 6,
     flex: 1,
+    lineHeight: 18, // Consistent line height
   },
-  weightContainer: {
-    marginBottom: 5,
-  },
-  weightText: {
-    fontSize: 12,
-    color: "#666",
+  itemWeight: {
+    fontSize: 13,
+    color: "#6b7280",
+    marginBottom: 8,
+    marginLeft: 26, // Align with item name (icon width + left margin)
   },
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 12,
+    height: 24, // Fixed height for price area
   },
-  priceText: {
+  itemPrice: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#6b21a8",
   },
-  mrpText: {
-    fontSize: 12,
-    color: "#888",
+  itemMRP: {
+    fontSize: 14,
+    color: "#9ca3af",
     textDecorationLine: "line-through",
-    marginLeft: 5,
+    marginLeft: 8,
   },
-  outOfStockButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 8,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  outOfStockText: {
-    color: "#888",
-    fontWeight: "600",
-    fontSize: 12,
+  // Fixed position button container at bottom
+  buttonContainer: {
+    height: 44,
+    marginTop: "auto", // Push to bottom of container
+    justifyContent: "center",
+    width: "100%", // Ensure full width
+    position: "absolute",
+    bottom: 12,
+    left: 12,
+    right: 12,
   },
   addButton: {
     backgroundColor: "#6b21a8",
-    paddingVertical: 8,
-    borderRadius: 5,
+    borderRadius: 8,
+    paddingVertical: 10,
     alignItems: "center",
+    justifyContent: "center",
+    height: 40, // Fixed height
   },
   addButtonText: {
-    color: "white",
+    color: "#fff",
     fontWeight: "600",
     fontSize: 14,
   },
   quantityContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#f0e6ff",
-    borderRadius: 5,
-    paddingVertical: 2,
+    justifyContent: "space-between",
+    height: 40, // Fixed height matching add button
   },
   quantityButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
   quantityButtonText: {
-    fontSize: 16,
+    color: "#fff",
+    fontSize: 18,
     fontWeight: "bold",
-    color: "#6b21a8",
   },
   quantityTextContainer: {
-    width: 30,
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+    height: 40,
   },
   quantityText: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#6b21a8",
+    fontWeight: "600",
+    color: "#1f2937",
   },
-  emptyContainer: {
+  loaderContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    height: 300,
+    backgroundColor: "#fff",
   },
-  emptyText: {
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  noResultsText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1f2937",
+    marginTop: 16,
+  },
+  noResultsSubText: {
     fontSize: 16,
-    color: "#888",
+    color: "#6b7280",
     textAlign: "center",
-    width: "80%",
-  },
-  limitedStockText: {
-    color: "red",
-    fontSize: 12,
-    marginTop: 5,
-    textAlign: "center",
+    marginTop: 8,
   },
   footer: {
-    height: 100,
-    marginBottom:50
+    height: 20,
   },
   modalContainer: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    // paddingHorizontal: 20,
-    paddingVertical: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    height: "55%",
-    position: "relative",
-    // marginBottom:50
+    maxHeight: height * 0.8,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
+    color: "#1f2937",
+  },
+  filterSection: {
     marginBottom: 20,
-    textAlign: "center",
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    marginTop: 10,
-    marginBottom: 10,
+    color: "#374151",
+    marginBottom: 12,
   },
-  sortOptions: {
-    marginBottom: 15,
-  },
-  sortOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: "#f5f5f5",
-  },
-  selectedSortOption: {
-    backgroundColor: "#e9d5ff",
-    borderColor: "#6b21a8",
-    borderWidth: 1,
-  },
-  sortOptionText: {
-    fontSize: 14,
+  rangeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   rangeInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
+    flex: 0.48,
+  },
+  rangeLabel: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginBottom: 6,
   },
   rangeInput: {
-    flex: 1,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#d1d5db",
     borderRadius: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    marginRight: 10,
+    fontSize: 16,
   },
-  rangeText: {
-    marginHorizontal: 10,
+  sortOptions: {
+    flexDirection: "column",
   },
-  modalButtonContainer: {
+  sortOption: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: "#f3f4f6",
+  },
+  selectedSortOption: {
+    backgroundColor: "#ddd6fe",
+  },
+  sortText: {
+    fontSize: 14,
+    color: "#4b5563",
+  },
+  selectedSortText: {
+    fontSize: 14,
+    color: "#6b21a8",
+    fontWeight: "600",
+  },
+  modalButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
-    marginBottom: 20,
   },
   resetButton: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
+    flex: 0.48,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginRight: 10,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
   },
   resetButtonText: {
     fontSize: 16,
-    color: "#666",
+    color: "#4b5563",
     fontWeight: "600",
   },
   applyButton: {
-    flex: 1,
-    backgroundColor: "#6b21a8",
+    flex: 0.48,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginLeft: 10,
+    justifyContent: "center",
+    backgroundColor: "#6b21a8",
   },
   applyButtonText: {
     fontSize: 16,
-    color: "white",
+    color: "#fff",
     fontWeight: "600",
   },
+  weightFilterContainer: {
+    marginBottom: 10,
+  },
+  weightFilterContent: {
+    paddingHorizontal: 5,
+  },
+  weightFilterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginHorizontal: 5,
+    backgroundColor: "#f3f4f6",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+  },
+  selectedWeightFilterButton: {
+    backgroundColor: "#ddd6fe",
+    borderColor: "#6b21a8",
+  },
+  weightFilterText: {
+    fontSize: 14,
+    color: "#4b5563",
+  },
+  selectedWeightFilterText: {
+    fontSize: 14,
+    color: "#6b21a8",
+    fontWeight: "600",
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 15,
+    padding: 22,
+    width: "85%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  offerTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FF6B6B",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  offerText: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 20,
+    // textAlign: "center",
+    color: "#333",
+  },
+  noteText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  okButton: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 5,
+    elevation: 2,
+  },
+  okButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+});
+
+const oneKgModal = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  offerModalContainer: {
+    width: width * 0.85,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  offerModalHeader: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  offerModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
   closeButton: {
-    position: "absolute",
-    top: 15,
-    right: 15,
-    padding: 5,
+    padding: 4,
+  },
+  offerModalBody: {
+    padding: 16,
+    alignItems: "center",
+  },
+  offerImage: {
+    width: width * 0.3,
+    height: width * 0.3,
+    marginBottom: 10,
+  },
+  offerModalText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  offerModalFooter: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#e1e1e1",
+  },
+  offerModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  offerCancelButton: {
+    backgroundColor: "#f5f5f5",
+  },
+  offerConfirmButton: {
+    backgroundColor: "#FFD700",
+  },
+  offerButtonTextCancel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  offerButtonTextConfirm: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
   },
 });
 

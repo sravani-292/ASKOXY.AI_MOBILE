@@ -29,6 +29,8 @@ import { err } from "react-native-svg";
 import { Dropdown } from "react-native-element-dropdown";
 import Icon from "react-native-vector-icons/Ionicons";
 import { Ionicons } from '@expo/vector-icons';
+import DeliveryTimelineModal from "./DeliveryModal";
+import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
@@ -74,6 +76,8 @@ const PaymentDetails = ({ navigation, route }) => {
   const [isConfirmed,setIsConfirmed]=useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [slotsData,setSlotsData]=useState()
+  const [onlyOneKg, setOnlyOneKg] = useState(false);
+  const [showModal,setShowModal] = useState(false)
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -82,63 +86,68 @@ const PaymentDetails = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const items = route.params?.items || [];
 
+  const [offeravailable, setOfferAvailable] = useState();
 
-
-
-  
-
-const fetchTimeSlots = async () => { 
-  try { 
-      const response = await axios.get(`${BASE_URL}order-service/fetchTimeSlotlist`);
+ const fetchTimeSlots = async () => {
+    try {
+      const response = await axios.get(
+       ` ${BASE_URL}order-service/fetchTimeSlotlist`
+      );
       const data = response.data;
       console.log({ data });
 
-     setSlotsData(data)
-     let updatedOrderDate = new Date();
-     updatedOrderDate.setDate(updatedOrderDate.getDate() + 1);
-     setOrderDate(updatedOrderDate);
-     
-     const tomorrowDate = updatedOrderDate
-       .toLocaleDateString("en-GB") // "en-GB" gives "DD/MM/YYYY"
-       .split("/")
-       .join("-"); 
-     
-     console.log("New Date (Updatedate):", tomorrowDate);
-     setUpdatedate(tomorrowDate);
-     
-      // Get the next 7 days, starting from tomorrow
+      setSlotsData(data);
+      let updatedOrderDate = new Date();
+      updatedOrderDate.setDate(updatedOrderDate.getDate() + 1);
+      setOrderDate(updatedOrderDate);
+
+      const tomorrowDate = updatedOrderDate
+        .toLocaleDateString("en-GB") 
+        .split("/")
+        .join("-");
+
+      console.log("New Date (Updatedate):", tomorrowDate);
+    
+    
       const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
-          const date = new Date(updatedOrderDate);
-          date.setDate(updatedOrderDate.getDate() + i);
-          const formattedDate = `${date.getDate().toString().padStart(2, "0")}-${(date.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}-${date.getFullYear()}`;
-          return {
-              dayOfWeek: date.toLocaleDateString("en-GB", { weekday: "long" }).toUpperCase(),
-              formattedDate: formattedDate, 
-          };
+        const date = new Date(updatedOrderDate);
+        date.setDate(updatedOrderDate.getDate() + i);
+        const formattedDate = `${date.getDate().toString().padStart(2, "0")}-${(
+          date.getMonth() + 1
+        )
+          .toString()
+          .padStart(2, "0")}-${date.getFullYear()}`;
+        return {
+          dayOfWeek: date
+            .toLocaleDateString("en-GB", { weekday: "long" })
+            .toUpperCase(),
+          formattedDate: formattedDate,
+        };
       });
 
       console.log("Next seven days:", nextSevenDays);
 
-      const availableDays = nextSevenDays.filter(day => {
-          const matchedDay = data.find(d => d.dayOfWeek === day.dayOfWeek);
-          return matchedDay && matchedDay.isAvailable === false; 
-      }).slice(0, 3); 
+      const availableDays = nextSevenDays
+        .filter((day) => {
+          const matchedDay = data.find((d) => d.dayOfWeek === day.dayOfWeek);
+          return matchedDay && matchedDay.isAvailable ===false;
+        })
+        .slice(0, 3);
 
       console.log("Filtered available days:", availableDays);
 
-      const transformedDays = availableDays.map(day => ({
-          label: `${day.dayOfWeek} ( ${day.formattedDate})`,
-          value: day.dayOfWeek,
+      const transformedDays = availableDays.map((day) => ({
+        label: `${day.dayOfWeek} ( ${day.formattedDate})`,
+        value: day.dayOfWeek,
+        formattedDate: day.formattedDate,
       }));
 
       console.log("Transformed days:", transformedDays);
       setDays(transformedDays);
-  } catch (error) {
+    } catch (error) {
       console.error("Error fetching time slots:", error);
-  }
-};
+    }
+  };
   
   const checkOfferEligibility = async (customerId) => {
     try {
@@ -203,20 +212,27 @@ const fetchTimeSlots = async () => {
     setSelectedDay(selectedDay);
     console.log("selectedDay", selectedDay);
     console.log("Days array before filtering:", days);
-    console.log("Available Days:", days.map((d) => `"${d.value}"`));
-    console.log("Selected Day:", `"${selectedDay}"`);
+    console.log(
+      "Available Days:",
+      days.map((d) => `${d.value}`)
+    );
+    console.log("Selected Day:", `${selectedDay}`);
 
     const selectedDayData = days.find(
-      (d) => d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
+      (d) =>
+        d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
     );
 
     console.log({ selectedDayData });
 
     if (selectedDayData) {
       const fullDayData = slotsData.find((d) => d.dayOfWeek === selectedDay);
-
+    
+      
       if (fullDayData) {
-        setSelectedDate(selectedDayData.formattedDate || ""); 
+        setSelectedDate(selectedDayData.formattedDate || "");
+        setUpdatedate(selectedDayData?.formattedDate);
+
         setTimeSlots(
           [
             fullDayData.timeSlot1,
@@ -224,15 +240,15 @@ const fetchTimeSlots = async () => {
             fullDayData.timeSlot3,
             fullDayData.timeSlot4,
           ]
-          // .filter(Boolean) 
+          // .filter(Boolean)
         );
       } else {
         setTimeSlots([]);
       }
     } else {
       setTimeSlots([]);
-    }
-};
+    }
+  };
 
 
   const totalCart = async () => {
@@ -251,11 +267,16 @@ const fetchTimeSlots = async () => {
       });
        
         const cartResponse = response.data.cartResponseList;
+        const onlyOneKg = items.every(item => item.weight === 1);
+        setOnlyOneKg(onlyOneKg);
+console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items other than 1kg bags');
+
         setCartData(cartResponse);
        const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
         setTotalGstSum(response.data.totalGstSum)
         setDeliveryBoyFee(totalDeliveryFee)
         setGrandTotal(response.data.totalSumWithGstSum)
+        setOfferAvailable(response.data.offerElgible)
     } catch (error) {
       // setError("Failed to fetch cart data");
     }
@@ -495,6 +516,8 @@ const fetchTimeSlots = async () => {
       coupon = null;
       coupenAmount = 0;
     }
+
+    const avail = offeravailable === "YES" ? "YES" : null;
     
     postData = {
       address: addressDetails.address,
@@ -518,7 +541,8 @@ const fetchTimeSlots = async () => {
       expectedDeliveryDate: updatedDate,
       timeSlot: selectedTimeSlot,
       latitude:addressDetails.latitude,
-      longitude:addressDetails.longitude
+      longitude:addressDetails.longitude,
+      freeTicketAvailable: avail,
     };
 
     console.log({ postData });
@@ -621,6 +645,7 @@ const fetchTimeSlots = async () => {
           };
           // console.log({ data });
           getepayPortal(data);
+          GoogleAnalyticsService.purchase(response.data.paymentId,cartData, grandTotalAmount,"ONLINE");
         }
 
         
@@ -1086,7 +1111,7 @@ const fetchTimeSlots = async () => {
         </TouchableOpacity>
         
          
-          {grandTotalAmount  > 100 && (
+          {/* {grandTotalAmount  > 100 && (
          <TouchableOpacity
          style={[
            styles.paymentOption,
@@ -1101,7 +1126,7 @@ const fetchTimeSlots = async () => {
          />
          <Text style={styles.optionText}>Cash on Delivery</Text>
        </TouchableOpacity>
-          )}
+          )} */}
           
         </View>
       
@@ -1180,6 +1205,7 @@ const fetchTimeSlots = async () => {
           )}
         </View>
       </ScrollView>
+      <DeliveryTimelineModal visible={showModal} onClose={() => setShowModal(false)} />
     </View>
   );
 };
@@ -1226,21 +1252,21 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 18, fontWeight: "bold" },
   totalAmount: { fontSize: 18, fontWeight: "bold", color: "green" },
   paymentHeader: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
-  paymentOptions: {
-    width: width * 0.7,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginBottom: 16,
-    marginVertical: 20,
-    padding: 10,
-    backgroundColor: "#4DA1A9",
-    borderRadius: 12,
-    // shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6, 
-  },
+  // paymentOptions: {
+  //   width: width * 0.7,
+  //   flexDirection: "row",
+  //   justifyContent: "space-around",
+  //   marginBottom: 16,
+  //   marginVertical: 20,
+  //   padding: 10,
+  //   // backgroundColor: "#4DA1A9",
+  //   borderRadius: 12,
+  //   // shadowColor: "#000",
+  //   shadowOffset: { width: 0, height: 4 },
+  //   shadowOpacity: 0.2,
+  //   shadowRadius: 6,
+  //   elevation: 6, 
+  // },
   paymentOption: {
     alignItems: "center",
     padding: 16,
@@ -1248,7 +1274,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     // width: "40%",
-    width: width * 0.4,
+    width: width * 0.9,
     backgroundColor: "#c0c0c0",
     borderRadius: 10,
     // width: 180,
@@ -1261,7 +1287,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   selectedOption: { borderColor:COLORS.services, backgroundColor: "#e6f7ff" },
-  optionText: { fontSize: 16, marginTop: 8 },
+  optionText: { fontSize: 16, marginTop: 8, width: 150, textAlign: "center", fontWeight: "bold" },
   confirmButton: {
     backgroundColor:COLORS.title,
     padding: 16,
@@ -1321,10 +1347,6 @@ const styles = StyleSheet.create({
   selectedOption: {
     borderColor: COLORS.services,
     borderWidth: 2,
-  },
-  optionText: {
-    marginTop: 5,
-    fontSize: 14,
   },
   paymentDetails: {
     backgroundColor: "white",

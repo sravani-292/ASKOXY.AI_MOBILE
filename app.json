@@ -2,7 +2,7 @@
   "expo": {
     "name": "ASKOXY.AI",
     "slug": "oxyrice_customer",
-    "version": "1.0.26",
+    "version": "1.0.32",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "26",
+      "buildNumber": "32",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to show available delivery options, calculate delivery times, and ensure your order reaches you accurately.",
         "NSLocationAlwaysUsageDescription": "We need your location to ensure timely delivery updates even when the app is in the background.",
@@ -28,7 +28,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 26,
+      "versionCode": 32,
       "permissions": []
     },
     "web": {

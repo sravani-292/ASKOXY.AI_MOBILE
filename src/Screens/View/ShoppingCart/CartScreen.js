@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
   Dimensions,
   RefreshControl,
-  Modal,Animated, Easing
+  Modal,
+  Animated,
+  Easing
 } from "react-native";
 import axios from "axios";
 import { StyleSheet } from "react-native";
@@ -19,19 +21,36 @@ import { COLORS } from "../../../../Redux/constants/theme";
 import { Alert } from "react-native";
 import { TouchableWithoutFeedback } from "react-native";
 
+import ContainerOfferModal from "./ContainerOfferModal";
+
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
 import BASE_URL, { userStage } from "../../../../Config";
+import LottieView from "lottie-react-native";
+
 const CartScreen = () => {
-  const userData = useSelector((state) => state.counter);
-  const token = userData.accessToken;
-  const customerId = userData.userId;
+  // State management for user data
+  const userData = useSelector((state) => state?.counter || {});
+  const token = userData?.accessToken || '';
+  const customerId = userData?.userId || '';
+
+  // Input validation for user data
+  if (!token || !customerId) {
+    // Handle missing credentials
+    useEffect(() => {
+      Alert.alert(
+        "Authentication Error",
+        "Please login again to continue",
+        [{ text: "OK", onPress: () => navigation.navigate("Login") }]
+      );
+    }, []);
+  }
 
   const navigation = useNavigation();
   const [cartData, setCartData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [grandTotal, setGrandTotal] = useState(null);
+  const [grandTotal, setGrandTotal] = useState(0);
   const [loadingItems, setLoadingItems] = useState({});
   const [removalLoading, setRemovalLoading] = useState({});
   const [user, setUser] = useState({});
@@ -39,13 +58,18 @@ const CartScreen = () => {
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
   const [hasWeight, setHasWeight] = useState("");
-  const[containerAddedPrice,setContainerAddedPrice]=useState(false)
+  const [containerAddedPrice, setContainerAddedPrice] = useState(false);
+  const [apiAttempts, setApiAttempts] = useState(0); // Track API retries
+  const [lastFetchTime, setLastFetchTime] = useState(0); // Rate limiting
+  const [checkoutInProgress, setCheckoutInProgress] = useState(false); // Prevent double checkout
+
   const [address, setAddress] = useState({
     email: "",
     mobileNumber: "",
     name: "",
     alterMobileNumber: "",
   });
+  
   const locationdata = {
     flatNo: "",
     landMark: "",
@@ -61,29 +85,34 @@ const CartScreen = () => {
     addressId: "",
     hasId: false,
   };
+  
   const [containerDecision, setContainerDecision] = useState(null);
-
-
   const [modalVisible, setModalVisible] = useState(false);
   const [showOfferAvail, setShowOfferAvail] = useState(false);
   const [showOffer, setShowOffer] = useState(false);
+  const [versionChange, setVersionChange] = useState("English");
   const scaleValue = new Animated.Value(1); // Initial scale value for zoom-in animation
 
+  // Constants moved to a proper configuration object for easier maintenance
   const CONTAINER_TYPES = {
     SMALL: {
       id: "53d7f68c-f770-4a70-ad67-ee2726a1f8f3",
       WEIGHT: "10",
       NAME: "10kg Rice Container",
-      Price:2000
+      Price: 2000
     },
     LARGE: {
       id: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
       WEIGHT: "26",
       NAME: "26kg Rice Container",
-      Price:2500
-
+      Price: 2500
     }
   };
+
+  // Maximum number of API retry attempts
+  const MAX_API_ATTEMPTS = 3;
+  // Minimum time between API calls in milliseconds
+  const API_RATE_LIMIT = 500;
 
   // Zoom-in animation
   useEffect(() => {
@@ -94,9 +123,13 @@ const CartScreen = () => {
         easing: Easing.linear,
         useNativeDriver: true,
       }).start();
+    } else {
+      // Reset scale when modal is hidden
+      scaleValue.setValue(1);
     }
   }, [modalVisible]);
 
+  // Load container decision and check cart status
   useEffect(() => {
     // Load saved container decision
     const loadContainerDecision = async () => {
@@ -107,30 +140,48 @@ const CartScreen = () => {
         }
       } catch (error) {
         console.log("Error loading container decision:", error);
+        // Fallback to default state
+        setContainerDecision(null);
       }
     };
 
+    // Check if containers that should be in cart are still there
     const checkCartForContainers = () => {
-      if (cartData && cartData.length > 0) {
-        const containerExists = cartData.some(item => 
+      if (!Array.isArray(cartData) || cartData.length === 0) {
+        return;
+      }
+      
+      const containerExists = cartData.some(item => 
+        item && item.itemId && (
           item.itemId === CONTAINER_TYPES.LARGE.id || 
           item.itemId === CONTAINER_TYPES.SMALL.id
-        );
-        
-        if (!containerExists && containerDecision === 'yes') {
-          // If the user had a container but it's no longer in the cart, reset decision
-          setContainerDecision(null);
-          setContainerAddedPrice(false);
-          AsyncStorage.removeItem('containerDecision');
+        )
+      );
+      
+      if (!containerExists && containerDecision === 'yes') {
+        // If user had a container but it's no longer in cart, reset decision
+        setContainerDecision(null);
+        setContainerAddedPrice(false);
+        try {
+          AsyncStorage.removeItem('containerDecision')
+            .catch(err => console.log("Error removing container decision:", err));
+        } catch (error) {
+          console.log("AsyncStorage removal error:", error);
         }
       }
     };
-    checkCartForContainers();
+    
     loadContainerDecision();
-  }, [cartData]);
+    checkCartForContainers();
+  }, [cartData, containerDecision]);
 
+  // Handle container "Yes" button
   const handleYes = async() => {
-    // setShowCode(true);
+    if (!customerId || !token) {
+      Alert.alert("Error", "Authentication required. Please login again.");
+      return;
+    }
+    
     setContainerDecision('yes');
   
     try {
@@ -138,43 +189,59 @@ const CartScreen = () => {
     } catch (error) {
       console.log("Error saving container decision:", error);
     }
+    
     setModalVisible(false);
 
-     const containerId= hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.id : CONTAINER_TYPES.SMALL.id;
-     const data = { customerId: customerId, itemId: containerId };
+    // Validate weight before proceeding
+    if (!hasWeight) {
+      console.error("Weight is undefined");
+      Alert.alert("Error", "Container weight not specified");
+      return;
+    }
 
-     try {
+    const containerId = hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.id : CONTAINER_TYPES.SMALL.id;
+    
+    if (!containerId) {
+      console.error("Container ID is undefined");
+      return;
+    }
+    
+    const data = { customerId: customerId, itemId: containerId };
+    
+    try {
+      setLoading(true);
       const response = await axios.post(
         BASE_URL + "cart-service/cart/add_Items_ToCart",
         data,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
         }
       );
     
-      console.log("item added response", response.data);
+      console.log("item added response", response?.data);
       
-
-  if (response.data.errorMessage == "Item added to cart successfully") {
+      if (response?.data?.errorMessage === "Item added to cart successfully") {
         Alert.alert("Success", `Successfully added ${hasWeight} container to your cart`);
-
         fetchCartData();
       } else {
-        setLoader(false);
-        Alert.alert("Alert", response.data.errorMessage);
+        Alert.alert("Alert", response?.data?.errorMessage || "Failed to add container");
       }
     } catch (error) {
-      setLoader(false);
+      console.error("Error adding container:", error?.response?.data || error?.message || error);
+      Alert.alert("Error", "Failed to add container to cart. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-
+  // Handle container "No" button
   const handleNo = async() => {
     setModalVisible(false);
-    
     setContainerDecision('no');
     setContainerAddedPrice(false);
-    
     
     try {
       await AsyncStorage.setItem('containerDecision', 'no');
@@ -183,31 +250,74 @@ const CartScreen = () => {
     }
   };
 
-
-
-
-
-
+  // Handle quantity increase for cart items
   const handleIncrease = async (item) => {
+    if (!item || !item.itemId) {
+      console.error("Invalid item data for quantity increase");
+      return;
+    }
+    
+    // Prevent multiple rapid clicks
+    if (loadingItems[item.itemId]) return;
+    
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await increaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-  };
-
-  const handleDecrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await decreaseCartItem(item);
-    setTimeout(() => {
+    
+    try {
+      await increaseCartItem(item);
+    } catch (error) {
+      console.error("Error increasing quantity:", error);
+      Alert.alert("Error", "Failed to increase quantity. Please try again.");
+    } finally {
       setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-    }, 5000);
+    }
   };
 
-  const handleRemove = async (item) => {
-    // console.log("removal item", item);
+  // Handle quantity decrease for cart items
+  const handleDecrease = async (item) => {
+    if (!item || !item.itemId) {
+      console.error("Invalid item data for quantity decrease");
+      return;
+    }
+    
+    // Prevent multiple rapid clicks
+    if (loadingItems[item.itemId]) return;
+    
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
+    
+    try {
+      // Check if quantity will be reduced to zero
+      const currentQuantity = cartItems[item.itemId] || item.cartQuantity || 0;
+      
+      if (currentQuantity <= 1) {
+        // Ask before removing the last item
+        handleRemove(item);
+      } else {
+        await decreaseCartItem(item);
+      }
+    } catch (error) {
+      console.error("Error decreasing quantity:", error);
+      Alert.alert("Error", "Failed to decrease quantity. Please try again.");
+    } finally {
+      // Use a reasonable timeout to prevent too many API calls
+      setTimeout(() => {
+        setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
+      }, 800);
+    }
+  };
 
+  // Handle item removal from cart
+  const handleRemove = async (item) => {
+    if (!item || !item.cartId) {
+      console.error("Invalid item data for removal", item);
+      return;
+    }
+
+    // Prevent multiple removal requests for same item
+    if (removalLoading[item.cartId]) return;
+    
     Alert.alert(
       "Remove Item",
-      "Are you sure you want to remove this item from your cart?",
+      `Are you sure you want to remove "${item.itemName || 'this item'}" from your cart?`,
       [
         {
           text: "Cancel",
@@ -222,12 +332,17 @@ const CartScreen = () => {
               [item.cartId]: true,
             }));
 
-            await removeCartItem(item);
-
-            setRemovalLoading((prevState) => ({
-              ...prevState,
-              [item.cartId]: false,
-            }));
+            try {
+              await removeCartItem(item);
+            } catch (error) {
+              console.error("Error removing item:", error);
+              Alert.alert("Error", "Failed to remove item. Please try again.");
+            } finally {
+              setRemovalLoading((prevState) => ({
+                ...prevState,
+                [item.cartId]: false,
+              }));
+            }
           },
         },
       ],
@@ -235,113 +350,158 @@ const CartScreen = () => {
     );
   };
 
-  const fetchCartData = async () => {
+  // Fetch cart data with rate limiting and retry logic
+  const fetchCartData = async (force = false) => {
+    // Input validation
+    if (!customerId || !token) {
+      console.error("Missing customer ID or token");
+      setError("Authentication error. Please login again.");
+      setLoading(false);
+      return;
+    }
+    
+    // Rate limiting to prevent excessive API calls
+    const now = Date.now();
+    if (!force && now - lastFetchTime < API_RATE_LIMIT) {
+      console.log("Rate limiting cart fetch");
+      return;
+    }
+    
+    setLastFetchTime(now);
     setLoading(true);
-    axios
-      .get(
-        BASE_URL +
-          `cart-service/cart/customersCartItems?customerId=${customerId}`,
+    
+    try {
+      const response = await axios.get(
+        `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 10000, // 10 second timeout
         }
-      )
+      );
 
-      .then((response) => {
-        console.log("cart api response",response);
-        
-        console.log("cart screen cart data", response.data);
-        setLoading(false);
-        const cartData = response?.data?.customerCartResponseList;
-        const weightArray = cartData?.map(item => item.weight);
-        console.log({weightArray})
-
-        if (!cartData || !Array.isArray(cartData)) {
-          setCartData([]);
-          setIsLimitedStock({});
-          setCartItems({});
-          return;
-        }
-        const cartItemsMap = cartData.reduce((acc, item) => {
-          if (
-            !item.itemId ||
-            item.cartQuantity === undefined ||
-            item.quantity === undefined
-          ) {
-            console.error("Invalid item in cartData:", item);
-            return acc;
-          }
-          acc[item.itemId] = item.cartQuantity;
-          return acc;
-        }, {});
-
-        const limitedStockMap = cartData.reduce((acc, item) => {
-          if (item.quantity === 0) {
-            acc[item.itemId] = "outOfStock";
-          } else if (item.quantity <= 5) {
-            acc[item.itemId] = "lowStock";
-          }
-          return acc;
-        }, {});
-
-        setError(null);
-
-        setCartData(cartData);
-        FreeContainerfunc(cartData)
-        // checkAndApplyOffers(cartData);
-        setCartItems(cartItemsMap);
-        setIsLimitedStock(limitedStockMap);
-        setLoading(false);
-        setLoadingItems((prevState) => ({
-          ...prevState,
-          [cartData.itemId]: false,
-        }));
-        return weightArray;
-      })
-      .catch((error) => {
-        console.log(error.response);
-        
-        setError("Failed to load cart data");
-        setLoading(false);
-      });
-  };
-
- // ✅ Accept cartData as a parameter
- function FreeContainerfunc(cartData) {
-  axios
-    .get(BASE_URL + `cart-service/cart/ContainerInterested/${customerId}`)
-    .then((response) => {
-      console.log("Cart API called successfully", response.data);
-
-      // Check if freeContainerStatus is "Interested" - if so, never show the alert
-      // if (response.data.freeContainerStatus === "Interested") {
-      //   console.log("User already interested in container, no alert will be shown.");
-      //   setModalVisible(false);
-      //   return;
-      // }
+      // Response validation
+      if (!response || !response.data) {
+        throw new Error("Invalid response from server");
+      }
       
-
-      // ✅ Ensure cartData is valid
-      if (!cartData || cartData.length === 0) {
-        console.log("Cart is empty, no alert triggered.");
+      console.log("Cart API response status:", response.status);
+      
+      const cartData = response?.data?.customerCartResponseList || [];
+      
+      // Reset API attempts on success
+      setApiAttempts(0);
+      
+      // Type checking for proper array
+      if (!Array.isArray(cartData)) {
+        console.error("Cart data is not an array:", cartData);
+        setCartData([]);
+        setIsLimitedStock({});
+        setCartItems({});
+        setLoading(false);
         return;
       }
+      
+      // Extract weights for container logic
+      const weightArray = cartData
+        .filter(item => item && item.weight !== undefined && item.weight !== null)
+        .map(item => item.weight);
+      
+      console.log("Cart item weights:", weightArray);
 
-      // Only proceed to show alerts if freeContainerStatus is null
-      if (response.data.freeContainerStatus === null) {
-        let has10kg = cartData.some(item => item.weight === 10);
-        let has26kg = cartData.some(item => item.weight === 26);
-        let has1kg = cartData.some(item => item.weight === 1);
-        // ✅ If the cart has more than 0 items, show alerts based on weight
-        if (cartData.length > 0) {
+      // Process cart items to map quantities and stock status
+      const cartItemsMap = cartData.reduce((acc, item) => {
+        // Skip invalid items
+        if (!item || !item.itemId || item.cartQuantity === undefined || item.quantity === undefined) {
+          console.error("Invalid item in cartData:", item);
+          return acc;
+        }
+        acc[item.itemId] = item.cartQuantity;
+        return acc;
+      }, {});
+
+      // Track items with limited stock
+      const limitedStockMap = cartData.reduce((acc, item) => {
+        if (!item) return acc;
+        
+        if (item.quantity === 0) {
+          acc[item.itemId] = "outOfStock";
+        } else if (item.quantity <= 5) {
+          acc[item.itemId] = "lowStock";
+        }
+        return acc;
+      }, {});
+
+      setError(null);
+      setCartData(cartData);
+      setCartItems(cartItemsMap);
+      setIsLimitedStock(limitedStockMap);
+      
+      // Check for container eligibility
+      checkContainerEligibility(cartData);
+      
+      // Calculate total
+      totalCart();
+      
+      return weightArray;
+    } catch (error) {
+      console.error("Cart fetch error:", error?.response?.data || error?.message || error);
+      
+      setError("Failed to load cart data. Please try again.");
+      
+      // Implement retry logic for transient errors
+      if (apiAttempts < MAX_API_ATTEMPTS) {
+        console.log(`Retrying cart fetch (${apiAttempts + 1}/${MAX_API_ATTEMPTS})...`);
+        setApiAttempts(apiAttempts + 1);
+        setTimeout(() => fetchCartData(true), 1000);
+      }
+    } finally {
+      setLoading(false);
+      setLoadingItems({});
+    }
+  };
+
+  // Check container eligibility based on cart items
+  function checkContainerEligibility(cartData) {
+    if (!customerId) {
+      console.error("Missing customer ID for container check");
+      return;
+    }
+    
+    // Handle empty cart case explicitly
+    if (!Array.isArray(cartData) || cartData.length === 0) {
+      console.log("Cart is empty, no container offer triggered");
+      return;
+    }
+    
+    // First check the container interest API
+    axios
+      .get(`${BASE_URL}cart-service/cart/ContainerInterested/${customerId}`)
+      .then((response) => {
+        console.log("Container interest API response:", response?.data);
+
+        // If user already made a container decision, respect it
+        // if (response?.data?.freeContainerStatus === "Interested") {
+        //   console.log("User already interested in container, no alert needed");
+        //   setModalVisible(false);
+        //   return;
+        // }
+        
+        // Container eligibility logic - only show if user hasn't decided yet
+        if (response?.data?.freeContainerStatus !== null) {
+          const validItems = cartData.filter(item => item && typeof item === 'object');
+          
+          // Check for specific weight items
+          const has10kg = validItems.some(item => Number(item.weight) === 10);
+          const has26kg = validItems.some(item => Number(item.weight) === 26);
+          const has1kg = validItems.some(item => Number(item.weight) === 1);
+          
           if (has10kg && has26kg) {
-            // Alert.alert("You have won a 26kg bag!");
-            setHasWeight("26kgs");
+            setHasWeight("26kgs"); // Prefer larger container when both exist
             setContainerAddedPrice(true);
             setModalVisible(true);
           } else if (has26kg) {
-            // Alert.alert("You have a 26kg bag");
             setHasWeight("26kgs");
             setContainerAddedPrice(true);
             setModalVisible(true);
@@ -349,274 +509,171 @@ const CartScreen = () => {
             setHasWeight("10kgs");
             setContainerAddedPrice(true);
             setModalVisible(true);
-          }else if (has1kg){
-            const oneKgBags = cartData.filter(
-              item => parseFloat(item.weight?.toString() || "0") === 1
-            );
-            const anyOneKgHasTwoOrMore = oneKgBags.some(
-              item => item.cartQuantity >= 2
-            );
-    
-            let offeravail = 0;
-    
-            axios
-              .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
-              .then((response) => {
-                console.log("One kg offer API response", response.data);
-                if (response.data) {
-                  offeravail = response.data.cartQuantity;
-                } 
-              })
-            
-            if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
-              setShowOffer(true);
-            }
-    
-            if (has1kg) {
-              console.log("1kg Bags in Cart:");
-              oneKgBags.forEach(bag => {
-                console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
-              });
-            }
+          }else if (has1kg) {
+
+          // Check for 1kg special offer
+          checkOneKgOfferEligibility(validItems, has1kg);
           }
-          // else {
-          //   Alert.alert("No eligible bag found");
-          // }
+        } else {
+          // Even if container status is set, still check 1kg offers
+          const validItems = cartData.filter(item => item && typeof item === 'object');
+          const has1kg = validItems.some(item => Number(item.weight) === 1);
+          
+          checkOneKgOfferEligibility(validItems, has1kg);
         }
-      } else {
-        console.log("User container status is not null or 'Interested', no alert triggered.");
-        setModalVisible(false);
-        let has1kg = cartData.some(item => item.weight === 1);
-        console.log("has1kg", has1kg);
-        const oneKgBags = cartData.filter(
-          item => parseFloat(item.weight?.toString() || "0") === 1
-        );
-        const anyOneKgHasTwoOrMore = oneKgBags.some(
-          item => item.cartQuantity >= 2
-        );
-
-        let offeravail = 0;
-
-        axios
-          .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
-          .then((response) => {
-            console.log("One kg offer API response", response.data);
-            if (response.data) {
-              offeravail = response.data.cartQuantity;
-            } 
-          })
-          console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
-        if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
-          setShowOffer(true);
-        }
-
-        if (has1kg) {
-          console.log("1kg Bags in Cart:");
-          oneKgBags.forEach(bag => {
-            console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
-          });
-        }
+      })
+      .catch((error) => {
+        console.error("Error checking container interest:", error?.response?.data || error?.message || error);
         
-        console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
-        
-      }
-    })
-    .catch((error) => {
-      console.log("Error fetching cart data:", error.response);
-      let has1kg = cartData.some(item => item.weight === 1);
-        console.log("has1kg", has1kg);
-        const oneKgBags = cartData.filter(
-          item => parseFloat(item.weight?.toString() || "0") === 1
-        );
-        const anyOneKgHasTwoOrMore = oneKgBags.some(
-          item => item.cartQuantity >= 2
-        );
-     let offeravail = 0;
-        axios
-        .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
-        .then((response) => {
-          console.log("One kg offer API response", response.data);
-          if (response.data) {
-            offeravail = response.data.cartQuantity;
-          } 
-        })
-        console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
-        
-        if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
-          setShowOffer(true);
-        }
+        // Fallback to local logic if API fails
+        const validItems = cartData.filter(item => item && typeof item === 'object');
+        const has1kg = validItems.some(item => Number(item.weight) === 1);
+        checkOneKgOfferEligibility(validItems, has1kg);
+      });
+  }
 
-        if (has1kg) {
-          console.log("1kg Bags in Cart:");
-          oneKgBags.forEach(bag => {
-            console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
-          });
-        }
-        
-        console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
-    });
-}
-
-
-const handleAddCheapest1kgBag = async () => {
-  try {
-    // 1. Filter all 1kg bags
-    const oneKgBags = cartData.filter(
-      item => parseFloat(item.weight?.toString() || "0") === 1
-    );
-
-    if (oneKgBags.length === 0) {
-      // message.info("No 1kg bag found in the cart.");
+  // Check eligibility for 1kg special offer
+  function checkOneKgOfferEligibility(cartItems, has1kg) {
+    // Handle empty cart case explicitly
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+      console.log("Cart is empty, no 1kg offer triggered");
       return;
     }
 
-    // 2. Find the one with the lowest itemPrice
-    const cheapestBag = oneKgBags.reduce((min, curr) =>
-      parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
+    if (!has1kg || !customerId) return;
+
+    console.log("Checking 1kg offer eligibility...");
+    
+    // Find 1kg items and check if any already have quantity >= 2
+    const oneKgBags = cartItems.filter(
+      item => item && Number(item.weight) === 1
+    );
+    
+    const anyOneKgHasTwoOrMore = oneKgBags.some(
+      item => item.cartQuantity >= 2
     );
 
-    const currentQuantity = cartItems[cheapestBag.itemId] || 0;
-    const newQuantity = currentQuantity + 1;
-
-    // 3. Call API to increase quantity
-    await axios.patch(
-      `${BASE_URL}cart-service/cart/incrementCartData`,
-      {
-        cartQuantity: newQuantity,
-        customerId,
-        itemId: cheapestBag.itemId,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    setShowOffer(false)
-    // message.success(`Added 1 more of ${cheapestBag.itemName}`);
-    await fetchCartData(); // refresh cart
-  } catch (error) {
-    console.error("Failed to add 1kg item:", error);
-    // setShowOffer(false)
-    // message.error("Could not update the cart.");
+    // Check offer API for eligibility
+    axios
+      .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
+      .then((response) => {
+        
+        // Show offer if eligible and no item already has quantity >= 2
+        if (response?.data && response?.data.cartQuantity < 2 && !anyOneKgHasTwoOrMore) {
+          setShowOffer(true);
+        } else {
+          setShowOffer(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error checking 1kg offer:", error?.response?.data || error?.message || error);
+        setShowOffer(false);
+      });
   }
-};
 
+  // Handle adding cheapest 1kg bag for promotion
+  const handleAddCheapest1kgBag = async () => {
+    if (!customerId || !token) {
+      Alert.alert("Error", "Authentication required. Please login again.");
+      return;
+    }
+    
+    try {
+      // Filter all 1kg bags
+      const oneKgBags = (cartData || []).filter(
+        item => item && Number(item.weight) === 1
+      );
 
-// const checkAndApplyOffers = async (cartData) => {
-//   if (!cartData || cartData.length === 0) return;
+      if (oneKgBags.length === 0) {
+        Alert.alert("Error", "No 1kg bag found in your cart");
+        setShowOffer(false);
+        return;
+      }
 
-//   const alreadyApplied = await AsyncStorage.getItem('offersApplied');
-//   if (alreadyApplied === 'true') {
-//     console.log("⏭️ Offers already applied, skipping.");
-//     return;
-//   }
+      // Find the one with the lowest price
+      const cheapestBag = oneKgBags.reduce((min, curr) =>
+        (!min || (Number(curr.itemPrice) < Number(min.itemPrice))) ? curr : min
+      );
 
-//   let containerStatus = null;
-//   let oneKgEligible = false;
+      if (!cheapestBag || !cheapestBag.itemId) {
+        Alert.alert("Error", "Could not identify eligible bag");
+        return;
+      }
 
-//   const has10kg = cartData.some(item => item.weight === 10);
-//   const has26kg = cartData.some(item => item.weight === 26);
-//   const containerExists = cartData.some(item =>
-//     item.itemId === CONTAINER_TYPES.LARGE.id ||
-//     item.itemId === CONTAINER_TYPES.SMALL.id
-//   );
+      const currentQuantity = cartItems[cheapestBag.itemId] || cheapestBag.cartQuantity || 0;
+      const newQuantity = currentQuantity + 1;
 
-//   try {
-//     const [containerRes, oneKgRes] = await Promise.all([
-//       axios.get(`${BASE_URL}cart-service/cart/ContainerInterested/${customerId}`),
-//       axios.get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
-//     ]);
-
-//     containerStatus = containerRes.data?.freeContainerStatus;
-//     oneKgEligible = oneKgRes.data?.eligible === true;
-//   } catch (error) {
-//     console.log("⚠️ Offer API error, falling back to local logic.");
-//     containerStatus = null;
-//     oneKgEligible = cartData.some(item => item.weight === 1);
-//   }
-
-//   let offerApplied = false;
-
-//   if (!containerExists && containerStatus === null && (has10kg || has26kg)) {
-//     const containerId = has26kg ? CONTAINER_TYPES.LARGE.id : CONTAINER_TYPES.SMALL.id;
-
-//     try {
-//       await axios.post(
-//         `${BASE_URL}cart-service/cart/add_Items_ToCart`,
-//         { customerId, itemId: containerId },
-//         { headers: { Authorization: `Bearer ${token}` } }
-//       );
-//       console.log("✅ Container added");
-//       offerApplied = true;
-//     } catch (err) {
-//       console.log("❌ Failed to add container");
-//     }
-//   }
-
-//   if (oneKgEligible) {
-//     const oneKgItems = cartData
-//       .filter(item => item.weight === 1)
-//       .sort((a, b) => a.itemPrice - b.itemPrice);
-
-//     if (oneKgItems.length > 0) {
-//       const cheapest1kgItem = oneKgItems[0];
-//       try {
-//         await axios.patch(
-//           `${BASE_URL}cart-service/cart/incrementCartData`,
-//           { customerId, itemId: cheapest1kgItem.itemId },
-//           { headers: { Authorization: `Bearer ${token}` } }
-//         );
-//         console.log("✅ 1kg quantity increased");
-//         offerApplied = true;
-//       } catch (err) {
-//         console.log("❌ Failed to increase 1kg");
-//       }
-//     }
-//   }
-
-//   if (offerApplied) {
-//     await AsyncStorage.setItem('offersApplied', 'true');
-
-//     setBannerMessage("🎁 Offers Applied Successfully!");
-//     setShowBanner(true);
-//     setTimeout(() => {
-//       setShowBanner(false);
-//       setBannerMessage("");
-//     }, 3000);
-//   }
-
-//   fetchCartData();
-//   totalCart();
-// };
-
-
-useFocusEffect(
-  useCallback(() => {
-    fetchCartData();
-    totalCart();
-  }, [])
-);
-
-
-  const onRefresh = () => {
-    fetchCartData();
-    totalCart();
-    FreeContainerfunc()
+      // Call API to increase quantity
+      const response = await axios.patch(
+        `${BASE_URL}cart-service/cart/incrementCartData`,
+        {
+          cartQuantity: newQuantity,
+          customerId,
+          itemId: cheapestBag.itemId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      
+      if (response?.status === 200) {
+        setShowOffer(false);
+        Alert.alert("Success", `Added 1 more ${cheapestBag.itemName} to your cart!`);
+        await fetchCartData(true); // Force refresh cart
+      } else {
+        throw new Error("Unexpected response status");
+      }
+    } catch (error) {
+      console.error("Failed to add 1kg item:", error?.response?.data || error?.message || error);
+      Alert.alert("Error", "Could not update the cart. Please try again.");
+      setShowOffer(false);
+    }
   };
 
+  // Set up effect to refresh cart when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchCartData();
+      totalCart();
+      
+      // Check for deactivated account status
+      handleDeactivateStatus();
+      
+      return () => {
+        // Clean up any pending operations
+        setLoading(false);
+        setLoadingItems({});
+        setRemovalLoading({});
+      };
+    }, [customerId, token])
+  );
+
+  // Handle refresh action
+  const onRefresh = useCallback(() => {
+    fetchCartData(true);
+    totalCart();
+  }, [customerId, token]);
+
+  // Check user profile completeness
   const getProfile = async () => {
+    if (!customerId) {
+      Alert.alert("Error", "User ID not found. Please log in again.");
+      return false;
+    }
+    
     try {
       const response = await axios.get(
         `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`
       );
 
-      if (response.status === 200) {
-        if (!response.data.firstName) {
+      if (response?.status === 200) {
+        if (!response.data?.firstName) {
           Alert.alert(
             "Incomplete Profile",
-            "Please fill out your profile to proceed.",
+            "Please fill out your profile details to proceed with checkout.",
             [
               {
                 text: "OK",
@@ -626,22 +683,28 @@ useFocusEffect(
           );
           return false;
         }
-
         return true;
       } else {
-        console.log("Unexpected response status:", response.status);
+        console.error("Unexpected profile response status:", response?.status);
         return false;
       }
     } catch (error) {
-      console.error("Profile error:", error?.response || error);
+      console.error("Profile error:", error?.response?.data || error?.message || error);
+      Alert.alert("Error", "Could not verify your profile. Please try again.");
       return false;
     }
   };
 
+  // Calculate cart total
   const totalCart = async () => {
+    if (!customerId || !token) {
+      console.error("Missing credentials for totalCart");
+      return;
+    }
+    
     try {
       const response = await axios({
-        url: BASE_URL + "cart-service/cart/cartItemData",
+        url: `${BASE_URL}cart-service/cart/cartItemData`,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -650,22 +713,56 @@ useFocusEffect(
         data: {
           customerId: customerId,
         },
+        timeout: 5000,
       });
 
-      setGrandTotal(response.data.totalSum);
+      if (response?.data?.totalSum !== undefined) {
+        // console.log("Total sum response:", response.data);
+        setGrandTotal(Number(response.data.totalSum));
+      } else {
+        console.error("Invalid total sum in response:", response?.data);
+        // Calculate total manually as fallback
+        if (Array.isArray(cartData) && cartData.length > 0) {
+          const calculatedTotal = cartData.reduce((total, item) => {
+            if (!item || !item.itemPrice || !item.cartQuantity) return total;
+            return total + (Number(item.itemPrice) * Number(item.cartQuantity));
+          }, 0);
+          setGrandTotal(calculatedTotal);
+        } else {
+          setGrandTotal(0);
+        }
+      }
     } catch (error) {
-      setError("Failed to fetch cart data");
+      console.error("Total calculation error:", error?.response?.data || error?.message || error);
+      setError("Failed to calculate cart total");
+      
+      // Fallback to manual calculation
+      if (Array.isArray(cartData) && cartData.length > 0) {
+        const calculatedTotal = cartData.reduce((total, item) => {
+          if (!item || !item.itemPrice || !item.cartQuantity) return total;
+          return total + (Number(item.itemPrice) * Number(item.cartQuantity));
+        }, 0);
+        setGrandTotal(calculatedTotal);
+      }
     }
   };
 
+  // Navigate to item details
   const handleImagePress = (item) => {
-    navigation.navigate("ItemDetails", { item });
+    if (!item) return;
+    navigation.navigate("Item Details", { item });
   };
 
+  // Increase item quantity in cart
   const increaseCartItem = async (item) => {
+    if (!item || !item.itemId || !customerId || !token) {
+      console.error("Missing data for quantity increase");
+      return;
+    }
+    
     try {
       const response = await axios.patch(
-        BASE_URL + `cart-service/cart/incrementCartData`,
+        `${BASE_URL}cart-service/cart/incrementCartData`,
         {
           customerId: customerId,
           itemId: item.itemId,
@@ -673,51 +770,73 @@ useFocusEffect(
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
           },
         }
       );
-      // console.log("response after increment", response);
-
+      
+      if (response?.status !== 200) {
+        throw new Error(`Unexpected response status: ${response?.status}`);
+      }
+      
       fetchCartData();
       totalCart();
-      setLoading(false);
-    } catch (err) {}
-  };
-
-  const decreaseCartItem = async (item) => {
-    try {
-      if (cartItems[item.itemId] > 1) {
-        const response = await axios.patch(
-          BASE_URL + "cart-service/cart/decrementCartData",
-          {
-            customerId: customerId,
-            itemId: item.itemId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        // console.log("response after decrement", response.data);
-
-        fetchCartData();
-        totalCart();
-        setLoading(false);
-      } else {
-        handleRemove(item);
-      }
-    } catch (error) {
-      console.log(error.response);
+    } catch (err) {
+      console.error("Error increasing quantity:", err?.response?.data || err?.message || err);
+      throw err; // Let the caller handle the error
     }
   };
 
+  // Decrease item quantity in cart
+  const decreaseCartItem = async (item) => {
+    if (!item || !item.itemId || !customerId || !token) {
+      console.error("Missing data for quantity decrease");
+      return;
+    }
+    
+    try {
+      // Check if we're removing the last item
+      if ((cartItems[item.itemId] || item.cartQuantity || 0) <= 1) {
+        handleRemove(item);
+        return;
+      }
+      
+      const response = await axios.patch(
+        `${BASE_URL}cart-service/cart/decrementCartData`,
+        {
+          customerId: customerId,
+          itemId: item.itemId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      
+      if (response?.status !== 200) {
+        throw new Error(`Unexpected response status: ${response?.status}`);
+      }
+      
+      fetchCartData();
+      totalCart();
+    } catch (error) {
+      console.error("Error decreasing quantity:", error?.response?.data || error?.message || error);
+      throw error; // Let the caller handle the error
+    }
+  };
+
+  // Remove item from cart
   const removeCartItem = async (item) => {
-    console.log("item to remove", item.cartId);
+    if (!item || !item.cartId || !token) {
+      console.error("Missing data for item removal", item);
+      return;
+    }
+    
     try {
       const response = await axios.delete(
-        BASE_URL + "cart-service/cart/remove",
+        `${BASE_URL}cart-service/cart/remove`,
         {
           data: {
             id: item.cartId,
@@ -729,77 +848,107 @@ useFocusEffect(
         }
       );
 
-      console.log("Item",item.itemId)
-      console.log("removal response",response);
-      
-      // if(item.itemId= (containerAddedPrice?hasWeight=="26kgs"?CONTAINER_TYPES.LARGE.id:CONTAINER_TYPES.SMALL.id:0)){
-      //   console.log(containerAddedPrice?hasWeight=="26kgs"?CONTAINER_TYPES.LARGE.id:CONTAINER_TYPES.SMALL.id:0)
-      //   setContainerAddedPrice(false)
-      //   setModalVisible(false)
-      // }
-
-      const containerLargeId = CONTAINER_TYPES.LARGE.id;
-    const containerSmallId = CONTAINER_TYPES.SMALL.id;
-    
-    if(item.itemId === containerLargeId || item.itemId === containerSmallId) {
-      // Reset container decision when container is removed
-      setContainerDecision(null);
-      setContainerAddedPrice(false);
-      
-      try {
-        await AsyncStorage.removeItem('containerDecision');
-        console.log("Container decision reset");
-      } catch (error) {
-        console.log("Error resetting container decision:", error);
+      if (response?.status !== 200) {
+        throw new Error(`Unexpected response status: ${response?.status}`);
       }
-    }
-    
+      
+      console.log("Item removal response:", response?.data);
+      
+      // Reset container decision if a container was removed
+      const containerLargeId = CONTAINER_TYPES.LARGE.id;
+      const containerSmallId = CONTAINER_TYPES.SMALL.id;
+      
+      if (item.itemId === containerLargeId || item.itemId === containerSmallId) {
+        setContainerDecision(null);
+        setContainerAddedPrice(false);
+        
+        try {
+          await AsyncStorage.removeItem('containerDecision');
+          console.log("Container decision reset");
+        } catch (error) {
+          console.log("Error resetting container decision:", error);
+        }
+      }
+      
       fetchCartData();
       totalCart();
-
-      
     } catch (error) {
-      console.error("Error removing cart item:", error.response);
+      console.error("Error removing cart item:", error?.response?.data || error?.message || error);
+      throw error; // Let the caller handle the error
     }
   };
 
+  // Check if account is deactivated
   const handleDeactivateStatus = async () => {
-    const reactivate = await AsyncStorage.getItem("deactivate");
-    if (reactivate == "false") {
-      Alert.alert(
-        "Deactivated",
-        "Your account is deactivated, Are you want to reactivate your account to continue?",
-        [
-          { text: "Yes", onPress: () => navigation.navigate("Write To Us") },
-          { text: "No" },
-        ]
-      );
+    try {
+      const reactivate = await AsyncStorage.getItem("deactivate");
+      if (reactivate === "false") {
+        Alert.alert(
+          "Deactivated Account",
+          "Your account is currently deactivated. Would you like to reactivate it to continue?",
+          [
+            { 
+              text: "Yes", 
+              onPress: () => navigation.navigate("Write To Us") 
+            },
+            { 
+              text: "No",
+              style: "cancel" 
+            },
+          ],
+          { cancelable: false }
+        );
+      }
+    } catch (error) {
+      console.error("Error checking account status:", error);
     }
   };
 
-  const handleOrderConfirmation = () => {
-    const zeroQuantityItems = cartData
-      .filter((item) => item.quantity === 0)
-      .map((item) => item.itemName);
-
-    if (zeroQuantityItems.length > 0) {
-      const itemNames = zeroQuantityItems.join(", ");
-      Alert.alert(
-        "Sorry for the inconvenience",
-        `We noticed that the following items in your cart have zero quantity: ${itemNames}. 
-        
-           Please update or remove them before proceeding with your order.`,
-        [{ text: "OK", onPress: () => navigation.navigate("CartScreen") }]
-      );
-      return;
-    } else if (!validateCartBeforeCheckout) {
-      return;
-    } else {
-      placeOrder();
+  // Validate cart before proceeding to checkout
+  const validateCartBeforeCheckout = () => {
+    if (!Array.isArray(cartData) || cartData.length === 0) {
+      Alert.alert("Empty Cart", "Please add items to your cart before checking out.");
+      return false;
     }
+    
+    // Check for out-of-stock items
+    const outOfStockItems = cartData.filter(item => 
+      item && isLimitedStock[item.itemId] === "outOfStock"
+    );
+
+    if (outOfStockItems.length > 0) {
+      const itemNames = outOfStockItems.map(item => item.itemName).join(", ");
+      Alert.alert(
+        "Out of Stock Items",
+        `The following items are out of stock: ${itemNames}. Please remove them before proceeding.`,
+        [{ text: "OK" }]
+      );
+      return false;
+    }
+    
+    // Check for items with too low stock
+    const tooManyItems = cartData.filter(item => 
+      item && item.cartQuantity > item.quantity
+    );
+    
+    if (tooManyItems.length > 0) {
+      const itemNames = tooManyItems.map(item => 
+        `${item.itemName} (requested: ${item.cartQuantity}, available: ${item.quantity})`
+      ).join(", ");
+      
+      Alert.alert(
+        "Limited Stock",
+        `The following items have limited stock: ${itemNames}. Please update quantities before proceeding.`,
+        [{ text: "OK" }]
+      );
+      return false;
+    }
+    
+    return true;
   };
 
-  const handleProfileCheck = async () => {
+  // Handle checkout process
+  const handleCheckout = async () => {
     const profile = await getProfile();
 
     if (!profile) {
@@ -861,813 +1010,707 @@ useFocusEffect(
     });
   };
 
-  return (
-    <View
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
-      }
-    >
-    {/* <Text>sdhgv</Text> */}
-      {loading ? (
-        <ActivityIndicator size="large" color="#9333ea" />
-      ) : error ? (
-        <Text style={styles.error}>{error}</Text>
-      ) : cartData && cartData.length > 0 ? (
-        <FlatList
-          data={cartData}
-          keyExtractor={(item) => item.itemId.toString()}
-          renderItem={({ item }) => (
-            <View
-              style={[
-                styles.cartItem,
-                item.quantity === 0 && styles.outOfStockCard,
-              ]}
-               keyboardShouldPersistTaps="always"
-            >
-              {isLimitedStock[item.itemId] == "lowStock" && (
-                <View style={styles.limitedStockBadge}>
-                  <Text style={styles.limitedStockText}>
-                    {item.quantity > 1
-                      ? `${item.quantity} items left`
-                      : `${item.quantity} item left`}
-                  </Text>
-                </View>
-              )}
-              {isLimitedStock[item.itemId] === "outOfStock" && (
-                <View style={styles.outOfStockContainer}>
-                  <Text style={styles.outOfStockText}>Out of Stock</Text>
-
-                  <TouchableOpacity
-                    onPress={() => handleRemove(item)}
-                    style={styles.removeButton}
-                  >
-                    <Text style={styles.removeText}>Please remove it</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {removalLoading[item.cartId] ? (
-                <View style={[styles.cartItem, styles.removalLoader]}>
-                  <ActivityIndicator size="large" color="#ecb01e" />
-                  <Text style={styles.removingText}>
-                    Removing {item.itemName}...
-                  </Text>
-                </View>
-              ) : (
-                <>
-                  {item.itemQuantity === 1 && (
-                    <Text style={styles.noteText}>
-                      Note: Only one free sample is allowed per user.
-                    </Text>
-                  )}
-                  <View style={{ flexDirection: "row" }}>
-                    <View>
-                      <Image
-                        source={{ uri: item.image }}
-                        style={styles.itemImage}
-                        onError={() => console.log("Failed to load image")}
-                      />
-                    </View>
-                    <View>
-                      <View style={styles.itemDetails}>
-                        <Text style={styles.itemName}>{item.itemName}</Text>
-                        <View style={styles.priceContainer}>
-                          <Text style={[styles.itemPrice, styles.crossedPrice]}>
-                            MRP: ₹{item.priceMrp}
-                          </Text>
-                          <Text style={[styles.itemPrice, styles.boldPrice]}>
-                            ₹{item.itemPrice}
-                          </Text>
-                        </View>
-                        <Text style={{ marginTop: 5 }}>
-                          (
-                          {Math.round(
-                            ((item.priceMrp - item.itemPrice) / item.priceMrp) *
-                              100
-                          )}
-                          % OFF)
-                        </Text>
-                        <Text style={styles.itemWeight}>
-  Weight: {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
-</Text>
-                        {isLimitedStock[item.itemId] !== "outOfStock" && (
-                          <View style={styles.quantityContainer}>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleDecrease(item)}
-                              disabled={loadingItems[item.itemId]}
-                            >
-                              <Text style={styles.buttonText}>-</Text>
-                            </TouchableOpacity>
-                            {loadingItems[item.itemId] ? (
-                              <ActivityIndicator
-                                size="small"
-                                color="#000"
-                                style={styles.loader}
-                              />
-                            ) : (
-                              <Text style={styles.quantityText}>
-                                {cartItems[item.itemId] || item.cartQuantity}
-                              </Text>
-                            )}
-                              {item.itemPrice==1 ?(
-                                                   <View
-                                                   style={styles.quantityButton1}
-                                                   // onPress={() => incrementQuantity(item)}
-                                                   onPress={() => handleIncrease(item)}
-                                                   disabled={loadingItems[item.itemId]}
-                                                 >
-                                                   <Text style={styles.quantityButtonText}>+</Text>
-                                                 </View>
-                                                ):(
-                            <TouchableOpacity
-                              style={[
-                                styles.quantityButton,
-                                cartItems[item.itemId] === item.quantity &&
-                                  styles.disabledButton,
-                              ]}
-                              onPress={() => handleIncrease(item)}
-                              disabled={
-                                loadingItems[item.itemId] ||
-                                cartItems[item.itemId] === item.quantity
-                              }
-                            >
-                              <Text style={styles.buttonText}>+</Text>
-                            </TouchableOpacity>)}
-
-                            <Text style={styles.itemTotal}>
-                              {/* Total: */}₹
-                              {(
-                                item.itemPrice *
-                                (cartItems[item.itemId] || item.cartQuantity)
-                              ).toFixed(2)}
-                            </Text>
-                          </View>
-                        )}
-                        {isLimitedStock[item.itemId] !== "outOfStock" && (
-                          <TouchableOpacity
-                            style={{ marginLeft: 100 }}
-                            onPress={() => handleRemove(item)}
-                          >
-                            <MaterialIcons
-                              name="delete"
-                              size={23}
-                              color="#FF0000"
-                            />
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                </>
-              )}
-            </View>
-          )}
-          contentContainerStyle={styles.flatListContent}
-          showsVerticalScrollIndicator={false}
-          showsHorizontalScrollIndicator={false}
+  // Empty cart component
+  const EmptyCartComponent = () => {
+    return (
+      <View style={styles.emptyCartContainer}> 
+      {/* <MaterialIcons
+                  name="shopping-cart"
+                  size={80}
+                  color="#A9A9A9"
+                  style={styles.emptyCartImage}
+                /> */}
+      <View style={styles.emptyCartView}>
+        <LottieView 
+          source={require("../../../../assets/emptyLoading.json")}
+          autoPlay
+          loop
+          style={styles.emptyCartImage}
         />
-      ) : (
-        <View style={styles.card}>
-          <MaterialIcons
-            name="shopping-cart"
-            size={80}
-            color="#A9A9A9"
-            style={styles.icon}
-          />
-          <Text style={{ fontSize: 18, color: "#333", marginBottom: 20 }}>
-            Your cart is empty
-          </Text>
-          <TouchableOpacity
-            style={styles.browseButton}
-            onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
-          >
-            <Text style={styles.browseButtonText}>Browse Items</Text>
-          </TouchableOpacity>
         </View>
-      )}
-      {cartData && cartData.length > 0 && (
-        <>
-         
-
-{/* <View style={styles.totalContainer}>
-  {containerAddedPrice && containerDecision === 'yes' && (
-    <>
-      <Text style={styles.totalText}>Sub Total: ₹{grandTotal + (containerAddedPrice && containerDecision === 'yes' ? (hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price) : 0)}</Text>
-    <Text style={styles.totalText}>Container Price: - ₹{(hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price)}</Text>
-  </>
-  )}
-  <Text style={styles.totalText}>Grand Total: ₹{grandTotal}</Text>
-</View> */}
-
-<View style={styles.totalContainer}>
-  {containerAddedPrice && containerDecision === 'yes' && (
-    <>
-      <View style={styles.row}>
-        <Text style={styles.label}>Sub Total:</Text>
-        <Text style={styles.value}>₹{grandTotal + (hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price)}</Text>
+        <Text style={styles.emptyCartText}>Your cart is empty</Text>
+        <TouchableOpacity
+          style={styles.shopNowButton}
+          onPress={() => navigation.navigate("Rice Products", {
+            screen: "Rice Products",
+            category: "All CATEGORIES",
+          })}
+        >
+          <Text style={styles.shopNowButtonText}>Shop Now</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.row}>
-        <Text style={styles.label}>Container Price:</Text>
-        <Text style={styles.discountValue}>-₹{(hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.Price : CONTAINER_TYPES.SMALL.Price)}</Text>
+    );
+  };
+
+  // Loading component
+  const LoadingComponent = () => {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading your cart...</Text>
       </View>
-      <View style={styles.divider} />
-    </>
-  )}
-  <View style={styles.grandTotalRow}>
-    <Text style={styles.grandTotalLabel}>Grand Total:</Text>
-    <Text style={styles.grandTotalValue}>₹{grandTotal}</Text>
-  </View>
-</View>
+    );
+  };
 
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
-            >
-              <Text style={styles.actionButtonText}>Add More</Text>
-            </TouchableOpacity>
+  // Item stock indicator
+  const StockIndicator = ({ itemId }) => {
+    const stockStatus = isLimitedStock[itemId];
+    
+    if (!stockStatus) return null;
+    
+    return (
+      <View 
+        style={[
+          styles.stockIndicator, 
+          stockStatus === "outOfStock" ? styles.outOfStock : styles.lowStock
+        ]}
+      >
+        <Text style={styles.stockIndicatorText}>
+          {stockStatus === "outOfStock" ? "Out of Stock" : "Low Stock"}
+        </Text>
+      </View>
+    );
+  };
 
-            <TouchableOpacity
-              style={styles.checkoutButton}
-              onPress={handleProfileCheck}
-            >
-              <Text style={styles.actionButtonText}>Checkout</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
 
-{/* Modal to display the free container */}
-<Modal
+  // Offer Modal for 1kg promotion
+  const OneKgOfferModal = () => {
+    return (
+      <Modal
         animationType="fade"
         transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        visible={showOffer}
+        onRequestClose={() => setShowOffer(false)}
       >
-        <View style={styles.modalContainer}>
-          {/* Animated Alert Box */}
-          <Animated.View
-            style={[
-              styles.modalContent,
-              {
-                transform: [{ scale: scaleValue }], // Apply zoom-in animation
-              },
-            ]}
-          >
-            <Text style={styles.congratsText}>🎉 Congratulations! 🎉</Text>
-            <Text style={styles.messageText}>You’ve Won a {hasWeight==="26kgs"?"26kgs":"10kgs"} Container for FREE!</Text>
-
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>How to Earn Ownership:</Text>
-            </View>
-            
-            <View style={styles.planContainer}>
-              <Text style={styles.planTitle}>Plan A:</Text>
-              <Text style={styles.planDescription}>
-                Buy 9 bags during the next 3 years, and the container is yours forever.
-              </Text>
-            </View>
-            
-            <View style={styles.orContainer}>
-              <View style={styles.divider} />
-              <Text style={styles.orText}>OR</Text>
-              <View style={styles.divider} />
-            </View>
-            
-            <View style={styles.planContainer}>
-              <Text style={styles.planTitle}>Plan B:</Text>
-              <Text style={styles.planDescription}>
-                Refer 9 people, and when they buy their first bag, the container is yours forever.
-              </Text>
-            </View>
-            
-            <Text style={styles.questionText}>Do you own it?</Text>
-
-            {/* Buttons */}
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.buttonYes} onPress={handleYes}>
-                <Text style={styles.buttonText}>Yes, I’m Interested!</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.buttonNo} onPress={handleNo}>
-                <Text style={styles.buttonText}>No, Thanks</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Show Code */}
-            {/* {showCode && (
-              <Text style={styles.codeText}>Your Code: FREECON26</Text>
-            )} */}
-          </Animated.View>
-        </View>
+        <TouchableWithoutFeedback onPress={() => setShowOffer(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.offerModalContainer}>
+                <View style={styles.offerModalHeader}>
+                  <Text style={styles.offerModalTitle}>Special Offer!</Text>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setShowOffer(false)}
+                  >
+                    <MaterialIcons name="close" size={24} color="#000" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.offerModalBody}>
+                  <Image
+                    source={require("../../../../assets/offer.png")}
+                    style={styles.offerImage}
+                    resizeMode="contain"
+                  />
+                  
+                  <Text style={styles.offerModalText}>
+                  Buy 1kg and Get 1kg Absolutely FREE! 🛍
+                  </Text>
+                  <Text style={styles.noteText}><Text style={{fontWeight:"bold"}}>📍 Note:</Text>
+                    The 1kg + 1kg Free Offer is valid only once per user and applies exclusively to 1kg rice bags.
+                    This offer can only be redeemed once per address and is applicable on the first successful delivery only.
+                    Once claimed, it cannot be reused. Grab it while it lasts!</Text>
+                    <Text style={styles.noteText}>📍 గమనిక: 1+1 కేజీ రైస్ ఆఫర్ ఒకే చిరునామాకు ఒక్కసారి మాత్రమే — మొదటి విజయవంతమైన డెలివరీకి మాత్రమే వర్తిస్తుంది.
+                  </Text>
+                </View>
+                
+                <View style={styles.offerModalFooter}>
+                  <TouchableOpacity
+                    style={[styles.offerModalButton, styles.offerCancelButton]}
+                    onPress={() => setShowOffer(false)}
+                  >
+                    <Text style={styles.offerButtonTextCancel}>No, Thanks</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.offerModalButton, styles.offerConfirmButton]}
+                    onPress={handleAddCheapest1kgBag}
+                  >
+                    <Text style={styles.offerButtonTextConfirm}>Add One More</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
+    );
+  };
 
-
-      <Modal
-      visible={showOffer}
-      transparent
-      animationType="fade"
-      onRequestClose={()=>setShowOffer(false)}
-      onDismiss={() => {
-        scaleValue.setValue(100); 
-      }}
-    >
-      <View style={styles.modalContainer} pointerEvents="auto">
-      <Animated.View
-        style={[
-          styles.modalContent,
-          {
-            transform: [{ scale: scaleValue }],
-          },
-        ]}
-        pointerEvents="auto"
-      >
-          <Text style={styles.offerTitle}>🎁 Special Offer!</Text>
-          <Text style={styles.offerText}>
-            Buy 1kg and Get 1kg Absolutely FREE! 🛍
+  // Render individual cart item
+  const renderItem = ({ item }) => {
+    // Guard against invalid items
+    if (!item || !item.itemId || !item.itemName) {
+      console.error("Invalid item data:", item);
+      return null;
+    }
+    
+    const isLoading = loadingItems[item.itemId] || false;
+    const isRemoving = removalLoading[item.cartId] || false;
+    const isOutOfStock = isLimitedStock[item.itemId] === "outOfStock";
+    const isLowStock = isLimitedStock[item.itemId] === "lowStock";
+    
+    return (
+      <View style={styles.itemContainer}>
+        <TouchableOpacity
+          onPress={() => handleImagePress(item)}
+          disabled={isOutOfStock}
+          style={[styles.itemImageContainer, isOutOfStock && styles.disabledItem]}
+        >
+          <Image
+            source={{ uri: item.image || "https://via.placeholder.com/150" }}
+            style={styles.itemImage}
+            resizeMode="cover"
+            defaultSource={{ uri: "https://via.placeholder.com/150" }}
+          />
+          <StockIndicator itemId={item.itemId} />
+        </TouchableOpacity>
+        
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName} numberOfLines={2}>
+            {item.itemName}
           </Text>
-          {/* <Text style={{textAlign:"center",marginBottom:10}}>Increase any item quantity by 1kg in this cart only this avaliditiy for 1kg bag</Text> */}
-          <Text style={styles.noteText}><Text style={{fontWeight:"bold"}}>Note:</Text>
-          This 1kg + 1kg Free Offer is available only once per user and applies only to 1kg bags.
-          Once used, the offer cannot be claimed again. Grab it while it lasts!</Text>
-          <TouchableOpacity style={styles.okButton} onPress={()=>{setShowOfferAvail(true),handleAddCheapest1kgBag()}}>
-            <Text style={styles.okButtonText}>Claim Offer</Text>
-          </TouchableOpacity>
-      </Animated.View>
+          
+          <Text style={styles.itemWeight}>
+            {item.weight} {item.weight===1? "kg":item.units}
+          </Text>
+          
+          <View style={styles.priceContainer}>
+            <Text style={styles.itemPrice}>₹{item.itemPrice}</Text>
+          </View>
+          
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              style={[
+                styles.quantityButton,
+                (isLoading || isOutOfStock) && styles.disabledButton
+              ]}
+              onPress={() => handleDecrease(item)}
+              disabled={isLoading || isOutOfStock}
+            >
+              <Text style={styles.quantityButtonText}>-</Text>
+            </TouchableOpacity>
+            
+            <View style={styles.quantityTextContainer}>
+              {isLoading ? (
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              ) : (
+                <Text style={styles.quantityText}>
+                  {cartItems[item.itemId] || item.cartQuantity || 0}
+                </Text>
+              )}
+            </View>
+            
+            <TouchableOpacity
+              style={[
+                styles.quantityButton,
+                (isLoading || isOutOfStock || (item.quantity && item.cartQuantity >= item.quantity)) && styles.disabledButton
+              ]}
+              onPress={() => handleIncrease(item)}
+              disabled={isLoading || isOutOfStock || (item.quantity && item.cartQuantity >= item.quantity)}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        <TouchableOpacity
+          style={styles.removeButton}
+          onPress={() => handleRemove(item)}
+          disabled={isRemoving}
+        >
+          {isRemoving ? (
+            <ActivityIndicator size="small" color="red" />
+          ) : (
+            <MaterialIcons name="delete-outline" size={22} color="red" />
+          )}
+        </TouchableOpacity>
       </View>
-    </Modal>
+    );
+  };
 
+  // Main render method
+  return (
+    <View style={styles.container}>
+      {/* Container offer modal */}
+      <ContainerOfferModal modalVisible={modalVisible} setModalVisible={setModalVisible} hasWeight={hasWeight} onAccept={handleYes} onDecline={() => setModalVisible(false)} />
+      
+      {/* 1kg offer modal */}
+      <OneKgOfferModal />
+      
+      {/* Show loading component if loading */}
+      {loading && !error ? (
+        <LoadingComponent />
+      ) : error ? (
+        // Show error message
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchCartData(true)}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : Array.isArray(cartData) && cartData.length > 0 ? (
+        // Show cart items
+        <View style={styles.cartContent}>
+          <FlatList
+            data={cartData}
+            renderItem={renderItem}
+            keyExtractor={(item) => (item?.cartId?.toString() || Math.random().toString())}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContainer}
+            // ListFooterComponentStyle={styles.listFooter}
+            ListFooterComponent={
+              <View style={{ height: 100 }} />
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={onRefresh}
+                colors={[COLORS.primary]}
+              />
+            }
+          />
+          
+          {/* Cart total and checkout button */}
+          <View style={styles.footer}>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalLabel}>Total:</Text>
+              <Text style={styles.totalAmount}>₹{grandTotal.toFixed(2)}</Text>
+            </View>
+
+            <View style={styles.checkoutButtonContainer}>    
+            <TouchableOpacity
+              style={styles.checkoutButton}
+              onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
+              disabled={checkoutInProgress}
+            >
+              {checkoutInProgress ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.checkoutButtonText}>ADD MORE</Text>
+              )}
+            </TouchableOpacity>        
+            <TouchableOpacity
+              style={styles.checkoutButton}
+              onPress={handleCheckout}
+              disabled={checkoutInProgress}
+            >
+              {checkoutInProgress ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+              )}
+            </TouchableOpacity>
+            </View>
+            
+            
+          </View>
+        </View>
+      ) : (
+        // Show empty cart
+        <EmptyCartComponent />
+      )}
     </View>
   );
 };
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#E5E7EB",
-    padding: 20,
+    backgroundColor: "#f8f9fa",
   },
-  error: {
-    color: "#EF4444",
-    textAlign: "center",
-    marginTop: 20,
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e1e1e1",
+    elevation: 2,
   },
-  cartItem: {
-    padding: 16,
-    marginBottom: 8,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  cartContent: {
+    flex: 1,
+    // marginBottom: 60,
+  },
+  listContainer: {
+    padding: 12,
+    paddingBottom: 120,
+  },
+  itemContainer: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    marginBottom: 12,
+    padding: 12,
+    elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+  },
+  itemImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    overflow: "hidden",
+    marginRight: 12,
   },
   itemImage: {
-    marginLeft: 5,
-    width: width * 0.3,
-    height: height / 7,
-    marginRight: 10,
-    borderRadius: 20,
+    width: "100%",
+    height: "100%",
   },
   itemDetails: {
     flex: 1,
     justifyContent: "space-between",
   },
   itemName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    width: width * 0.5,
-  },
-  itemPrice: {
-    color: "#16A34A",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
   },
   itemWeight: {
-    color: "#6B7280",
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  quantityButton: {
-    backgroundColor: "#a593df",
-    padding: 8,
-    borderRadius: 4,
-    marginHorizontal: 8,
-  },
-  quantityButton1: {
-    backgroundColor: "#D1D5DB",
-    padding: 8,
-    borderRadius: 4,
-    marginHorizontal: 8,
-  },
-  quantityText: {
-    fontWeight: "bold",
-    backgroundColor: "white",
-  },
-  removeButton: {
-    backgroundColor: "#D32F2F",
-    padding: 8,
-    borderRadius: 4,
-    marginTop: 8,
-    width: 150,
-    zIndex: 2,
-    // position:'absolute'
-  },
-  removeButtonText: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  flatListContent: {
-    paddingBottom: 80,
-  },
-  emptyCartText: {
-    textAlign: "center",
-    fontSize: 16,
-    color: "#6B7280",
-    marginTop: 20,
-  },
-  actionButtonsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  addButton: {
-    backgroundColor: "#16A34A",
-    padding: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginRight: 8,
-    marginBottom: 70,
-  },
-  checkoutButton: {
-    backgroundColor: COLORS.services,
-    padding: 12,
-    borderRadius: 8,
-    flex: 1,
-    marginBottom: 70,
-  },
-  actionButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
- 
-  itemTotal: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginLeft: 2,
-    marginBottom: 20,
-    width: width / 3,
-    marginTop: 15,
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#374151",
-    textAlign: "center",
-  },
-  card: {
-    width: "80%",
-    alignItems: "center",
-    padding: 20,
-    marginLeft: 35,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  loader: {
-    alignSelf: "center",
-    borderRadius: 4,
-  },
-  loaderContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    // zIndex: 1,
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
   },
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 5,
+    marginBottom: 8,
   },
   itemPrice: {
     fontSize: 16,
-    marginRight: 10,
-  },
-  crossedPrice: {
-    textDecorationLine: "line-through",
-    color: "#D32F2F",
-  },
-  boldPrice: {
     fontWeight: "bold",
-    color: "#388E3C",
+    color: COLORS.primary,
   },
-  limitedStockBadge: {
-    position: "absolute",
-    top: 10,
-    left: 30,
-    alignSelf: "center",
+  quantityContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "red",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    zIndex: 10,
-    marginBottom: 20,
+    height: 32,
   },
-  limitedStockText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
   },
   disabledButton: {
-    backgroundColor: "gray",
-    opacity: 0.5,
+    backgroundColor: "#ccc",
   },
-  outOfStockCard: {
-    opacity: 0.5,
+  quantityButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#fff",
   },
-  outOfStockContainer: {
-    position: "relative",
-    padding: 10,
-    backgroundColor: COLORS.backgroundcolour,
-    borderRadius: 8,
+  quantityTextContainer: {
+    width: 40,
+    height: 32,
+    justifyContent: "center",
     alignItems: "center",
   },
-  outOfStockOverlay: {
+  quantityText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  removeButton: {
+    width: 36,
+    height: 36,
+    justifyContent: "flex-start",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 60,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#e1e1e1",
+    elevation: 10,
+  },
+  totalContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  totalLabel: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  totalAmount: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: COLORS.primary,
+  },
+  checkoutButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+  },
+  checkoutButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
+  },
+  checkoutButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  emptyCartView:{
+    width: width * 0.5,
+    height: width * 0.5,
+    marginBottom: 20,
+    backgroundColor: "#f0f0f0",
+  },
+  emptyCartImage: {
+    width: "100%",
+    height: "100%",
+  },
+  emptyCartText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#666",
+    marginBottom: 20,
+  },
+  shopNowButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  shopNowButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#666",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: width * 0.85,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  modalHeader: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  modalBody: {
+    padding: 16,
+    alignItems: "center",
+  },
+  containerImage: {
+    width: width * 0.5,
+    height: width * 0.3,
+    marginBottom: 16,
+  },
+  modalText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  containerPrice: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.primary,
+    marginBottom: 8,
+  },
+  modalFooter: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#e1e1e1",
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#f5f5f5",
+    borderRightWidth: 0.5,
+    borderRightColor: "#e1e1e1",
+  },
+  confirmButton: {
+    backgroundColor: COLORS.primary,
+    borderLeftWidth: 0.5,
+    borderLeftColor: "#e1e1e1",
+  },
+  buttonTextCancel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  buttonTextConfirm: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  stockIndicator: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    // backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
+    paddingVertical: 2,
     alignItems: "center",
-    borderRadius: 8,
   },
-  outOfStockText: {
-    color: "red",
-    position: "relative",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 5,
-    fontSize: 16,
+  outOfStock: {
+    backgroundColor: "rgba(255, 0, 0, 0.7)",
   },
-  browseButton: {
-    backgroundColor: COLORS.services,
-    // padding: 12,
-    paddingVertical: 20,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginBottom: 50,
-    alignItems: "center",
-    justifyContent: "center",
+  lowStock: {
+    backgroundColor: "rgba(255, 165, 0, 0.7)",
   },
-  browseButtonText: {
+  stockIndicatorText: {
     color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  outOfStockText: {
-    color: COLORS.services,
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: "bold",
   },
-  removeText: {
-    alignSelf: "center",
-    textAlign: "center",
-    color: "#fff",
-    zIndex: 1,
-    fontSize: 14,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-    marginTop: 5,
-    // backgroundColor: "#000",
-    padding: 5,
-    borderRadius: 5,
+  disabledItem: {
+    opacity: 0.6,
+  },
+  offerModalContainer: {
+    width: width * 0.85,
+    backgroundColor: "#fff",
+    borderRadius: 16,
     overflow: "hidden",
   },
-  loaderOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 10,
-  },
-  loaderOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 255, 255, 0.8)",
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 10,
-  },
-  removingText: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#ecb01e",
-    textAlign: "center",
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  dimItem: {
-    opacity: 0.5, // Fades the item while loading
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  congratsText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  messageText: {
-    fontSize: 16,
-    marginVertical: 10,
-    textAlign: 'center',
-  },
-  questionText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  buttonYes: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  buttonNo: {
-    backgroundColor: '#FF5733',
-    padding: 10,
-    borderRadius: 5,
-  }, 
-  buttonText: {
-    color: 'white',
-  },
-  codeText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4CAF50',
-    marginTop: 20,
-  },
-  titleContainer: {
-    // marginBottom: 16,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#212529',
-  },
-  planContainer: {
-    // marginBottom: 16,
-  },
-  planTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#343a40',
-    marginBottom: 4,
-  },
-  planDescription: {
-    fontSize: 16,
-    color: '#495057',
-    lineHeight: 22,
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ced4da',
-  },
-  orText: {
+  offerModalHeader: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6c757d',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  totalContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+  offerModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  offerModalBody: {
     padding: 16,
-    marginVertical: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    alignItems: "center",
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  label: {
-    fontSize: 15,
-    color: '#495057',
-  },
-  value: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#212529',
-    textAlign: 'right',
-  },
-  discountValue: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#2e7d32',
-    textAlign: 'right',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#dee2e6',
-    marginVertical: 8,
-  },
-  grandTotalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-  },
-  grandTotalLabel: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    color: '#212529',
-  },
-  grandTotalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#212529',
-    textAlign: 'right',
-  },
-  offerText: {
-    fontSize: 18,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  okButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  
-  },
-  offerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  offerImage: {
+    width: width * 0.3,
+    height: width * 0.3,
     marginBottom: 10,
-    width: '100%',
-    textAlign: 'center',
   },
-  okButton: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    borderRadius: 8,
+  offerModalText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  offerModalFooter: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#e1e1e1",
+  },
+  offerModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  offerCancelButton: {
+    backgroundColor: "#f5f5f5",
+  },
+  offerConfirmButton: {
+    backgroundColor: "#FFD700",
+  },
+  offerButtonTextCancel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  offerButtonTextConfirm: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
   },
   noteText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#777',
     textAlign: 'center',
     marginBottom: 20,
     fontStyle: 'italic',
-  }
+  },
 
 });
 

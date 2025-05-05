@@ -62,7 +62,7 @@ const centralPosition = {
      Longitude: 78.3847054
   };
 
-const radius = 20000;
+const radius = 25000;
 
 // Function to get coordinates and check if within radius
 export const getCoordinates = async (address) => {

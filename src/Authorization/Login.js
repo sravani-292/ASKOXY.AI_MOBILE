@@ -34,6 +34,7 @@ import BASE_URL, { userStage } from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
+import GoogleAnalyticsService from "../Components/GoogleAnalytic";
 
 
 const Login = () => {
@@ -321,6 +322,7 @@ const Login = () => {
               response.data.userStatus == "ACTIVE" ||
               response.data.userStatus == null
             ) {
+              GoogleAnalyticsService.login(authMethod == "whatsapp" ? "whatsapp" : "SMS");
               navigation.reset({
                 index: 0,
                 routes: [{ name: "Home", params: { screen: "Dashboard" } }],

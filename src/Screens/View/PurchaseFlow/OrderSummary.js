@@ -130,6 +130,8 @@ const OrderSummaryScreen = ({ navigation, route }) => {
   
 
 const handleContinuePress = () => {
+   console.log({cartItems});
+   
     navigation.navigate("Payment Details", {
       items: cartItems,
       address: address,

@@ -19,6 +19,7 @@ import { COLORS } from "../../../../Redux/constants/theme";
 import Icon from "react-native-vector-icons/Ionicons";
 import BASE_URL, { userStage } from "../../../../Config";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 const ItemDetails = ({ route, navigation }) => {
   const { item } = route?.params;
   console.log("Item details page", item);
@@ -34,9 +35,18 @@ const ItemDetails = ({ route, navigation }) => {
   const [isLimitedStock, setIsLimitedStock] = useState({});
   
   useEffect(() => {
+    analytic();
     // getProfile();
     fetchCartData();
   }, []);
+
+  const analytic =async () => {
+  await GoogleAnalyticsService.viewItem(
+      item.itemId,
+      item.itemName,
+      item.itemPrice,
+    )
+  }
 
   const fetchCartData = async () => {
     console.log("fetching cart data");
@@ -321,6 +331,12 @@ const ItemDetails = ({ route, navigation }) => {
       );
       Alert.alert(response.data.errorMessage);
       console.log("Added item to cart:", response.data);
+      GoogleAnalyticsService.addToCart(
+        item.itemId,
+        item.itemName,
+        item.itemPrice,
+        1
+      ) 
 
       fetchCartData();
     } catch (error) {

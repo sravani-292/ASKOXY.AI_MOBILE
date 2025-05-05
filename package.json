@@ -70,6 +70,7 @@
     "react-native-snap-carousel": "^3.9.1",
     "react-native-svg": "15.8.0",
     "react-native-tab-view": "^4.0.5",
+    "react-native-uuid": "^2.0.3",
     "react-native-vector-icons": "^10.2.0",
     "react-native-version-check-expo": "^3.4.7",
     "react-native-video": "^6.11.0",

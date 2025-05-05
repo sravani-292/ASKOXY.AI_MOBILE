@@ -514,7 +514,7 @@ console.log("campainType",campaignType);
             <Text style={modalStyles.modalTitle}>Confirmation</Text>
             
             <Text style={modalStyles.modalText}>
-              Are you sure you want to proceed with this University {item?.campaignType}?
+              Are you sure you want to proceed ?
             </Text>
             
             <View style={modalStyles.buttonContainer}>

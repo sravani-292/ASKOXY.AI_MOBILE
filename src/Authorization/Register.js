@@ -34,6 +34,7 @@ const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
 import { Checkbox } from "react-native-paper";
 import Feather from "react-native-vector-icons/Feather";
+import GoogleAnalyticsService from "../Components/GoogleAnalytic";
 // import dynamicLinks from '@react-native-firebase/dynamic-links';
 // import { initializeApp } from '@react-native-firebase/app';
 
@@ -370,6 +371,7 @@ const Register = () => {
               response.data.userStatus == "ACTIVE" ||
               response.data.userStatus == null
             ) {
+              GoogleAnalyticsService.signup(authMethod == "whatsapp" ? "whatsapp" : "SMS");
               navigation.navigate("Home");
             } else {
               Alert.alert(

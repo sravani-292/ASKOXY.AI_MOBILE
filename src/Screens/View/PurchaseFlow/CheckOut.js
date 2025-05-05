@@ -69,6 +69,7 @@ const { width, height } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL, { userStage } from "../../../../Config";
 import { getCoordinates } from "../../../Screens/View/Address/LocationService";
+import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 
 const CheckOut = ({ navigation, route }) => {
   // console.log("from cartscreen", route.params);
@@ -271,6 +272,7 @@ const CheckOut = ({ navigation, route }) => {
         value
       );
 
+
       if (isWithin == true) {
         console.log("within radius");
 
@@ -282,6 +284,15 @@ const CheckOut = ({ navigation, route }) => {
           );
           return false;
         } else {
+
+          console.log({cartItems});
+          console.log({locationData});
+          
+          // navigation.navigate("Payment Details", {
+          //   items: cartItems,
+          //   address: locationData,
+          // });
+          GoogleAnalyticsService.beginCheckout(cartItems, grandTotal);
           navigation.navigate("Order Summary", { addressData: locationData });
         }
       } else {

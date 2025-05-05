@@ -68,8 +68,8 @@ import OxyLoans from "../Dashboard/Oxyloans";
 import OfferLetters from "../Dashboard/offerletters";
 import StudyAbroad from "../StudyAbroad";
 import AllService from "../AllService";
-const json = require("../../app.json");
-
+import AccountDeletionScreen from "../Authorization/AccountDeletion";
+const json = require("../../app.json"); 
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
     <ActivityIndicator size="large" color={COLORS.services} />
@@ -224,6 +224,7 @@ export default function StacksScreens() {
       <Stack.Screen name="Subscription" component={Main} />
 
       <Stack.Screen name="Terms and Conditions" component={About} />
+      <Stack.Screen name="Account Deletion" component={AccountDeletionScreen}/>
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
       <Stack.Screen name="Checkout" component={CheckOut} />
@@ -416,6 +417,8 @@ export default function StacksScreens() {
    component={AllService}
     options={{ headerShown: true }}
   />
+
+
     </Stack.Navigator>
   );
 }
