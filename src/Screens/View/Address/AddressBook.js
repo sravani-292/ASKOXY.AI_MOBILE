@@ -14,8 +14,8 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { Ionicons } from "react-native-vector-icons";
-import BASE_URL,{userStage} from "../../../../Config";
-import { isWithinRadius,getCoordinates } from "./LocationService";
+import BASE_URL, { userStage } from "../../../../Config";
+import { isWithinRadius, getCoordinates } from "./LocationService";
 import { COLORS } from "../../../../Redux/constants/theme";
 
 import { getDistance } from "geolib";
@@ -28,7 +28,7 @@ const AddressBook = ({ route }) => {
   const customerId = userData.userId;
   const [addressList, setAddressList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const[saveLoader,setSaveLoader]=useState(false);  
+  const [saveLoader, setSaveLoader] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedType, setSelectedType] = useState("");
   const [coordinates, setCoordinates] = useState(null);
@@ -51,7 +51,6 @@ const AddressBook = ({ route }) => {
       // getCoordinates();
     }, [])
   );
-
 
   const validateFields = () => {
     const newErrors = {};
@@ -109,7 +108,7 @@ const AddressBook = ({ route }) => {
     setLoading(true);
     try {
       const response = await axios({
-        url: BASE_URL+`user-service/getAllAdd?customerId=${customerId}`,
+        url: BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -133,6 +132,8 @@ const AddressBook = ({ route }) => {
   };
 
   const handleAddressSelect = (address) => {
+    console.log("Selected address:", address);
+
     setSelectedAddress(address);
     const value =
       address.address + "," + address.landMark + "," + address.pincode;
@@ -141,22 +142,23 @@ const AddressBook = ({ route }) => {
   };
 
   const saveAddress = async () => {
-    
     if (!validateFields()) {
       return;
     }
     const value =
       newAddress.address + "," + newAddress.landMark + "," + newAddress.pincode;
     console.log("value for saving api", value);
-      const { status,isWithin, distanceInKm,coord1 } =await getCoordinates(value);
-      console.log({status,isWithin,distanceInKm,coord1});
-      setSaveLoader(true)
+    const { status, isWithin, distanceInKm, coord1 } = await getCoordinates(
+      value
+    );
+    console.log({ status, isWithin, distanceInKm, coord1 });
+    setSaveLoader(true);
     if (isWithin == true && coord1) {
       console.log("Address saved as it is within the radius.");
       try {
         const data = {
           method: "post",
-          url: BASE_URL+"user-service/addAddress",
+          url: BASE_URL + "user-service/addAddress",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -174,7 +176,7 @@ const AddressBook = ({ route }) => {
         console.log("data", data);
 
         const response = await axios(data);
-        setSaveLoader(false)
+        setSaveLoader(false);
         console.log("Added address:", response.data);
         Alert.alert("Address saved successfully");
         setModalVisible(false);
@@ -194,7 +196,7 @@ const AddressBook = ({ route }) => {
       }
     } else {
       console.log("Address not saved as it is outside the radius.");
-      setSaveLoader(false)
+      setSaveLoader(false);
       setNewAddress({
         address: "",
         flatNo: "",
@@ -214,7 +216,6 @@ const AddressBook = ({ route }) => {
     let locationdata;
     console.log("selected type", selectedType);
     if (selectAddress) {
-      // If a radio button address is selected
       locationdata = {
         ...selectAddress,
         status: true,
@@ -227,19 +228,27 @@ const AddressBook = ({ route }) => {
     }
     console.log("Location Data:", locationdata);
     const value =
-    locationdata.address + "," + locationdata.landMark + "," + locationdata.pincode;
+      locationdata.address +
+      "," +
+      locationdata.landMark +
+      "," +
+      locationdata.pincode;
     console.log("value for saving api", value);
-      const { status,isWithin, distanceInKm,coord1 } =await getCoordinates(value);
-      console.log({status,isWithin,distanceInKm,coord1});
-  if(isWithin == true && coord1){
-    console.log("Address saved as it is within the radius.");
-    navigation.navigate("Checkout", { locationdata });
-  }else{
-    console.log("Address not saved as it is outside the radius.");
-    // Alert.alert("Sorry",`We cannot deliver to this address because your distance is ${distanceInKm} km, which is not within the 20 km radius.`);
-    Alert.alert("Sorry!" `We’re unable to deliver to this address as it’s ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`)
-  }
- 
+    const { status, isWithin, distanceInKm, coord1 } = await getCoordinates(
+      value
+    );
+    console.log({ status, isWithin, distanceInKm, coord1 });
+    if (isWithin == true && coord1) {
+      console.log("Address saved as it is within the radius.");
+      navigation.navigate("Checkout", { locationdata });
+    } else {
+      console.log("Address not saved as it is outside the radius.");
+      // Alert.alert("Sorry",`We cannot deliver to this address because your distance is ${distanceInKm} km, which is not within the 20 km radius.`);
+      Alert.alert(
+        "Sorry!"`We’re unable to deliver to this address as it’s ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`
+      );
+    }
+
     // navigation.navigate("Checkout", { locationdata });
   };
 
@@ -250,15 +259,20 @@ const AddressBook = ({ route }) => {
       ) : (
         <>
           <View>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
-            <Text style={styles.noteText}>
-        <Text style={styles.noteLabel}>Note:</Text> Order will be delivered within a 20 km radius only
-      </Text>            
-      <Text style={styles.title}>Your Delivery Addresses</Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="always"
+            >
+              <Text style={styles.noteText}>
+                <Text style={styles.noteLabel}>Note:</Text> Order will be
+                delivered within a 25 km radius only
+              </Text>
+              <Text style={styles.title}>Your Delivery Addresses</Text>
               <View>
                 <TouchableOpacity
                   style={styles.addButton}
-                  onPress={() => handleAddAddress()}
+                  // onPress={() => handleAddAddress()}
+                  onPress={() => navigation.navigate("New Address Book")}
                 >
                   <Text style={styles.addButtonText}>Add +</Text>
                 </TouchableOpacity>
@@ -298,6 +312,40 @@ const AddressBook = ({ route }) => {
                                 {address.address}
                               </Text>
                               {"\n"}
+                              {address.residenceName ? (
+                                <>
+                                  <Text style={styles.label}>
+                                    Residence Name: 
+                                  </Text>
+                                  <Text style={styles.value}>
+                                    {address.residenceName}
+                                  </Text>
+                                  {"\n"}
+                                </>
+                              ) : null}
+
+                              {address.houseType ? (
+                                <>
+                                  <Text style={styles.label}>
+                                    Residence Type: 
+                                  </Text>
+                                  <Text style={styles.value}>
+                                    {address.houseType}
+                                  </Text>
+                                  {"\n"}
+                                </>
+                              ) : null}
+
+                              {address.area ? (
+                                <>
+                                  <Text style={styles.label}>Area: </Text>
+                                  <Text style={styles.value}>
+                                    {address.area}
+                                  </Text>
+                                  {"\n"}
+                                </>
+                              ) : null}
+
                               <Text style={styles.label}>Flat No: </Text>
                               <Text style={styles.value}>{address.flatNo}</Text>
                               {"\n"}
@@ -334,25 +382,20 @@ const AddressBook = ({ route }) => {
               )}
 
               {addressList.length != 0 ? (
-                <>                
-                <TouchableOpacity
-                  style={styles.button1}
-                  onPress={() => handleSendAddress(selectedAddress)}
-                >
-                  <Text style={styles.addButtonText}>SUBMIT ADDRESS</Text>
-                </TouchableOpacity>
-               
+                <>
+                  <TouchableOpacity
+                    style={styles.button1}
+                    onPress={() => handleSendAddress(selectedAddress)}
+                  >
+                    <Text style={styles.addButtonText}>SUBMIT ADDRESS</Text>
+                  </TouchableOpacity>
                 </>
               ) : null}
             </ScrollView>
             {/* </ScrollView> */}
           </View>
 
-          {/* <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Order will be delivered within 20 km radius only
-            </Text>
-          </View> */}
+        
         </>
       )}
 
@@ -465,21 +508,19 @@ const AddressBook = ({ route }) => {
             </View>
             {errors.type && <Text style={styles.errorText}>{errors.type}</Text>}
 
-
-            {saveLoader==false?
-
-            <TouchableOpacity
-              style={styles.submitButton}
-              // onPress={() => handleSendAddress()}
-              onPress={() => saveAddress()}
-            >
-              <Text style={styles.submitButtonText}>Submit</Text>
-            </TouchableOpacity>
-             :
-             <View  style={styles.submitButton}>
-               <ActivityIndicator size={"small"} color="white"/>
-             </View>
-             }
+            {saveLoader == false ? (
+              <TouchableOpacity
+                style={styles.submitButton}
+                // onPress={() => handleSendAddress()}
+                onPress={() => saveAddress()}
+              >
+                <Text style={styles.submitButtonText}>Submit</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.submitButton}>
+                <ActivityIndicator size={"small"} color="white" />
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -499,7 +540,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#343a40",
     marginBottom: 8,
-    textAlign:"center"
+    textAlign: "center",
   },
   addressRow: {
     backgroundColor: "#ffffff",
@@ -512,10 +553,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 1,
     elevation: 2,
+    // height:200
   },
   selectedAddress: {
     borderWidth: 2,
-    borderColor:COLORS.services,
+    borderColor: COLORS.services,
   },
   addressText: {
     fontSize: 14,
@@ -605,7 +647,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   submitButton: {
-    backgroundColor:COLORS.title,
+    backgroundColor: COLORS.title,
     paddingVertical: 8,
     borderRadius: 5,
     alignItems: "center",
@@ -644,7 +686,7 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   value: {
-    color: "#000", 
+    color: "#000",
   },
   footer: {
     position: "absolute",
@@ -660,18 +702,18 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
   },
-  noteText:{
+  noteText: {
     fontSize: 15,
-  color: '#555', 
-  // fontStyle: 'italic', 
-  marginBottom: 10, 
-  lineHeight: 20, 
-  alignSelf:"center",
-  fontWeight:"bold"
+    color: "#555",
+    // fontStyle: 'italic',
+    marginBottom: 10,
+    lineHeight: 20,
+    alignSelf: "center",
+    fontWeight: "bold",
   },
-  noteLabel:{
-    color:"red"
-  }
+  noteLabel: {
+    color: "red",
+  },
 });
 
 export default AddressBook;

@@ -17,7 +17,6 @@ import {
   import BASE_URL, { userStage } from "../../Config";
   import { useSelector } from "react-redux";
   import { WebView } from 'react-native-webview';
-  import { Route } from "lucide-react-native";
   const AbroadCategories = ({ navigation ,route}) => {
 
     const [loadingStates, setLoadingStates] = useState({});

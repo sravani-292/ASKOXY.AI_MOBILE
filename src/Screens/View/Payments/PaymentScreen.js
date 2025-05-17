@@ -19,18 +19,17 @@ import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { RadioButton, Checkbox, ActivityIndicator } from "react-native-paper";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
 import { COLORS } from "../../../../Redux/constants/theme"
 import BASE_URL,{userStage}from "../../../../Config";
-import { err } from "react-native-svg";
 import { Dropdown } from "react-native-element-dropdown";
-import Icon from "react-native-vector-icons/Ionicons";
 import { Ionicons } from '@expo/vector-icons';
 import DeliveryTimelineModal from "./DeliveryModal";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
+import RadioGroup from 'react-native-radio-buttons-group';
+import TimeSlotModal from "./TimeSlotModal ";
+
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
@@ -78,6 +77,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [slotsData,setSlotsData]=useState()
   const [onlyOneKg, setOnlyOneKg] = useState(false);
   const [showModal,setShowModal] = useState(false)
+  const [modalVisible, setModalVisible] = useState(false);
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -87,28 +87,28 @@ const PaymentDetails = ({ navigation, route }) => {
   const items = route.params?.items || [];
 
   const [offeravailable, setOfferAvailable] = useState();
+  const [showCOD, setShowCOD] = useState(false);
 
- const fetchTimeSlots = async () => {
+  const fetchTimeSlots = async () => {
     try {
       const response = await axios.get(
-       ` ${BASE_URL}order-service/fetchTimeSlotlist`
+        `${BASE_URL}order-service/fetchTimeSlotlist`
       );
       const data = response.data;
       console.log({ data });
-
+  
       setSlotsData(data);
       let updatedOrderDate = new Date();
       updatedOrderDate.setDate(updatedOrderDate.getDate() + 1);
       setOrderDate(updatedOrderDate);
-
+  
       const tomorrowDate = updatedOrderDate
-        .toLocaleDateString("en-GB") 
+        .toLocaleDateString("en-GB")
         .split("/")
         .join("-");
-
+  
       console.log("New Date (Updatedate):", tomorrowDate);
-    
-    
+  
       const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(updatedOrderDate);
         date.setDate(updatedOrderDate.getDate() + i);
@@ -124,30 +124,76 @@ const PaymentDetails = ({ navigation, route }) => {
           formattedDate: formattedDate,
         };
       });
-
+  
       console.log("Next seven days:", nextSevenDays);
-
+  
+      // Fixed the filter condition - changed isAvailable === false to isAvailable === true
       const availableDays = nextSevenDays
         .filter((day) => {
           const matchedDay = data.find((d) => d.dayOfWeek === day.dayOfWeek);
-          return matchedDay && matchedDay.isAvailable ===false;
+          return matchedDay && matchedDay.isAvailable === false;
         })
         .slice(0, 3);
-
+  
       console.log("Filtered available days:", availableDays);
-
+  
       const transformedDays = availableDays.map((day) => ({
-        label: `${day.dayOfWeek} ( ${day.formattedDate})`,
+        label: `${day.dayOfWeek} (${day.formattedDate})`,
         value: day.dayOfWeek,
         formattedDate: day.formattedDate,
       }));
-
+  
       console.log("Transformed days:", transformedDays);
       setDays(transformedDays);
+
+      if(Platform.OS === 'ios'){
+
+        setSelectedDay(transformedDays[0]?.value);
+        const selectedDayData = transformedDays.find(
+          (d) => d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
+        );
+        
+        console.log({ selectedDayData });
+        
+        if (selectedDayData) {
+          const fullDayData = slotsData.find(
+            (d) => d.dayOfWeek.trim().toUpperCase() === selectedDay.trim().toUpperCase()
+          );
+      
+          if (fullDayData) {
+            setSelectedDate(selectedDayData.formattedDate || "");
+            setUpdatedate(selectedDayData?.formattedDate);
+      
+            console.log("Matching Slot:", fullDayData);
+      
+            const timeSlots = [
+              { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
+              { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
+              { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
+              { time: fullDayData.timeSlot4, status: fullDayData.slot4Status }
+            ];
+      
+            // Filter for available slots only (status === false)
+            // Assuming false means available and true means unavailable/booked
+            const availableTimeStrings = timeSlots
+              .filter(slot => slot.time && !slot.status)
+              .map(slot => slot.time);
+      
+            // Remove duplicates
+            const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
+      
+            console.log("Available Times:", uniqueAvailableTimes);
+      
+            // Set only array of time strings
+            setTimeSlots(uniqueAvailableTimes);
+            setSelectedTimeSlot(uniqueAvailableTimes[0]);
+          }
+        }
+      } 
     } catch (error) {
       console.error("Error fetching time slots:", error);
-    }
-  };
+    }
+  };
   
   const checkOfferEligibility = async (customerId) => {
     try {
@@ -163,6 +209,10 @@ const PaymentDetails = ({ navigation, route }) => {
       console.error("Error fetching offer details:", error?.response?.status, error?.response?.data);
       // setShowButtons(true); 
     }
+  };
+
+  const handleTimeSlotChange = (timeSlot) => {
+    setSelectedTimeSlot(timeSlot);
   };
   
   
@@ -217,38 +267,52 @@ const PaymentDetails = ({ navigation, route }) => {
       days.map((d) => `${d.value}`)
     );
     console.log("Selected Day:", `${selectedDay}`);
-
-    const selectedDayData = days.find(
-      (d) =>
-        d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
-    );
-
-    console.log({ selectedDayData });
-
-    if (selectedDayData) {
-      const fullDayData = slotsData.find((d) => d.dayOfWeek === selectedDay);
     
-      
+    // Improved day matching by normalizing case and trimming
+    const selectedDayData = days.find(
+      (d) => d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
+    );
+    
+    console.log({ selectedDayData });
+    
+    if (selectedDayData) {
+      const fullDayData = slotsData.find(
+        (d) => d.dayOfWeek.trim().toUpperCase() === selectedDay.trim().toUpperCase()
+      );
+  
       if (fullDayData) {
         setSelectedDate(selectedDayData.formattedDate || "");
         setUpdatedate(selectedDayData?.formattedDate);
-
-        setTimeSlots(
-          [
-            fullDayData.timeSlot1,
-            fullDayData.timeSlot2,
-            fullDayData.timeSlot3,
-            fullDayData.timeSlot4,
-          ]
-          // .filter(Boolean)
-        );
+  
+        console.log("Matching Slot:", fullDayData);
+  
+        const timeSlots = [
+          { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
+          { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
+          { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
+          { time: fullDayData.timeSlot4, status: fullDayData.slot4Status }
+        ];
+  
+        // Filter for available slots only (status === false)
+        // Assuming false means available and true means unavailable/booked
+        const availableTimeStrings = timeSlots
+          .filter(slot => slot.time && !slot.status)
+          .map(slot => slot.time);
+  
+        // Remove duplicates
+        const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
+  
+        console.log("Available Times:", uniqueAvailableTimes);
+  
+        // Set only array of time strings
+        setTimeSlots(uniqueAvailableTimes);
       } else {
         setTimeSlots([]);
       }
     } else {
       setTimeSlots([]);
-    }
-  };
+    }
+  };
 
 
   const totalCart = async () => {
@@ -282,7 +346,7 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
     }
   };
   
-  var addressDetails = route.params.address;
+  var addressDetails = route.params.addressData;
 
   const [selectedPaymentMode, setSelectedPaymentMode] = useState('ONLINE');
 
@@ -517,6 +581,9 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
       coupenAmount = 0;
     }
 
+    console.log(addressDetails);
+    
+
     const avail = offeravailable === "YES" ? "YES" : null;
     
     postData = {
@@ -524,24 +591,27 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
       amount: grandTotalAmount,
   
       customerId: customerId,
-      flatNo: addressDetails.flatNo,
+        flatNo: addressDetails.flatNo,
       landMark: addressDetails.landMark,
       orderStatus: selectedPaymentMode,
       pincode: addressDetails.pincode,
       latitude: addressDetails.latitude ?? 0,
-      longitude:addressDetails.longitude?? 0,
+      longitude: addressDetails.longitude ?? 0,
+      area: addressDetails?.area || "",
+      houseType: addressDetails?.houseType || "",
+      residenceName: addressDetails?.residenceName || "",
       walletAmount: usedWalletAmount,
       couponCode: coupon,
       couponValue: coupenDetails,
       deliveryBoyFee:deliveryBoyFee,
       subTotal:subTotal,
       gstAmount:totalGstSum,
-      orderFrom:"MOBILE",
+      orderFrom:Platform.OS,
       dayOfWeek: selectedDay,
       expectedDeliveryDate: updatedDate,
       timeSlot: selectedTimeSlot,
-      latitude:addressDetails.latitude,
-      longitude:addressDetails.longitude,
+      latitude:addressDetails.latitude ?? 0,
+      longitude:addressDetails.longitude ?? 0,
       freeTicketAvailable: avail,
     };
 
@@ -719,7 +789,7 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
           [
             {
               text: "No",
-              onPress: () => {},
+              onPress: () => {setLoading(false)},
             },
             {
               text: "yes",
@@ -1057,44 +1127,124 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
           </View>
         )}
 
-       
-<View style={styles.container1}>
-      <Text style={styles.label}>Select Day:</Text>
-      <View style={styles.pickerContainer}>
-        <Dropdown
-          data={days}
-          labelField="label"
-          valueField="value"
-          placeholder="SELECT A DAY"
-          value={selectedDay}
-          onChange={(item) => handleDayChange(item.value)}
-          style={styles.picker}
-          iconStyle={{marginRight:20}}
-        />
-      </View>
+{/* <View style={styles.container1}>
+  <Text style={styles.label}>Select Day:</Text>
 
-      {timeSlots.length > 0 && (
-        <>
-          <Text style={styles.label}>Select Time Slot:</Text>
-          <View style={styles.pickerContainer}>
-            <Dropdown
-              data={timeSlots.map((slot) => ({ label: slot, value: slot }))}
-              labelField="label"
-              valueField="value"
-              placeholder="Select a time slot"
-              value={selectedTimeSlot}
-              onChange={(item) => setSelectedTimeSlot(item.value)}
-              style={styles.picker}
-              iconStyle={{marginRight:20}}
+  {Platform.OS === 'ios' ? (
+ <RadioGroup
+ radioButtons={days.map((d) => ({
+   id: d.value,
+   label: d.label,
+   value: d.value,
+ }))}
+ selectedId={selectedDay}
+ onPress={(selectedId) => handleDayChange(selectedId)}
+ containerStyle={styles.radioGroupContainer}
+ labelStyle={styles.radioButtonLabel}
+/>
 
-            />
-          </View>
-        </>
-      )}
+ 
+  ) : (
+    <View style={styles.pickerContainer}>
+      <Dropdown
+        data={days}
+        labelField="label"
+        valueField="value"
+        placeholder="SELECT A DAY"
+        value={selectedDay}
+        onChange={(item) => handleDayChange(item.value)}
+        style={styles.picker}
+        iconStyle={{ marginRight: 20 }}
+      />
     </View>
+  )}
+
+  {timeSlots.length > 0 && (
+    <>
+      <Text style={styles.label}>Select Time Slot:</Text>
+
+      {Platform.OS != 'ios' ? (
+      <RadioGroup
+      radioButtons={timeSlots.map((slot) => ({
+        id: slot,
+        label: slot,
+        value: slot,
+        containerStyle: { marginBottom: 10 }, 
+      }))}
+      selectedId={selectedTimeSlot}
+      onPress={(selectedId) => setSelectedTimeSlot(selectedId)}
+      containerStyle={styles.radioGroupContainer}
+      labelStyle={styles.radioButtonLabel}
+    />
+    ) : (
+        <View style={styles.pickerContainer}>
+          <Dropdown
+            data={timeSlots.map((slot) => ({ label: slot, value: slot }))}
+            labelField="label"
+            valueField="value"
+            placeholder="Select a time slot"
+            value={selectedTimeSlot}
+            onChange={(item) => setSelectedTimeSlot(item.value)}
+            style={styles.picker}
+            iconStyle={{ marginRight: 20 }}
+          />
+        </View>
+      )}
+    </>
+  )}
+</View> */}
+
+{Platform.OS === 'android' && (<Text style={styles.headering}>Please select date and time slot : </Text>)}
+
+{Platform.OS === 'ios' ? (
+<View
+        style={styles.selectButton}
+        onPress={() => setModalVisible(true)}
+      >
+      <Text style={[styles.selectButtonText,{marginBottom:10}]}>Your order will be delivered on:</Text>
+        <Text style={styles.selectButtonText}>
+          {!selectedDay && !selectedTimeSlot ? 'Select Date & Time' : `${updatedDate} (${selectedDay}) ,${selectedTimeSlot}`}
+        </Text>
+      </View>
+) : (
+  <TouchableOpacity
+        style={styles.selectButton}
+        onPress={() => setModalVisible(true)}
+      >
+   
+   <Text style={styles.selectButtonText}>
+  {!selectedDay && !selectedTimeSlot ? (
+    'Select Date & Time'
+  ) : (
+    <>
+      <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
+        Your order will be delivered on:
+      </Text>
+      {'\n'}
+      {`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
+    </>
+  )}
+</Text>
+
+      </TouchableOpacity>
+)}
+    <TimeSlotModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        days={days}
+        timeSlots={timeSlots}
+        selectedDay={selectedDay}
+        selectedTimeSlot={selectedTimeSlot}
+        onDayChange={handleDayChange}
+        onTimeSlotChange={handleTimeSlotChange}
+        onConfirm={() => {
+          setModalVisible(false);
+        }}
+      />
         {/* Payment Methods */}
+        <View style={[styles.paymentMethodContainer,{marginTop: 20,marginBottom:20}]}>
         <Text style={styles.paymentHeader}>Choose Payment Method</Text>
-        <View style={styles.paymentOptions}>
+        <View>
         <TouchableOpacity
           style={[
             styles.paymentOption,
@@ -1109,13 +1259,22 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
           />
           <Text style={styles.optionText}>Online Payment</Text>
         </TouchableOpacity>
-        
-         
-          {/* {grandTotalAmount  > 100 && (
+        </View>
+        {grandTotalAmount  > 100 && (
+        <View>
+        <TouchableOpacity style={styles.otherOptionContainer} onPress={()=>setShowCOD(!showCOD)}>
+          <View style={styles.otherOptionTextContainer}>
+           <Text style={styles.otherOptionText}>Other</Text>
+           <MaterialIcons name="keyboard-arrow-right" size={24} color="black" style={styles.otherOptionIcon}/>
+           </View>
+        </TouchableOpacity>
+            <View>
+            {showCOD && (
          <TouchableOpacity
          style={[
            styles.paymentOption,
            selectedPaymentMode === "COD" && styles.selectedOption,
+           {marginTop: 20,}
          ]}
          onPress={() => handlePaymentModeSelect("COD")}
        >
@@ -1126,8 +1285,10 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
          />
          <Text style={styles.optionText}>Cash on Delivery</Text>
        </TouchableOpacity>
-          )} */}
-          
+                   )}
+          </View>
+          </View>
+           )}
         </View>
       
 
@@ -1142,8 +1303,8 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
         size={24}
         color={isChecked ? 'green' : 'gray'}
       />
-      <Text style={styles.label1}>
-              I confirm that the exchange can be taken within{" "}
+     <Text style={styles.label1}>
+              You can request an exchange within{" "}
               <Text
                 style={[
                   styles.label1,
@@ -1152,7 +1313,7 @@ console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items othe
               >
                 10 days
               </Text>{" "}
-              after the order has been delivered.
+              of your order being delivered.
             </Text>
     </TouchableOpacity>
           <Text style={styles.detailsHeader}>Payment Details</Text>
@@ -1273,8 +1434,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    // width: "40%",
-    width: width * 0.9,
+    width: width * 0.8,
     backgroundColor: "#c0c0c0",
     borderRadius: 10,
     // width: 180,
@@ -1496,7 +1656,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: width *1,
     alignSelf: "center",
-    
   },
  
   button: {
@@ -1561,6 +1720,92 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 18,
   },
+otherOptionContainer:{
+  flexDirection:'row',
+  alignItems:'center',
+  marginTop:10,
+  borderWidth:1,
+  borderColor:'#ccc',
+  borderRadius:5,
+  padding:10,
+  width:width*0.8,
+  paddingHorizontal:10,
+  marginLeft:5
+},
+otherOptionTextContainer:{
+  flexDirection:'row',
+  alignItems:'center',
+  marginLeft:10,
+  justifyContent:'space-between',
+  width:width*0.7,
+},
+otherOptionIcon:{
+  fontSize:24,
+  color:'#333',
+  alignSelf:"flex-end"
+},
+otherOptionText:{
+  fontSize:16,
+  color:'#333',
+  marginLeft:10,
+  fontWeight:'bold',
+  alignSelf:"flex-start"
+},
+paymentMethodContainer:{  
+  padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    width: width*0.9,
+    alignSelf: "center",
+},
+radioGroupContainer: {
+  flexDirection: 'column', 
+  alignItems: 'flex-start', 
+  marginBottom: 16,
+  gap: 10, 
+},
+
+radioButtonLabel: {
+  fontSize: 16,
+  color: '#333',
+  marginLeft: 8, 
+},
+container1: {
+  padding: 16,
+  backgroundColor: '#fff',
+},
+label: {
+  fontSize: 16,
+  fontWeight: '600',
+  marginBottom: 8,
+  color:'#333',
+ },
+selectButton: {
+  backgroundColor: '#fff',
+  paddingVertical: 14,
+  paddingHorizontal: 28,
+  borderRadius: 8,
+  width: '100%',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: '#ccc',
+  marginTop: 10,
+},
+selectButtonText: {
+  color: 'black',
+  fontSize: 16,
+  fontWeight: 'bold',
+  alignSelf:"flex-start"
+},
+headering:{
+  fontSize: 16,
+  fontWeight: "bold",
+  // marginBottom: 5,
+  // color: "#333",
+  marginTop:10,
+  marginLeft:10
+}
 });
 
 export default PaymentDetails;

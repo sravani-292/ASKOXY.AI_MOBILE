@@ -149,12 +149,9 @@ const Register = () => {
   const currentScreen = useNavigationState(
     (state) => state.routes[state.index]?.name
   );
-
   useFocusEffect(
     useCallback(() => {
       const handleBackPress = () => {
-        // if (currentScreen === 'Login') {
-        // Custom behavior for Login screen
         Alert.alert(
           "Exit",
           "Are you sure you want to exit?",
@@ -164,19 +161,19 @@ const Register = () => {
           ],
           { cancelable: false }
         );
-
         return true;
       };
-
-      // Add BackHandler event listener
-      BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-
-      // Cleanup
-      return () => {
-        BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-      };
+  
+      // ✅ Updated: Save the subscription and call remove() during cleanup
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+  
+      return () => backHandler.remove(); // ✅ correct way to clean up
     }, [currentScreen])
   );
+  
 
   const getVersion = async () => {
     try {
@@ -341,7 +338,7 @@ const Register = () => {
         expiryTime: otpGeneratedTime,
         registrationType: "mobile",
         primaryType: "CUSTOMER",
-        registerdFrom: "MOBILE",
+        registerdFrom: Platform.OS,
         referrerIdForMobile: referCode
       };
     }

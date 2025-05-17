@@ -10,21 +10,9 @@ import {
   Linking,
   Dimensions
 } from 'react-native';
-import { 
-  ChevronRight, 
-  CheckCircle, 
-  Star, 
-  Eye, 
-  CreditCard, 
-  Shield, 
-  Rocket, 
-  Users, 
-  DollarSign, 
-  Handshake,
-  TrendingUp,
-  Coins,
-  X
-} from 'lucide-react-native';
+import Icon from 'react-native-vector-icons/Feather'; // Main icon set for most icons
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'; // For star icon with fill
+import FontAwesome from 'react-native-vector-icons/FontAwesome'; // For other material icons
 import { LinearGradient } from 'expo-linear-gradient';
 
 // Import testimonial images - You'll need to add these to your assets folder
@@ -53,8 +41,8 @@ const OxyLoans = () => {
   const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
   const [showRBILicense, setShowRBILicense] = useState(false);
   // App store badges
-const googlePlayBadge = { uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png' };
-const appStoreBadge = require ('../../assets/appstore.png');
+  const googlePlayBadge = { uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/512px-Google_Play_Store_badge_EN.svg.png' };
+  const appStoreBadge = require ('../../assets/appstore.png');
 
   // Comprehensive testimonials data
   const testimonials = [
@@ -161,19 +149,19 @@ const appStoreBadge = require ('../../assets/appstore.png');
   const ImpactTiles = () => {
     const tiles = [
       { 
-        icon: Handshake, 
+        iconName: "handshake-o", 
         value: "30,000+", 
         label: "Lenders",
         description: "Trusted Investors" 
       },
       { 
-        icon: Users, 
+        iconName: "users", 
         value: "270,000+", 
         label: "Borrowers",
         description: "Growing Community" 
       },
       { 
-        icon: Coins, 
+        iconName: "dollar-sign", 
         value: "₹2,500,000,000+", 
         label: "Total Disbursal", 
         description: "In the Indian Financial Market" 
@@ -183,12 +171,23 @@ const appStoreBadge = require ('../../assets/appstore.png');
     return (
       <View style={styles.tilesContainer}>
         {tiles.map((tile, index) => (
+          <>
+          {tile.label !== "Lenders"?
           <View key={index} style={styles.impactTile}>
-            <tile.icon color="#2563eb" size={48} style={styles.tileIcon} />
+            <Icon name={tile.iconName} color="#2563eb" size={48} style={styles.tileIcon} />
             <Text style={styles.tileValue}>{tile.value}</Text>
             <Text style={styles.tileLabel}>{tile.label}</Text>
             <Text style={styles.tileDescription}>{tile.description}</Text>
           </View>
+          : 
+          <View key={index} style={styles.impactTile}>
+            <FontAwesome name={tile.iconName} color="#2563eb" size={48} style={styles.tileIcon} />
+            <Text style={styles.tileValue}>{tile.value}</Text>
+            <Text style={styles.tileLabel}>{tile.label}</Text>
+            <Text style={styles.tileDescription}>{tile.description}</Text>
+          </View>
+          }
+          </>
         ))}
       </View>
     );
@@ -198,17 +197,17 @@ const appStoreBadge = require ('../../assets/appstore.png');
   const BenefitTiles = () => {
     const benefits = [
       { 
-        icon: CreditCard, 
+        iconName: "credit-card", 
         title: "Easy Compare", 
         description: "Compare loan offers and investment opportunities effortlessly" 
       },
       { 
-        icon: Shield, 
+        iconName: "shield", 
         title: "Expert Assistance", 
         description: "Get professional guidance throughout your lending journey" 
       },
       { 
-        icon: Rocket, 
+        iconName: "send", 
         title: "Save Money", 
         description: "Optimize your investments and borrowing with competitive rates" 
       }
@@ -218,7 +217,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
       <View style={styles.tilesContainer}>
         {benefits.map((benefit, index) => (
           <View key={index} style={styles.benefitTile}>
-            <benefit.icon color="#2563eb" size={48} style={styles.tileIcon} />
+            <Icon name={benefit.iconName} color="#2563eb" size={48} style={styles.tileIcon} />
             <Text style={styles.benefitTitle}>{benefit.title}</Text>
             <Text style={styles.benefitDescription}>{benefit.description}</Text>
           </View>
@@ -239,7 +238,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
           
           <View style={styles.lendEarnCards}>
             <View style={styles.lendEarnCard}>
-              <TrendingUp color="#16a34a" size={48} style={styles.cardIcon} />
+              <Icon name="trending-up" color="#16a34a" size={48} style={styles.cardIcon} />
               <Text style={styles.cardTitle}>Attractive Returns</Text>
               <Text style={styles.rateText}>
                 Lend and Earn Upto 1.75% Monthly ROI and 24% P.A.
@@ -247,7 +246,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
             </View>
             
             <View style={styles.lendEarnCard}>
-              <Coins color="#2563eb" size={48} style={styles.cardIcon} />
+              <Icon name="dollar-sign" color="#2563eb" size={48} style={styles.cardIcon} />
               <Text style={styles.cardTitle}>Easy Investment</Text>
               <Text style={styles.rateText}>
                 Start your investment journey with just ₹500
@@ -259,7 +258,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
             style={styles.actionButton}
             onPress={() => handleNavigation('lendAndEarn')}
           >
-            <TrendingUp color="#ffffff" size={20} />
+            <Icon name="trending-up" color="#ffffff" size={20} />
             <Text style={styles.actionButtonText}>Register for Lend and Earn</Text>
           </TouchableOpacity>
         </View>
@@ -282,7 +281,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
               style={styles.closeButton}
               onPress={toggleRBILicense}
             >
-              <X size={20} color="#4b5563" />
+              <Icon name="x" size={20} color="#4b5563" />
             </TouchableOpacity>
             <Image 
               source={RBILicense} 
@@ -305,7 +304,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
           style={styles.viewRbiButton}
           onPress={toggleRBILicense}
         >
-          <Eye color="#ffffff" size={20} style={styles.buttonIcon} />
+          <Icon name="eye" color="#ffffff" size={20} style={styles.buttonIcon} />
           <Text style={styles.buttonText}>View RBI License Certificate</Text>
         </TouchableOpacity>
       </View>
@@ -327,7 +326,7 @@ const appStoreBadge = require ('../../assets/appstore.png');
           />
           <View style={styles.starsContainer}>
             {[...Array(5)].map((_, i) => (
-              <Star key={i} color="#facc15" size={24} fill="#facc15" />
+              <MaterialIcons key={i} name="star" color="#facc15" size={24} />
             ))}
           </View>
           <Text style={styles.testimonialQuote}>

@@ -113,8 +113,6 @@ const[secureText,setSecureText]=useState(true)
   useFocusEffect(
     useCallback(() => {
       const handleBackPress = () => {
-        // if (currentScreen === 'Login') {
-        // Custom behavior for Login screen
         Alert.alert(
           "Exit",
           "Are you sure you want to exit?",
@@ -124,19 +122,19 @@ const[secureText,setSecureText]=useState(true)
           ],
           { cancelable: false }
         );
-
         return true;
       };
-
-      // Add BackHandler event listener
-      BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-
-      // Cleanup
-      return () => {
-        BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-      };
+  
+      // ✅ Updated: Save the subscription and call remove() during cleanup
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+  
+      return () => backHandler.remove(); // ✅ correct way to clean up
     }, [currentScreen])
   );
+  
 
 
  

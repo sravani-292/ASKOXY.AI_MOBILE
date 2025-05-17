@@ -27,6 +27,7 @@ import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
 import BASE_URL, { userStage } from "../../../../Config";
 import LottieView from "lottie-react-native";
+import ContainerSoftCopy from "./ContainerSoftCopy";
 
 const CartScreen = () => {
   // State management for user data
@@ -489,7 +490,7 @@ const CartScreen = () => {
         // }
         
         // Container eligibility logic - only show if user hasn't decided yet
-        if (response?.data?.freeContainerStatus !== null) {
+        if (response?.data?.freeContainerStatus === null) {
           const validItems = cartData.filter(item => item && typeof item === 'object');
           
           // Check for specific weight items
@@ -1233,8 +1234,8 @@ const CartScreen = () => {
   return (
     <View style={styles.container}>
       {/* Container offer modal */}
-      <ContainerOfferModal modalVisible={modalVisible} setModalVisible={setModalVisible} hasWeight={hasWeight} onAccept={handleYes} onDecline={() => setModalVisible(false)} />
-      
+      {/* <ContainerOfferModal modalVisible={modalVisible} setModalVisible={setModalVisible} hasWeight={hasWeight} onAccept={handleYes} onDecline={() => setModalVisible(false)} /> */}
+      <ContainerSoftCopy visible={modalVisible} hasWeight = {hasWeight} onClose={()=>setModalVisible(false)} addContainer={handleYes} cartData={cartData}/>
       {/* 1kg offer modal */}
       <OneKgOfferModal />
       

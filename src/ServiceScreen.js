@@ -28,6 +28,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AccessToken } from "../Redux/action/index";
 import FreeSampleScreen from "./FreeSample";
 import GoogleAnalyticsService from "./Components/GoogleAnalytic";
+import AskoxyOffers from "./Screens/View/Offers/AskoxyOffers";
 
 // Default banners as fallback
 const defaultBanners = [
@@ -123,7 +124,7 @@ const ServiceScreen = () => {
     useCallback(() => {
       const handleBackPress = () => {
         Alert.alert(
-          "Exit App",
+          "Exit",
           "Are you sure you want to exit?",
           [
             { text: "Cancel", style: "cancel" },
@@ -133,13 +134,17 @@ const ServiceScreen = () => {
         );
         return true;
       };
-
-      BackHandler.addEventListener("hardwareBackPress", handleBackPress);
-      return () => {
-        BackHandler.removeEventListener("hardwareBackPress", handleBackPress);
-      };
+  
+      // ✅ Updated: Save the subscription and call remove() during cleanup
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+  
+      return () => backHandler.remove(); // ✅ correct way to clean up
     }, [currentScreen])
   );
+  
 
   useFocusEffect(
     useCallback(() => {
@@ -582,6 +587,8 @@ const ServiceScreen = () => {
                 />
               </View>
             </View>
+
+            <AskoxyOffers/>
 
             {/* Categories Section */}
             <View style={styles.sectionContainer}>

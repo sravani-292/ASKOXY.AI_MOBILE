@@ -282,7 +282,7 @@ const UserDashboard = ({ route }) => {
           setOfferItems(cheapestBag);
           console.log("cheapest bag", cheapestBag);
           // Trigger modal
-          setHas5kgsOffer(true); 
+          // setHas5kgsOffer(true); 
         }
     } catch (error) {
       console.error("Error checking 5kg offer:", error.response.data);

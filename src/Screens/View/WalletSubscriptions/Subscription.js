@@ -129,18 +129,7 @@ const Subscription = () => {
         },
       });
 
-      // console.log("Plans response:", response.data);
-
-      // if (response.data) {
-
-      //   const updatedPlans = response.data.map((plan) => ({
-      //     ...plan,
-      //     planName: planNames[plan.amount] || "Custom",
-      //     isPremium: planNames[plan.amount] === "Premium"
-      //   }));
-
-      //   setSubscriptionHistoryData(updatedPlans);
-      // }
+     
       console.log("Plans response:", response.data);
 
       if (response.data && Array.isArray(response.data)) {
@@ -152,7 +141,9 @@ const Subscription = () => {
             isPremium: planName === "Premium",
           };
         });
-
+        // sort the plans based on amount in descending order
+        updatedPlans.sort((a, b) => b.amount - a.amount);
+ 
         setSubscriptionHistoryData(updatedPlans);
       }
     } catch (error) {
@@ -431,10 +422,9 @@ const Subscription = () => {
   }
 
   const renderPlan = ({ item, index }) => {
-    // Calculate wallet balance based on the amount (using the pattern from the image)
-    const walletBalance = item.amount * 1.09;
-    const originalPrice = item.amount * 1.09;
-    const savings = originalPrice - item.amount;
+    const walletBalance = item?.getAmount;
+    const originalPrice = item?.amount ;
+    const savings = walletBalance- originalPrice;
     const monthlyLimit = item.limitAmount;
 
    
@@ -445,21 +435,21 @@ const Subscription = () => {
         {item.status && (
           <View style={styles.planCard}>
             <View style={styles.header}>
-              <Text style={styles.planTitle}> {`${item.planName}`} Plan</Text>
-              {item.planName == "Premium" && (
+              <Text style={styles.planTitle}> {`${item?.planName}`} Plan</Text>
+              {item?.planName == "Premium" && (
                 <Text style={styles.bestValue}>BEST VALUE</Text>
               )}
             </View>
 
             <Text style={styles.priceLabel}>Pay</Text>
             <Text style={styles.priceAmount}>
-              ₹{item.amount.toLocaleString()}
+              ₹{item?.amount.toLocaleString()}
             </Text>
 
             <View style={styles.walletSection}>
               <Text style={styles.walletLabel}>Get in your wallet</Text>
               <Text style={styles.walletAmount}>
-                ₹{walletBalance.toLocaleString()}
+                ₹{walletBalance?.toLocaleString()}
               </Text>
               <View style={styles.bonusTag}>
                 <Text style={styles.bonusText}>
@@ -469,7 +459,7 @@ const Subscription = () => {
             </View>
 
             <Text style={styles.benefitsTitle}>Benefits</Text>
-            {item.planName == "Premium" ? (
+            {item?.planName == "Premium" ? (
               <>
                 <View style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>🔒</Text>
@@ -496,12 +486,12 @@ const Subscription = () => {
                 <Text style={styles.benefitIcon}>⚡</Text>
                 <Text style={styles.benefitText}>Instant wallet credit</Text>
               </View>
-              <View style={styles.benefitItem}>
+              {/* <View style={styles.benefitItem}>
                   <Text style={styles.benefitIcon}>⏳</Text>
                   <Text style={styles.benefitText}>
                     <Text style={styles.boldText}>Monthly Use: </Text>₹{monthlyLimit.toLocaleString()}
                   </Text>
-                </View>
+                </View> */}
               </>
             )}
 
@@ -548,7 +538,7 @@ const Subscription = () => {
         <ActivityIndicator size="large" color="#9333ea" />
       ) : (
         <>
-          <Text style={styles.header}>Subscription Plans</Text>
+        
           {noteResponse && (
             <View style={styles.noteContainer}>
               <Text style={styles.noteText}>

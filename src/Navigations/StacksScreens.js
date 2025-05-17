@@ -40,6 +40,7 @@ import { COLORS } from "../../Redux/constants/theme";
 import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory";
 import Main from "../Screens/View/WalletSubscriptions/Main";
 import ProfileScreen from "../Screens/View/Profile/ProfileScreen";
+import NewAddressBook from "../Screens/View/Address/NewAddressBook";
 
 import Rudraksha from "../Dashboard/Rudraksha";
 import FreeAIAndGenAI from "../Dashboard/FreeAIAndGenAI";
@@ -50,6 +51,7 @@ import AbroadCategories from "../Dashboard/AbroadCategories";
 import FreeContainer from "../Dashboard/FreeContainer";
 import WeAreHiring from "../Dashboard/WeAreHiring";
 import CryptoCurrency from "../Dashboard/CryptoCurrency";
+import ViewCoinsTransferHistory from "../../src/Screens/View/MyCrypto/ViewCoinsTransferHistory";
 
 import Explore from "../Dashboard/ExploreGpts/Explore";
 import UniversityGPT from "../Dashboard/ExploreGpts/UniversityGpt";
@@ -245,10 +247,6 @@ export default function StacksScreens() {
         name="My Cancelled Item Details"
         component={UserCancelledOrderDetails}
       />
-      <Stack.Screen
-        name="My Exchanged Item Details"
-        component={UserExchangeOrderDetails}
-      />
       <Stack.Screen name="Support" component={Support} />
       <Stack.Screen name="Container Policy" component={ContainerPolicy} />
 
@@ -412,11 +410,25 @@ export default function StacksScreens() {
         options={{ headerShown: true }}
       />
 
+
+
 <Stack.Screen
    name="Services"
    component={AllService}
     options={{ headerShown: true }}
   />
+
+<Stack.Screen
+        name="My Exchanged Item Details"
+        component={UserExchangeOrderDetails}
+      />
+
+      <Stack.Screen
+        name = "View BMVcoins History"
+        component={ViewCoinsTransferHistory}
+        />
+
+        <Stack.Screen name="New Address Book" component={NewAddressBook}/>
 
 
     </Stack.Navigator>

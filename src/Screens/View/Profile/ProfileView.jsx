@@ -7,12 +7,14 @@ import axios from 'axios';
 import * as Clipboard from "expo-clipboard";
 import BASE_URL from "../../../../Config";
 import { useSelector } from "react-redux";
+import CoinsTransferrModal from "../../View/MyCrypto/CoinsTransferrModal";                  
 const jsonData = require('../../../../app.json');
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileSettings({ navigation }) {
     const [version, setVersion] = React.useState('');
+
   // App version info
  React.useEffect(() => {
     if(Platform.OS === 'ios'){
@@ -56,9 +58,18 @@ export default function ProfileSettings({ navigation }) {
         showArrow: true,
         gradient: ['#00C9FF', '#92FE9D'] // fresh and clean, reflects activity
       },
-      { id: 4, type: 'divider' },
       { 
-        id: 5, 
+        id: 4, 
+        icon: 'hand-coin', 
+        type: 'MaterialCommunityIcons', 
+        label: 'My Crypto', 
+        showArrow: true,
+        navigation: 'View BMVcoins History',
+        gradient: ['#00B4DB', '#0083B0'] 
+      },
+      { id: 5, type: 'divider' },
+      { 
+        id: 6, 
         icon: 'credit-card', 
         type: 'Feather', 
         label: 'Subscription',
@@ -67,7 +78,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#F7971E', '#FFD200'] // gold/yellow hues, finance-friendly
       },
       { 
-        id: 6, 
+        id: 7, 
         icon: 'help-circle', 
         type: 'Feather', 
         label: 'FAQ\'s', 
@@ -76,7 +87,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#36D1DC', '#5B86E5'] // consistent with helpful/support tone
       },
       { 
-        id: 7, 
+        id: 8, 
         icon: 'phone', 
         type: 'Feather', 
         label: 'Contact Us', 
@@ -84,9 +95,9 @@ export default function ProfileSettings({ navigation }) {
         navigation: 'Write To Us',
         gradient: ['#00B4DB', '#0083B0'] // professional blue gradient
       },
-      { id: 8, type: 'divider' },
+      { id: 9, type: 'divider' },
       {
-        id: 9, 
+        id: 10, 
         icon: 'user-x', 
         type: 'Feather', 
         label: 'DeActivate Account', 
@@ -95,7 +106,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#FF4B2B', '#FF416C'] // serious red-pink for account closure
       },
       {
-        id: 10,
+        id: 11,
         icon: 'user-minus',
         type: 'Feather',
         label: 'Delete Account',
@@ -114,6 +125,7 @@ export default function ProfileSettings({ navigation }) {
   const [copied, setCopied] = React.useState(false);
   const [infoModalVisible, setInfoModalVisible] = React.useState(false);
   const [user, setUser] = React.useState(null);
+  const [bmvCoinModalVisible, setBmvCoinModalVisible] = React.useState(false);
 
   const getInitials = (name) => {
     return name?.charAt(0).toUpperCase();
@@ -275,10 +287,19 @@ export default function ProfileSettings({ navigation }) {
         {userData && (
               <View style={styles.userInfoCard}>
                 <View style={styles.userInfoHeader}>
+                <View style={styles.userInfoHeader}>
                   <FontAwesome5 name="user-circle" size={20} color="#4A148C" />
                   <Text style={styles.userInfoTitle}>Account Information</Text>
                 </View>
-                
+                <View style={{flex:1,alignItems:"flex-end"}}>
+                  <TouchableOpacity
+                    style={styles.transferButton}
+                    onPress={() => setBmvCoinModalVisible(true)}
+                  >
+                    <Text style={styles.transferButtonText}>Transfer Coins</Text>
+                  </TouchableOpacity>
+                </View>
+                </View>
                 <View style={styles.userInfoDivider} />
                 
                 <View>
@@ -415,6 +436,7 @@ export default function ProfileSettings({ navigation }) {
                     </View>
                   </View>
                 </Modal>
+                <CoinsTransferrModal visible={bmvCoinModalVisible} onClose={()=>setBmvCoinModalVisible(false)}   availableCoins={coin} />
     </SafeAreaView>
   );
 }
@@ -768,4 +790,20 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: "600",
     },
+  transferButton: {
+    backgroundColor: "#4A148C",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  transferButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    // paddingVertical: 8,
+    width:width*0.2,
+  },
 });

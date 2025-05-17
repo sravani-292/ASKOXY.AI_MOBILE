@@ -106,7 +106,6 @@ const CheckOut = ({ navigation, route }) => {
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
   const [locationData, setLocationData] = useState({
-    // customerId:4,
     flatNo: "",
     landMark: "",
     pincode: "",
@@ -114,14 +113,18 @@ const CheckOut = ({ navigation, route }) => {
     addressType: "",
     latitude: "",
     longitude: "",
-  });
+    area: "",
+    houseType: "",
+    residenceName: "",
+  });
 
   useFocusEffect(
     useCallback(() => {
-      // getProfile();
-      calculateTotal();
-      totalCart();
+      // calculateTotal();
+
       fetchCartData();
+      totalCart();
+
       console.log("from my location page", route.params.locationdata);
 
       if (route.params.locationdata.status == false) {
@@ -131,20 +134,23 @@ const CheckOut = ({ navigation, route }) => {
         setAddressData(route.params.locationdata);
         setLocationData({
           customerId: customerId,
-          flatNo: route.params.locationdata.flatNo,
-          landMark: route.params.locationdata.landMark,
-          pincode: route.params.locationdata.pincode,
-          address: route.params.locationdata.address,
-          addressType: route.params.locationdata.type,
-          latitude: route.params.locationdata.latitude,
-          longitude: route.params.locationdata.longitude,
+          flatNo: route.params.locationdata?.flatNo,
+          landMark: route.params.locationdata?.landMark,
+          pincode: route.params.locationdata?.pincode,
+          address: route.params.locationdata?.address,
+          addressType: route.params.locationdata?.addressType,
+          latitude: route.params.locationdata?.latitude,
+          longitude: route.params.locationdata?.longitude,
+          area: route.params.locationdata?.area || "",
+          houseType: route.params.locationdata?.houseType || "",
+          residenceName: route.params.locationdata?.residenceName || "",
         });
       }
       return () => {
         // Clean up any side effects here if needed
       };
     }, [route.params.locationdata])
-  );
+  );
 
   const handleIncrease = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
@@ -225,7 +231,6 @@ const CheckOut = ({ navigation, route }) => {
     console.log("locationdata==================================", locationData);
     console.log("addresslist", addressList);
 
-    // 🔴 Check if any items in the cart are out of stock
     const outOfStockItems = cartData.filter((item) => {
       console.log(
         `Checking item: ${item.itemId}, Stock: ${isLimitedStock[item.itemId]}`
@@ -239,11 +244,11 @@ const CheckOut = ({ navigation, route }) => {
       Alert.alert(
         "🚨 Some Items Are Out of Stock!",
         `The following items are currently unavailable:\n\n${outOfStockItems
-          .map((item) => `- 🛑 ${item.itemName}`)
+          .map((item) =>` - 🛑 ${item.itemName}`)
           .join("\n")}\n\nPlease remove them to proceed.`,
         [{ text: "OK", style: "cancel" }]
       );
-      return; // Stop execution
+      return;
     }
 
     const value =
@@ -272,7 +277,6 @@ const CheckOut = ({ navigation, route }) => {
         value
       );
 
-
       if (isWithin == true) {
         console.log("within radius");
 
@@ -284,16 +288,10 @@ const CheckOut = ({ navigation, route }) => {
           );
           return false;
         } else {
-
-          console.log({cartItems});
-          console.log({locationData});
-          
-          // navigation.navigate("Payment Details", {
-          //   items: cartItems,
-          //   address: locationData,
-          // });
-          GoogleAnalyticsService.beginCheckout(cartItems, grandTotal);
-          navigation.navigate("Order Summary", { addressData: locationData });
+          navigation.navigate("Payment Details", {
+            addressData: locationData,
+            items: cartData,
+          });
         }
       } else {
         console.log("Not within radius");

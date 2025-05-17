@@ -39,6 +39,7 @@ const OrderDetails = () => {
   const { order_id, status } = route.params;
   const [selectedItems, setSelectedItems] = useState({});
   const [selectedCancelItems, setSelectedCancelItems] = useState({});
+ const [selectedExchangeItems,setSelectedExchangeItems]=useState({});
   const [hideCancelbtn, setHideCancelBtn] = useState(false);
   const [isExchangeComplete, setIsExchangeComplete] = useState(false);
   const [comments, setComments] = useState();
@@ -114,7 +115,7 @@ const OrderDetails = () => {
     };
     axios({
       method: "post",
-      // url:BASE_URL+`erice-service/order/deliveryBoyAssigneData`,
+     
       url: BASE_URL + `order-service/deliveryBoyAssigneData`,
       data: data,
       headers: {
@@ -248,17 +249,11 @@ const OrderDetails = () => {
     setCanExchange(canExchange);
     
     
-    // setExchangeInfo({
-    //   deliveredDate,
-    //   exchangeEndDate,
-    //   message: canExchange 
-    //     ? "Item eligible for exchange" 
-    //     : "Exchange period has expired"
-    // });
+    
   }
 
   const toggleExchangeItemSelection = (id, quantity) => {
-    setSelectedCancelItems((prev) => ({
+    setSelectedExchangeItems((prev) => ({
       ...prev,
       [id]: prev[id]
         ? { ...prev[id], checked: !prev[id].checked }
@@ -267,19 +262,27 @@ const OrderDetails = () => {
   };
 
   const handleExchangeReason = (id, text) => {
-    setSelectedCancelItems((prev) => ({
+    setSelectedExchangeItems((prev) => ({
       ...prev,
       [id]: { ...prev[id], reason: text },
     }));
   };
 
   const handleExchangeSubmit = () => {
-    const result = Object.entries(selectedCancelItems)
+    const result = Object.entries(selectedExchangeItems)
       .filter(([_, value]) => value.checked)
       .map(([key, value]) => ({
         itemId: key,
         reason: value.reason,
       }));
+     
+      const checkbox = Object.entries(selectedExchangeItems)
+                      .filter(([_, value]) => value.checked);
+      
+     if(checkbox.length == 0){
+      Alert.alert("Error", "Please select at least one item for exchange.");
+      return;
+      }
 
     const hasEmptyReasons = result.some((item) => !item.reason);
 
@@ -310,7 +313,7 @@ const OrderDetails = () => {
         Alert.alert("Success", res.data.type, [
           {
             text: "OK",
-            onPress: () => navigation.navigate("My Orders"),
+            onPress: () => navigation.navigate("My Exchanged Item Details"),
           },
         ]);
         setIsExchangeVisible(false);
@@ -436,6 +439,12 @@ const OrderDetails = () => {
     });
   };
 
+
+  const allItemsExchangeRequested = orderItems.every(
+    (item) => item.status === "EXCHANGEREQUESTED"
+  );
+  
+
   return (
     <>
      
@@ -470,23 +479,37 @@ const OrderDetails = () => {
                 <Text style={styles.headerText}>Price</Text>
                 <Text style={styles.headerText}>Total</Text>
               </View>
-
               <FlatList
-                data={orderItems}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                  <View style={styles.itemRow}>
-                    <Text style={styles.itemName}>{item.itemName}</Text>
-                    <Text style={styles.itemDetail}>{item.quantity}</Text>
-                    <Text style={styles.itemDetail}>
-                      ₹{item.price / item.quantity}
-                    </Text>
+        data={orderItems}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => (
+          <View>
+             {item.status === "EXCHANGEREQUESTED" && (
+              <View style={styles.exchangeLabelContainer}>
+                <Text style={styles.exchangeLabel}>Exchange Requested</Text>
+              </View>
+            )}
+            <View style={[
+              styles.itemRow,
+              item.status === "EXCHANGEREQUESTED" && styles.exchangeRequestedItem
+            ]}>
+              
+              <Text style={styles.itemName}>{item.itemName}</Text>
+              <Text style={styles.itemDetail}>{item.quantity}</Text>
+              <Text style={styles.itemDetail}>
+                ₹{item.price / item.quantity}
+              </Text>
+              <Text style={styles.itemDetail}>₹{item.price}</Text>
+            </View>
+            
+           
+          </View>
+        )}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        contentContainerStyle={styles.listContent}
+      />
 
-                    <Text style={styles.itemDetail}>₹{item.price}</Text>
-                  </View>
-                )}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-              />
+
             </View>
           </View>
         ) : null}
@@ -747,8 +770,8 @@ const OrderDetails = () => {
           </Text>
         </View>
       ) : null}
-      {/* // yesterday changes */}
-      <View
+    
+      {/* <View
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
@@ -767,16 +790,16 @@ const OrderDetails = () => {
                   paddingHorizontal: 20,
                 }}
               >
-                {/* <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => setIsmodelVisible(true)}
-                >
-                  <View>
-                    <Text style={styles.cancelButtonText}>Cancel Order</Text>
-                  </View>
-                </TouchableOpacity> */}
+              
               </View>
             ) : orderstatus == 4 && canExchange ? (
+              allItemsExchangeRequested ? (
+                <View style={{ padding: 10, alignItems: "center" }}>
+                  <Text style={{ color: "red", fontSize: 16 }}>
+                    All items in the order are already requested for exchange.
+                  </Text>
+                </View>
+              ) : (
               <View
                 style={{
                   flex: 1,
@@ -786,15 +809,17 @@ const OrderDetails = () => {
                   paddingHorizontal: 20,
                 }}
               >
-                {/* <TouchableOpacity
+                <TouchableOpacity
                   style={styles.cancelButton}
-                  onPress={() => setIsExchangeVisible(true)}
+                  onPress={() => setIsExchangeVisible(true)
+
+                  }
                 >
                   <View>
                     <Text style={styles.cancelButtonText}>Exchange Order</Text>
                   </View>
-                </TouchableOpacity> */}
-              </View>
+                </TouchableOpacity>
+              </View>)
             ) : null}
           </View>
         )}
@@ -807,7 +832,45 @@ const OrderDetails = () => {
         >
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
+       <View style={styles.footer1}>
+      
+        {orderstatus == 4 && canExchange && allItemsExchangeRequested && (
+          <View style={styles.exchangeMessageContainer}>
+            <Text style={styles.exchangeMessage}>
+              All items in the order are already requested for exchange.
+            </Text>
+          </View>
+        )}
+        
+       
+        <View style={styles.footerButtonsContainer}>
+         
+          {orderstatus !== "6" && orderItems.length !== 0 && 
+           orderstatus == 4 && canExchange && !allItemsExchangeRequested && (
+            <TouchableOpacity
+              style={styles.exchangeButton}
+              onPress={() => setIsExchangeVisible(true)}
+            >
+              <Text style={styles.buttonText}>Exchange Order</Text>
+            </TouchableOpacity>
+          )}
+          
+          
+          <TouchableOpacity
+            style={[
+              styles.writeToUsButton,
+             
+              (orderstatus == "6" || orderItems.length == 0 || 
+               orderstatus != 4 || !canExchange || allItemsExchangeRequested) && 
+               styles.fullWidthButton
+            ]}
+            onPress={() => navigation.navigate("Write To Us", { orderId: order_id })}
+          >
+            <Text style={styles.buttonText}>Write To Us</Text>
+          </TouchableOpacity>
+        </View>
+        </View>
       {isModalVisible && (
         <Modal visible={isModalVisible} transparent animationType="slide">
           <View style={styles.overlay}>
@@ -852,7 +915,7 @@ const OrderDetails = () => {
                   style={styles.cancelButton}
                   onPress={() => setIsmodelVisible(false)}
                 >
-                  <Text style={styles.buttonText}>Close</Text>
+                  <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.submitButton}
@@ -882,7 +945,7 @@ const OrderDetails = () => {
           </View>
         </Modal>
       )}
-      {orderstatus === "4" ? (
+      {/* {orderstatus === "4" ? (
         <View style={styles.footer1}>
           <TouchableOpacity
             style={styles.cancelButton}
@@ -894,21 +957,21 @@ const OrderDetails = () => {
             </Text>
           </TouchableOpacity>
         </View>
-      ) : null}
+      ) : null} */}
       {isExchangeVisible && (
         <Modal visible={isExchangeVisible} transparent animationType="slide">
           <View style={styles.overlay}>
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Exchange Items</Text>
               <FlatList
-                data={orderItems}
+                data={orderItems.filter(item => item.status !== "EXCHANGEREQUESTED")}
                 keyExtractor={(item) => item.itemId}
                 renderItem={({ item }) => (
                   <View>
                     <View style={styles.itemRow}>
                       <Checkbox
                         value={
-                          selectedCancelItems[item.itemId]?.checked || false
+                         selectedExchangeItems[item.itemId]?.checked || false
                         }
                         onValueChange={() =>
                           toggleExchangeItemSelection(
@@ -922,13 +985,13 @@ const OrderDetails = () => {
                       <Text style={styles.itemDetail}>{item.quantity}</Text>
                       <Text style={styles.itemDetail}>₹{item.price}</Text>
                     </View>
-                    {selectedCancelItems[item.itemId]?.checked && (
+                    {selectedExchangeItems[item.itemId]?.checked && (
                       <TextInput
                         style={styles.modalInput}
-                        placeholder="Please enter a reason for cancellation"
+                        placeholder="Please enter a reason for Exchange"
                         multiline
                         numberOfLines={4}
-                        value={selectedCancelItems[item.itemId]?.reason || ""}
+                        value={selectedExchangeItems[item.itemId]?.reason || ""}
                         onChangeText={(text) =>
                           handleExchangeReason(item.itemId, text)
                         }
@@ -939,10 +1002,10 @@ const OrderDetails = () => {
               />
               <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={styles.cancelButton}
+                  style={styles.cancelButton1}
                   onPress={() => setIsExchangeVisible(false)}
                 >
-                  <Text style={styles.buttonText}>Close</Text>
+                  <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.submitButton}
@@ -1038,16 +1101,15 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   itemRow: {
-    marginLeft: 15,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    flexWrap: 'wrap',
   },
 
   itemName: {
-    paddingLeft: 1,
+    paddingLeft: 5,
     fontSize: 13,
     flex: 1.5,
     color: "#000",
@@ -1246,15 +1308,15 @@ const styles = StyleSheet.create({
     color: "#000",
     textDecorationLine: "underline",
   },
-  cancelButton: {
-    marginBottom: 15,
-    backgroundColor: "#fff",
-    padding: 10,
-    borderRadius: 5,
-    // alignItems: "center",
-    marginTop: 10,
-    marginRight: 10,
-  },
+  // cancelButton: {
+  //   marginBottom: 15,
+  //   backgroundColor: "#fff",
+  //   padding: 10,
+  //   borderRadius: 5,
+  //   // alignItems: "center",
+  //   marginTop: 10,
+  //   marginRight: 10,
+  // },
   cancelButtonTextModal: {
     color: "#fff",
     fontWeight: "bold",
@@ -1267,12 +1329,13 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   footer: {
-    // marginTop:-30,
+  
     padding: 5,
     borderTopColor: "#ccc",
-    // backgroundColor: "#fff",
+   
   },
   footer1: {
+    marginTop:30,
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: "#ccc",
@@ -1291,7 +1354,7 @@ const styles = StyleSheet.create({
     height: "auto",
   },
   modal: {
-    // backgroundColor: "#c0c0c0",
+  
     padding: 30,
     borderRadius: 15,
     width: width * 0.85,
@@ -1366,7 +1429,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cancelButton1: {
-    backgroundColor: "red",
+    // backgroundColor: "red",
     padding: 10,
     borderRadius: 5,
     flex: 1,
@@ -1438,6 +1501,70 @@ const styles = StyleSheet.create({
   feedbackText: {
     fontSize: 16,
     color: "#555",
+  },
+  exchangeRequestedItem: {
+    backgroundColor: '#f8f9fa', 
+  },
+  exchangeLabel: {
+    // width: '100%',
+    marginTop: 6,
+    color: COLORS.services,
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign:"center",
+    alignSelf:"center",
+    fontWeight:"bold"
+  },
+  footer: {
+    marginBottom:100,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  exchangeMessageContainer: {
+    padding: 8,
+    marginBottom: 10,
+    backgroundColor: '#fff3f3',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ffcccb',
+  },
+  exchangeMessage: {
+    color: COLORS.services,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  footerButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10, 
+    marginBottom:10
+  },
+  exchangeButton: {
+    backgroundColor:'#A6AEBF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+  },
+  writeToUsButton: {
+    backgroundColor: '#A6AEBF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
   },
 });
 

@@ -90,9 +90,9 @@ const OrderScreen = () => {
             date: dayInfo.date,
             slots: [
               { id: `${matchingSlot.id}-1`, time: matchingSlot.timeSlot1 },
-              { id: `${matchingSlot.id}-2`, time: matchingSlot.timeSlot2 },
-              { id: `${matchingSlot.id}-3`, time: matchingSlot.timeSlot3 },
-              { id: `${matchingSlot.id}-4`, time: matchingSlot.timeSlot4 }
+              // { id: `${matchingSlot.id}-2`, time: matchingSlot.timeSlot2 },
+              // { id: `${matchingSlot.id}-3`, time: matchingSlot.timeSlot3 },
+              // { id: `${matchingSlot.id}-4`, time: matchingSlot.timeSlot4 }
             ],
             isAvailable: matchingSlot.isAvailable
           };
@@ -301,7 +301,7 @@ const OrderScreen = () => {
             style={styles.detailsButton}
             onPress={() => navigateToOrderDetails(item)}
           >
-            <Ionicons name="chevron-forward" size={24} color="#333" />
+            <Ionicons name="chevron-forward" size={30} color="#4B0082" />
           </TouchableOpacity>
         </View>
         
@@ -329,7 +329,7 @@ const OrderScreen = () => {
     );
   };
 
-  // Time slot selection modal content
+ 
   const renderTimeSlotModal = () => {
    
     const flattenedData = timeSlotData.flatMap(dateObj => {
@@ -445,8 +445,16 @@ const OrderScreen = () => {
           )}
         </>
       )}
-      
+       <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.exchangeButton}
+          onPress={() => navigation.navigate("My Exchanged Item Details")}
+        >
+          <Text style={styles.exchangeButtonText}>View Exchanged Items</Text>
+        </TouchableOpacity>
+      </View>
       {renderTimeSlotModal()}
+     
     </View>
   );
 };
@@ -752,6 +760,34 @@ const styles = StyleSheet.create({
     color: "#F44336",
     textAlign: "center",
     marginTop: 16,
+  },
+  footer: {
+    position: 'absolute',
+    marginBottom:70,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    elevation: 3, 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  exchangeButton: {
+    backgroundColor: COLORS.services,
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  exchangeButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 
