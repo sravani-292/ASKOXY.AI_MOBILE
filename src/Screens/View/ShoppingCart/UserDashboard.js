@@ -12,26 +12,44 @@ import {
   Pressable,
   ActivityIndicator,
   SafeAreaView,
+  BackHandler,
+  RefreshControl,
   Modal,
+  Platform,
   Animated,
   Easing,
   TouchableWithoutFeedback
 } from "react-native";
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import BASE_URL from "../../../../Config";
+import BASE_URL, { userStage } from "../../../../Config";
+import useCart from "./useCart";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigationState } from "@react-navigation/native";
 const { width, height } = Dimensions.get("window");
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
+import { Ionicons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
+import RiceLoader from "./RiceLoader";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
+
+import {
+  handleCustomerCartData,
+  handleUserAddorIncrementCart,
+  handleDecrementorRemovalCart,
+} from "../../../../src/ApiService";
 
 const UserDashboard = ({ route }) => {
   const [loading, setLoading] = useState(false);
@@ -43,32 +61,30 @@ const UserDashboard = ({ route }) => {
   );
   const navigation = useNavigation();
   const [loadingItems, setLoadingItems] = useState({});
-  const [cartCount, setCartCount] = useState(0);
+  const [cartCount, setCartCount] = useState();
   const [cartItems, setCartItems] = useState({});
   const [cartData, setCartData] = useState([]);
+  const [loader, setLoader] = useState(false);
+  const [seletedState, setSelectedState] = useState(null);
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [removalLoading, setRemovalLoading] = useState({});
   const [searchText, setSearchText] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [user, setUser] = useState();
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
   const [weightRange, setWeightRange] = useState({ min: 0, max: 100 });
   const [sortOrder, setSortOrder] = useState("weightAsc");
+  const [showOffer, setShowOffer] = useState(false);
   const [selectedWeightFilter, setSelectedWeightFilter] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
-  const [showOffer, setShowOffer] = useState(false);
   const [offerItems, setOfferItems] = useState();
   const [has5kgsOffer, setHas5kgsOffer] = useState(false);
   const [offeravail5kgs, setOfferavail5kgs] = useState(false);
 
   const scrollViewRef = useRef(null);
 
-  const userData = useSelector((state) => state.counter);
-  const token = userData?.accessToken;
-  const customerId = userData?.userId;
-  const scaleValue = new Animated.Value(1);
-
-  useEffect(() => {
+   useEffect(() => {
     if (showOffer) {
       Animated.timing(scaleValue, {
         toValue: 1, // Fully expanded
@@ -79,7 +95,6 @@ const UserDashboard = ({ route }) => {
     }
   }, [showOffer]);
 
-  // Handle Item Actions
   const handleAdd = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await handleAddToCart(item);
@@ -97,44 +112,38 @@ const UserDashboard = ({ route }) => {
     await decrementQuantity(item);
     setTimeout(() => {
       setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-    }, 1000); // Reduced timeout for better UX
+    }, 5000);
   };
 
-  const handleRemove = async (item) => {
-    setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await removeItem(item);
-    setRemovalLoading((prevState) => ({ ...prevState, [item.itemId]: false }));
-  };
+  const userData = useSelector((state) => state.counter);
+  const token = userData?.accessToken;
+  const customerId = userData?.userId;
 
-  // Focus effect for fetching cart items
   useFocusEffect(
     useCallback(() => {
       if (userData) {
         fetchCartItems();
       }
       getAllCategories();
+      // console.log(route?.params?.category);
     }, [userData])
   );
 
-  // Fetch cart items
-  const fetchCartItems = async () => {
-    if (!customerId || !token) return;
-        console.log("Fetching cart items...");
-    try {
-      const response = await axios.get(
-        `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  const onRefresh = () => {
+    getAllCategories();
+  };
 
-      const cartData = response?.data?.customerCartResponseList || [];
+  const fetchCartItems = async () => {
+    try {
+      const response = await handleCustomerCartData(customerId);
+      // console.log("cart response", response?.data);
+
+      const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
         (total, item) => total + item.cartQuantity,
         0
       );
+      //  console.log("total cart count", totalCartCount);
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
         setCartData([]);
@@ -150,11 +159,14 @@ const UserDashboard = ({ route }) => {
           item.cartQuantity === undefined ||
           item.quantity === undefined
         ) {
+          console.error("Invalid item in cartData:", item);
           return acc;
         }
         acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
+
+      // console.log("cart items map", cartItemsMap);
 
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
@@ -165,39 +177,24 @@ const UserDashboard = ({ route }) => {
         return acc;
       }, {});
 
-      const has1kg = cartData.some((item) => item.weight === 1);
-      const has5kg = cartData.some((item) => item.weight === 5);
-      console.log("has1kg", has1kg);
-      console.log("has5kg", has5kg);
-      
-      // Set state
+      // console.log({ limitedStockMap });
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
       setCartCount(totalCartCount);
+      await checkAndShowOneKgOfferModal();
 
-      // Show offer modals or handle logic
-      if (has1kg ) {
-         checkAndShowOneKgOfferModal(cartData);
-      }
-       if (has5kg) {
-         checkAndShowFiveKgOfferModal(cartData);
-      }
+      setLoadingItems((prevState) => ({
+        ...prevState,
+        [cartData.itemId]: false,
+      }));
     } catch (error) {
-      console.error("Error fetching cart items:", error.response);
+      console.error("Error fetching cart items:", error.response.status);
     }
   };
 
-  // Handle image error
-  const handleImageError = (itemId) => {
-    setImageErrors((prev) => ({ ...prev, [itemId]: true }));
-  };
-
-  // Check for 1kg offer
-  const checkAndShowOneKgOfferModal = async (cartData) => {
-    if (!cartData || cartData.length === 0) return;
-
-    console.log("Checking for 1kg offer...");
+  const checkAndShowOneKgOfferModal = async () => {
+    // console.log("checking one kg offer modal");
 
     const oneKgBags = cartData.filter(
       (item) =>
@@ -207,7 +204,7 @@ const UserDashboard = ({ route }) => {
 
     const has1kg = oneKgBags.length > 0;
     const anyOneKgHasTwoOrMore = oneKgBags.some(
-      (item) => item.cartQuantity > 2
+      (item) => item.cartQuantity >= 2
     );
 
     let offeravail = 0;
@@ -221,88 +218,43 @@ const UserDashboard = ({ route }) => {
         offeravail = response.data.cartQuantity;
       }
 
-      console.log("Offer availability:", offeravail);
-      console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
       if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
         const cheapestBag = oneKgBags.reduce((min, curr) =>
           parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
         );
-        
-        console.log(
-          "cheapest bag",
-          has1kg && !anyOneKgHasTwoOrMore && offeravail < 2
-        );
-        setOfferItems(cheapestBag);
-        setShowOffer(true);
+        // console.log("cheapest bag", cheapestBag);
+
+        // Alert.alert(
+        //   "🎁 1+1 Offer!",
+        //   `You're eligible for a free ${cheapestBag.itemName}!`,
+        //   [
+        //     {
+        //       text: "Add Free Bag",
+        //       onPress: async () => {
+        //         await addFreeOneKgBag(cheapestBag, cartData);
+        //       },
+        //     },
+        //     {
+        //       text: "No Thanks",
+        //       style: "cancel",
+        //     },
+        //   ]
+        // );
       }
     } catch (error) {
       console.error("Error checking 1kg offer:", error);
     }
   };
 
-  const checkAndShowFiveKgOfferModal = async (cartData) => {
-    if (!cartData || cartData.length === 0 || !customerId) return;
-
-    console.log("Checking for 5kg offer...");
-
-    const fiveKgBags = cartData.filter(
-      (item) =>
-        parseFloat(item.weight?.toString() || "0") === 5 &&
-        item.cartQuantity < item.quantity
-    );
-    
-    // console.log("fiveKgBags", fiveKgBags);
-    
-    const has5kg = fiveKgBags.length > 0;
-    const alreadyAddedTwoOrMore = fiveKgBags.some(
-      (item) => item.cartQuantity < 2
-    );
-
-    // console.log("alreadyAddedTwoOrMoreFiveKgs", alreadyAddedTwoOrMore);
-
-    // console.log("has5kg", has5kg);
-
-    if (!has5kg || !alreadyAddedTwoOrMore) return;
-
-    try {
-      // const offerKey = `used_5kg_offer_${customerId}`;
-      console.log(`used_5kg_offer_${customerId}`);
-      
-   const response = await axios.get(
-        `${BASE_URL}cart-service/cart/freeTicketsforCustomer?customerId=${customerId}`
-      );
-        console.log("offeravail5kgs", offeravail5kgs);
-        const cheapestBag = fiveKgBags.reduce((min, curr) => {
-          const currPrice = parseFloat(curr.itemPrice?.toString() || "0");
-          const minPrice = parseFloat(min.itemPrice?.toString() || "0");
-          return currPrice < minPrice ? curr : min;
-        });
-        
-        if(response.data && response.data.freeTickets === null && alreadyAddedTwoOrMore && !offeravail5kgs){
-          setOfferItems(cheapestBag);
-          console.log("cheapest bag", cheapestBag);
-          // Trigger modal
-          // setHas5kgsOffer(true); 
-        }
-    } catch (error) {
-      console.error("Error checking 5kg offer:", error.response.data);
-    }
-  };
-
-  // Add free 1kg bag to cart
   const addFreeOneKgBag = async (item) => {
     try {
-      if(!customerId || !token){
-        Alert.alert("Error", "Authentication required. Please login again.");
-        return;
-      }
-
-      if(offerItems && offerItems.weight === 1){
+      console.log("item ID", item.itemId);
       await axios.patch(
         `${BASE_URL}cart-service/cart/incrementCartData`,
         {
+          // cartQuantity: newQuantity,
           customerId,
-          itemId: offerItems.itemId,
+          itemId: item.itemId,
         },
         {
           headers: {
@@ -313,27 +265,24 @@ const UserDashboard = ({ route }) => {
       );
       Alert.alert(
         "Success",
-        `🎉 1+1 Offer applied! Free ${offerItems.itemName} added.`,
-        [
-          { text: "OK", onPress: () => setShowOffer(false) },
-        ]
+        `🎉 1+1 Offer applied! Free ${item.itemName} added.`
       );
       await fetchCartItems();
-    }
     } catch (error) {
-      console.error("Error applying free 1kg bag:", error);
-      Alert.alert("Error", "Failed to add the free bag. Try again.");
+      console.error("Error applying free 1kg bag:", error.response);
+      message.error("Failed to add the free bag. Try again.");
     }
   };
 
-  // Arrange categories with Sample Rice first
   const arrangeCategories = (categories) => {
     if (!categories || categories.length === 0) return [];
 
+    // Find the exact "Sample Rice" category
     const sampleRiceIndex = categories.findIndex(
       (cat) => cat.categoryName === "Sample Rice"
     );
 
+    // If "Sample Rice" category is found, move it to the first position
     if (sampleRiceIndex !== -1) {
       const result = [...categories];
       const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
@@ -343,10 +292,11 @@ const UserDashboard = ({ route }) => {
     return categories;
   };
 
-  // Parse weight for sorting
+  // Helper function to parse weight for sorting
   const parseWeight = (weightStr) => {
     if (!weightStr) return 0;
 
+    // Try to extract numeric value
     const numMatch = weightStr.toString().match(/(\d+(\.\d+)?)/);
     if (numMatch) {
       return parseFloat(numMatch[0]);
@@ -354,18 +304,18 @@ const UserDashboard = ({ route }) => {
     return 0;
   };
 
-  // Sort items by various criteria
+  // Sort items by weight in ascending order (changed from descending)
   const sortItems = (items, order) => {
     return [...items].sort((a, b) => {
-      // Priority: in-stock items
+      // First priority: in-stock items
       if (a.quantity > 0 && b.quantity === 0) return -1;
       if (a.quantity === 0 && b.quantity > 0) return 1;
 
-      // Sort by selected order
+      // Second priority: sort by selected order
       if (order === "weightAsc") {
         const weightA = parseWeight(a.weight);
         const weightB = parseWeight(b.weight);
-        return weightA - weightB;
+        return weightA - weightB; // Changed to ascending
       } else if (order === "weightDesc") {
         const weightA = parseWeight(a.weight);
         const weightB = parseWeight(b.weight);
@@ -380,7 +330,7 @@ const UserDashboard = ({ route }) => {
     });
   };
 
-  // Apply filters and sorting
+  // Apply all filters and sorting
   const applyFiltersAndSort = (
     items,
     currentWeightFilter = selectedWeightFilter
@@ -411,7 +361,54 @@ const UserDashboard = ({ route }) => {
     return sortItems(filtered, sortOrder);
   };
 
-  // Add item to cart
+  //   const handleAddToCart = async (item) => {
+  //     console.log("item added to cart", item);
+
+  //     if (!userData) {
+  //       Alert.alert("Alert", "Please login to continue", [
+  //         { text: "Cancel" },
+  //         { text: "OK", onPress: () => navigation.navigate("Login") },
+  //       ]);
+  //       return;
+  //     }
+
+  //     const data = { customerId: customerId, itemId: item.itemId };
+  //     console.log("added data", data);
+
+  //     try {
+  //       const response = await handleUserAddorIncrementCart(data);
+  //       console.log("item added response", response.data);
+  //       Alert.alert("Success", response.data.errorMessage);
+  //       fetchCartItems();
+  // if(item.weight.toString()==1){
+  // Alert.alert(
+  //   "Special Offer",
+  //   "Buy 2 bags (1kg each) of the same item and get 1kg free! Add one more bag to your cart to avail the offer."
+  // );
+  // }
+  // if(item.weight.toString()==5){
+  // Alert.alert(
+  //   "Offer Availed",
+  //   "Buy a 5kgs bag, get 2kg free of the same item! Check your cart."
+  // );
+  // }
+  // if(item.weight.toString()==10){
+  // Alert.alert(
+  //   "Offer Availed",
+  //   "Buy a 10kgs bag, get 20kgs container free! Check your cart."
+  // );
+  // }
+  // if(item.weight.toString()==26){
+  // Alert.alert(
+  //   "Offer Availed",
+  //   "Buy a 26kgs bag, get 35kgs container free! Check your cart."
+  // );
+  // }
+  //     } catch (error) {
+  //       setLoader(false);
+  //     }
+  //   };
+
   const handleAddToCart = async (item) => {
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
@@ -421,134 +418,172 @@ const UserDashboard = ({ route }) => {
       return;
     }
 
-    const data = { customerId: customerId, itemId: item.itemId };
+    const data = {
+      customerId: customerId,
+      itemId: item.itemId,
+    };
 
     try {
-      const response = await axios.post(
-        `${BASE_URL}cart-service/cart/add_Items_ToCart`,
-        data,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      // Add item to cart
+      const response = await handleUserAddorIncrementCart(data);
+      Alert.alert(
+        "Success",
+        response.data.errorMessage || "Item added to cart"
       );
+      fetchCartItems();
 
-      if (response.data.errorMessage === "Item added to cart successfully") {
-        Alert.alert("Success", "Item added to cart successfully");
-        await fetchCartItems();
-      } else {
-        Alert.alert("Alert", response.data.errorMessage);
+      // Fetch active and eligible offers
+      const [activeRes, eligibleRes] = await Promise.all([
+        fetch(`${BASE_URL}cart-service/cart/activeOffers`),
+        fetch(`${BASE_URL}cart-service/cart/userEligibleOffer/${customerId}`),
+      ]);
+
+      const activeOffers = await activeRes.json();
+      const userEligibleOffers = await eligibleRes.json();
+
+      // Filter only active offers
+      const validActiveOffers = activeOffers.filter((offer) => offer.active);
+      if (!validActiveOffers.length) return; // No active offers, no alerts
+
+      // Extract used offer weights and names
+      const usedOfferWeights = userEligibleOffers
+        .filter((o) => o.eligible)
+        .map((o) => o.weight);
+      const usedOfferNames = userEligibleOffers
+        .filter((o) => o.eligible)
+        .map((o) => o.offerName);
+
+      const itemWeight = item.weight;
+      let alertShown = false;
+
+      // Check if user has already used an offer for this weight
+      const hasUsedOfferForWeight = usedOfferWeights.includes(itemWeight);
+
+      // 1️⃣ Check for already used offer for the same weight (non-container offers)
+      if (hasUsedOfferForWeight && itemWeight !== 10 && itemWeight !== 26) {
+        const usedOffer = userEligibleOffers.find(
+          (o) => o.eligible && o.weight === itemWeight
+        );
+        if (usedOffer) {
+          setTimeout(() => {
+            Alert.alert(
+              "Offer Already Availed",
+              `You have already availed the ${usedOffer.offerName} for ${itemWeight}kg.`
+            );
+          }, 1000);
+
+          alertShown = true;
+        }
       }
-      GoogleAnalyticsService.viewItem(
-        item.itemId,
-        item.itemName,
-        item.itemPrice,
-      );
-      GoogleAnalyticsService.addToCart(item.itemId, item.itemName, item.itemPrice, 1);
+
+      // 2️⃣ Container Offer (10kg or 26kg, only one per user)
+      if (!alertShown && (itemWeight === 10 || itemWeight === 26)) {
+        // Check if user has already used a container offer (10kg or 26kg)
+        const hasUsedContainer = userEligibleOffers.some(
+          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26)
+        );
+
+        if (hasUsedContainer) {
+          setTimeout(() => {
+            Alert.alert(
+              "Container Offer Already Availed",
+              "You have already availed a container offer. Only one container offer (10kg or 26kg) can be used."
+            );
+          }, 1000);
+          alertShown = true;
+        } else {
+          const matchedContainerOffer = validActiveOffers.find(
+            (offer) =>
+              offer.minQtyKg === itemWeight &&
+              (offer.minQtyKg === 10 || offer.minQtyKg === 26) &&
+              !usedOfferNames.includes(offer.offerName)
+          );
+
+          if (matchedContainerOffer) {
+            setTimeout(() => {
+              Alert.alert(
+                "Container Offer",
+                `${matchedContainerOffer.offerName} is active! Buy 1 bag of ${matchedContainerOffer.minQtyKg}kg and get a ${matchedContainerOffer.freeItemName} free.`
+              );
+            }, 1000);
+            alertShown = true;
+          }
+        }
+      }
+
+      // 3️⃣ Special Offer (2+1 for 1kg or 5+2 for 5kg)
+      if (!alertShown && (itemWeight === 1 || itemWeight === 5)) {
+        const matchedSpecialOffer = validActiveOffers.find(
+          (offer) =>
+            offer.minQtyKg === itemWeight &&
+            (offer.minQtyKg === 1 || offer.minQtyKg === 5) &&
+            !usedOfferNames.includes(offer.offerName) &&
+            offer.freeItemName.toLowerCase() === item.itemName.toLowerCase()
+        );
+
+        if (matchedSpecialOffer) {
+          console.log("Matched Special Offer:", matchedSpecialOffer);
+          setTimeout(() => {
+            Alert.alert(
+              "Special Offer",
+              `${matchedSpecialOffer.offerName} is active! Buy ${matchedSpecialOffer.minQty} bag(s) of ${matchedSpecialOffer.minQtyKg}kg and get ${matchedSpecialOffer.freeQty}kg free.`
+            );
+          }, 1000);
+          alertShown = true;
+        }
+      }
     } catch (error) {
-      console.error("Error adding item to cart:", error);
+      console.error("Add to cart error", error);
       Alert.alert("Error", "Failed to add item to cart. Please try again.");
     }
   };
 
-  // Increment quantity in cart
   const incrementQuantity = async (item) => {
     const data = {
       customerId: customerId,
       itemId: item.itemId,
     };
     try {
-      await axios.patch(
-        `${BASE_URL}cart-service/cart/incrementCartData`,
-        data,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const response = await handleUserAddorIncrementCart(data);
+      console.log("increment response", response.data);
+      Alert.alert("Success", response.data.errorMessage);
       await fetchCartItems();
-    } catch (error) {
-      console.error("Error incrementing item quantity:", error);
-      Alert.alert("Error", "Failed to update item quantity. Please try again.");
-    }
+    } catch (error) {}
   };
 
-  // Remove item from cart
-  const removeItem = async (item) => {
-    const cartItem = cartData.find(
-      (cartData) => cartData.itemId === item.itemId
-    );
-
-    if (!cartItem) {
-      Alert.alert("Error", "Item is not found in the cart");
-      return;
-    }
-
-    try {
-      const response = await axios.delete(
-        `${BASE_URL}cart-service/cart/remove`,
-        {
-          data: {
-            id: cartItem.cartId,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        const updatedCart = cartData.filter((c) => c.itemId !== item.itemId);
-        setCartData([...updatedCart]);
-
-        await fetchCartItems();
-
-        if (updatedCart.length === 0) {
-          setCartData([]);
-          setCartItems({});
-          setIsLimitedStock({});
-          setCartCount(0);
-        }
-        Alert.alert("Success", response.data);
-      }
-    } catch (error) {
-      console.error("Error removing item:", error);
-      Alert.alert("Error", "Failed to remove item. Please try again.");
-    }
-  };
-
-  // Decrement quantity in cart
   const decrementQuantity = async (item) => {
     const newQuantity = cartItems[item.itemId];
 
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-
-    if (newQuantity === 1) {
-      handleRemove(item);
-    } else {
-      const data = {
-        customerId: customerId,
-        itemId: item.itemId,
-      };
-      try {
-        await axios.patch(
-          `${BASE_URL}cart-service/cart/decrementCartData`,
-          data,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        await fetchCartItems();
-      } catch (error) {
-        console.error("Error decrementing item quantity:", error);
-        Alert.alert(
-          "Error",
-          "Failed to update item quantity. Please try again."
-        );
-      }
+    // console.log("customer cart items", cartItem);
+    // console.log({userData})
+    try {
+      const response = await handleDecrementorRemovalCart(
+        cartItem,
+        userData.userId
+      );
+      console.log("decrement response", response);
+      Alert.alert("Success", response.data.errorMessage);
+      fetchCartItems();
+    } catch (error) {
+      console.log(
+        "Error decrementing item cart quantity:",
+        error.response.data.errorMessage
+      );
+      Alert.alert("Failed", error.response.data.errorMessage);
+      fetchCartItems();
     }
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      getAllCategories();
+    };
+
+    fetchData();
+  }, []);
 
   // Get all categories and items
   const getAllCategories = () => {
@@ -578,6 +613,10 @@ const UserDashboard = ({ route }) => {
 
           setFilteredItems(sortItems(filtered, "weightAsc"));
         }
+
+        // if(route?.params?.offerId) {
+        //   filterByWeight(route?.params?.offerId);
+        // }
 
         setTimeout(() => {
           setLoading(false);
@@ -773,10 +812,25 @@ const UserDashboard = ({ route }) => {
   };
 
 
+  if (loading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <LottieView
+          source={require("../../../../assets/AnimationLoading.json")}
+          autoPlay
+          loop
+          style={{ width: 200, height: 200 }}
+        />
+      </View>
+    );
+  }
 
-  // Render item
-  // Updated renderItem function with improved layout structure
-  const renderItem = ({ item }) => (
+  // Footer component
+  function footer() {
+    return <View style={styles.footer} />;
+  }
+
+   const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <TouchableOpacity
         onPress={() => navigation.navigate("Item Details", { item })}
@@ -927,143 +981,6 @@ const UserDashboard = ({ route }) => {
       </View>
     </View>
   );
-
-  const HandleOneKgOffer = () => {
-    return (
-       <Modal
-              animationType="fade"
-              transparent={true}
-              visible={showOffer}
-              onRequestClose={() => setShowOffer(false)}
-            >
-              <TouchableWithoutFeedback onPress={() => setShowOffer(false)}>
-                <View style={oneKgModal.modalOverlay}>
-                  <TouchableWithoutFeedback>
-                    <View style={oneKgModal.offerModalContainer}>
-                      <View style={oneKgModal.offerModalHeader}>
-                        <Text style={oneKgModal.offerModalTitle}>🎁 Special Offer!</Text>
-                        <TouchableOpacity
-                          style={oneKgModal.closeButton}
-                          onPress={() => setShowOffer(false)}
-                        >
-                          <MaterialIcons name="close" size={24} color="#000" />
-                        </TouchableOpacity>
-                      </View>
-                      
-                      <View style={oneKgModal.offerModalBody}>
-                        <Image
-                          source={require("../../../../assets/offer.png")}
-                          style={oneKgModal.offerImage}
-                          resizeMode="contain"
-                        />
-                        
-                        <Text style={oneKgModal.offerModalText}>
-                        Buy 1kg and Get 1kg Absolutely FREE! 🛍
-                        </Text>
-                        <Text style={oneKgModal.noteText}><Text style={{fontWeight:"bold"}}>📍 Note:</Text>
-                          The 1kg + 1kg Free Offer is valid only once per user and applies exclusively to 1kg rice bags.
-                          This offer can only be redeemed once per address and is applicable on the first successful delivery only.
-                          Once claimed, it cannot be reused. Grab it while it lasts!</Text>
-                          <Text style={oneKgModal.noteText}>📍 గమనిక: 1+1 కేజీ రైస్ ఆఫర్ ఒకే చిరునామాకు ఒక్కసారి మాత్రమే — మొదటి విజయవంతమైన డెలివరీకి మాత్రమే వర్తిస్తుంది.
-                        </Text>
-                      </View>
-                      
-                      <View style={oneKgModal.offerModalFooter}>
-                        <TouchableOpacity
-                          style={[oneKgModal.offerModalButton, oneKgModal.offerCancelButton]}
-                          onPress={() => setShowOffer(false)}
-                        >
-                          <Text style={oneKgModal.offerButtonTextCancel}>No, Thanks</Text>
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity
-                          style={[oneKgModal.offerModalButton, oneKgModal.offerConfirmButton]}
-                          onPress={async () => {
-                                      setShowOffer(false);
-                                      setOfferItems();
-                                      addFreeOneKgBag();
-                                    }}
-                        >
-                          <Text style={oneKgModal.offerButtonTextConfirm}>Claim Offer</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </TouchableWithoutFeedback>
-                </View>
-              </TouchableWithoutFeedback>
-            </Modal>
-    )
-  }
-
-  const HandleFreeTicketOffer = () => {
-    return (
-      <Modal
-        visible={has5kgsOffer}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setHas5kgsOffer(false)}
-        onDismiss={() => {
-          scaleValue.setValue(100);
-        }}
-      >
-        <View style={modalStyles.modalContainer} pointerEvents="auto">
-          <Animated.View
-            style={[
-              modalStyles.modalContent,
-              {
-                transform: [{ scale: scaleValue }],
-              },
-            ]}
-            pointerEvents="auto"
-          >
-            <Text style={modalStyles.offerTitle}>🎁 Special Offer!</Text>
-
-            <Text style={modalStyles.offerText}>
-              🎉 Congratulations! You're eligible for a{" "}
-              <Text style={{ fontWeight: "bold" }}>Free PVR Movie Ticket</Text>{" "}
-              to watch{" "}
-              <Text style={{ fontWeight: "bold" }}>HIT: The Third Case</Text>{" "}
-              with your purchase of a{" "}
-              <Text style={{ fontWeight: "bold" }}>5KG rice bag</Text>!{"\n\n"}
-              ✅ Offer valid only once per user{"\n"}
-              🎟 Applicable exclusively on 5KG rice bags{"\n"}
-              🚚 Redeemable on your first successful delivery only{"\n"}
-              ❗ Once claimed, the offer cannot be reused{"\n\n"}
-              🔥 Grab yours while it lasts — enjoy the movie on us!
-            </Text>
-            <TouchableOpacity
-              style={modalStyles.okButton}
-              onPress={async () => {
-                setHas5kgsOffer(false);
-                setOfferavail5kgs(true);
-                setOfferItems();
-              }}
-            >
-              <Text style={modalStyles.okButtonText}>Got it</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Modal>
-    );
-  };
-  // Render loading state
-  if (loading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <LottieView
-          source={require("../../../../assets/AnimationLoading.json")}
-          autoPlay
-          loop
-          style={{ width: 200, height: 200 }}
-        />
-      </View>
-    );
-  }
-
-  // Footer component
-  function footer() {
-    return <View style={styles.footer} />;
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1440,12 +1357,6 @@ const UserDashboard = ({ route }) => {
         />
       )}
 
-      {/*1kg + 1kg Offer Modal */}
-      <HandleOneKgOffer />
-      
-
-      {/*Free movie ticket Offer Modal */}
-      <HandleFreeTicketOffer />
     </SafeAreaView>
   );
 };

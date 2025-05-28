@@ -28,18 +28,20 @@ const ContainerSoftCopy = ({
   onClose,
   addContainer,
   cartData,
+  removeItem,
+  itemToRemove,
 }) => {
-  console.log({ hasWeight });
-  console.log({ cartData });
+  // console.log({ hasWeight });
+  // console.log({ cartData });
 
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData?.userId;
   const mobileNumber = userData?.mobileNumber;
-  console.log(mobileNumber);
+  // console.log("mobilenumber",mobileNumber);
 
   const whatsappNumber = userData?.whatsappNumber;
-  console.log(whatsappNumber);
+  // console.log("whatsappnumber",whatsappNumber);
 
   const [modalVisible, setModalVisible] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -140,25 +142,25 @@ const ContainerSoftCopy = ({
     }
 
     setLoading(true);
-   console.log("current mobile", currentMobile);
-   let numberToSend = mobileNumber || (
-    whatsappNumber && 
-    (whatsappNumber.length === 13 
-      ? whatsappNumber.slice(3) 
-      : whatsappNumber)
-    );
+    console.log("current mobile", currentMobile);
+    let numberToSend =
+      mobileNumber ||
+      (whatsappNumber &&
+        (whatsappNumber.length === 13
+          ? whatsappNumber.slice(3)
+          : whatsappNumber));
+
     console.log("numberToSend:", numberToSend);
     const itemIds = cartData.map((item) => item.itemId);
     setNumberToSend(numberToSend);
     const requestBody = {
       user_id: customerId,
       mobilenumber: numberToSend,
-      referencemobilenumbers: finalNumbersArray,
+      referenceMobileNumbers: finalNumbersArray,
       created_at: new Date(),
       itemIds: itemIds,
     };
 
-    // Send flags for selected plans
     if (selectedPlanA) {
       requestBody.plana = "YES";
     }
@@ -179,11 +181,15 @@ const ContainerSoftCopy = ({
       .then((response) => {
         console.log("API Response:", response);
 
-        const alreadySaved = response.data.alreadySavedReferences;
-        const newlySaved = response.data.newlySavedReferences;
+        const alreadySaved = response.data?.alreadySavedReferences;
+        const newlySaved = response.data?.newlySavedReferences;
         let message = "Reference offer saved successfully.";
 
-        if (alreadySaved && alreadySaved.length > 0 && newlySaved.length > 0) {
+        if (
+          alreadySaved &&
+          alreadySaved?.length > 0 &&
+          newlySaved?.length > 0
+        ) {
           const numbers = alreadySaved.join(", ");
           message = `The following numbers already exist: ${numbers}. Reference offer saved successfully.`;
         }
@@ -198,15 +204,16 @@ const ContainerSoftCopy = ({
           },
         ]);
         // selectedPlan(" ");
-        setSelectedPlanA("");
-        selectedPlanB("");
-        setNumbersArray([]);
-        setCurrentMobile("");
+        setSelectedPlanA(" ");
+        selectedPlanB(" ");
       })
       .catch((error) => {
         console.log("error", error);
 
         console.log("Error in API:", error?.response);
+        if (error?.response?.status === 500) {
+          Alert.alert("Error", "Error Occured. Please try again later.");
+        }
         if (error?.response?.status === 400) {
           Alert.alert("Error", error.response.data.message);
         }
@@ -214,6 +221,7 @@ const ContainerSoftCopy = ({
       .finally(() => {
         setLoading(false);
         setModalVisible(false);
+        // addContainer();
       });
   };
 
@@ -239,17 +247,22 @@ const ContainerSoftCopy = ({
         { text: "Cancel", style: "cancel" },
         {
           text: "Ok",
-          onPress: () => {
-            setModalVisible(false);
-            onClose();
-            setSelectedPlanA(false);
-            setSelectedPlanB(false);
-            setNumbersArray([]);
-            setCurrentMobile("");
-          },
+          onPress: handleOk, // call the remove function
         },
       ]
     );
+  };
+  const handleOk = () => {
+      if (removeItem && itemToRemove) {
+        removeItem(itemToRemove); 
+      }
+
+    setModalVisible(false);
+    onClose(); // close modal
+    setSelectedPlanA(false);
+    setSelectedPlanB(false);
+    setNumbersArray([]);
+    setCurrentMobile("");
   };
 
   const handleRemoveNumber = (indexToRemove) => {
@@ -264,6 +277,7 @@ const ContainerSoftCopy = ({
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1, marginTop: 100 }}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 40 : 0}
         >
           <Animated.View
             style={[
@@ -457,6 +471,7 @@ const ContainerSoftCopy = ({
 
 const styles = StyleSheet.create({
   modalBackground: {
+    flex: 1,
     height: height - 300,
     backgroundColor: "#000000aa",
     justifyContent: "center",
@@ -472,7 +487,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 1,
+    // marginBottom: 1,
     textAlign: "center",
   },
   plansContainer: {

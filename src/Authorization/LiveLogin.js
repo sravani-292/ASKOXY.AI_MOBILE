@@ -22,8 +22,6 @@ import { AccessToken } from "../../Redux/action/index";
 import BASE_URL,{userStage} from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
-// import dynamicLinks from '@react-native-firebase/dynamic-links';
-// import { initializeApp } from '@react-native-firebase/app';
 
 // LOGIN WITH ERICE SERVICE
 const Login = () => {
@@ -246,95 +244,6 @@ const Login = () => {
         }
       });
   };
-
-
-  const firebaseConfig = {
-    apiKey: 'AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE',
-    authDomain: 'erice-241012.firebaseapp.com',
-    projectId: 'erice-241012',
-    appId: '1:834341780860:android:2a62736e85889c243cb8f9',
-    databaseURL: 'https://erice-241012.firebaseio.com',
-    storageBucket: 'erice-241012.firebasestorage.app',
-    messagingSenderId: '834341780860'
-  };
-
-  
-    // initializeApp(firebaseConfig);
-
-
-
-//   useEffect(() => {
-// 		const handleDynamicLink = async () => {
-				
-
-// 				const initialDynamicLink = await dynamicLinks().getInitialLink();
-// 				if (initialDynamicLink) {
-// 						// Handle the initial dynamic link
-// 						console.log('Initial dynamic link:');
-// 						console.log('Initial dynamic link1:', initialDynamicLink.url);
-// 						// alert("initialDynamicLink....."+initialDynamicLink.url)
-// 						const url = initialDynamicLink.url;
-// 						const regex = /ref=([^&]+)/;
-// 						const match = url.match(regex);
-
-// 						if (match && match[1]) {
-// 								const referralCode = match[1];
-// 								// setRefCode(referralCode)
-// 								var refCode=referralCode;
-// 								console.log({refCode}); 
-//                 navigation.navigate('RegisterScreen',{refCode:refCode})
-
-// 								// dispatch(Refcodes(referralCode));// Output: LR1040972
-// 						} else {
-// 								console.log("Referral code not found in the URL.");
-// 						}
-
-// 				}
-
-// 				const unsubscribe = dynamicLinks().onLink((link) => {
-// 						// Handle the incoming dynamic link
-// 						console.log('Incoming dynamic link2:', link.url);
-// 						// alert("unsubscribe......"+link.url)
-// 						const url = link.url;
-// 						const regex = /ref=([^&]+)/;
-// 						const match = url.match(regex);
-
-// 						if (match && match[1]) {
-// 								const referralCode = match[1];
-// 								// setRefCode(referralCode)
-// 								var refCode=referralCode;
-// 								console.log({refCode}); 
-//                 navigation.navigate('RegisterScreen',{refCode:refCode})
-// 						} else {
-// 								console.log("Referral code not found in the URL.");
-// 						}
-                                       
-// 				});
-
-// 				// Handle app URL scheme deep links
-// 				Linking.addEventListener('url', (event) => {
-// 						handleOpenURL(event.url);
-// 						// alert("event.........."+event.url)
-// 				});
-
-// 				return () => {
-// 						unsubscribe();
-// 						Linking.removeEventListener('url', handleOpenURL);
-// 				};
-// 		};
-
-// 		handleDynamicLink();
-// }, []);
-
-// const handleOpenURL = (url) => {
-// 		// Handle app URL scheme deep links
-// 		console.log('App URL scheme deep link:');
-// 		console.log('App URL scheme deep link:', url);
-// };
-
-
-
-
 
 
 

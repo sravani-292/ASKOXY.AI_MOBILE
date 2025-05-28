@@ -42,6 +42,8 @@ import Main from "../Screens/View/WalletSubscriptions/Main";
 import ProfileScreen from "../Screens/View/Profile/ProfileScreen";
 import NewAddressBook from "../Screens/View/Address/NewAddressBook";
 
+import OffersModel from "../Screens/View/Offers/OffersModal";
+
 import Rudraksha from "../Dashboard/Rudraksha";
 import FreeAIAndGenAI from "../Dashboard/FreeAIAndGenAI";
 import LegalService from "../Dashboard/LegalService";
@@ -427,6 +429,11 @@ export default function StacksScreens() {
         name = "View BMVcoins History"
         component={ViewCoinsTransferHistory}
         />
+
+      <Stack.Screen 
+         name= "Special Offers"
+         component={OffersModel}
+         />
 
         <Stack.Screen name="New Address Book" component={NewAddressBook}/>
 

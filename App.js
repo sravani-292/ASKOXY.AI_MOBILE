@@ -10,6 +10,7 @@ import NetworkAlert from "./src/Authorization/NetworkAlert";
 import StacksScreens from "./src/Navigations/StacksScreens";
 import GoogleAnalyticsService from "./src/Components/GoogleAnalytic";
 import * as Linking from 'expo-linking';
+import { initializeApp, getApps } from 'firebase/app';
 
 LogBox.ignoreLogs([
   'EventEmitter.removeListener',
@@ -38,6 +39,17 @@ export default function App() {
   const navigationRef = useRef();
   const routeNameRef = useRef();
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE",
+    authDomain: "erice-241012.firebaseapp.com",
+    projectId: "erice-241012",
+    appId: "1:834341780860:android:2a62736e85889c243cb8f9",
+    databaseURL: "https://erice-241012.firebaseio.com",
+    storageBucket: "erice-241012.firebasestorage.app",
+    messagingSenderId: "834341780860",
+  };
+
+
   useEffect(() => {
     const handleDeepLink = (event) => {
       const url = event.url;
@@ -65,9 +77,19 @@ export default function App() {
     const subscription = Linking.addEventListener('url', handleDeepLink);
     checkInitialLink();
 
+       try {
+  if (!getApps().length) {
+    initializeApp(firebaseConfig);
+    console.log('Firebase initialized');
+  }
+} catch (e) {
+  console.error('Firebase init error:', e);
+}
+
     return () => {
       subscription.remove();
     };
+  
   }, []);
 
   return (

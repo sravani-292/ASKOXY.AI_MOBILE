@@ -19,21 +19,20 @@ import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { RadioButton, Checkbox, ActivityIndicator } from "react-native-paper";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
 import { COLORS } from "../../../../Redux/constants/theme";
 import BASE_URL, { userStage } from "../../../../Config";
+import { err } from "react-native-svg";
 import { Dropdown } from "react-native-element-dropdown";
+import Icon from "react-native-vector-icons/Ionicons";
 import { Ionicons } from "@expo/vector-icons";
-import DeliveryTimelineModal from "./DeliveryModal";
-import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
-import RadioGroup from "react-native-radio-buttons-group";
-import TimeSlotModal from "./TimeSlotModal ";
-
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
-  // console.log("payment screen", route.params);
+  console.log("payment screen", route.params);
   // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
@@ -59,36 +58,146 @@ const PaymentDetails = ({ navigation, route }) => {
   const [cartData, setCartData] = useState();
   const [usedWalletAmount, setUsedWalletAmount] = useState();
   const [afterWallet, setAfterWallet] = useState();
-  const [availableDays, setAvailableDays] = useState([]);
+
   const [selectedDay, setSelectedDay] = useState("");
   const [timeSlots, setTimeSlots] = useState([]);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
-  const [selectedDayName, setSelectedDayName] = useState("");
+
   const [days, setDays] = useState([]);
   const [showButtons, setShowButtons] = useState(false);
   const [orderId, setOrderId] = useState("");
   const [orderDate, setOrderDate] = useState(new Date());
   const [updatedDate, setUpdatedate] = useState();
-  const [isDayPickerVisible, setIsDayPickerVisible] = useState(false);
-  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [modalVisible, setModalVisible] = useState(true);
   const [slotsData, setSlotsData] = useState();
-  const [onlyOneKg, setOnlyOneKg] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedPlanType, setSelectedPlanType] = useState(null);
+  const [planA, setPlanA] = useState("");
+  const [planB, setPlanB] = useState("");
+  const [softCopyIntrested, setSoftcopyIntrested] = useState(false);
+  const [userIntrest, setUserIntrest] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
     customer_mobile: "",
+    whatsapp_number: "",
+
+    emailError: false,
+    validateEmail: false,
   });
   const [loading, setLoading] = useState(false);
   const items = route.params?.items || [];
-  const [paymentMethods, setPaymentMethods] = useState([]);
 
-  const [offeravailable, setOfferAvailable] = useState();
-  const [showCOD, setShowCOD] = useState(false);
+  const validateEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const getPlanType = async () => {
+    try {
+      if (selectedPlan !== null) {
+        if (selectedPlan === "A") {
+          setPlanA("YES");
+          setPlanB("");
+        } else if (selectedPlan === "B") {
+          setPlanA("");
+          setPlanB("YES");
+        }
+      } else {
+        console.log("No plan type found in AsyncStorage");
+
+        setPlanA("");
+        setPlanB("");
+      }
+    } catch (error) {
+      console.log("Error fetching selected plan type:", error);
+    }
+  };
+
+  const handleGetPaymentMethod = async () => {
+    console.log("into payment method");
+
+    try {
+      const response = await axios.get(
+        BASE_URL + `order-service/getCodAndOnlinePaymetStatus`
+      );
+      console.log("Payment method response", response.data);
+      const data = response.data;
+      const paymentMethods = data.filter((item) => item.status === true);
+      console.log("Payment methods", paymentMethods);
+      setPaymentMethods(paymentMethods);
+    } catch (error) {
+      console.log("Error fetching payment methods", error);
+    }
+  };
+  const freeContainerSoftCopy = () => {
+    const email = profileForm.customer_email?.trim();
+
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const isEmailEmpty = !email;
+
+    if (isEmailEmpty || !isValidEmail) {
+      setProfileForm((prevForm) => ({
+        ...prevForm,
+        emailError: isEmailEmpty,
+        validateEmail: !isValidEmail && !isEmailEmpty,
+      }));
+      return;
+    }
+    if (!selectedPlan) {
+      Alert.alert("Please select plan type");
+      return;
+    }
+
+    const requestBody = {
+      user_id: customerId,
+      address: addressDetails.address,
+      adharnum: "",
+      communityApartment: addressDetails.flatNo,
+      containerprovideddate: "",
+      created_at: new Date(),
+      deliveryboyname: "",
+      email: email,
+      mobilenumber: profileForm.customer_mobile || profileForm.whatsapp_number,
+      orderid: "",
+      pincode: addressDetails.pincode,
+      plana: planA,
+      planb: planB,
+      referemncemobilenumbers: "",
+      referreroffer: "CONTAINER",
+    };
+
+    setLoading(true);
+    console.log("requestBody", requestBody);
+
+    const API_URL = `https://meta.oxyglobal.tech/api/reference-service/referenceoffer`;
+
+    axios
+      .post(API_URL, requestBody, {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then((response) => {
+        console.log("Container softcopy response:", response);
+        if (response.status === 200) {
+          setSoftcopyIntrested(true);
+          setModalVisible(false);
+        }
+        setProfileForm((prevForm) => ({
+          ...prevForm,
+          emailError: false,
+          validateEmail: false,
+        }));
+      })
+      .catch((error) => {
+        console.error("Error in container softcopy API:", error.response);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   const fetchTimeSlots = async () => {
     try {
@@ -104,12 +213,14 @@ const PaymentDetails = ({ navigation, route }) => {
       setOrderDate(updatedOrderDate);
 
       const tomorrowDate = updatedOrderDate
-        .toLocaleDateString("en-GB")
+        .toLocaleDateString("en-GB") // "en-GB" gives "DD/MM/YYYY"
         .split("/")
         .join("-");
 
       console.log("New Date (Updatedate):", tomorrowDate);
+      setUpdatedate(tomorrowDate);
 
+      // Get the next 7 days, starting from tomorrow
       const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(updatedOrderDate);
         date.setDate(updatedOrderDate.getDate() + i);
@@ -128,72 +239,22 @@ const PaymentDetails = ({ navigation, route }) => {
 
       console.log("Next seven days:", nextSevenDays);
 
-      // Fixed the filter condition - changed isAvailable === false to isAvailable === true
       const availableDays = nextSevenDays
         .filter((day) => {
           const matchedDay = data.find((d) => d.dayOfWeek === day.dayOfWeek);
-          return matchedDay && matchedDay.isAvailable === false;
+          return matchedDay && matchedDay.isAvailable === true;
         })
         .slice(0, 3);
 
       console.log("Filtered available days:", availableDays);
 
       const transformedDays = availableDays.map((day) => ({
-        label: `${day.dayOfWeek} (${day.formattedDate})`,
+        label: `${day.dayOfWeek} ( ${day.formattedDate})`,
         value: day.dayOfWeek,
-        formattedDate: day.formattedDate,
       }));
 
       console.log("Transformed days:", transformedDays);
       setDays(transformedDays);
-
-      if (Platform.OS === "ios") {
-        setSelectedDay(transformedDays[0]?.value);
-        const selectedDayData = transformedDays.find(
-          (d) =>
-            d.value?.trim()?.toUpperCase() ===
-            selectedDay?.trim()?.toUpperCase()
-        );
-
-        console.log({ selectedDayData });
-
-        if (selectedDayData) {
-          const fullDayData = slotsData.find(
-            (d) =>
-              d.dayOfWeek.trim().toUpperCase() ===
-              selectedDay.trim().toUpperCase()
-          );
-
-          if (fullDayData) {
-            setSelectedDate(selectedDayData.formattedDate || "");
-            setUpdatedate(selectedDayData?.formattedDate);
-
-            console.log("Matching Slot:", fullDayData);
-
-            const timeSlots = [
-              { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
-              { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
-              { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
-              { time: fullDayData.timeSlot4, status: fullDayData.slot4Status },
-            ];
-
-            // Filter for available slots only (status === false)
-            // Assuming false means available and true means unavailable/booked
-            const availableTimeStrings = timeSlots
-              .filter((slot) => slot.time && !slot.status)
-              .map((slot) => slot.time);
-
-            // Remove duplicates
-            const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
-
-            console.log("Available Times:", uniqueAvailableTimes);
-
-            // Set only array of time strings
-            setTimeSlots(uniqueAvailableTimes);
-            setSelectedTimeSlot(uniqueAvailableTimes[0]);
-          }
-        }
-      }
     } catch (error) {
       console.error("Error fetching time slots:", error);
     }
@@ -218,27 +279,6 @@ const PaymentDetails = ({ navigation, route }) => {
       );
       // setShowButtons(true);
     }
-  };
-
-   const handleGetPaymentMethod = async () => {
-      console.log("into payment method");
-  
-      try {
-        const response = await axios.get(
-          BASE_URL + `order-service/getCodAndOnlinePaymetStatus`
-        );
-        console.log("Payment method response", response.data);
-        const data = response.data;
-        const paymentMethods = data.filter((item) => item.status === true);
-        console.log("Payment methods", paymentMethods);
-        setPaymentMethods(paymentMethods);
-      } catch (error) {
-        console.log("Error fetching payment methods", error);
-      }
-    };
-
-  const handleTimeSlotChange = (timeSlot) => {
-    setSelectedTimeSlot(timeSlot);
   };
 
   const handleOfferResponse = async (orderId, userId, userResponse) => {
@@ -290,11 +330,10 @@ const PaymentDetails = ({ navigation, route }) => {
     console.log("Days array before filtering:", days);
     console.log(
       "Available Days:",
-      days.map((d) => `${d.value}`)
+      days.map((d) => `"${d.value}"`)
     );
-    console.log("Selected Day:", `${selectedDay}`);
+    console.log("Selected Day:", `"${selectedDay}"`);
 
-    // Improved day matching by normalizing case and trimming
     const selectedDayData = days.find(
       (d) =>
         d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
@@ -303,37 +342,19 @@ const PaymentDetails = ({ navigation, route }) => {
     console.log({ selectedDayData });
 
     if (selectedDayData) {
-      const fullDayData = slotsData.find(
-        (d) =>
-          d.dayOfWeek.trim().toUpperCase() === selectedDay.trim().toUpperCase()
-      );
+      const fullDayData = slotsData.find((d) => d.dayOfWeek === selectedDay);
 
       if (fullDayData) {
         setSelectedDate(selectedDayData.formattedDate || "");
-        setUpdatedate(selectedDayData?.formattedDate);
-
-        console.log("Matching Slot:", fullDayData);
-
-        const timeSlots = [
-          { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
-          { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
-          { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
-          { time: fullDayData.timeSlot4, status: fullDayData.slot4Status },
-        ];
-
-        // Filter for available slots only (status === false)
-        // Assuming false means available and true means unavailable/booked
-        const availableTimeStrings = timeSlots
-          .filter((slot) => slot.time && !slot.status)
-          .map((slot) => slot.time);
-
-        // Remove duplicates
-        const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
-
-        console.log("Available Times:", uniqueAvailableTimes);
-
-        // Set only array of time strings
-        setTimeSlots(uniqueAvailableTimes);
+        setTimeSlots(
+          [
+            fullDayData.timeSlot1,
+            fullDayData.timeSlot2,
+            fullDayData.timeSlot3,
+            fullDayData.timeSlot4,
+          ]
+          // .filter(Boolean)
+        );
       } else {
         setTimeSlots([]);
       }
@@ -343,6 +364,8 @@ const PaymentDetails = ({ navigation, route }) => {
   };
 
   const totalCart = async () => {
+    console.log("into total cart function");
+
     try {
       const response = await axios({
         url: BASE_URL + "cart-service/cart/cartItemData",
@@ -356,29 +379,46 @@ const PaymentDetails = ({ navigation, route }) => {
         },
       });
 
+      console.log("cart items", response.data.cartResponseList);
+
       const cartResponse = response.data.cartResponseList;
-      const onlyOneKg = items.every((item) => item.weight === 1);
-      setOnlyOneKg(onlyOneKg);
-      console.log(
-        onlyOneKg
-          ? "✅ All items are 1kg bags"
-          : "❌ There are items other than 1kg bags"
-      );
 
       setCartData(cartResponse);
-      const totalDeliveryFee = response.data?.cartResponseList.reduce(
+
+      const totalDeliveryFee = cartResponse.reduce(
         (sum, item) => sum + item.deliveryBoyFee,
         0
       );
       setTotalGstSum(response.data.totalGstSum);
       setDeliveryBoyFee(totalDeliveryFee);
       setGrandTotal(response.data.totalSumWithGstSum);
-      setOfferAvailable(response.data.offerElgible);
+
+      const containerItemIds = [
+        "53d7f68c-f770-4a70-ad67-ee2726a1f8f3", // Stainless Steel Rice Vault - 20Kg+
+        "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61", // Premium Steel Rice Storage - 35kg+
+      ];
+
+      const containerItemNames = [
+        "Stainless Steel Rice Vault - 20Kg+",
+        "Premium Steel Rice Storage - 35kg+",
+      ];
+
+      const isUserInterested = cartResponse.some(
+        (item) =>
+          containerItemIds.includes(item.itemId) ||
+          containerItemNames.includes(item.itemName)
+      );
+
+      console.log("Is user interested in rice containers?", isUserInterested);
+
+      setUserIntrest(isUserInterested);
     } catch (error) {
       // setError("Failed to fetch cart data");
+      console.error("Error fetching cart data:", error);
     }
   };
 
+  //address details from previous page
   var addressDetails = route.params.addressData;
 
   const [selectedPaymentMode, setSelectedPaymentMode] = useState("ONLINE");
@@ -396,6 +436,8 @@ const PaymentDetails = ({ navigation, route }) => {
         0
       )
     );
+    console.log("calculated total", calculatedTotal);
+
     setSubTotal(calculatedTotal);
     grandTotalfunc();
   }, [items]);
@@ -413,7 +455,6 @@ const PaymentDetails = ({ navigation, route }) => {
   };
 
   const confirmPayment = () => {
-    // if(selez
     if (selectedTimeSlot == null || selectedTimeSlot == "") {
       Alert.alert("Please select time slot to proceed");
     } else if (selectedPaymentMode == null || selectedPaymentMode == "") {
@@ -489,9 +530,9 @@ const PaymentDetails = ({ navigation, route }) => {
     getWalletAmount();
     totalCart();
     fetchTimeSlots();
-    checkOfferEligibility(customerId);
+    getPlanType();
     handleGetPaymentMethod();
-    // setDeliveryBoyFee(200);
+    checkOfferEligibility(customerId);
   }, [grandTotalAmount, deliveryBoyFee]);
 
   const getWalletAmount = async () => {
@@ -553,6 +594,10 @@ const PaymentDetails = ({ navigation, route }) => {
   };
 
   const getProfile = async () => {
+    console.log("sravani profile");
+
+    console.log("into profile call");
+
     try {
       const response = await axios({
         method: "GET",
@@ -564,13 +609,16 @@ const PaymentDetails = ({ navigation, route }) => {
           BASE_URL +
           `user-service/customerProfileDetails?customerId=${customerId}`,
       });
-      // console.log(response.data);
+      console.log("profile call response", response.data);
 
       if (response.status === 200) {
         setProfileForm({
-          customer_name: response.data.name,
+          customer_name: response.data.firstName,
           customer_email: response.data.email,
-          customer_mobile: response.data.mobileNumber,
+          customer_mobile:
+            response.data?.mobileNumber || response.data?.whatsappNumber,
+          // whatsapp_number: response.data?.whatsappNumber,
+          customer_email: response.data?.email,
         });
       }
     } catch (error) {
@@ -580,6 +628,8 @@ const PaymentDetails = ({ navigation, route }) => {
   var postData;
 
   const placeOrder = () => {
+    console.log("grandTotalAmount", grandTotalAmount);
+
     if (loading == true) {
       return;
     }
@@ -589,6 +639,11 @@ const PaymentDetails = ({ navigation, route }) => {
         "Please confirm that the exchange can be taken within 10 days after delivery."
       );
       return;
+    }
+    if (selectedPlan) {
+      if (softCopyIntrested == false) {
+        setModalVisible(true);
+      }
     }
 
     let wallet;
@@ -606,10 +661,6 @@ const PaymentDetails = ({ navigation, route }) => {
       coupenAmount = 0;
     }
 
-    console.log(addressDetails);
-
-    const avail = offeravailable === "YES" ? "YES" : null;
-
     postData = {
       address: addressDetails.address,
       amount: grandTotalAmount,
@@ -621,22 +672,18 @@ const PaymentDetails = ({ navigation, route }) => {
       pincode: addressDetails.pincode,
       latitude: addressDetails.latitude ?? 0,
       longitude: addressDetails.longitude ?? 0,
-      area: addressDetails?.area || "",
-      houseType: addressDetails?.houseType || "",
-      residenceName: addressDetails?.residenceName || "",
       walletAmount: usedWalletAmount,
       couponCode: coupon,
       couponValue: coupenDetails,
       deliveryBoyFee: deliveryBoyFee,
       subTotal: subTotal,
       gstAmount: totalGstSum,
-      orderFrom: Platform.OS,
+      orderFrom: "MOBILE",
       dayOfWeek: selectedDay,
       expectedDeliveryDate: updatedDate,
       timeSlot: selectedTimeSlot,
-      latitude: addressDetails.latitude ?? 0,
-      longitude: addressDetails.longitude ?? 0,
-      freeTicketAvailable: avail,
+      latitude: addressDetails.latitude,
+      longitude: addressDetails.longitude,
     };
 
     console.log({ postData });
@@ -657,54 +704,13 @@ const PaymentDetails = ({ navigation, route }) => {
         console.log("Order Placed with Payment API:", response);
         console.log("order id after placing the order", response.data.orderId);
         setOrderId(response.data.orderId);
-        // if (response.data.status) {
-        //   Alert.alert(
-        //     "Sorry",
-        //     response.data.status,
-        //     [
-        //       {
-        //         text: "OK",
-        //         onPress: () => navigation.navigate("Home",{screen:"My Cart"}),
-        //       },
-        //     ]
-        //   );
-        //   return;
-        // }
         if (response.data.status) {
-          const message = response.data.status;
-
-          if (message === "Item not found or out of stock. Order not placed.") {
-            Alert.alert("Out of Stock", message, [
-              {
-                text: "OK",
-                onPress: () =>
-                  navigation.navigate("Home", { screen: "My Cart" }),
-              },
-            ]);
-          } else if (
-            message ===
-            "We noticed that this offer has already been used at this address. To help you move forward, it’s been removed from the cart."
-          ) {
-            Alert.alert(
-              "Alert", 
-              message, 
-              [
-                {
-                  text: "OK",
-                  onPress: () => {},
-                },
-              ]
-            );
-            setLoading(false);
-          } else {
-            Alert.alert("Notice", message, [
-              {
-                text: "OK",
-                onPress: () => {},
-              },
-            ]);
-          }
-
+          Alert.alert("Sorry", response.data.status, [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate("Home", { screen: "My Cart" }),
+            },
+          ]);
           return;
         }
 
@@ -755,8 +761,8 @@ const PaymentDetails = ({ navigation, route }) => {
           const data = {
             mid: "1152305",
             amount: grandTotalAmount,
-            // amount: 1,
-            merchantTransactionId: response.data.paymentId,
+            amount: 1,
+            // merchantTransactionId: response.data.paymentId,
             transactionDate: new Date(),
             terminalId: "getepay.merchant128638@icici",
             udf1: profileForm.customer_mobile,
@@ -782,12 +788,6 @@ const PaymentDetails = ({ navigation, route }) => {
           };
           // console.log({ data });
           getepayPortal(data);
-          GoogleAnalyticsService.purchase(
-            response.data.paymentId,
-            cartData,
-            grandTotalAmount,
-            "ONLINE"
-          );
         }
       })
       .catch((error) => {
@@ -860,9 +860,7 @@ const PaymentDetails = ({ navigation, route }) => {
           [
             {
               text: "No",
-              onPress: () => {
-                setLoading(false);
-              },
+              onPress: () => {},
             },
             {
               text: "yes",
@@ -1108,7 +1106,7 @@ const PaymentDetails = ({ navigation, route }) => {
         usedWallet = total; // Use only what's needed
         total = 0;
       } else {
-        usedWallet = walletAmount; // Use full wallet balance
+        usedWallet = walletAmount;
         total -= walletAmount;
       }
     }
@@ -1116,17 +1114,14 @@ const PaymentDetails = ({ navigation, route }) => {
     // Ensure total is never negative
     total = Math.max(0, total);
 
-    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
-    setUsedWalletAmount(usedWallet); // Store how much wallet is used
+    setAfterWallet(walletAmount ? walletAmount - usedWallet : 0);
+    setUsedWalletAmount(usedWallet);
     setGrandTotalAmount(total);
 
     if (total === 0) {
       // console.log("Get all Values",{total});
       // setSelectedPaymentMode('COD');
     }
-
-    // console.log("Used Wallet:", usedWallet);
-    // console.log("Final Grand Total:", total);
   }
 
   useEffect(() => {
@@ -1142,7 +1137,6 @@ const PaymentDetails = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      {/* Apply Coupon Section */}
       <ScrollView
         keyboardShouldPersistTaps="always"
         style={{ flex: 1 }}
@@ -1212,135 +1206,65 @@ const PaymentDetails = ({ navigation, route }) => {
           </View>
         )}
 
-        {/* <View style={styles.container1}>
-  <Text style={styles.label}>Select Day:</Text>
-
-  {Platform.OS === 'ios' ? (
- <RadioGroup
- radioButtons={days.map((d) => ({
-   id: d.value,
-   label: d.label,
-   value: d.value,
- }))}
- selectedId={selectedDay}
- onPress={(selectedId) => handleDayChange(selectedId)}
- containerStyle={styles.radioGroupContainer}
- labelStyle={styles.radioButtonLabel}
-/>
-
- 
-  ) : (
-    <View style={styles.pickerContainer}>
-      <Dropdown
-        data={days}
-        labelField="label"
-        valueField="value"
-        placeholder="SELECT A DAY"
-        value={selectedDay}
-        onChange={(item) => handleDayChange(item.value)}
-        style={styles.picker}
-        iconStyle={{ marginRight: 20 }}
-      />
-    </View>
-  )}
-
-  {timeSlots.length > 0 && (
-    <>
-      <Text style={styles.label}>Select Time Slot:</Text>
-
-      {Platform.OS != 'ios' ? (
-      <RadioGroup
-      radioButtons={timeSlots.map((slot) => ({
-        id: slot,
-        label: slot,
-        value: slot,
-        containerStyle: { marginBottom: 10 }, 
-      }))}
-      selectedId={selectedTimeSlot}
-      onPress={(selectedId) => setSelectedTimeSlot(selectedId)}
-      containerStyle={styles.radioGroupContainer}
-      labelStyle={styles.radioButtonLabel}
-    />
-    ) : (
-        <View style={styles.pickerContainer}>
-          <Dropdown
-            data={timeSlots.map((slot) => ({ label: slot, value: slot }))}
-            labelField="label"
-            valueField="value"
-            placeholder="Select a time slot"
-            value={selectedTimeSlot}
-            onChange={(item) => setSelectedTimeSlot(item.value)}
-            style={styles.picker}
-            iconStyle={{ marginRight: 20 }}
-          />
-        </View>
-      )}
-    </>
-  )}
-</View> */}
-
-        {Platform.OS === "android" && (
-          <Text style={styles.headering}>
-            Please select date and time slot :{" "}
-          </Text>
-        )}
-
-        {Platform.OS === "ios" ? (
-          <View
-            style={styles.selectButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
-              Your order will be delivered on:
-            </Text>
-            <Text style={styles.selectButtonText}>
-              {!selectedDay && !selectedTimeSlot
-                ? "Select Date & Time"
-                : `${updatedDate} (${selectedDay}) ,${selectedTimeSlot}`}
-            </Text>
+        <View style={styles.container1}>
+          <Text style={styles.label}>Select Day:</Text>
+          <View style={styles.pickerContainer}>
+            <Dropdown
+              data={days}
+              labelField="label"
+              valueField="value"
+              placeholder="SELECT A DAY"
+              value={selectedDay}
+              onChange={(item) => handleDayChange(item.value)}
+              style={styles.picker}
+              iconStyle={{ marginRight: 20 }}
+            />
           </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {!selectedDay && !selectedTimeSlot ? (
-                "Select Date & Time"
-              ) : (
-                <>
-                  <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
-                    Your order will be delivered on:
-                  </Text>
-                  {"\n"}
-                  {`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
-                </>
-              )}
-            </Text>
-          </TouchableOpacity>
-        )}
-        <TimeSlotModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          days={days}
-          timeSlots={timeSlots}
-          selectedDay={selectedDay}
-          selectedTimeSlot={selectedTimeSlot}
-          onDayChange={handleDayChange}
-          onTimeSlotChange={handleTimeSlotChange}
-          onConfirm={() => {
-            setModalVisible(false);
-          }}
-        />
+
+          {timeSlots.length > 0 && (
+            <>
+              <Text style={styles.label}>Select Time Slot:</Text>
+              <View style={styles.pickerContainer}>
+                <Dropdown
+                  data={timeSlots.map((slot) => ({ label: slot, value: slot }))}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select a time slot"
+                  value={selectedTimeSlot}
+                  onChange={(item) => setSelectedTimeSlot(item.value)}
+                  style={styles.picker}
+                  iconStyle={{ marginRight: 20 }}
+                />
+              </View>
+            </>
+          )}
+        </View>
         {/* Payment Methods */}
-        <View
-          style={[
-            styles.paymentMethodContainer,
-            { marginTop: 20, marginBottom: 20 },
-          ]}
-        >
-          <Text style={styles.paymentHeader}>Choose Payment Method</Text>
-          {/*<View>
+        <Text style={styles.paymentHeader}>Choose Payment Method</Text>
+        <View style={styles.paymentOptions}>
+          {/* <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              selectedPaymentMode === "ONLINE" && styles.selectedOption,
+            ]}
+            onPress={() => handlePaymentModeSelect("ONLINE")}
+          >
+            <FontAwesome5
+              name="credit-card"
+              size={24}
+              color={
+                selectedPaymentMode === "ONLINE"
+                  ? COLORS.backgroundcolour
+                  : "black"
+              }
+            />
+            <Text style={styles.optionText}>Online Payment</Text>
+          </TouchableOpacity> */}
+
+          {paymentMethods.some(
+            (method) =>
+              method.paymentStatus === "ONLINE" && method.status === true
+          ) && (
             <TouchableOpacity
               style={[
                 styles.paymentOption,
@@ -1359,94 +1283,32 @@ const PaymentDetails = ({ navigation, route }) => {
               />
               <Text style={styles.optionText}>Online Payment</Text>
             </TouchableOpacity>
-          </View>*/}
+          )}
 
-          {paymentMethods.some(
-                      (method) =>
-                        method.paymentStatus === "ONLINE" && method.status === true
-                    ) && (
-                      <TouchableOpacity
-                        style={[
-                          styles.paymentOption,
-                          selectedPaymentMode === "ONLINE" && styles.selectedOption,
-                        ]}
-                        onPress={() => handlePaymentModeSelect("ONLINE")}
-                      >
-                        <FontAwesome5
-                          name="credit-card"
-                          size={24}
-                          color={
-                            selectedPaymentMode === "ONLINE"
-                              ? COLORS.backgroundcolour
-                              : "black"
-                          }
-                        />
-                        <Text style={styles.optionText}>Online Payment</Text>
-                      </TouchableOpacity>
-                    )}
-
-          {grandTotalAmount > 100 && (
-            <View>
+          {grandTotalAmount > 100 &&
+            paymentMethods.some(
+              (method) =>
+                method.paymentStatus === "COD" && method.status === true
+            ) && (
               <TouchableOpacity
-                style={styles.otherOptionContainer}
-                onPress={() => setShowCOD(!showCOD)}
+                style={[
+                  styles.paymentOption,
+                  selectedPaymentMode === "COD" && styles.selectedOption,
+                ]}
+                onPress={() => handlePaymentModeSelect("COD")}
               >
-                <View style={styles.otherOptionTextContainer}>
-                  <Text style={styles.otherOptionText}>Other</Text>
-                  <MaterialIcons
-                    name="keyboard-arrow-right"
-                    size={24}
-                    color="black"
-                    style={styles.otherOptionIcon}
-                  />
-                </View>
+                <MaterialIcons
+                  name="delivery-dining"
+                  size={24}
+                  color={
+                    selectedPaymentMode === "COD"
+                      ? COLORS.backgroundcolour
+                      : "black"
+                  }
+                />
+                <Text style={styles.optionText}>Cash on Delivery</Text>
               </TouchableOpacity>
-              <View>
-                {showCOD &&  paymentMethods.some(
-                              (method) =>
-                                method.paymentStatus === "COD" && method.status === true
-                            ) && (
-                              <TouchableOpacity
-                                style={[
-                                  styles.paymentOption,
-                                  selectedPaymentMode === "COD" && styles.selectedOption,
-                                ]}
-                                onPress={() => handlePaymentModeSelect("COD")}
-                              >
-                                <MaterialIcons
-                                  name="delivery-dining"
-                                  size={24}
-                                  color={
-                                    selectedPaymentMode === "COD"
-                                      ? COLORS.backgroundcolour
-                                      : "black"
-                                  }
-                                />
-                                <Text style={styles.optionText}>Cash on Delivery</Text>
-                              </TouchableOpacity>
-                            )} 
-                  {/* <TouchableOpacity
-                    style={[
-                      styles.paymentOption,
-                      selectedPaymentMode === "COD" && styles.selectedOption,
-                      { marginTop: 20 },
-                    ]}
-                    onPress={() => handlePaymentModeSelect("COD")}
-                  >
-                    <MaterialIcons
-                      name="delivery-dining"
-                      size={24}
-                      color={
-                        selectedPaymentMode === "COD"
-                          ? COLORS.backgroundcolour
-                          : "black"
-                      }
-                    />
-                    <Text style={styles.optionText}>Cash on Delivery</Text>
-                  </TouchableOpacity> */}
-              </View>
-            </View>
-          )} 
+            )}
         </View>
 
         {/* Payment Details */}
@@ -1461,7 +1323,7 @@ const PaymentDetails = ({ navigation, route }) => {
               color={isChecked ? "green" : "gray"}
             />
             <Text style={styles.label1}>
-              You can request an exchange within{" "}
+              I confirm that the exchange can be taken within{" "}
               <Text
                 style={[
                   styles.label1,
@@ -1470,7 +1332,7 @@ const PaymentDetails = ({ navigation, route }) => {
               >
                 10 days
               </Text>{" "}
-              of your order being delivered.          
+              after the order has been delivered.
             </Text>
           </TouchableOpacity>
           <Text style={styles.detailsHeader}>Payment Details</Text>
@@ -1525,10 +1387,175 @@ const PaymentDetails = ({ navigation, route }) => {
           )}
         </View>
       </ScrollView>
-      <DeliveryTimelineModal
-        visible={showModal}
-        onClose={() => setShowModal(false)}
-      />
+
+      {userIntrest && (
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <ScrollView contentContainerStyle={styles.scrollViewContent}>
+                <Text style={styles.modalTitle}>
+                  <Text style={styles.modalTitle}>
+                    🎉 Congratulations! A free container will be delivered with
+                    your order. 📦
+                  </Text>
+                </Text>
+                <View style={styles.planSelectionContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.radioButton,
+                      selectedPlan === "planA" && styles.radioButtonSelected,
+                    ]}
+                    onPress={() => setSelectedPlan("planA")}
+                  >
+                    <View style={styles.radioCircle}>
+                      {selectedPlan === "planA" && (
+                        <View style={styles.selectedRadioCircle} />
+                      )}
+                    </View>
+                    <Text style={styles.radioText}>Plan A</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.radioButton,
+                      selectedPlan === "planB" && styles.radioButtonSelected,
+                    ]}
+                    onPress={() => setSelectedPlan("planB")}
+                  >
+                    <View style={styles.radioCircle}>
+                      {selectedPlan === "planB" && (
+                        <View style={styles.selectedRadioCircle} />
+                      )}
+                    </View>
+                    <Text style={styles.radioText}>Plan B</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Dynamic Content Based on Plan Selection */}
+                {selectedPlan === "planA" && (
+                  <View style={styles.planContent}>
+                    <Text style={styles.planTitle}>Plan A Details</Text>
+                    <Text style={styles.planDescription}>
+                      Buy 9 bags during the next 3 years, and the container is
+                      yours forever.
+                    </Text>
+                  </View>
+                )}
+
+                {selectedPlan === "planB" && (
+                  <View style={styles.planContent}>
+                    <Text style={styles.planTitle}>Plan B Details</Text>
+                    <Text style={styles.planDescription}>
+                      Refer 9 people, and when they buy their first bag, the
+                      container is yours forever.
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.section}>
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Name</Text>
+                    <View style={styles.inputField}>
+                      <Text style={styles.inputText}>
+                        {profileForm.customer_name}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Mobile</Text>
+                    <View style={styles.inputField}>
+                      <Text style={styles.inputText}>
+                        {profileForm.customer_mobile}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <Text style={styles.sectionTitle}>Address</Text>
+
+                <View style={styles.section}>
+                  <View style={styles.inputContainer}>
+                    <View style={styles.inputField}>
+                      <Text style={styles.inputText}>
+                        <Text style={styles.addressLabel}>Flat No: </Text>
+                        {addressDetails.flatNo}
+
+                        {addressDetails.landMark ? "\n" : ""}
+                        {addressDetails.landMark ? (
+                          <Text style={styles.addressLabel}>Landmark: </Text>
+                        ) : null}
+                        {addressDetails.landMark}
+
+                        {addressDetails.pincode ? "\n" : ""}
+                        {addressDetails.pincode ? (
+                          <Text style={styles.addressLabel}>Pincode: </Text>
+                        ) : null}
+                        {addressDetails.pincode}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Email</Text>
+
+                  <TextInput
+                    style={styles.textInput}
+                    value={profileForm.customer_email}
+                    placeholder="Please enter your email"
+                    keyboardType="email-address"
+                    onChangeText={(text) => {
+                      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                        text
+                      );
+                      setProfileForm((prevForm) => ({
+                        ...prevForm,
+                        customer_email: text,
+                        emailError: text.trim() === "",
+                        validateEmail: text.trim() !== "" && !isValidEmail,
+                      }));
+                    }}
+                  />
+
+                  {profileForm.emailError && (
+                    <Text style={{ color: "red", alignSelf: "center" }}>
+                      Email is mandatory
+                    </Text>
+                  )}
+
+                  {profileForm.validateEmail && (
+                    <Text style={{ color: "red", alignSelf: "center" }}>
+                      Invalid Email
+                    </Text>
+                  )}
+                </View>
+              </ScrollView>
+              <View style={styles.buttonContainer}>
+                {/* <TouchableOpacity
+                  style={[styles.button, styles.closeButton]}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.buttonText}>Close</Text>
+                </TouchableOpacity> */}
+
+                <TouchableOpacity
+                  style={[styles.button, styles.okButton]}
+                  onPress={() => {
+                    freeContainerSoftCopy();
+                  }}
+                >
+                  <Text style={styles.buttonText}>OK</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -1575,28 +1602,29 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 18, fontWeight: "bold" },
   totalAmount: { fontSize: 18, fontWeight: "bold", color: "green" },
   paymentHeader: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
-  // paymentOptions: {
-  //   width: width * 0.7,
-  //   flexDirection: "row",
-  //   justifyContent: "space-around",
-  //   marginBottom: 16,
-  //   marginVertical: 20,
-  //   padding: 10,
-  //   // backgroundColor: "#4DA1A9",
-  //   borderRadius: 12,
-  //   // shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 4 },
-  //   shadowOpacity: 0.2,
-  //   shadowRadius: 6,
-  //   elevation: 6,
-  // },
+  paymentOptions: {
+    width: width * 0.7,
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 16,
+    marginVertical: 20,
+    padding: 10,
+    backgroundColor: "#4DA1A9",
+    borderRadius: 12,
+    // shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
+  },
   paymentOption: {
     alignItems: "center",
     padding: 16,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    width: width * 0.8,
+    // width: "40%",
+    width: width * 0.4,
     backgroundColor: "#c0c0c0",
     borderRadius: 10,
     // width: 180,
@@ -1609,13 +1637,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   selectedOption: { borderColor: COLORS.services, backgroundColor: "#e6f7ff" },
-  optionText: {
-    fontSize: 16,
-    marginTop: 8,
-    width: 150,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
+  optionText: { fontSize: 16, marginTop: 8 },
   confirmButton: {
     backgroundColor: COLORS.title,
     padding: 16,
@@ -1675,6 +1697,10 @@ const styles = StyleSheet.create({
   selectedOption: {
     borderColor: COLORS.services,
     borderWidth: 2,
+  },
+  optionText: {
+    marginTop: 5,
+    fontSize: 14,
   },
   paymentDetails: {
     backgroundColor: "white",
@@ -1787,6 +1813,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 10,
   },
+  label1: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+    marginLeft: 18,
+  },
   message: {
     fontSize: 14,
     color: "#555",
@@ -1871,9 +1904,15 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "white",
+    borderRadius: 10,
     padding: 20,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
+    width: "100%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   closeButton: {
     textAlign: "center",
@@ -1881,98 +1920,173 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "blue",
   },
-  label1: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-    marginLeft: 18,
-  },
-  otherOptionContainer: {
-    flexDirection: "row",
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    width: width * 0.8,
-    paddingHorizontal: 10,
-    marginLeft: 5,
-  },
-  otherOptionTextContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
-    justifyContent: "space-between",
-    width: width * 0.7,
-  },
-  otherOptionIcon: {
-    fontSize: 24,
-    color: "#333",
-    alignSelf: "flex-end",
-  },
-  otherOptionText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 10,
-    fontWeight: "bold",
-    alignSelf: "flex-start",
-  },
-  paymentMethodContainer: {
     padding: 20,
-    backgroundColor: "#fff",
+  },
+  modalContent: {
+    backgroundColor: "white",
     borderRadius: 10,
-    width: width * 0.9,
-    alignSelf: "center",
+    padding: 20,
+    width: "100%",
+    maxWidth: 400,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  radioGroupContainer: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    marginBottom: 16,
-    gap: 10,
-  },
-
-  radioButtonLabel: {
-    fontSize: 16,
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
     color: "#333",
-    marginLeft: 8,
   },
-  container1: {
-    padding: 16,
-    backgroundColor: "#fff",
+  section: {
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginVertical: 10,
+    color: "#333",
+    marginTop: 8,
+  },
+  inputContainer: {
+    marginBottom: 10,
   },
   label: {
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 5,
+    fontWeight: "500",
+  },
+  inputField: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    padding: 12,
+    backgroundColor: "#f5f5f5",
+  },
+  inputText: {
     fontSize: 16,
-    fontWeight: "600",
+    color: "#333",
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 15,
+  },
+  closeBtn: {
+    backgroundColor: "#3498db",
+    borderRadius: 5,
+    padding: 12,
+    alignItems: "center",
+    marginTop: 15,
+  },
+  closeBtnText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  addressLabel: {
+    fontWeight: "500",
+    color: "#666",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 20,
+  },
+  button: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginHorizontal: 5,
+  },
+  okButton: {
+    backgroundColor: "#4CAF50",
+  },
+  closeButton: {
+    backgroundColor: "#f44336",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    padding: 12,
+    fontSize: 16,
+    color: "#333",
+    backgroundColor: "#f5f5f5",
+  },
+  planSelectionContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: 15,
+    paddingHorizontal: 10,
+  },
+  radioButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  radioButtonSelected: {
+    backgroundColor: "#f0f8ff",
+    borderColor: "#4682b4",
+  },
+  radioCircle: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#4682b4",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  selectedRadioCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#4682b4",
+  },
+  radioText: {
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  planContent: {
+    padding: 15,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: "#eee",
+  },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     marginBottom: 8,
     color: "#333",
   },
-  selectButton: {
-    backgroundColor: "#fff",
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 8,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginTop: 10,
-  },
-  selectButtonText: {
-    color: "black",
-    fontSize: 16,
-    fontWeight: "bold",
-    alignSelf: "flex-start",
-  },
-  headering: {
-    fontSize: 16,
-    fontWeight: "bold",
-    // marginBottom: 5,
-    // color: "#333",
-    marginTop: 10,
-    marginLeft: 10,
+  planDescription: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#555",
   },
 });
 

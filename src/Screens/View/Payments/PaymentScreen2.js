@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,29 +12,29 @@ import {
   Dimensions,
   ScrollView,
   Platform,
-  Modal,
+  Modal
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import {Picker} from '@react-native-picker/picker';
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { RadioButton, Checkbox, ActivityIndicator } from "react-native-paper";
 import encryptEas from "../../../Screens/View/Payments/components/encryptEas";
 import decryptEas from "../../../Screens/View/Payments/components/decryptEas";
-import { COLORS } from "../../../../Redux/constants/theme";
-import BASE_URL, { userStage } from "../../../../Config";
+import { COLORS } from "../../../../Redux/constants/theme"
+import BASE_URL,{userStage}from "../../../../Config";
 import { Dropdown } from "react-native-element-dropdown";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from '@expo/vector-icons';
 import DeliveryTimelineModal from "./DeliveryModal";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
-import RadioGroup from "react-native-radio-buttons-group";
+import RadioGroup from 'react-native-radio-buttons-group';
 import TimeSlotModal from "./TimeSlotModal ";
 
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
   // console.log("payment screen", route.params);
-  // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
+    // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
@@ -47,24 +47,24 @@ const PaymentDetails = ({ navigation, route }) => {
   const [coupenDetails, setCoupenDetails] = useState("");
   const [coupenApplied, setCoupenApplied] = useState(false);
   const [walletTotal, setWalletTotal] = useState("");
-  const [deliveryBoyFee, setDeliveryBoyFee] = useState(0);
+  const [deliveryBoyFee,setDeliveryBoyFee] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
   const [totalSum, setTotalSum] = useState("");
   const [walletAmount, setWalletAmount] = useState();
   const [status, setStatus] = useState();
-  const [totalGstSum, setTotalGstSum] = useState();
+  const [totalGstSum,setTotalGstSum] =useState();
   const [grandTotalAmount, setGrandTotalAmount] = useState();
-  const [subTotal, setSubTotal] = useState();
+  const [subTotal,setSubTotal] = useState()
   const [message, setMessge] = useState();
-  const [cartData, setCartData] = useState();
-  const [usedWalletAmount, setUsedWalletAmount] = useState();
-  const [afterWallet, setAfterWallet] = useState();
-  const [availableDays, setAvailableDays] = useState([]);
+  const [cartData,setCartData] = useState();
+  const [usedWalletAmount,setUsedWalletAmount] = useState();
+  const [afterWallet,setAfterWallet]=useState();
+  const [availableDays, setAvailableDays] = useState([]); 
   const [selectedDay, setSelectedDay] = useState("");
-  const [timeSlots, setTimeSlots] = useState([]);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedDayName, setSelectedDayName] = useState("");
+  const [timeSlots, setTimeSlots] = useState([]); 
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(""); 
+  const [selectedDate, setSelectedDate] = useState("");  
+  const [selectedDayName, setSelectedDayName] = useState(""); 
   const [days, setDays] = useState([]);
   const [showButtons, setShowButtons] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -72,11 +72,11 @@ const PaymentDetails = ({ navigation, route }) => {
   const [updatedDate, setUpdatedate] = useState();
   const [isDayPickerVisible, setIsDayPickerVisible] = useState(false);
   const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isConfirmed,setIsConfirmed]=useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const [slotsData, setSlotsData] = useState();
+  const [slotsData,setSlotsData]=useState()
   const [onlyOneKg, setOnlyOneKg] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal,setShowModal] = useState(false)
   const [modalVisible, setModalVisible] = useState(false);
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
@@ -85,7 +85,6 @@ const PaymentDetails = ({ navigation, route }) => {
   });
   const [loading, setLoading] = useState(false);
   const items = route.params?.items || [];
-  const [paymentMethods, setPaymentMethods] = useState([]);
 
   const [offeravailable, setOfferAvailable] = useState();
   const [showCOD, setShowCOD] = useState(false);
@@ -97,19 +96,19 @@ const PaymentDetails = ({ navigation, route }) => {
       );
       const data = response.data;
       console.log({ data });
-
+  
       setSlotsData(data);
       let updatedOrderDate = new Date();
       updatedOrderDate.setDate(updatedOrderDate.getDate() + 1);
       setOrderDate(updatedOrderDate);
-
+  
       const tomorrowDate = updatedOrderDate
         .toLocaleDateString("en-GB")
         .split("/")
         .join("-");
-
+  
       console.log("New Date (Updatedate):", tomorrowDate);
-
+  
       const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(updatedOrderDate);
         date.setDate(updatedOrderDate.getDate() + i);
@@ -125,9 +124,9 @@ const PaymentDetails = ({ navigation, route }) => {
           formattedDate: formattedDate,
         };
       });
-
+  
       console.log("Next seven days:", nextSevenDays);
-
+  
       // Fixed the filter condition - changed isAvailable === false to isAvailable === true
       const availableDays = nextSevenDays
         .filter((day) => {
@@ -135,138 +134,112 @@ const PaymentDetails = ({ navigation, route }) => {
           return matchedDay && matchedDay.isAvailable === false;
         })
         .slice(0, 3);
-
+  
       console.log("Filtered available days:", availableDays);
-
+  
       const transformedDays = availableDays.map((day) => ({
         label: `${day.dayOfWeek} (${day.formattedDate})`,
         value: day.dayOfWeek,
         formattedDate: day.formattedDate,
       }));
-
+  
       console.log("Transformed days:", transformedDays);
       setDays(transformedDays);
 
-      if (Platform.OS === "ios") {
+      if(Platform.OS === 'ios'){
+
         setSelectedDay(transformedDays[0]?.value);
         const selectedDayData = transformedDays.find(
-          (d) =>
-            d.value?.trim()?.toUpperCase() ===
-            selectedDay?.trim()?.toUpperCase()
+          (d) => d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
         );
-
+        
         console.log({ selectedDayData });
-
+        
         if (selectedDayData) {
           const fullDayData = slotsData.find(
-            (d) =>
-              d.dayOfWeek.trim().toUpperCase() ===
-              selectedDay.trim().toUpperCase()
+            (d) => d.dayOfWeek.trim().toUpperCase() === selectedDay.trim().toUpperCase()
           );
-
+      
           if (fullDayData) {
             setSelectedDate(selectedDayData.formattedDate || "");
             setUpdatedate(selectedDayData?.formattedDate);
-
+      
             console.log("Matching Slot:", fullDayData);
-
+      
             const timeSlots = [
               { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
               { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
               { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
-              { time: fullDayData.timeSlot4, status: fullDayData.slot4Status },
+              { time: fullDayData.timeSlot4, status: fullDayData.slot4Status }
             ];
-
+      
             // Filter for available slots only (status === false)
             // Assuming false means available and true means unavailable/booked
             const availableTimeStrings = timeSlots
-              .filter((slot) => slot.time && !slot.status)
-              .map((slot) => slot.time);
-
+              .filter(slot => slot.time && !slot.status)
+              .map(slot => slot.time);
+      
             // Remove duplicates
             const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
-
+      
             console.log("Available Times:", uniqueAvailableTimes);
-
+      
             // Set only array of time strings
             setTimeSlots(uniqueAvailableTimes);
             setSelectedTimeSlot(uniqueAvailableTimes[0]);
           }
         }
-      }
+      } 
     } catch (error) {
       console.error("Error fetching time slots:", error);
     }
   };
-
+  
   const checkOfferEligibility = async (customerId) => {
     try {
       const { data } = await axios.get(
         `${BASE_URL}order-service/freeContainerBasedOnUserId?userId=${customerId}`
       );
-
-      const hasInterested = data.some(
-        (item) => item.freeContainer === "Interested"
-      );
+      
+  
+      const hasInterested = data.some(item => item.freeContainer === "Interested");
 
       // setShowButtons(!hasInterested);
     } catch (error) {
-      console.error(
-        "Error fetching offer details:",
-        error?.response?.status,
-        error?.response?.data
-      );
-      // setShowButtons(true);
+      console.error("Error fetching offer details:", error?.response?.status, error?.response?.data);
+      // setShowButtons(true); 
     }
   };
-
-   const handleGetPaymentMethod = async () => {
-      console.log("into payment method");
-  
-      try {
-        const response = await axios.get(
-          BASE_URL + `order-service/getCodAndOnlinePaymetStatus`
-        );
-        console.log("Payment method response", response.data);
-        const data = response.data;
-        const paymentMethods = data.filter((item) => item.status === true);
-        console.log("Payment methods", paymentMethods);
-        setPaymentMethods(paymentMethods);
-      } catch (error) {
-        console.log("Error fetching payment methods", error);
-      }
-    };
 
   const handleTimeSlotChange = (timeSlot) => {
     setSelectedTimeSlot(timeSlot);
   };
+  
+  
 
   const handleOfferResponse = async (orderId, userId, userResponse) => {
     try {
-      setLoading(true);
-
+      setLoading(true); 
+  
       const requestBody = {
-        freeContainer: userResponse,
+        freeContainer: userResponse, 
         orderId: orderId,
-        userId: customerId,
+        userId:customerId
       };
-
+      
       console.log(" free Request Body:", requestBody);
-
+      
       const API_URL = `${BASE_URL}order-service/freeContainer`;
-
-      const response = await axios.post(API_URL, requestBody, {
+  
+      const response= await axios.post(API_URL, requestBody, {
         headers: { "Content-Type": "application/json" },
       });
       console.log("API Response:", response);
-
+      
       console.log(response);
     } catch (error) {
       console.error("API Error:", error);
-      Alert.alert(
-        "Error",
-        error.response?.data?.message || "Something went wrong!"
-      );
+      Alert.alert("Error", error.response?.data?.message || "Something went wrong!");
     } finally {
       Alert.alert(
         "Thank You!",
@@ -283,6 +256,7 @@ const PaymentDetails = ({ navigation, route }) => {
       );
     }
   };
+  
 
   const handleDayChange = (selectedDay) => {
     setSelectedDay(selectedDay);
@@ -293,45 +267,43 @@ const PaymentDetails = ({ navigation, route }) => {
       days.map((d) => `${d.value}`)
     );
     console.log("Selected Day:", `${selectedDay}`);
-
+    
     // Improved day matching by normalizing case and trimming
     const selectedDayData = days.find(
-      (d) =>
-        d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
+      (d) => d.value?.trim()?.toUpperCase() === selectedDay?.trim()?.toUpperCase()
     );
-
+    
     console.log({ selectedDayData });
-
+    
     if (selectedDayData) {
       const fullDayData = slotsData.find(
-        (d) =>
-          d.dayOfWeek.trim().toUpperCase() === selectedDay.trim().toUpperCase()
+        (d) => d.dayOfWeek.trim().toUpperCase() === selectedDay.trim().toUpperCase()
       );
-
+  
       if (fullDayData) {
         setSelectedDate(selectedDayData.formattedDate || "");
         setUpdatedate(selectedDayData?.formattedDate);
-
+  
         console.log("Matching Slot:", fullDayData);
-
+  
         const timeSlots = [
           { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
           { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
           { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
-          { time: fullDayData.timeSlot4, status: fullDayData.slot4Status },
+          { time: fullDayData.timeSlot4, status: fullDayData.slot4Status }
         ];
-
+  
         // Filter for available slots only (status === false)
         // Assuming false means available and true means unavailable/booked
         const availableTimeStrings = timeSlots
-          .filter((slot) => slot.time && !slot.status)
-          .map((slot) => slot.time);
-
+          .filter(slot => slot.time && !slot.status)
+          .map(slot => slot.time);
+  
         // Remove duplicates
         const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
-
+  
         console.log("Available Times:", uniqueAvailableTimes);
-
+  
         // Set only array of time strings
         setTimeSlots(uniqueAvailableTimes);
       } else {
@@ -342,10 +314,12 @@ const PaymentDetails = ({ navigation, route }) => {
     }
   };
 
+
   const totalCart = async () => {
     try {
       const response = await axios({
-        url: BASE_URL + "cart-service/cart/cartItemData",
+        url:
+           BASE_URL + "cart-service/cart/cartItemData",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -355,33 +329,26 @@ const PaymentDetails = ({ navigation, route }) => {
           customerId: customerId,
         },
       });
+       
+        const cartResponse = response.data.cartResponseList;
+        const onlyOneKg = items.every(item => item.weight === 1);
+        setOnlyOneKg(onlyOneKg);
+console.log(onlyOneKg ? '✅ All items are 1kg bags' : '❌ There are items other than 1kg bags');
 
-      const cartResponse = response.data.cartResponseList;
-      const onlyOneKg = items.every((item) => item.weight === 1);
-      setOnlyOneKg(onlyOneKg);
-      console.log(
-        onlyOneKg
-          ? "✅ All items are 1kg bags"
-          : "❌ There are items other than 1kg bags"
-      );
-
-      setCartData(cartResponse);
-      const totalDeliveryFee = response.data?.cartResponseList.reduce(
-        (sum, item) => sum + item.deliveryBoyFee,
-        0
-      );
-      setTotalGstSum(response.data.totalGstSum);
-      setDeliveryBoyFee(totalDeliveryFee);
-      setGrandTotal(response.data.totalSumWithGstSum);
-      setOfferAvailable(response.data.offerElgible);
+        setCartData(cartResponse);
+       const totalDeliveryFee = response.data?.cartResponseList.reduce((sum, item) => sum + item.deliveryBoyFee, 0);
+        setTotalGstSum(response.data.totalGstSum)
+        setDeliveryBoyFee(totalDeliveryFee)
+        setGrandTotal(response.data.totalSumWithGstSum)
+        setOfferAvailable(response.data.offerElgible)
     } catch (error) {
       // setError("Failed to fetch cart data");
     }
   };
-
+  
   var addressDetails = route.params.addressData;
 
-  const [selectedPaymentMode, setSelectedPaymentMode] = useState("ONLINE");
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState('ONLINE');
 
   var calculatedTotal;
   useEffect(() => {
@@ -397,7 +364,7 @@ const PaymentDetails = ({ navigation, route }) => {
       )
     );
     setSubTotal(calculatedTotal);
-    grandTotalfunc();
+    grandTotalfunc()
   }, [items]);
 
   const handlePaymentModeSelect = (mode) => {
@@ -408,17 +375,18 @@ const PaymentDetails = ({ navigation, route }) => {
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
-
+   
     Alert.alert("coupen removed successfully");
   };
 
   const confirmPayment = () => {
     // if(selez
-    if (selectedTimeSlot == null || selectedTimeSlot == "") {
-      Alert.alert("Please select time slot to proceed");
-    } else if (selectedPaymentMode == null || selectedPaymentMode == "") {
+       if(selectedTimeSlot == null || selectedTimeSlot == ""){
+          Alert.alert("Please select time slot to proceed");
+        }
+   else if (selectedPaymentMode == null || selectedPaymentMode == "") {
       Alert.alert("Please select payment method");
-      return;
+      return
     } else {
       handleOrderConfirmation();
     }
@@ -427,59 +395,61 @@ const PaymentDetails = ({ navigation, route }) => {
   const validateCartBeforeCheckout = (cartItems, navigation) => {
     let insufficientStockItems = [];
 
-    cartItems.forEach((item) => {
-      if (item.cartItemQuantity > item.quantity) {
-        insufficientStockItems.push(
-          `${item.itemName}: Only ${item.quantity} left, but you added ${item.cartItemQuantity}`
-        );
-      }
+    cartItems.forEach(item => {
+        if (item.cartItemQuantity > item.quantity) {
+            insufficientStockItems.push(
+                `${item.itemName}: Only ${item.quantity} left, but you added ${item.cartItemQuantity}`
+            );
+        }
     });
 
     if (insufficientStockItems.length > 0) {
-      Alert.alert(
-        "Insufficient Stock",
-        "Some items in your cart have insufficient stock:\n" +
-          insufficientStockItems.join("\n"),
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("Home", { screen: "My Cart" });
-            },
-          },
-        ]
-      );
-      return false;
+        Alert.alert(
+            "Insufficient Stock",
+            "Some items in your cart have insufficient stock:\n" + insufficientStockItems.join("\n"),
+            [
+                { text: "OK", onPress: () => {  navigation.navigate("Home",{screen:"My Cart"}) }}
+            ]
+        );
+        return false; 
     }
 
-    return true;
-  };
+    return true; 
+};
+
 
   const handleOrderConfirmation = () => {
+    
     if (!cartData || cartData.length === 0) {
-      return;
+        return;
     }
-    if (grandTotalAmount == 0) {
-      setSelectedPaymentMode("COD");
+    if(grandTotalAmount == 0){
+      setSelectedPaymentMode('COD');
     }
     const zeroQuantityItems = cartData
-      .filter((item) => item.quantity === 0)
-      .map((item) => item.itemName);
-
+      .filter(item => item.quantity === 0)
+      .map(item => item.itemName); 
+  
     if (zeroQuantityItems.length > 0) {
+      
       const itemNames = zeroQuantityItems.join(", ");
       Alert.alert(
         "Sorry for the inconvenience",
         `We noticed that the following items in your cart have zero quantity: ${itemNames}. 
       
          Please update or remove them before proceeding with your order.`,
-        [{ onPress: () => navigation.navigate("Home", { screen: "My Cart" }) }]
+        [
+          {  onPress: () =>  navigation.navigate("Home",{screen:"My Cart"}), 
+           } 
+        ]
       );
+      return; 
+    }
+    else if(!validateCartBeforeCheckout(cartData)){
       return;
-    } else if (!validateCartBeforeCheckout(cartData)) {
-      return;
-    } else {
-      placeOrder();
+    }
+    else{
+    placeOrder();
     }
   };
 
@@ -490,14 +460,14 @@ const PaymentDetails = ({ navigation, route }) => {
     totalCart();
     fetchTimeSlots();
     checkOfferEligibility(customerId);
-    handleGetPaymentMethod();
     // setDeliveryBoyFee(200);
   }, [grandTotalAmount, deliveryBoyFee]);
 
+  
   const getWalletAmount = async () => {
     try {
       const response = await axios.post(
-        BASE_URL + `order-service/applyWalletAmountToCustomer`,
+      BASE_URL+`order-service/applyWalletAmountToCustomer`,
         {
           customerId: customerId,
         },
@@ -509,11 +479,15 @@ const PaymentDetails = ({ navigation, route }) => {
       );
 
       if (response.data) {
+      
         setWalletAmount(response.data.usableWalletAmountForOrder);
         setMessge(response.data.message);
         setTotalSum(response.data.totalSum);
         setStatus();
-        setWalletTotal(grandTotal - response.data.usableWalletAmountForOrder);
+        setWalletTotal(
+          grandTotal - response.data.usableWalletAmountForOrder
+        );
+      
       }
     } catch (error) {
       console.error(
@@ -523,9 +497,11 @@ const PaymentDetails = ({ navigation, route }) => {
     }
   };
 
+ 
+ 
   const handleCheckboxToggle = () => {
     const newValue = !useWallet;
-
+   
     setUseWallet(newValue);
     getWalletAmount();
 
@@ -560,9 +536,7 @@ const PaymentDetails = ({ navigation, route }) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        url:
-          BASE_URL +
-          `user-service/customerProfileDetails?customerId=${customerId}`,
+         url: BASE_URL+`user-service/customerProfileDetails?customerId=${customerId}`,
       });
       // console.log(response.data);
 
@@ -579,8 +553,9 @@ const PaymentDetails = ({ navigation, route }) => {
   };
   var postData;
 
+
   const placeOrder = () => {
-    if (loading == true) {
+    if(loading==true){
       return;
     }
     if (!isChecked) {
@@ -588,8 +563,8 @@ const PaymentDetails = ({ navigation, route }) => {
         "Confirmation Required",
         "Please confirm that the exchange can be taken within 10 days after delivery."
       );
-      return;
-    }
+      return;
+    }
 
     let wallet;
     if (useWallet) {
@@ -607,15 +582,16 @@ const PaymentDetails = ({ navigation, route }) => {
     }
 
     console.log(addressDetails);
+    
 
     const avail = offeravailable === "YES" ? "YES" : null;
-
+    
     postData = {
       address: addressDetails.address,
       amount: grandTotalAmount,
-
+  
       customerId: customerId,
-      flatNo: addressDetails.flatNo,
+        flatNo: addressDetails.flatNo,
       landMark: addressDetails.landMark,
       orderStatus: selectedPaymentMode,
       pincode: addressDetails.pincode,
@@ -627,15 +603,15 @@ const PaymentDetails = ({ navigation, route }) => {
       walletAmount: usedWalletAmount,
       couponCode: coupon,
       couponValue: coupenDetails,
-      deliveryBoyFee: deliveryBoyFee,
-      subTotal: subTotal,
-      gstAmount: totalGstSum,
-      orderFrom: Platform.OS,
+      deliveryBoyFee:deliveryBoyFee,
+      subTotal:subTotal,
+      gstAmount:totalGstSum,
+      orderFrom:Platform.OS,
       dayOfWeek: selectedDay,
       expectedDeliveryDate: updatedDate,
       timeSlot: selectedTimeSlot,
-      latitude: addressDetails.latitude ?? 0,
-      longitude: addressDetails.longitude ?? 0,
+      latitude:addressDetails.latitude ?? 0,
+      longitude:addressDetails.longitude ?? 0,
       freeTicketAvailable: avail,
     };
 
@@ -643,11 +619,11 @@ const PaymentDetails = ({ navigation, route }) => {
     console.log("postdata", postData);
 
     setLoading(true);
-    console.log({ postData });
-
+    console.log({postData});
+    
     axios({
       method: "POST",
-      url: BASE_URL + "order-service/orderPlacedPaymet",
+      url: BASE_URL+"order-service/orderPlacedPaymet",
       data: postData,
       headers: {
         Authorization: `Bearer ${token}`,
@@ -655,103 +631,60 @@ const PaymentDetails = ({ navigation, route }) => {
     })
       .then((response) => {
         console.log("Order Placed with Payment API:", response);
-        console.log("order id after placing the order", response.data.orderId);
-        setOrderId(response.data.orderId);
-        // if (response.data.status) {
-        //   Alert.alert(
-        //     "Sorry",
-        //     response.data.status,
-        //     [
-        //       {
-        //         text: "OK",
-        //         onPress: () => navigation.navigate("Home",{screen:"My Cart"}),
-        //       },
-        //     ]
-        //   );
-        //   return;
-        // }
+         console.log("order id after placing the order",response.data.orderId);
+          setOrderId(response.data.orderId);
         if (response.data.status) {
-          const message = response.data.status;
-
-          if (message === "Item not found or out of stock. Order not placed.") {
-            Alert.alert("Out of Stock", message, [
+          Alert.alert(
+            "Sorry",
+            response.data.status,
+            [
               {
                 text: "OK",
-                onPress: () =>
-                  navigation.navigate("Home", { screen: "My Cart" }),
+                onPress: () => navigation.navigate("Home",{screen:"My Cart"}), 
               },
-            ]);
-          } else if (
-            message ===
-            "We noticed that this offer has already been used at this address. To help you move forward, it’s been removed from the cart."
-          ) {
-            Alert.alert(
-              "Alert", 
-              message, 
-              [
-                {
-                  text: "OK",
-                  onPress: () => {},
-                },
-              ]
-            );
-            setLoading(false);
-          } else {
-            Alert.alert("Notice", message, [
-              {
-                text: "OK",
-                onPress: () => {},
-              },
-            ]);
-          }
-
+            ]
+          );
           return;
         }
-
+       
         if (selectedPaymentMode === null || selectedPaymentMode === "COD") {
-          const message = showButtons
-            ? "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
-              "Buy 9 bags of 26kg / 10kg in 3 years OR refer 9 friends. " +
-              "When they buy their first bag, the container is yours forever.\n\n" +
-              "* No purchase in 45 days OR a 45-day gap between purchases = Container will be taken back."
-            : "Your order has been placed successfully. Thank you for shopping with us!";
-
+          const message = showButtons?
+          "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
+          "Buy 9 bags of 26kg / 10kg in 3 years OR refer 9 friends. " +
+          "When they buy their first bag, the container is yours forever.\n\n" +
+          "* No purchase in 45 days OR a 45-day gap between purchases = Container will be taken back.":"Your order has been placed successfully. Thank you for shopping with us!"
+        
+        
           const buttons = showButtons
-            ? [
+            ? 
+            [
                 {
                   text: "Interested",
-                  onPress: () =>
-                    handleOfferResponse(
-                      response.data.orderId,
-                      customerId,
-                      "Interested"
-                    ),
+                  onPress: () => handleOfferResponse(response.data.orderId, customerId, "Interested"),
                 },
                 {
                   text: "Not Interested",
-                  onPress: () =>
-                    handleOfferResponse(
-                      response.data.orderId,
-                      customerId,
-                      "Not Interested"
-                    ),
+                  onPress: () => handleOfferResponse(response.data.orderId, customerId, "Not Interested"),
                   style: "cancel",
                 },
               ]
             : [
-                {
-                  text: "OK",
-                  onPress: () => {
-                    setLoading(false);
-                    navigation.navigate("My Orders");
-                  },
-                },
+              {
+                        text: "OK",
+                        onPress: () => {
+                          setLoading(false); 
+                          navigation.navigate("My Orders");
+                        },
+                      },
               ];
-
+        
           Alert.alert("Order Confirmed!", message, buttons);
-        } else {
+        }
+        
+        
+        else {
           setTransactionId(response.data.paymentId);
-
+         
           const data = {
             mid: "1152305",
             amount: grandTotalAmount,
@@ -782,13 +715,10 @@ const PaymentDetails = ({ navigation, route }) => {
           };
           // console.log({ data });
           getepayPortal(data);
-          GoogleAnalyticsService.purchase(
-            response.data.paymentId,
-            cartData,
-            grandTotalAmount,
-            "ONLINE"
-          );
+          GoogleAnalyticsService.purchase(response.data.paymentId,cartData, grandTotalAmount,"ONLINE");
         }
+
+        
       })
       .catch((error) => {
         console.error("Order Placement Error:", error);
@@ -801,8 +731,7 @@ const PaymentDetails = ({ navigation, route }) => {
     if (
       paymentStatus == "PENDING" ||
       paymentStatus == "" ||
-      paymentStatus == null ||
-      paymentStatus == "INITIATED"
+      paymentStatus == null || paymentStatus == "INITIATED"
     ) {
       const data = setInterval(() => {
         Requery(paymentId);
@@ -860,32 +789,30 @@ const PaymentDetails = ({ navigation, route }) => {
           [
             {
               text: "No",
-              onPress: () => {
-                setLoading(false);
-              },
+              onPress: () => {setLoading(false)},
             },
             {
               text: "yes",
               onPress: () => {
                 Linking.openURL(data.qrIntent);
                 Requery(data.paymentId);
-                setPaymentStatus(null);
+                setPaymentStatus(null)
               },
             },
           ]
         );
       })
-      .catch((error) => {
-        console.log("getepayPortal", error.response);
-        setLoading(false);
+      .catch((error) =>{ console.log("getepayPortal", error.response)
+        setLoading(false)
       });
   };
 
   const getOffers = async () => {
     setLoading(true);
     try {
+     
       const response = await axios.get(
-        BASE_URL + "order-service/getAllCoupons",
+      BASE_URL+"order-service/getAllCoupons",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -900,7 +827,7 @@ const PaymentDetails = ({ navigation, route }) => {
       setLoading(false);
     }
   };
-
+ 
   const handleApplyCoupon = () => {
     const data = {
       couponCode: couponCode.toUpperCase(),
@@ -910,7 +837,7 @@ const PaymentDetails = ({ navigation, route }) => {
     // console.log("Total amount is  :", subTotal);
 
     const response = axios
-      .post(BASE_URL + "order-service/applycoupontocustomer", data, {
+      .post( BASE_URL+"order-service/applycoupontocustomer", data, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -918,7 +845,7 @@ const PaymentDetails = ({ navigation, route }) => {
       .then((response) => {
         // console.log("coupen applied", response.data);
         const { discount, grandTotal } = response.data;
-
+       
         setCoupenDetails(discount);
         Alert.alert(response.data.message);
         setCoupenApplied(response.data.couponApplied);
@@ -929,11 +856,11 @@ const PaymentDetails = ({ navigation, route }) => {
   };
 
   function Requery(paymentId) {
+   
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
-      paymentStatus === null ||
-      paymentStatus === "INITIATED"
+      paymentStatus === null || paymentStatus === "INITIATED"
     ) {
       // console.log("Before.....",paymentId)
 
@@ -1002,27 +929,26 @@ const PaymentDetails = ({ navigation, route }) => {
               data.paymentStatus == "FAILED"
             ) {
               // clearInterval(intervalId); 294182409
-              if (data.paymentStatus === "SUCCESS") {
+              if(data.paymentStatus === "SUCCESS"){
                 axios({
                   method: "get",
-                  url:
-                    BASE_URL +
-                    `/order-service/api/download/invoice?paymentId=${transactionId}&&userId=${customerId}`,
+                  url: BASE_URL + `/order-service/api/download/invoice?paymentId=${transactionId}&&userId=${customerId}`,
                   headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                   },
                 })
-                  .then((response) => {
-                    console.log(response.data);
-                  })
-                  .catch((error) => {
-                    console.error("Error in payment confirmation:", error);
-                  });
+                .then((response) => {
+                  console.log(response.data);
+                })
+                .catch((error) => {
+                  console.error("Error in payment confirmation:", error);
+                });
               }
               axios({
                 method: "POST",
-                url: BASE_URL + "order-service/orderPlacedPaymet",
+                url:BASE_URL
+                +"order-service/orderPlacedPaymet",
                 data: {
                   ...postData,
                   paymentId: transactionId,
@@ -1038,113 +964,102 @@ const PaymentDetails = ({ navigation, route }) => {
                     "Order Placed with Payment API:",
                     secondResponse.data
                   );
-                  const message = showButtons
-                    ? "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
-                      "Buy 9 bags of 26kg / 10kg in 3 years OR refer 9 friends. " +
-                      "When they buy their first bag, the container is yours forever.\n\n" +
-                      "* No purchase in 45 days OR a 45-day gap between purchases = Container will be taken back."
-                    : "Your order has been placed successfully. Thank you for shopping with us!";
-
+                  const message = showButtons ?
+                  "🎉 Special Offer: Free Rice Container! 🎉\n\n" +
+                  "Buy 9 bags of 26kg / 10kg in 3 years OR refer 9 friends. " +
+                  "When they buy their first bag, the container is yours forever.\n\n" +
+                  "* No purchase in 45 days OR a 45-day gap between purchases = Container will be taken back.":"Your order has been placed successfully. Thank you for shopping with us!";
+                
+                
                   const buttons = showButtons
-                    ? [
+                    ? 
+                    [
                         {
                           text: "Interested",
-                          onPress: () =>
-                            handleOfferResponse(
-                              secondResponse.data.orderId,
-                              customerId,
-                              "Interested"
-                            ),
+                          onPress: () => handleOfferResponse(secondResponse.data.orderId, customerId, "Interested"),
                         },
                         {
                           text: "Not Interested",
-                          onPress: () =>
-                            handleOfferResponse(
-                              secondResponse.data.orderId,
-                              customerId,
-                              "Not Interested"
-                            ),
+                          onPress: () => handleOfferResponse(secondResponse.data.orderId, customerId, "Not Interested"),
                           style: "cancel",
                         },
                       ]
                     : [
-                        {
-                          text: "OK",
-                          onPress: () => {
-                            setLoading(false);
-                            navigation.navigate("My Orders");
-                          },
+                      {
+                        text: "OK",
+                        onPress: () => {
+                          setLoading(false);
+                          navigation.navigate("My Orders");
                         },
-                      ];
-
+                      },
+                    ];
+                
                   Alert.alert("Order Confirmed!", message, buttons);
+                
+                 
                 })
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
-                  setLoading(false);
+                  setLoading(false)
                 });
             } else {
-              setLoading(false);
+              setLoading(false)
             }
           }
         })
-        .catch((error) => {
-          console.log("Payment Status", error);
-          setLoading(false);
+        .catch((error) => {console.log("Payment Status", error)
+          setLoading(false)
         });
     }
+   
   }
 
+
+
+
   function grandTotalfunc() {
-    let total = grandTotal + deliveryBoyFee;
-    let usedWallet = 0;
+    let total = grandTotal + deliveryBoyFee; 
+    let usedWallet = 0; 
 
     if (coupenApplied) {
-      total -= coupenDetails;
+        total -= coupenDetails;
     }
 
-    if (useWallet && walletAmount > 0) {
-      if (walletAmount >= total) {
-        usedWallet = total; // Use only what's needed
-        total = 0;
-      } else {
-        usedWallet = walletAmount; // Use full wallet balance
-        total -= walletAmount;
-      }
+    if (useWallet && walletAmount > 0) { 
+        if (walletAmount >= total) {
+            usedWallet = total;  // Use only what's needed
+            total = 0;  
+        } else {
+            usedWallet = walletAmount; // Use full wallet balance
+            total -= walletAmount;
+        }
     }
 
     // Ensure total is never negative
     total = Math.max(0, total);
 
     setAfterWallet(walletAmount ? walletAmount - usedWallet : 0); // Update remaining wallet balance
-    setUsedWalletAmount(usedWallet); // Store how much wallet is used
+    setUsedWalletAmount(usedWallet);  // Store how much wallet is used
     setGrandTotalAmount(total);
 
-    if (total === 0) {
+    if(total === 0){
       // console.log("Get all Values",{total});
+      
       // setSelectedPaymentMode('COD');
     }
 
     // console.log("Used Wallet:", usedWallet);
     // console.log("Final Grand Total:", total);
-  }
+}
 
   useEffect(() => {
     grandTotalfunc();
-  }, [
-    coupenApplied,
-    useWallet,
-    grandTotalAmount,
-    grandTotal,
-    deliveryBoyFee,
-    totalGstSum,
-  ]);
+  }, [coupenApplied, useWallet, grandTotalAmount,grandTotal,deliveryBoyFee,totalGstSum]);
 
   return (
     <View style={styles.container}>
       {/* Apply Coupon Section */}
-      <ScrollView
-        keyboardShouldPersistTaps="always"
+      <ScrollView keyboardShouldPersistTaps="always"
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
@@ -1187,7 +1102,7 @@ const PaymentDetails = ({ navigation, route }) => {
             )}
           </View>
         </View>
-        {/* wallet amount */}
+         {/* wallet amount */}
         {walletAmount > 0 ? (
           <View style={styles.walletContainer}>
             <View style={styles.walletHeader}>
@@ -1212,7 +1127,7 @@ const PaymentDetails = ({ navigation, route }) => {
           </View>
         )}
 
-        {/* <View style={styles.container1}>
+{/* <View style={styles.container1}>
   <Text style={styles.label}>Select Day:</Text>
 
   {Platform.OS === 'ios' ? (
@@ -1279,188 +1194,116 @@ const PaymentDetails = ({ navigation, route }) => {
   )}
 </View> */}
 
-        {Platform.OS === "android" && (
-          <Text style={styles.headering}>
-            Please select date and time slot :{" "}
-          </Text>
-        )}
+{Platform.OS === 'android' && (<Text style={styles.headering}>Please select date and time slot : </Text>)}
 
-        {Platform.OS === "ios" ? (
-          <View
-            style={styles.selectButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
-              Your order will be delivered on:
-            </Text>
-            <Text style={styles.selectButtonText}>
-              {!selectedDay && !selectedTimeSlot
-                ? "Select Date & Time"
-                : `${updatedDate} (${selectedDay}) ,${selectedTimeSlot}`}
-            </Text>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.selectButtonText}>
-              {!selectedDay && !selectedTimeSlot ? (
-                "Select Date & Time"
-              ) : (
-                <>
-                  <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
-                    Your order will be delivered on:
-                  </Text>
-                  {"\n"}
-                  {`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
-                </>
-              )}
-            </Text>
-          </TouchableOpacity>
-        )}
-        <TimeSlotModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          days={days}
-          timeSlots={timeSlots}
-          selectedDay={selectedDay}
-          selectedTimeSlot={selectedTimeSlot}
-          onDayChange={handleDayChange}
-          onTimeSlotChange={handleTimeSlotChange}
-          onConfirm={() => {
-            setModalVisible(false);
-          }}
-        />
+{Platform.OS === 'ios' ? (
+<View
+        style={styles.selectButton}
+        onPress={() => setModalVisible(true)}
+      >
+      <Text style={[styles.selectButtonText,{marginBottom:10}]}>Your order will be delivered on:</Text>
+        <Text style={styles.selectButtonText}>
+          {!selectedDay && !selectedTimeSlot ? 'Select Date & Time' : `${updatedDate} (${selectedDay}) ,${selectedTimeSlot}`}
+        </Text>
+      </View>
+) : (
+  <TouchableOpacity
+        style={styles.selectButton}
+        onPress={() => setModalVisible(true)}
+      >
+   
+   <Text style={styles.selectButtonText}>
+  {!selectedDay && !selectedTimeSlot ? (
+    'Select Date & Time'
+  ) : (
+    <>
+      <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
+        Your order will be delivered on:
+      </Text>
+      {'\n'}
+      {`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
+    </>
+  )}
+</Text>
+
+      </TouchableOpacity>
+)}
+    <TimeSlotModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        days={days}
+        timeSlots={timeSlots}
+        selectedDay={selectedDay}
+        selectedTimeSlot={selectedTimeSlot}
+        onDayChange={handleDayChange}
+        onTimeSlotChange={handleTimeSlotChange}
+        onConfirm={() => {
+          setModalVisible(false);
+        }}
+      />
         {/* Payment Methods */}
-        <View
+        <View style={[styles.paymentMethodContainer,{marginTop: 20,marginBottom:20}]}>
+        <Text style={styles.paymentHeader}>Choose Payment Method</Text>
+        <View>
+        <TouchableOpacity
           style={[
-            styles.paymentMethodContainer,
-            { marginTop: 20, marginBottom: 20 },
+            styles.paymentOption,
+            selectedPaymentMode === "ONLINE" && styles.selectedOption,
           ]}
+          onPress={() => handlePaymentModeSelect("ONLINE")}
         >
-          <Text style={styles.paymentHeader}>Choose Payment Method</Text>
-          {/*<View>
-            <TouchableOpacity
-              style={[
-                styles.paymentOption,
-                selectedPaymentMode === "ONLINE" && styles.selectedOption,
-              ]}
-              onPress={() => handlePaymentModeSelect("ONLINE")}
-            >
-              <FontAwesome5
-                name="credit-card"
-                size={24}
-                color={
-                  selectedPaymentMode === "ONLINE"
-                    ? COLORS.backgroundcolour
-                    : "black"
-                }
-              />
-              <Text style={styles.optionText}>Online Payment</Text>
-            </TouchableOpacity>
-          </View>*/}
-
-          {paymentMethods.some(
-                      (method) =>
-                        method.paymentStatus === "ONLINE" && method.status === true
-                    ) && (
-                      <TouchableOpacity
-                        style={[
-                          styles.paymentOption,
-                          selectedPaymentMode === "ONLINE" && styles.selectedOption,
-                        ]}
-                        onPress={() => handlePaymentModeSelect("ONLINE")}
-                      >
-                        <FontAwesome5
-                          name="credit-card"
-                          size={24}
-                          color={
-                            selectedPaymentMode === "ONLINE"
-                              ? COLORS.backgroundcolour
-                              : "black"
-                          }
-                        />
-                        <Text style={styles.optionText}>Online Payment</Text>
-                      </TouchableOpacity>
-                    )}
-
-          {grandTotalAmount > 100 && (
-            <View>
-              <TouchableOpacity
-                style={styles.otherOptionContainer}
-                onPress={() => setShowCOD(!showCOD)}
-              >
-                <View style={styles.otherOptionTextContainer}>
-                  <Text style={styles.otherOptionText}>Other</Text>
-                  <MaterialIcons
-                    name="keyboard-arrow-right"
-                    size={24}
-                    color="black"
-                    style={styles.otherOptionIcon}
-                  />
-                </View>
-              </TouchableOpacity>
-              <View>
-                {showCOD &&  paymentMethods.some(
-                              (method) =>
-                                method.paymentStatus === "COD" && method.status === true
-                            ) && (
-                              <TouchableOpacity
-                                style={[
-                                  styles.paymentOption,
-                                  selectedPaymentMode === "COD" && styles.selectedOption,
-                                ]}
-                                onPress={() => handlePaymentModeSelect("COD")}
-                              >
-                                <MaterialIcons
-                                  name="delivery-dining"
-                                  size={24}
-                                  color={
-                                    selectedPaymentMode === "COD"
-                                      ? COLORS.backgroundcolour
-                                      : "black"
-                                  }
-                                />
-                                <Text style={styles.optionText}>Cash on Delivery</Text>
-                              </TouchableOpacity>
-                            )} 
-                  {/* <TouchableOpacity
-                    style={[
-                      styles.paymentOption,
-                      selectedPaymentMode === "COD" && styles.selectedOption,
-                      { marginTop: 20 },
-                    ]}
-                    onPress={() => handlePaymentModeSelect("COD")}
-                  >
-                    <MaterialIcons
-                      name="delivery-dining"
-                      size={24}
-                      color={
-                        selectedPaymentMode === "COD"
-                          ? COLORS.backgroundcolour
-                          : "black"
-                      }
-                    />
-                    <Text style={styles.optionText}>Cash on Delivery</Text>
-                  </TouchableOpacity> */}
-              </View>
-            </View>
-          )} 
+          <FontAwesome5
+            name="credit-card"
+            size={24}
+            color={selectedPaymentMode === "ONLINE" ? COLORS.backgroundcolour : "black"}
+          />
+          <Text style={styles.optionText}>Online Payment</Text>
+        </TouchableOpacity>
         </View>
+        {grandTotalAmount  > 100 && (
+        <View>
+        <TouchableOpacity style={styles.otherOptionContainer} onPress={()=>setShowCOD(!showCOD)}>
+          <View style={styles.otherOptionTextContainer}>
+           <Text style={styles.otherOptionText}>Other</Text>
+           <MaterialIcons name="keyboard-arrow-right" size={24} color="black" style={styles.otherOptionIcon}/>
+           </View>
+        </TouchableOpacity>
+            <View>
+            {showCOD && (
+         <TouchableOpacity
+         style={[
+           styles.paymentOption,
+           selectedPaymentMode === "COD" && styles.selectedOption,
+           {marginTop: 20,}
+         ]}
+         onPress={() => handlePaymentModeSelect("COD")}
+       >
+         <MaterialIcons
+           name="delivery-dining"
+           size={24}
+           color={selectedPaymentMode === "COD" ? COLORS.backgroundcolour : "black"}
+         />
+         <Text style={styles.optionText}>Cash on Delivery</Text>
+       </TouchableOpacity>
+                   )}
+          </View>
+          </View>
+           )}
+        </View>
+      
 
         {/* Payment Details */}
         <View style={styles.paymentDetails}>
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setIsChecked(!isChecked)}
-          >
-            <Ionicons
-              name={isChecked ? "checkbox" : "square-outline"}
-              size={24}
-              color={isChecked ? "green" : "gray"}
-            />
-            <Text style={styles.label1}>
+        <TouchableOpacity
+      style={styles.checkboxContainer}
+      onPress={() => setIsChecked(!isChecked)}
+    >
+      <Ionicons
+        name={isChecked ? 'checkbox' : 'square-outline'}
+        size={24}
+        color={isChecked ? 'green' : 'gray'}
+      />
+     <Text style={styles.label1}>
               You can request an exchange within{" "}
               <Text
                 style={[
@@ -1470,9 +1313,9 @@ const PaymentDetails = ({ navigation, route }) => {
               >
                 10 days
               </Text>{" "}
-              of your order being delivered.          
-            </Text>
-          </TouchableOpacity>
+              of your order being delivered.
+            </Text>
+    </TouchableOpacity>
           <Text style={styles.detailsHeader}>Payment Details</Text>
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>Sub Total</Text>
@@ -1497,19 +1340,17 @@ const PaymentDetails = ({ navigation, route }) => {
           </View>
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>GST</Text>
-            <Text style={styles.detailsValue}>
-              +₹{Number((totalGstSum || 0.0).toFixed(2))}
-            </Text>
+            <Text style={styles.detailsValue}>+₹{Number((totalGstSum || 0.00).toFixed(2))}</Text>
           </View>
           <View style={styles.divider} />
 
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabelBold}>Grand Total</Text>
             {/* <Text style={styles.detailsValueBold}>₹{grandTotalAmount+deliveryBoyFee}</Text> */}
-            <Text style={styles.detailsValueBold}>
-              ₹{Number(grandTotalAmount || 0).toFixed(2)}
-            </Text>
+            <Text style={styles.detailsValueBold}>₹{Number(grandTotalAmount || 0).toFixed(2)}</Text>
+
           </View>
+      
 
           {loading == true ? (
             <View style={styles.confirmButton}>
@@ -1525,10 +1366,7 @@ const PaymentDetails = ({ navigation, route }) => {
           )}
         </View>
       </ScrollView>
-      <DeliveryTimelineModal
-        visible={showModal}
-        onClose={() => setShowModal(false)}
-      />
+      <DeliveryTimelineModal visible={showModal} onClose={() => setShowModal(false)} />
     </View>
   );
 };
@@ -1588,7 +1426,7 @@ const styles = StyleSheet.create({
   //   shadowOffset: { width: 0, height: 4 },
   //   shadowOpacity: 0.2,
   //   shadowRadius: 6,
-  //   elevation: 6,
+  //   elevation: 6, 
   // },
   paymentOption: {
     alignItems: "center",
@@ -1608,16 +1446,10 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginBottom: 15,
   },
-  selectedOption: { borderColor: COLORS.services, backgroundColor: "#e6f7ff" },
-  optionText: {
-    fontSize: 16,
-    marginTop: 8,
-    width: 150,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
+  selectedOption: { borderColor:COLORS.services, backgroundColor: "#e6f7ff" },
+  optionText: { fontSize: 16, marginTop: 8, width: 150, textAlign: "center", fontWeight: "bold" },
   confirmButton: {
-    backgroundColor: COLORS.title,
+    backgroundColor:COLORS.title,
     padding: 16,
     alignItems: "center",
     borderRadius: 8,
@@ -1671,7 +1503,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
-
+  
   selectedOption: {
     borderColor: COLORS.services,
     borderWidth: 2,
@@ -1785,7 +1617,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 4,
-    marginLeft: 10,
+    marginLeft:10
   },
   message: {
     fontSize: 14,
@@ -1822,10 +1654,10 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#fff",
     borderRadius: 10,
-    width: width * 1,
+    width: width *1,
     alignSelf: "center",
   },
-
+ 
   button: {
     padding: 12,
     borderRadius: 8,
@@ -1843,18 +1675,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-
+ 
   pickerContainer: {
     borderWidth: 1,
     borderColor: "gray",
     borderRadius: 5,
     marginBottom: 15,
     // overflow: "hidden",
-    width: width * 0.8,
-    alignSelf: "center",
-    paddingLeft: 20,
+    width:width*0.8,
+    alignSelf:"center",
+    paddingLeft:20
   },
-
+ 
   picker: {
     height: 50,
     width: "100%",
@@ -1886,94 +1718,94 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 4,
-    marginLeft: 18,
-  },
-  otherOptionContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    width: width * 0.8,
-    paddingHorizontal: 10,
-    marginLeft: 5,
-  },
-  otherOptionTextContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
-    justifyContent: "space-between",
-    width: width * 0.7,
-  },
-  otherOptionIcon: {
-    fontSize: 24,
-    color: "#333",
-    alignSelf: "flex-end",
-  },
-  otherOptionText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 10,
-    fontWeight: "bold",
-    alignSelf: "flex-start",
-  },
-  paymentMethodContainer: {
-    padding: 20,
+    marginLeft: 18,
+  },
+otherOptionContainer:{
+  flexDirection:'row',
+  alignItems:'center',
+  marginTop:10,
+  borderWidth:1,
+  borderColor:'#ccc',
+  borderRadius:5,
+  padding:10,
+  width:width*0.8,
+  paddingHorizontal:10,
+  marginLeft:5
+},
+otherOptionTextContainer:{
+  flexDirection:'row',
+  alignItems:'center',
+  marginLeft:10,
+  justifyContent:'space-between',
+  width:width*0.7,
+},
+otherOptionIcon:{
+  fontSize:24,
+  color:'#333',
+  alignSelf:"flex-end"
+},
+otherOptionText:{
+  fontSize:16,
+  color:'#333',
+  marginLeft:10,
+  fontWeight:'bold',
+  alignSelf:"flex-start"
+},
+paymentMethodContainer:{  
+  padding: 20,
     backgroundColor: "#fff",
     borderRadius: 10,
-    width: width * 0.9,
+    width: width*0.9,
     alignSelf: "center",
-  },
-  radioGroupContainer: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    marginBottom: 16,
-    gap: 10,
-  },
+},
+radioGroupContainer: {
+  flexDirection: 'column', 
+  alignItems: 'flex-start', 
+  marginBottom: 16,
+  gap: 10, 
+},
 
-  radioButtonLabel: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 8,
-  },
-  container1: {
-    padding: 16,
-    backgroundColor: "#fff",
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "#333",
-  },
-  selectButton: {
-    backgroundColor: "#fff",
-    paddingVertical: 14,
-    paddingHorizontal: 28,
-    borderRadius: 8,
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    marginTop: 10,
-  },
-  selectButtonText: {
-    color: "black",
-    fontSize: 16,
-    fontWeight: "bold",
-    alignSelf: "flex-start",
-  },
-  headering: {
-    fontSize: 16,
-    fontWeight: "bold",
-    // marginBottom: 5,
-    // color: "#333",
-    marginTop: 10,
-    marginLeft: 10,
-  },
+radioButtonLabel: {
+  fontSize: 16,
+  color: '#333',
+  marginLeft: 8, 
+},
+container1: {
+  padding: 16,
+  backgroundColor: '#fff',
+},
+label: {
+  fontSize: 16,
+  fontWeight: '600',
+  marginBottom: 8,
+  color:'#333',
+ },
+selectButton: {
+  backgroundColor: '#fff',
+  paddingVertical: 14,
+  paddingHorizontal: 28,
+  borderRadius: 8,
+  width: '100%',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderWidth: 1,
+  borderColor: '#ccc',
+  marginTop: 10,
+},
+selectButtonText: {
+  color: 'black',
+  fontSize: 16,
+  fontWeight: 'bold',
+  alignSelf:"flex-start"
+},
+headering:{
+  fontSize: 16,
+  fontWeight: "bold",
+  // marginBottom: 5,
+  // color: "#333",
+  marginTop:10,
+  marginLeft:10
+}
 });
 
 export default PaymentDetails;

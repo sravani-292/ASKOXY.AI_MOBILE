@@ -32,8 +32,6 @@ import BASE_URL, { userStage } from "../../Config";
 const { height, width } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
-// import dynamicLinks from '@react-native-firebase/dynamic-links';
-// import { initializeApp } from '@react-native-firebase/app';
 
 const Register = () => {
   const [formData, setFormData] = useState({

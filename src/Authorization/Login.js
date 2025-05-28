@@ -14,7 +14,7 @@ import {
   BackHandler,
   useColorScheme,
   TouchableWithoutFeedback,
-  Keyboard
+  Keyboard,
 } from "react-native";
 import axios from "axios";
 import { TextInput } from "react-native-paper";
@@ -48,7 +48,9 @@ const Login = () => {
     loading: false,
   });
   const [isTelugu, setIsTelugu] = useState(true);
-  const theme = useColorScheme(); 
+  const theme = useColorScheme();
+  const isDarkMode = theme === "dark";
+  const isLightMode = theme === "light"; 
 
   // console.log({ BASE_URL });
   const phoneInput = React.createRef();
@@ -79,7 +81,6 @@ const Login = () => {
   useFocusEffect(
     useCallback(() => {
       const checkLoginData = async () => {
-        console.log("0",theme);
 
         try {
           const loginData = await AsyncStorage.getItem("userData");
@@ -364,15 +365,6 @@ const Login = () => {
       });
   };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE",
-    authDomain: "erice-241012.firebaseapp.com",
-    projectId: "erice-241012",
-    appId: "1:834341780860:android:2a62736e85889c243cb8f9",
-    databaseURL: "https://erice-241012.firebaseio.com",
-    storageBucket: "erice-241012.firebasestorage.app",
-    messagingSenderId: "834341780860",
-  };
 
   const handlePhoneNumberChange = (value) => {
     console.log({ value });
@@ -554,10 +546,11 @@ const Login = () => {
                 <View style={styles.phoneInputContainer}>
                   <PhoneInput
                     placeholder="Whatsapp Number"
+                    placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
                     ref={phoneInput}
-                    containerStyle={styles.input1}
-                    textInputStyle={styles.phonestyle}
-                    codeTextStyle={styles.phonestyle1}
+                    containerStyle={[styles.input1, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}
+                    textInputStyle={[styles.phonestyle,{ backgroundColor: isDarkMode ? '#fff' : '#fff',color: isDarkMode ? '#000' : '#000' }]}
+                    codeTextStyle={[styles.phonestyle1,{ color: isDarkMode ? '#000' : '#fff' }]}
                     // ref={(ref) => (phoneInput = ref)}
                     defaultValue={whatsappNumber}
                     defaultCode="IN"
@@ -577,8 +570,9 @@ const Login = () => {
                     </Text>
                   )} */}
                   <TextInput
-                    style={[styles.input, otpSent && styles.disabledInput]}
+                    style={[styles.input, otpSent && styles.disabledInput,{ backgroundColor: isDarkMode ? '#333' : '#fff',color: isDarkMode ? '#fff' : '#000' }]}
                     placeholder="Enter your phone number"
+                    placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
                     keyboardType="number-pad"
                     value={phoneNumber}
                     onChangeText={(text) => {
@@ -641,8 +635,9 @@ const Login = () => {
             {otpSent && (
               <View style={styles.inputContainer}>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: isDarkMode ? '#333' : '#fff',color: isDarkMode ? '#fff' : '#000' }]}
                   placeholder="Enter OTP code"
+                  placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
                   keyboardType="number-pad"
                   value={formData.otp}
                   onChangeText={(numeric) => {
@@ -838,7 +833,6 @@ const styles = StyleSheet.create({
     width: width / 1.2,
     alignSelf: "center",
     height: 45,
-    color:"black"
   },
   disabledInput: {
     backgroundColor: "#e8e8e8",

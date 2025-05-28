@@ -10,7 +10,8 @@ import {
   RefreshControl,
   Modal,
   Animated,
-  Easing
+  Easing,
+  Platform,
 } from "react-native";
 import axios from "axios";
 import { StyleSheet } from "react-native";
@@ -20,57 +21,45 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../../../../Redux/constants/theme";
 import { Alert } from "react-native";
 import { TouchableWithoutFeedback } from "react-native";
-
-import ContainerOfferModal from "./ContainerOfferModal";
-
+import {
+  handleCustomerCartData,
+  handleGetProfileData,
+  handleUserAddorIncrementCart,
+  handleDecrementorRemovalCart,
+  handleRemoveItem,
+  handleRemoveFreeItem,
+} from "../../../../src/ApiService";
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
 import BASE_URL, { userStage } from "../../../../Config";
 import LottieView from "lottie-react-native";
+import ContainerPolicy from "../AdditionalFiles/ContainerPolicy";
 import ContainerSoftCopy from "./ContainerSoftCopy";
-
 const CartScreen = () => {
-  // State management for user data
-  const userData = useSelector((state) => state?.counter || {});
-  const token = userData?.accessToken || '';
-  const customerId = userData?.userId || '';
+  const userData = useSelector((state) => state.counter);
+  // console.log("userData", userData);
 
-  // Input validation for user data
-  if (!token || !customerId) {
-    // Handle missing credentials
-    useEffect(() => {
-      Alert.alert(
-        "Authentication Error",
-        "Please login again to continue",
-        [{ text: "OK", onPress: () => navigation.navigate("Login") }]
-      );
-    }, []);
-  }
+  const token = userData.accessToken;
+  const customerId = userData.userId;
 
   const navigation = useNavigation();
   const [cartData, setCartData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [grandTotal, setGrandTotal] = useState(0);
+  const [grandTotal, setGrandTotal] = useState(null);
   const [loadingItems, setLoadingItems] = useState({});
   const [removalLoading, setRemovalLoading] = useState({});
-  const [user, setUser] = useState({});
-  const [deleteLoader, setDeleteLoader] = useState(false);
+
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
   const [hasWeight, setHasWeight] = useState("");
-  const [containerAddedPrice, setContainerAddedPrice] = useState(false);
-  const [apiAttempts, setApiAttempts] = useState(0); // Track API retries
-  const [lastFetchTime, setLastFetchTime] = useState(0); // Rate limiting
-  const [checkoutInProgress, setCheckoutInProgress] = useState(false); // Prevent double checkout
+  const [freeItemPrice, setFreeItemPrice] = useState("");
+  const [gstAmount, setGstAmount] = useState("");
+  const [totalCartValue, setTotalCartValue] = useState("");
 
-  const [address, setAddress] = useState({
-    email: "",
-    mobileNumber: "",
-    name: "",
-    alterMobileNumber: "",
-  });
-  
+  const [containerAddedPrice, setContainerAddedPrice] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState(null);
+
   const locationdata = {
     flatNo: "",
     landMark: "",
@@ -86,335 +75,204 @@ const CartScreen = () => {
     addressId: "",
     hasId: false,
   };
-  
   const [containerDecision, setContainerDecision] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [showOfferAvail, setShowOfferAvail] = useState(false);
-  const [showOffer, setShowOffer] = useState(false);
-  const [versionChange, setVersionChange] = useState("English");
-  const scaleValue = new Animated.Value(1); // Initial scale value for zoom-in animation
 
-  // Constants moved to a proper configuration object for easier maintenance
+  const scaleValue = new Animated.Value(1);
+  const containerItemIds = [
+    "53d7f68c-f770-4a70-ad67-ee2726a1f8f3", // Stainless Steel Rice Vault - 20Kg+
+    "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61", // Premium Steel Rice Storage - 35kg+
+  ];
   const CONTAINER_TYPES = {
     SMALL: {
       id: "53d7f68c-f770-4a70-ad67-ee2726a1f8f3",
       WEIGHT: "10",
       NAME: "10kg Rice Container",
-      Price: 2000
+      Price: 2000,
     },
     LARGE: {
       id: "9b5c671a-32bb-4d18-8b3c-4a7e4762cc61",
       WEIGHT: "26",
       NAME: "26kg Rice Container",
-      Price: 2500
-    }
+      Price: 2500,
+    },
   };
 
-  // Maximum number of API retry attempts
-  const MAX_API_ATTEMPTS = 3;
-  // Minimum time between API calls in milliseconds
-  const API_RATE_LIMIT = 500;
-
-  // Zoom-in animation
   useEffect(() => {
     if (modalVisible) {
       Animated.timing(scaleValue, {
-        toValue: 1, // Fully expanded
-        duration: 500, // Animation duration
+        toValue: 1,
+        duration: 500,
         easing: Easing.linear,
         useNativeDriver: true,
       }).start();
-    } else {
-      // Reset scale when modal is hidden
-      scaleValue.setValue(1);
     }
   }, [modalVisible]);
 
-  // Load container decision and check cart status
   useEffect(() => {
-    // Load saved container decision
     const loadContainerDecision = async () => {
       try {
-        const savedDecision = await AsyncStorage.getItem('containerDecision');
+        const savedDecision = await AsyncStorage.getItem("containerDecision");
         if (savedDecision) {
           setContainerDecision(savedDecision);
         }
       } catch (error) {
         console.log("Error loading container decision:", error);
-        // Fallback to default state
-        setContainerDecision(null);
       }
     };
 
-    // Check if containers that should be in cart are still there
     const checkCartForContainers = () => {
-      if (!Array.isArray(cartData) || cartData.length === 0) {
-        return;
-      }
-      
-      const containerExists = cartData.some(item => 
-        item && item.itemId && (
-          item.itemId === CONTAINER_TYPES.LARGE.id || 
-          item.itemId === CONTAINER_TYPES.SMALL.id
-        )
-      );
-      
-      if (!containerExists && containerDecision === 'yes') {
-        // If user had a container but it's no longer in cart, reset decision
-        setContainerDecision(null);
-        setContainerAddedPrice(false);
-        try {
-          AsyncStorage.removeItem('containerDecision')
-            .catch(err => console.log("Error removing container decision:", err));
-        } catch (error) {
-          console.log("AsyncStorage removal error:", error);
+      if (cartData && cartData.length > 0) {
+        const containerExists = cartData.some(
+          (item) =>
+            item.itemId === CONTAINER_TYPES.LARGE.id ||
+            item.itemId === CONTAINER_TYPES.SMALL.id
+        );
+
+        if (!containerExists && containerDecision === "yes") {
+          setContainerDecision(null);
+          setContainerAddedPrice(false);
+          AsyncStorage.removeItem("containerDecision");
         }
       }
     };
-    
-    loadContainerDecision();
     checkCartForContainers();
-  }, [cartData, containerDecision]);
+    loadContainerDecision();
+  }, [cartData]);
 
-  // Handle container "Yes" button
-  const handleYes = async() => {
-    if (!customerId || !token) {
-      Alert.alert("Error", "Authentication required. Please login again.");
-      return;
-    }
-    
-    setContainerDecision('yes');
-  
+  const handleYes = async () => {
+    // setShowCode(true);
+    setContainerDecision("yes");
+
     try {
-      await AsyncStorage.setItem('containerDecision', 'yes');
+      await AsyncStorage.setItem("containerDecision", "yes");
     } catch (error) {
       console.log("Error saving container decision:", error);
     }
-    
     setModalVisible(false);
 
-    // Validate weight before proceeding
-    if (!hasWeight) {
-      console.error("Weight is undefined");
-      Alert.alert("Error", "Container weight not specified");
-      return;
-    }
-
-    const containerId = hasWeight === "26kgs" ? CONTAINER_TYPES.LARGE.id : CONTAINER_TYPES.SMALL.id;
-    
-    if (!containerId) {
-      console.error("Container ID is undefined");
-      return;
-    }
-    
+    const containerId =
+      hasWeight === "26kgs"
+        ? CONTAINER_TYPES.LARGE.id
+        : CONTAINER_TYPES.SMALL.id;
     const data = { customerId: customerId, itemId: containerId };
-    
+
     try {
-      setLoading(true);
-      const response = await axios.post(
-        BASE_URL + "cart-service/cart/add_Items_ToCart",
-        data,
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        }
-      );
-    
-      console.log("item added response", response?.data);
-      
-      if (response?.data?.errorMessage === "Item added to cart successfully") {
-        Alert.alert("Success", `Successfully added ${hasWeight} container to your cart`);
+      const response = await handleCustomerCartData(data);
+
+      console.log("Container added response", response);
+      if (response.data.errorMessage === "Item added to cart successfully") {
+        Alert.alert(
+          "Success",
+          `Successfully added ${hasWeight} container to your cart`,
+          [
+            {
+              text: "OK",
+              // onPress: () => handleSoftCopydecision(),
+            },
+          ],
+          { cancelable: false }
+        );
+
         fetchCartData();
       } else {
-        Alert.alert("Alert", response?.data?.errorMessage || "Failed to add container");
+        setLoader(false);
+        Alert.alert("Alert", response.data.errorMessage);
       }
     } catch (error) {
-      console.error("Error adding container:", error?.response?.data || error?.message || error);
-      Alert.alert("Error", "Failed to add container to cart. Please try again.");
-    } finally {
-      setLoading(false);
+      setLoader(false);
     }
   };
 
-  // Handle container "No" button
-  const handleNo = async() => {
-    setModalVisible(false);
-    setContainerDecision('no');
-    setContainerAddedPrice(false);
-    
-    try {
-      await AsyncStorage.setItem('containerDecision', 'no');
-    } catch (error) {
-      console.log("Error saving container decision:", error);
-    }
-  };
-
-  // Handle quantity increase for cart items
   const handleIncrease = async (item) => {
-    if (!item || !item.itemId) {
-      console.error("Invalid item data for quantity increase");
-      return;
-    }
-    
-    // Prevent multiple rapid clicks
-    if (loadingItems[item.itemId]) return;
-    
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    
-    try {
-      await increaseCartItem(item);
-    } catch (error) {
-      console.error("Error increasing quantity:", error);
-      Alert.alert("Error", "Failed to increase quantity. Please try again.");
-    } finally {
-      setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-    }
+    await increaseCartItem(item);
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
-  // Handle quantity decrease for cart items
   const handleDecrease = async (item) => {
-    if (!item || !item.itemId) {
-      console.error("Invalid item data for quantity decrease");
-      return;
-    }
-    
-    // Prevent multiple rapid clicks
-    if (loadingItems[item.itemId]) return;
-    
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    
-    try {
-      // Check if quantity will be reduced to zero
-      const currentQuantity = cartItems[item.itemId] || item.cartQuantity || 0;
-      
-      if (currentQuantity <= 1) {
-        // Ask before removing the last item
-        handleRemove(item);
-      } else {
-        await decreaseCartItem(item);
-      }
-    } catch (error) {
-      console.error("Error decreasing quantity:", error);
-      Alert.alert("Error", "Failed to decrease quantity. Please try again.");
-    } finally {
-      // Use a reasonable timeout to prevent too many API calls
-      setTimeout(() => {
-        setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-      }, 800);
-    }
+    await decreaseCartItem(item);
+    // setTimeout(() => {
+    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
+    // }, 5000);
   };
 
-  // Handle item removal from cart
-  const handleRemove = async (item) => {
-    if (!item || !item.cartId) {
-      console.error("Invalid item data for removal", item);
-      return;
-    }
-
-    // Prevent multiple removal requests for same item
-    if (removalLoading[item.cartId]) return;
-    
-    Alert.alert(
-      "Remove Item",
-      `Are you sure you want to remove "${item.itemName || 'this item'}" from your cart?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            setRemovalLoading((prevState) => ({
-              ...prevState,
-              [item.cartId]: true,
-            }));
-
-            try {
-              await removeCartItem(item);
-            } catch (error) {
-              console.error("Error removing item:", error);
-              Alert.alert("Error", "Failed to remove item. Please try again.");
-            } finally {
-              setRemovalLoading((prevState) => ({
-                ...prevState,
-                [item.cartId]: false,
-              }));
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
-
-  // Fetch cart data with rate limiting and retry logic
-  const fetchCartData = async (force = false) => {
-    // Input validation
-    if (!customerId || !token) {
-      console.error("Missing customer ID or token");
-      setError("Authentication error. Please login again.");
-      setLoading(false);
-      return;
-    }
-    
-    // Rate limiting to prevent excessive API calls
-    const now = Date.now();
-    if (!force && now - lastFetchTime < API_RATE_LIMIT) {
-      console.log("Rate limiting cart fetch");
-      return;
-    }
-    
-    setLastFetchTime(now);
-    setLoading(true);
-    
+  const fetchCartData = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}cart-service/cart/customersCartItems?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          timeout: 10000, // 10 second timeout
+      setLoading(true);
+      const response = await handleCustomerCartData(customerId);
+      // console.log("cart response", response.data.customerCartResponseList);
+      response.data.customerCartResponseList.map((item) => {
+        if (
+          (item.weight === 20 || item.weight === 35) &&
+          item.status === "FREE"
+        ) {
+          Alert.alert(
+            "🎁 Special Offer: Free Rice Container!",
+            `Your cart includes a rice bag that qualifies for a FREE ${item.itemName}!\n\nNote: The container remains an Oxy Group asset until ownership is earned.\n\nAre you sure you want to avail this offer?`,
+            [
+              {
+                text: "No",
+                onPress: () => handleRemove(item),
+                style: "cancel",
+              },
+              {
+                text: "Yes",
+                onPress: () => {
+                  setItemToRemove(item);
+                  setModalVisible(true);
+                },
+              },
+            ]
+          );
         }
-      );
-
-      // Response validation
-      if (!response || !response.data) {
-        throw new Error("Invalid response from server");
-      }
-      
-      console.log("Cart API response status:", response.status);
-      
-      const cartData = response?.data?.customerCartResponseList || [];
-      
-      // Reset API attempts on success
-      setApiAttempts(0);
-      
-      // Type checking for proper array
-      if (!Array.isArray(cartData)) {
-        console.error("Cart data is not an array:", cartData);
+        // else{
+        //   //  Alert.alert(
+        //   //   "🎁 Special Offer!",
+        //   //   `Your cart includes a ${item.weight} rice bag that qualifies for a FREE ${item.itemName}!\n\nAre you sure you want to avail this offer?`,
+        //   //   [
+        //   //     {
+        //   //       text: "No",
+        //   //       onPress: () => handleRemove(item),
+        //   //       style: "cancel"
+        //   //     },
+        //   //     {
+        //   //       text: "Yes",
+        //   //       onPress: () => console.log("Yes Clicked")
+        //   //     }
+        //   //   ]
+        //   // );
+        // }
+        // }
+      });
+      // console.log("amount to pay", response.data.amountToPay);
+      // console.log("totalCartValue", response.data?.totalCartValue);
+      setTotalCartValue(response.data?.totalCartValue);
+      // console.log("freeItemPriceTotal", response.data?.freeItemPriceTotal);
+      // console.log(
+      //   "discountedByFreeItems",
+      //   response.data?.discountedByFreeItems
+      // );
+      setFreeItemPrice(response.data?.freeItemPriceTotal);
+      // console.log("totalGstAmountToPay", response.data?.totalGstAmountToPay);
+      setGstAmount(response.data?.totalGstAmountToPay);
+      setLoading(false);
+      setGrandTotal(response.data.amountToPay);
+      const cartData = response?.data?.customerCartResponseList;
+      const weightArray = cartData?.map((item) => item.weight);
+      if (!cartData || !Array.isArray(cartData)) {
         setCartData([]);
         setIsLimitedStock({});
         setCartItems({});
-        setLoading(false);
         return;
       }
-      
-      // Extract weights for container logic
-      const weightArray = cartData
-        .filter(item => item && item.weight !== undefined && item.weight !== null)
-        .map(item => item.weight);
-      
-      console.log("Cart item weights:", weightArray);
-
-      // Process cart items to map quantities and stock status
       const cartItemsMap = cartData.reduce((acc, item) => {
-        // Skip invalid items
-        if (!item || !item.itemId || item.cartQuantity === undefined || item.quantity === undefined) {
+        if (
+          !item.itemId ||
+          item.cartQuantity === undefined ||
+          item.quantity === undefined
+        ) {
           console.error("Invalid item in cartData:", item);
           return acc;
         }
@@ -422,10 +280,7 @@ const CartScreen = () => {
         return acc;
       }, {});
 
-      // Track items with limited stock
       const limitedStockMap = cartData.reduce((acc, item) => {
-        if (!item) return acc;
-        
         if (item.quantity === 0) {
           acc[item.itemId] = "outOfStock";
         } else if (item.quantity <= 5) {
@@ -433,248 +288,242 @@ const CartScreen = () => {
         }
         return acc;
       }, {});
-
       setError(null);
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
-      
-      // Check for container eligibility
-      checkContainerEligibility(cartData);
-      
-      // Calculate total
-      totalCart();
-      
+      setLoading(false);
+      setLoadingItems((prevState) => ({
+        ...prevState,
+        [cartData.itemId]: false,
+      }));
       return weightArray;
     } catch (error) {
-      console.error("Cart fetch error:", error?.response?.data || error?.message || error);
-      
-      setError("Failed to load cart data. Please try again.");
-      
-      // Implement retry logic for transient errors
-      if (apiAttempts < MAX_API_ATTEMPTS) {
-        console.log(`Retrying cart fetch (${apiAttempts + 1}/${MAX_API_ATTEMPTS})...`);
-        setApiAttempts(apiAttempts + 1);
-        setTimeout(() => fetchCartData(true), 1000);
-      }
-    } finally {
+      console.log(error.response);
+      setError("Failed to load cart data");
       setLoading(false);
-      setLoadingItems({});
     }
   };
 
-  // Check container eligibility based on cart items
-  function checkContainerEligibility(cartData) {
-    if (!customerId) {
-      console.error("Missing customer ID for container check");
-      return;
-    }
-    
-    // Handle empty cart case explicitly
-    if (!Array.isArray(cartData) || cartData.length === 0) {
-      console.log("Cart is empty, no container offer triggered");
-      return;
-    }
-    
-    // First check the container interest API
-    axios
-      .get(`${BASE_URL}cart-service/cart/ContainerInterested/${customerId}`)
-      .then((response) => {
-        console.log("Container interest API response:", response?.data);
+  // function FreeContainerfunc(cartData) {
+  //   axios
+  //     .get(BASE_URL + `cart-service/cart/ContainerInterested/${customerId}`)
+  //     .then((response) => {
+  //       console.log("Cart API called successfully", response.data);
+  //     if (!cartData || cartData.length === 0) {
+  //         console.log("Cart is empty, no alert triggered.");
+  //         return;
+  //       }
 
-        // If user already made a container decision, respect it
-        // if (response?.data?.freeContainerStatus === "Interested") {
-        //   console.log("User already interested in container, no alert needed");
-        //   setModalVisible(false);
-        //   return;
-        // }
-        
-        // Container eligibility logic - only show if user hasn't decided yet
-        if (response?.data?.freeContainerStatus === null) {
-          const validItems = cartData.filter(item => item && typeof item === 'object');
-          
-          // Check for specific weight items
-          const has10kg = validItems.some(item => Number(item.weight) === 10);
-          const has26kg = validItems.some(item => Number(item.weight) === 26);
-          const has1kg = validItems.some(item => Number(item.weight) === 1);
-          
-          if (has10kg && has26kg) {
-            setHasWeight("26kgs"); // Prefer larger container when both exist
-            setContainerAddedPrice(true);
-            setModalVisible(true);
-          } else if (has26kg) {
-            setHasWeight("26kgs");
-            setContainerAddedPrice(true);
-            setModalVisible(true);
-          } else if (has10kg) {
-            setHasWeight("10kgs");
-            setContainerAddedPrice(true);
-            setModalVisible(true);
-          }else if (has1kg) {
+  //       if (response.data.freeContainerStatus === null) {
 
-          // Check for 1kg special offer
-          checkOneKgOfferEligibility(validItems, has1kg);
-          }
-        } else {
-          // Even if container status is set, still check 1kg offers
-          const validItems = cartData.filter(item => item && typeof item === 'object');
-          const has1kg = validItems.some(item => Number(item.weight) === 1);
-          
-          checkOneKgOfferEligibility(validItems, has1kg);
-        }
-      })
-      .catch((error) => {
-        console.error("Error checking container interest:", error?.response?.data || error?.message || error);
-        
-        // Fallback to local logic if API fails
-        const validItems = cartData.filter(item => item && typeof item === 'object');
-        const has1kg = validItems.some(item => Number(item.weight) === 1);
-        checkOneKgOfferEligibility(validItems, has1kg);
-      });
-  }
+  //         let has10kg = cartData.some((item) => item.weight === 10);
+  //         let has26kg = cartData.some((item) => item.weight === 26);
+  //         let has1kg = cartData.some(
+  //           (item) =>
+  //             item.weight === 1 &&
+  //             (item.units === "kg" || item.units === "kgs") &&
+  //             item.itemName.toLowerCase().includes("rice") &&
+  //             !containerItemIds.includes(item.itemId)
+  //         );
+  //          if (cartData.length > 0) {
+  //           if (has10kg && has26kg) {
+  //             setHasWeight("26kgs");
+  //             setContainerAddedPrice(true);
+  //             setModalVisible(true);
+  //           } else if (has26kg) {
+  //             setHasWeight("26kgs");
+  //             setContainerAddedPrice(true);
+  //             setModalVisible(true);
+  //           } else if (has10kg) {
+  //             setHasWeight("10kgs");
+  //             setContainerAddedPrice(true);
+  //             setModalVisible(true);
+  //           } else if (has1kg) {
+  //             const oneKgBags = cartData.filter(
+  //               (item) => parseFloat(item.weight?.toString() || "0") === 1
+  //             );
+  //             const anyOneKgHasTwoOrMore = oneKgBags.some(
+  //               (item) => item.cartQuantity >= 2
+  //             );
 
-  // Check eligibility for 1kg special offer
-  function checkOneKgOfferEligibility(cartItems, has1kg) {
-    // Handle empty cart case explicitly
-    if (!Array.isArray(cartItems) || cartItems.length === 0) {
-      console.log("Cart is empty, no 1kg offer triggered");
-      return;
-    }
+  //             let offeravail = 0;
 
-    if (!has1kg || !customerId) return;
+  //             axios
+  //               .get(
+  //                 `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
+  //               )
+  //               .then((response) => {
+  //                 console.log("One kg offer API response", response.data);
+  //                 if (response.data) {
+  //                   offeravail = response.data.cartQuantity;
+  //                 }
+  //               });
 
-    console.log("Checking 1kg offer eligibility...");
-    
-    // Find 1kg items and check if any already have quantity >= 2
-    const oneKgBags = cartItems.filter(
-      item => item && Number(item.weight) === 1
-    );
-    
-    const anyOneKgHasTwoOrMore = oneKgBags.some(
-      item => item.cartQuantity >= 2
-    );
+  //             if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+  //               setShowOffer(true);
+  //             }
 
-    // Check offer API for eligibility
-    axios
-      .get(`${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`)
-      .then((response) => {
-        
-        // Show offer if eligible and no item already has quantity >= 2
-        if (response?.data && response?.data.cartQuantity < 2 && !anyOneKgHasTwoOrMore) {
-          setShowOffer(true);
-        } else {
-          setShowOffer(false);
-        }
-      })
-      .catch((error) => {
-        console.error("Error checking 1kg offer:", error?.response?.data || error?.message || error);
-        setShowOffer(false);
-      });
-  }
+  //             if (has1kg) {
+  //               console.log("1kg Bags in Cart:");
+  //               oneKgBags.forEach((bag) => {
+  //                 console.log(
+  //                   `Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`
+  //                 );
+  //               });
+  //             }
+  //           }
+  //         }
+  //       } else {
+  //         console.log(
+  //           "User container status is not null or 'Interested', no alert triggered."
+  //         );
+  //         setModalVisible(false);
+  //         let has1kg =
+  //           item.weight === 1 &&
+  //           (item.units === "kg" || item.units === "kgs") &&
+  //           item.itemName.includes("ASKOXY.AI");
+  //         console.log("has1kggg", has1kg);
+  //         const oneKgBags = cartData.filter(
+  //           (item) => parseFloat(item.weight?.toString() || "0") === 1
+  //         );
+  //         const anyOneKgHasTwoOrMore = oneKgBags.some(
+  //           (item) => item.cartQuantity >= 2
+  //         );
 
-  // Handle adding cheapest 1kg bag for promotion
-  const handleAddCheapest1kgBag = async () => {
-    if (!customerId || !token) {
-      Alert.alert("Error", "Authentication required. Please login again.");
-      return;
-    }
-    
-    try {
-      // Filter all 1kg bags
-      const oneKgBags = (cartData || []).filter(
-        item => item && Number(item.weight) === 1
-      );
+  //         let offeravail = 0;
 
-      if (oneKgBags.length === 0) {
-        Alert.alert("Error", "No 1kg bag found in your cart");
-        setShowOffer(false);
-        return;
-      }
+  //         axios
+  //           .get(
+  //             `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
+  //           )
+  //           .then((response) => {
+  //             console.log("One kg offer API response", response.data);
+  //             if (response.data) {
+  //               offeravail = response.data.cartQuantity;
+  //             }
+  //           });
+  //         console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
+  //         if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+  //           setShowOffer(true);
+  //         }
 
-      // Find the one with the lowest price
-      const cheapestBag = oneKgBags.reduce((min, curr) =>
-        (!min || (Number(curr.itemPrice) < Number(min.itemPrice))) ? curr : min
-      );
+  //         if (has1kg) {
+  //           console.log("1kg Bags in Cart:");
+  //           oneKgBags.forEach((bag) => {
+  //             console.log(
+  //               `Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`
+  //             );
+  //           });
+  //         }
 
-      if (!cheapestBag || !cheapestBag.itemId) {
-        Alert.alert("Error", "Could not identify eligible bag");
-        return;
-      }
+  //         console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.log("Error fetching cart data:", error?.response);
+  //       let has1kg = cartData.some(
+  //         (item) =>
+  //           item.weight === 1 &&
+  //           (item.units === "kg" || item.units === "kgs") &&
+  //           item.itemName.includes("ASKOXY.AI")
+  //       );
+  //       console.log("has1kg", has1kg);
+  //       const oneKgBags = cartData.filter(
+  //         (item) => parseFloat(item.weight?.toString() || "0") === 1
+  //       );
+  //       const anyOneKgHasTwoOrMore = oneKgBags.some(
+  //         (item) => item.cartQuantity >= 2
+  //       );
+  //       let offeravail = 0;
+  //       axios
+  //         .get(
+  //           `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
+  //         )
+  //         .then((response) => {
+  //           console.log("One kg offer API response", response.data);
+  //           if (response.data) {
+  //             offeravail = response.data.cartQuantity;
+  //           }
+  //         });
+  //       console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
 
-      const currentQuantity = cartItems[cheapestBag.itemId] || cheapestBag.cartQuantity || 0;
-      const newQuantity = currentQuantity + 1;
+  //       if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
+  //         setShowOffer(true);
+  //       }
 
-      // Call API to increase quantity
-      const response = await axios.patch(
-        `${BASE_URL}cart-service/cart/incrementCartData`,
-        {
-          cartQuantity: newQuantity,
-          customerId,
-          itemId: cheapestBag.itemId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      
-      if (response?.status === 200) {
-        setShowOffer(false);
-        Alert.alert("Success", `Added 1 more ${cheapestBag.itemName} to your cart!`);
-        await fetchCartData(true); // Force refresh cart
-      } else {
-        throw new Error("Unexpected response status");
-      }
-    } catch (error) {
-      console.error("Failed to add 1kg item:", error?.response?.data || error?.message || error);
-      Alert.alert("Error", "Could not update the cart. Please try again.");
-      setShowOffer(false);
-    }
-  };
+  //       if (has1kg) {
+  //         console.log("1kg Bags in Cart:");
+  //         oneKgBags.forEach((bag) => {
+  //           console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
+  //         });
+  //       }
 
-  // Set up effect to refresh cart when screen is focused
+  //       console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
+  //     });
+  // }
+
+  // const handleAddCheapest1kgBag = async () => {
+  //   try {
+
+  //     const oneKgBags = cartData.filter(
+  //       (item) => parseFloat(item.weight?.toString() || "0") === 1
+  //     );
+
+  //     if (oneKgBags.length === 0) {
+
+  //       return;
+  //     }
+
+  //     // 2. Find the one with the lowest itemPrice
+  //     const cheapestBag = oneKgBags.reduce((min, curr) =>
+  //       parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
+  //     );
+
+  //     const currentQuantity = cartItems[cheapestBag.itemId] || 0;
+  //     const newQuantity = currentQuantity + 1;
+
+  //     // 3. Call API to increase quantity
+  //     await axios.patch(
+  //       `${BASE_URL}cart-service/cart/incrementCartData`,
+  //       {
+  //         cartQuantity: newQuantity,
+  //         customerId,
+  //         itemId: cheapestBag.itemId,
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     setShowOffer(false);
+
+  //     await fetchCartData();
+  //   } catch (error) {
+  //     console.error("Failed to add 1kg item:", error);
+  //   }
+  // };
+
   useFocusEffect(
     useCallback(() => {
       fetchCartData();
-      totalCart();
-      
-      // Check for deactivated account status
-      handleDeactivateStatus();
-      
-      return () => {
-        // Clean up any pending operations
-        setLoading(false);
-        setLoadingItems({});
-        setRemovalLoading({});
-      };
-    }, [customerId, token])
+    }, [])
   );
 
-  // Handle refresh action
-  const onRefresh = useCallback(() => {
-    fetchCartData(true);
-    totalCart();
-  }, [customerId, token]);
+  const onRefresh = () => {
+    fetchCartData();
+  };
 
-  // Check user profile completeness
   const getProfile = async () => {
-    if (!customerId) {
-      Alert.alert("Error", "User ID not found. Please log in again.");
-      return false;
-    }
-    
     try {
-      const response = await axios.get(
-        `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`
-      );
-
-      if (response?.status === 200) {
-        if (!response.data?.firstName) {
+      const response = await handleGetProfileData(customerId);
+      if (response.status === 200) {
+        if (!response.data.firstName) {
           Alert.alert(
             "Incomplete Profile",
-            "Please fill out your profile details to proceed with checkout.",
+            "Please fill out your profile to proceed.",
             [
               {
                 text: "OK",
@@ -686,276 +535,129 @@ const CartScreen = () => {
         }
         return true;
       } else {
-        console.error("Unexpected profile response status:", response?.status);
+        console.log("Unexpected response status:", response.status);
         return false;
       }
     } catch (error) {
-      console.error("Profile error:", error?.response?.data || error?.message || error);
-      Alert.alert("Error", "Could not verify your profile. Please try again.");
+      console.error("Profile error:", error?.response || error);
       return false;
     }
   };
 
-  // Calculate cart total
-  const totalCart = async () => {
-    if (!customerId || !token) {
-      console.error("Missing credentials for totalCart");
-      return;
-    }
-    
-    try {
-      const response = await axios({
-        url: `${BASE_URL}cart-service/cart/cartItemData`,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        data: {
-          customerId: customerId,
-        },
-        timeout: 5000,
-      });
-
-      if (response?.data?.totalSum !== undefined) {
-        // console.log("Total sum response:", response.data);
-        setGrandTotal(Number(response.data.totalSum));
-      } else {
-        console.error("Invalid total sum in response:", response?.data);
-        // Calculate total manually as fallback
-        if (Array.isArray(cartData) && cartData.length > 0) {
-          const calculatedTotal = cartData.reduce((total, item) => {
-            if (!item || !item.itemPrice || !item.cartQuantity) return total;
-            return total + (Number(item.itemPrice) * Number(item.cartQuantity));
-          }, 0);
-          setGrandTotal(calculatedTotal);
-        } else {
-          setGrandTotal(0);
-        }
-      }
-    } catch (error) {
-      console.error("Total calculation error:", error?.response?.data || error?.message || error);
-      setError("Failed to calculate cart total");
-      
-      // Fallback to manual calculation
-      if (Array.isArray(cartData) && cartData.length > 0) {
-        const calculatedTotal = cartData.reduce((total, item) => {
-          if (!item || !item.itemPrice || !item.cartQuantity) return total;
-          return total + (Number(item.itemPrice) * Number(item.cartQuantity));
-        }, 0);
-        setGrandTotal(calculatedTotal);
-      }
-    }
-  };
-
-  // Navigate to item details
-  const handleImagePress = (item) => {
-    if (!item) return;
-    navigation.navigate("Item Details", { item });
-  };
-
-  // Increase item quantity in cart
   const increaseCartItem = async (item) => {
-    if (!item || !item.itemId || !customerId || !token) {
-      console.error("Missing data for quantity increase");
-      return;
-    }
-    
+    const data = {
+      customerId: customerId,
+      itemId: item.itemId,
+    };
     try {
-      const response = await axios.patch(
-        `${BASE_URL}cart-service/cart/incrementCartData`,
-        {
-          customerId: customerId,
-          itemId: item.itemId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          },
-        }
-      );
-      
-      if (response?.status !== 200) {
-        throw new Error(`Unexpected response status: ${response?.status}`);
-      }
-      
+      const response = await handleUserAddorIncrementCart(data);
+      console.log("Increment response", response);
       fetchCartData();
-      totalCart();
-    } catch (err) {
-      console.error("Error increasing quantity:", err?.response?.data || err?.message || err);
-      throw err; // Let the caller handle the error
+    } catch (error) {
+      console.error("Error incrementing cart item:", error.response);
     }
   };
 
-  // Decrease item quantity in cart
   const decreaseCartItem = async (item) => {
-    if (!item || !item.itemId || !customerId || !token) {
-      console.error("Missing data for quantity decrease");
-      return;
-    }
-    
+    // console.log("item to decrement", item);
+    const data = {
+      customerId: customerId,
+      itemId: item.itemId,
+    };
+    // console.log({data})
     try {
-      // Check if we're removing the last item
-      if ((cartItems[item.itemId] || item.cartQuantity || 0) <= 1) {
-        handleRemove(item);
-        return;
-      }
-      
-      const response = await axios.patch(
-        `${BASE_URL}cart-service/cart/decrementCartData`,
-        {
-          customerId: customerId,
-          itemId: item.itemId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      const response = await handleDecrementorRemovalCart(
+        data,
+        userData.userId
       );
-      
-      if (response?.status !== 200) {
-        throw new Error(`Unexpected response status: ${response?.status}`);
-      }
-      
+      console.log("Decrement response", response);
+      Alert.alert("Success", response.data.errorMessage);
       fetchCartData();
-      totalCart();
     } catch (error) {
-      console.error("Error decreasing quantity:", error?.response?.data || error?.message || error);
-      throw error; // Let the caller handle the error
+      console.log("Error decrementing cart item:", error);
     }
   };
 
-  // Remove item from cart
-  const removeCartItem = async (item) => {
-    if (!item || !item.cartId || !token) {
-      console.error("Missing data for item removal", item);
-      return;
-    }
-    
-    try {
-      const response = await axios.delete(
-        `${BASE_URL}cart-service/cart/remove`,
-        {
-          data: {
-            id: item.cartId,
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+const handleRemove = async (item) => {
+  if (!item?.cartId) {
+    console.error("Invalid item data for removal", item);
+    return;
+  }
 
-      if (response?.status !== 200) {
-        throw new Error(`Unexpected response status: ${response?.status}`);
-      }
-      
-      console.log("Item removal response:", response?.data);
-      
-      // Reset container decision if a container was removed
-      const containerLargeId = CONTAINER_TYPES.LARGE.id;
-      const containerSmallId = CONTAINER_TYPES.SMALL.id;
-      
-      if (item.itemId === containerLargeId || item.itemId === containerSmallId) {
-        setContainerDecision(null);
-        setContainerAddedPrice(false);
-        
-        try {
-          await AsyncStorage.removeItem('containerDecision');
-          console.log("Container decision reset");
-        } catch (error) {
-          console.log("Error resetting container decision:", error);
-        }
-      }
-      
-      fetchCartData();
-      totalCart();
-    } catch (error) {
-      console.error("Error removing cart item:", error?.response?.data || error?.message || error);
-      throw error; // Let the caller handle the error
-    }
-  };
+  try {
+    const itemWeight = Number(item.weight);
+    const isWeight10or26 = itemWeight === 10 || itemWeight === 26;
 
-  // Check if account is deactivated
-  const handleDeactivateStatus = async () => {
-    try {
-      const reactivate = await AsyncStorage.getItem("deactivate");
-      if (reactivate === "false") {
-        Alert.alert(
-          "Deactivated Account",
-          "Your account is currently deactivated. Would you like to reactivate it to continue?",
-          [
-            { 
-              text: "Yes", 
-              onPress: () => navigation.navigate("Write To Us") 
-            },
-            { 
-              text: "No",
-              style: "cancel" 
-            },
-          ],
-          { cancelable: false }
-        );
-      }
-    } catch (error) {
-      console.error("Error checking account status:", error);
-    }
-  };
-
-  // Validate cart before proceeding to checkout
-  const validateCartBeforeCheckout = () => {
-    if (!Array.isArray(cartData) || cartData.length === 0) {
-      Alert.alert("Empty Cart", "Please add items to your cart before checking out.");
-      return false;
-    }
-    
-    // Check for out-of-stock items
-    const outOfStockItems = cartData.filter(item => 
-      item && isLimitedStock[item.itemId] === "outOfStock"
+    const freeItem = cartData.find((i) => i.status === "FREE");
+    const sameWeightAddItems = cartData.filter(
+      (i) => i.status === "ADD" && Number(i.weight) === itemWeight
     );
 
-    if (outOfStockItems.length > 0) {
-      const itemNames = outOfStockItems.map(item => item.itemName).join(", ");
-      Alert.alert(
-        "Out of Stock Items",
-        `The following items are out of stock: ${itemNames}. Please remove them before proceeding.`,
-        [{ text: "OK" }]
-      );
-      return false;
-    }
-    
-    // Check for items with too low stock
-    const tooManyItems = cartData.filter(item => 
-      item && item.cartQuantity > item.quantity
-    );
-    
-    if (tooManyItems.length > 0) {
-      const itemNames = tooManyItems.map(item => 
-        `${item.itemName} (requested: ${item.cartQuantity}, available: ${item.quantity})`
-      ).join(", ");
-      
-      Alert.alert(
-        "Limited Stock",
-        `The following items have limited stock: ${itemNames}. Please update quantities before proceeding.`,
-        [{ text: "OK" }]
-      );
-      return false;
-    }
-    
-    return true;
-  };
+    let response;
 
-  // Handle checkout process
-  const handleCheckout = async () => {
+    // Begin Logic Check
+    let shouldRemoveFreeItem = false;
+
+    if (freeItem && isWeight10or26) {
+      const freeWeight = Number(freeItem.weight);
+
+      if (itemWeight === 10) {
+        if (freeWeight === 35) {
+          // Don't remove free item if it's 35kg and removing 10kg
+          shouldRemoveFreeItem = false;
+        } else if (freeWeight === 20) {
+          shouldRemoveFreeItem = sameWeightAddItems.length === 1; // Only remove if it's last 10kg
+        }
+      } else if (itemWeight === 26) {
+        if (freeWeight === 20) {
+          shouldRemoveFreeItem = false;
+        } else if (freeWeight === 35) {
+          shouldRemoveFreeItem = sameWeightAddItems.length === 1; // Only remove if it's last 26kg
+        }
+      }
+    }
+
+    if (shouldRemoveFreeItem) {
+      console.log("Removing both selected item and FREE item.");
+      // Remove selected item
+      response = await handleRemoveItem(item.cartId);
+
+      // Remove FREE item
+      const freePayload = {
+        id: freeItem.cartId,
+        customerId: freeItem.customerId,
+        itemId: freeItem.itemId,
+        status: "FREE",
+      };
+      response = await handleRemoveFreeItem(freePayload);
+    } else {
+      console.log("Removing only the selected item.");
+      response = await handleRemoveItem(item.cartId);
+    }
+
+    console.log("Remove response:", response);
+    Alert.alert("Success", "Item removed successfully");
+
+    fetchCartData();
+  } catch (error) {
+    console.error("Error removing item:", error);
+    Alert.alert("Error", "Failed to remove item. Please try again.");
+  } finally {
+    setRemovalLoading((prevState) => ({
+      ...prevState,
+      [item.cartId]: false,
+    }));
+  }
+};
+
+
+
+  const handleProfileCheck = async () => {
     const profile = await getProfile();
 
     if (!profile) {
       return;
     }
-
     const outOfStockItems = cartData.filter((item) => {
       return isLimitedStock[item.itemId] === "outOfStock";
     });
@@ -998,7 +700,6 @@ const CartScreen = () => {
       return false;
     }
 
-    // ✅ Proceed to checkout
     navigation.navigate("Checkout", {
       subtotal: cartData.reduce(
         (acc, item) =>
@@ -1007,11 +708,10 @@ const CartScreen = () => {
       ),
       locationdata,
       addressdata,
-    
     });
   };
 
-  // Empty cart component
+    // Empty cart component
   const EmptyCartComponent = () => {
     return (
       <View style={styles.emptyCartContainer}> 
@@ -1043,442 +743,983 @@ const CartScreen = () => {
     );
   };
 
-  // Loading component
-  const LoadingComponent = () => {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading your cart...</Text>
-      </View>
-    );
-  };
-
-  // Item stock indicator
-  const StockIndicator = ({ itemId }) => {
-    const stockStatus = isLimitedStock[itemId];
-    
-    if (!stockStatus) return null;
-    
-    return (
-      <View 
-        style={[
-          styles.stockIndicator, 
-          stockStatus === "outOfStock" ? styles.outOfStock : styles.lowStock
-        ]}
-      >
-        <Text style={styles.stockIndicatorText}>
-          {stockStatus === "outOfStock" ? "Out of Stock" : "Low Stock"}
-        </Text>
-      </View>
-    );
-  };
-
-
-  // Offer Modal for 1kg promotion
-  const OneKgOfferModal = () => {
-    return (
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={showOffer}
-        onRequestClose={() => setShowOffer(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowOffer(false)}>
-          <View style={styles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={styles.offerModalContainer}>
-                <View style={styles.offerModalHeader}>
-                  <Text style={styles.offerModalTitle}>Special Offer!</Text>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setShowOffer(false)}
-                  >
-                    <MaterialIcons name="close" size={24} color="#000" />
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.offerModalBody}>
-                  <Image
-                    source={require("../../../../assets/offer.png")}
-                    style={styles.offerImage}
-                    resizeMode="contain"
-                  />
-                  
-                  <Text style={styles.offerModalText}>
-                  Buy 1kg and Get 1kg Absolutely FREE! 🛍
-                  </Text>
-                  <Text style={styles.noteText}><Text style={{fontWeight:"bold"}}>📍 Note:</Text>
-                    The 1kg + 1kg Free Offer is valid only once per user and applies exclusively to 1kg rice bags.
-                    This offer can only be redeemed once per address and is applicable on the first successful delivery only.
-                    Once claimed, it cannot be reused. Grab it while it lasts!</Text>
-                    <Text style={styles.noteText}>📍 గమనిక: 1+1 కేజీ రైస్ ఆఫర్ ఒకే చిరునామాకు ఒక్కసారి మాత్రమే — మొదటి విజయవంతమైన డెలివరీకి మాత్రమే వర్తిస్తుంది.
-                  </Text>
-                </View>
-                
-                <View style={styles.offerModalFooter}>
-                  <TouchableOpacity
-                    style={[styles.offerModalButton, styles.offerCancelButton]}
-                    onPress={() => setShowOffer(false)}
-                  >
-                    <Text style={styles.offerButtonTextCancel}>No, Thanks</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity
-                    style={[styles.offerModalButton, styles.offerConfirmButton]}
-                    onPress={handleAddCheapest1kgBag}
-                  >
-                    <Text style={styles.offerButtonTextConfirm}>Add One More</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    );
-  };
-
-  // Render individual cart item
-  const renderItem = ({ item }) => {
-    // Guard against invalid items
-    if (!item || !item.itemId || !item.itemName) {
-      console.error("Invalid item data:", item);
-      return null;
-    }
-    
-    const isLoading = loadingItems[item.itemId] || false;
-    const isRemoving = removalLoading[item.cartId] || false;
-    const isOutOfStock = isLimitedStock[item.itemId] === "outOfStock";
-    const isLowStock = isLimitedStock[item.itemId] === "lowStock";
-    
-    return (
-      <View style={styles.itemContainer}>
-        <TouchableOpacity
-          onPress={() => handleImagePress(item)}
-          disabled={isOutOfStock}
-          style={[styles.itemImageContainer, isOutOfStock && styles.disabledItem]}
-        >
-          <Image
-            source={{ uri: item.image || "https://via.placeholder.com/150" }}
-            style={styles.itemImage}
-            resizeMode="cover"
-            defaultSource={{ uri: "https://via.placeholder.com/150" }}
-          />
-          <StockIndicator itemId={item.itemId} />
-        </TouchableOpacity>
-        
-        <View style={styles.itemDetails}>
-          <Text style={styles.itemName} numberOfLines={2}>
-            {item.itemName}
-          </Text>
-          
-          <Text style={styles.itemWeight}>
-            {item.weight} {item.weight===1? "kg":item.units}
-          </Text>
-          
-          <View style={styles.priceContainer}>
-            <Text style={styles.itemPrice}>₹{item.itemPrice}</Text>
-          </View>
-          
-          <View style={styles.quantityContainer}>
-            <TouchableOpacity
-              style={[
-                styles.quantityButton,
-                (isLoading || isOutOfStock) && styles.disabledButton
-              ]}
-              onPress={() => handleDecrease(item)}
-              disabled={isLoading || isOutOfStock}
-            >
-              <Text style={styles.quantityButtonText}>-</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.quantityTextContainer}>
-              {isLoading ? (
-                <ActivityIndicator size="small" color={COLORS.primary} />
-              ) : (
-                <Text style={styles.quantityText}>
-                  {cartItems[item.itemId] || item.cartQuantity || 0}
-                </Text>
-              )}
-            </View>
-            
-            <TouchableOpacity
-              style={[
-                styles.quantityButton,
-                (isLoading || isOutOfStock || (item.quantity && item.cartQuantity >= item.quantity)) && styles.disabledButton
-              ]}
-              onPress={() => handleIncrease(item)}
-              disabled={isLoading || isOutOfStock || (item.quantity && item.cartQuantity >= item.quantity)}
-            >
-              <Text style={styles.quantityButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => handleRemove(item)}
-          disabled={isRemoving}
-        >
-          {isRemoving ? (
-            <ActivityIndicator size="small" color="red" />
-          ) : (
-            <MaterialIcons name="delete-outline" size={22} color="red" />
-          )}
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  // Main render method
   return (
-    <View style={styles.container}>
-      {/* Container offer modal */}
-      {/* <ContainerOfferModal modalVisible={modalVisible} setModalVisible={setModalVisible} hasWeight={hasWeight} onAccept={handleYes} onDecline={() => setModalVisible(false)} /> */}
-      <ContainerSoftCopy visible={modalVisible} hasWeight = {hasWeight} onClose={()=>setModalVisible(false)} addContainer={handleYes} cartData={cartData}/>
-      {/* 1kg offer modal */}
-      <OneKgOfferModal />
-      
-      {/* Show loading component if loading */}
-      {loading && !error ? (
-        <LoadingComponent />
+    <View
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+      }
+    >
+      {loading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#4B0082" />
+        </View>
       ) : error ? (
-        // Show error message
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={() => fetchCartData(true)}
-          >
-            <Text style={styles.retryButtonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : Array.isArray(cartData) && cartData.length > 0 ? (
-        // Show cart items
-        <View style={styles.cartContent}>
-          <FlatList
-            data={cartData}
-            renderItem={renderItem}
-            keyExtractor={(item) => (item?.cartId?.toString() || Math.random().toString())}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContainer}
-            // ListFooterComponentStyle={styles.listFooter}
-            ListFooterComponent={
-              <View style={{ height: 100 }} />
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={loading}
-                onRefresh={onRefresh}
-                colors={[COLORS.primary]}
-              />
-            }
-          />
-          
-          {/* Cart total and checkout button */}
-          <View style={styles.footer}>
-            <View style={styles.totalContainer}>
-              <Text style={styles.totalLabel}>Total:</Text>
-              <Text style={styles.totalAmount}>₹{grandTotal.toFixed(2)}</Text>
-            </View>
+        <Text style={styles.error}>{error}</Text>
+      ) : cartData && cartData.length > 0 ? (
+        <FlatList
+          data={cartData}
+          keyExtractor={(item) => item.itemId.toString()}
+          renderItem={({ item }) => (
+            <View
+              style={[
+                styles.cartItem,
+                item.quantity === 0 && styles.outOfStockCard,
+              ]}
+              keyboardShouldPersistTaps="always"
+            >
+              {isLimitedStock[item.itemId] == "lowStock" && (
+                <View style={styles.limitedStockBadge}>
+                  <Text style={styles.limitedStockText}>
+                    {item.quantity > 1
+                      ? `${item.quantity} items left`
+                      : `${item.quantity} item left`}
+                  </Text>
+                </View>
+              )}
+              {isLimitedStock[item.itemId] === "outOfStock" && (
+                <View style={styles.outOfStockContainer}>
+                  <Text style={styles.outOfStockText}>Out of Stock</Text>
 
-            <View style={styles.checkoutButtonContainer}>    
-            <TouchableOpacity
-              style={styles.checkoutButton}
-              onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
-              disabled={checkoutInProgress}
-            >
-              {checkoutInProgress ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.checkoutButtonText}>ADD MORE</Text>
+                  <TouchableOpacity
+                    onPress={() => handleDecrease(item)}
+                    style={styles.removeButton}
+                  >
+                    <Text style={styles.removeText}>Please remove it</Text>
+                  </TouchableOpacity>
+                </View>
               )}
-            </TouchableOpacity>        
-            <TouchableOpacity
-              style={styles.checkoutButton}
-              onPress={handleCheckout}
-              disabled={checkoutInProgress}
-            >
-              {checkoutInProgress ? (
-                <ActivityIndicator size="small" color="#fff" />
+
+              {removalLoading[item.cartId] ? (
+                <View style={[styles.cartItem, styles.removalLoader]}>
+                  <ActivityIndicator size="large" color="#ecb01e" />
+                  <Text style={styles.removingText}>
+                    Removing {item.itemName}...
+                  </Text>
+                </View>
               ) : (
-                <Text style={styles.checkoutButtonText}>Proceed to Checkout</Text>
+                <>
+                  {item.itemQuantity === 1 && (
+                    <Text style={styles.noteText}>
+                      Note: Only one free sample is allowed per user.
+                    </Text>
+                  )}
+                  <View style={{ flexDirection: "row" }}>
+                    <View>
+                      <Image
+                        source={{ uri: item.image }}
+                        style={styles.itemImage}
+                        onError={() => console.log("Failed to load image")}
+                      />
+                    </View>
+                    {item.status == "FREE" && (
+                      <View style={styles.offerBadge}>
+                        <Text style={styles.offerBadgeText}>OFFER</Text>
+                      </View>
+                    )}
+                    <View>
+                      <View style={styles.itemDetails}>
+                        <Text style={styles.itemName}>{item.itemName}</Text>
+                        <View style={styles.priceContainer}>
+                          <Text style={[styles.itemPrice, styles.crossedPrice]}>
+                            MRP: ₹{item.priceMrp}
+                          </Text>
+                          <Text style={[styles.itemPrice, styles.boldPrice]}>
+                            ₹{item.itemPrice}
+                          </Text>
+                        </View>
+                        <Text style={{ marginTop: 5 }}>
+                          (
+                          {Math.round(
+                            ((item.priceMrp - item.itemPrice) / item.priceMrp) *
+                              100
+                          )}
+                          % OFF)
+                        </Text>
+
+                        <Text style={styles.itemWeight}>
+                          Weight: {item.weight}{" "}
+                          {item.weight === 1
+                            ? item.units.replace(/s$/, "")
+                            : item.units}
+                        </Text>
+
+                        {isLimitedStock[item.itemId] !== "outOfStock" && (
+                          <View style={styles.quantityContainer}>
+                            <TouchableOpacity
+                              style={[
+                                styles.quantityButton,
+                                (loadingItems[item.itemId] ||
+                                  item.status === "FREE") &&
+                                  styles.disabledButton,
+                              ]}
+                              onPress={() => handleDecrease(item)}
+                              disabled={
+                                loadingItems[item.itemId] ||
+                                item.status === "FREE"
+                              }
+                            >
+                              <Text style={styles.buttonText}>-</Text>
+                            </TouchableOpacity>
+
+                            {loadingItems[item.itemId] ? (
+                              <ActivityIndicator
+                                size="small"
+                                color="#000"
+                                style={styles.loader}
+                              />
+                            ) : (
+                              <Text style={styles.quantityText}>
+                                {item.cartQuantity}
+                              </Text>
+                            )}
+
+                            {item.itemPrice === 1 ||
+                            (containerDecision === "yes" &&
+                              containerItemIds.includes(item.itemId)) ? (
+                              <View
+                                style={[
+                                  styles.quantityButton1,
+                                  item.status === "FREE" &&
+                                    styles.disabledButton,
+                                ]}
+                                disabled={true}
+                              >
+                                <Text style={styles.quantityButtonText}>+</Text>
+                              </View>
+                            ) : (
+                              <TouchableOpacity
+                                style={[
+                                  styles.quantityButton,
+                                  (loadingItems[item.itemId] ||
+                                    cartItems[item.itemId] === item.quantity ||
+                                    item.status === "FREE") &&
+                                    styles.disabledButton,
+                                ]}
+                                onPress={() => handleIncrease(item)}
+                                disabled={
+                                  loadingItems[item.itemId] ||
+                                  cartItems[item.itemId] === item.quantity ||
+                                  item.status === "FREE"
+                                }
+                              >
+                                <Text style={styles.buttonText}>+</Text>
+                              </TouchableOpacity>
+                            )}
+
+                            <Text style={styles.itemTotal}>
+                              ₹{(item.itemPrice * item.cartQuantity).toFixed(2)}
+                            </Text>
+                          </View>
+                        )}
+                        {isLimitedStock[item.itemId] !== "outOfStock" && (
+                          <TouchableOpacity
+                            style={{ marginLeft: 100 }}
+                            onPress={() => handleRemove(item)}
+                          >
+                            <MaterialIcons
+                              name="delete"
+                              size={23}
+                              color="#FF0000"
+                            />
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+                </>
               )}
-            </TouchableOpacity>
             </View>
-            
-            
-          </View>
-        </View>
+          )}
+          contentContainerStyle={styles.flatListContent}
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+        />
       ) : (
-        // Show empty cart
-        <EmptyCartComponent />
+          <EmptyCartComponent />
       )}
+      {cartData && cartData.length > 0 && (
+        <>
+          {!loading && (
+            <View style={styles.grandTotalRowContainer}>
+              {totalCartValue > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Sub Total:</Text>
+                  <Text style={styles.value}>₹{totalCartValue}</Text>
+                </View>
+              )}
+
+              {freeItemPrice > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>Discount:</Text>
+                  <Text style={styles.value}>- ₹{freeItemPrice}</Text>
+                </View>
+              )}
+
+              {gstAmount > 0 && (
+                <View style={styles.row}>
+                  <Text style={styles.label}>GST:</Text>
+                  <Text style={styles.value}>+ ₹{gstAmount?.toFixed(2)}</Text>
+                </View>
+              )}
+
+              <View style={styles.grandTotalRow}>
+                <Text style={styles.grandTotalLabel}>Grand Total:</Text>
+                <Text style={styles.grandTotalValue}>
+                  ₹{grandTotal + gstAmount}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {!loading && (
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() =>
+                  navigation.navigate("Rice Products", {
+                    screen: "Rice Products",
+                    category: "All CATEGORIES",
+                  })
+                }
+              >
+                <Text style={styles.actionButtonText}>Add More</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.checkoutButton}
+                onPress={handleProfileCheck}
+              >
+                <Text style={styles.actionButtonText}>Checkout</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
+      )}
+
+      <ContainerSoftCopy
+        visible={modalVisible}
+        hasWeight={hasWeight}
+        onClose={() => setModalVisible(false)}
+        addContainer={handleYes}
+        cartData={cartData}
+        itemToRemove={itemToRemove} // Add this
+        removeItem={handleRemove}
+      />
+
+      {/* <Modal
+        visible={showOffer}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowOffer(false)}
+        onDismiss={() => {
+          scaleValue.setValue(100);
+        }}
+      >
+        <View style={styles.modalContainer} pointerEvents="auto">
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ scale: scaleValue }],
+              },
+            ]}
+            pointerEvents="auto"
+          >
+            <Text style={styles.offerTitle}>🎁 Special Offer!</Text>
+            <Text style={styles.offerText}>
+              Buy 1kg and Get 1kg Absolutely FREE! 🛍
+            </Text>
+            <Text style={styles.noteText}>
+              <Text style={{ fontWeight: "bold" }}>Note:</Text>
+              This 1kg + 1kg Free Offer is available only once per user and
+              applies only to 1kg bags. Once used, the offer cannot be claimed
+              again. Grab it while it lasts!
+            </Text>
+            <TouchableOpacity
+              style={styles.okButton}
+              onPress={() => {
+                setShowOfferAvail(true), handleAddCheapest1kgBag();
+              }}
+            >
+              <Text style={styles.okButtonText}>Claim Offer</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal> */}
     </View>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#E5E7EB",
+    padding: 20,
   },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e1e1e1",
-    elevation: 2,
+  error: {
+    color: "#EF4444",
+    textAlign: "center",
+    marginTop: 20,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  cartContent: {
-    flex: 1,
-    // marginBottom: 60,
-  },
-  listContainer: {
-    padding: 12,
-    paddingBottom: 120,
-  },
-  itemContainer: {
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    marginBottom: 12,
-    padding: 12,
-    elevation: 3,
+  cartItem: {
+    padding: 16,
+    marginBottom: 8,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  itemImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 8,
-    overflow: "hidden",
-    marginRight: 12,
+    elevation: 2,
   },
   itemImage: {
-    width: "100%",
-    height: "100%",
+    marginLeft: 5,
+    width: width * 0.3,
+    height: height / 7,
+    marginRight: 10,
+    borderRadius: 20,
   },
   itemDetails: {
     flex: 1,
     justifyContent: "space-between",
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  itemWeight: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 4,
-  },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
+    fontSize: 18,
+    fontWeight: "bold",
+    width: width * 0.5,
   },
   itemPrice: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: COLORS.primary,
+    color: "#16A34A",
+  },
+  itemWeight: {
+    color: "#6B7280",
   },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
-    height: 32,
+    marginTop: 8,
   },
   quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.primary,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#a593df",
+    padding: 8,
+    borderRadius: 4,
+    marginHorizontal: 8,
   },
-  disabledButton: {
-    backgroundColor: "#ccc",
-  },
-  quantityButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  quantityTextContainer: {
-    width: 40,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
+  quantityButton1: {
+    backgroundColor: "#D1D5DB",
+    padding: 8,
+    borderRadius: 4,
+    marginHorizontal: 8,
   },
   quantityText: {
+    fontWeight: "bold",
+    backgroundColor: "white",
+  },
+  removeButton: {
+    backgroundColor: "#D32F2F",
+    padding: 8,
+    borderRadius: 4,
+    marginTop: 8,
+    width: 150,
+    zIndex: 2,
+    // position:'absolute'
+  },
+  removeButtonText: {
+    color: "#FFFFFF",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  flatListContent: {
+    paddingBottom: 80,
+  },
+  emptyCartText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#6B7280",
+    marginTop: 20,
+  },
+  actionButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  addButton: {
+    backgroundColor: "#16A34A",
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginRight: 8,
+    marginBottom: 70,
+  },
+  checkoutButton: {
+    backgroundColor: COLORS.services,
+    padding: 12,
+    borderRadius: 8,
+    flex: 1,
+    marginBottom: 70,
+  },
+  actionButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+
+  itemTotal: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
+    marginLeft: 2,
+    marginBottom: 20,
+    width: width / 3,
+    marginTop: 15,
   },
-  removeButton: {
-    width: 36,
-    height: 36,
-    justifyContent: "flex-start",
+  totalText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#374151",
+    textAlign: "center",
+  },
+  card: {
+    width: "80%",
     alignItems: "center",
-    marginTop: 4,
+    padding: 20,
+    marginLeft: 35,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
-  footer: {
+  loader: {
+    alignSelf: "center",
+    borderRadius: 4,
+  },
+  loaderContainer: {
     position: "absolute",
-    bottom: 60,
+    top: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#fff",
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    // zIndex: 1,
+  },
+  priceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  itemPrice: {
+    fontSize: 16,
+    marginRight: 10,
+  },
+  crossedPrice: {
+    textDecorationLine: "line-through",
+    color: "#D32F2F",
+  },
+  boldPrice: {
+    fontWeight: "bold",
+    color: "#388E3C",
+  },
+  limitedStockBadge: {
+    position: "absolute",
+    top: 10,
+    left: 30,
+    alignSelf: "center",
+    alignItems: "center",
+    backgroundColor: "red",
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    zIndex: 10,
+    marginBottom: 20,
+  },
+  limitedStockText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  disabledButton: {
+    backgroundColor: "gray",
+    opacity: 0.5,
+  },
+  outOfStockCard: {
+    opacity: 0.5,
+  },
+  outOfStockContainer: {
+    position: "relative",
+    padding: 10,
+    backgroundColor: COLORS.backgroundcolour,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  outOfStockOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  outOfStockText: {
+    color: "red",
+    position: "relative",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 5,
+    fontSize: 16,
+  },
+  browseButton: {
+    backgroundColor: COLORS.services,
+    // padding: 12,
+    paddingVertical: 20,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    marginBottom: 50,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  browseButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  outOfStockText: {
+    color: COLORS.services,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  removeText: {
+    alignSelf: "center",
+    textAlign: "center",
+    color: "#fff",
+    zIndex: 1,
+    fontSize: 14,
+    fontWeight: "bold",
+    textDecorationLine: "underline",
+    marginTop: 5,
+    // backgroundColor: "#000",
+    padding: 5,
+    borderRadius: 5,
+    overflow: "hidden",
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  loaderOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  removingText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ecb01e",
+    textAlign: "center",
+    alignItems: "center",
+    alignSelf: "center",
+  },
+  dimItem: {
+    opacity: 0.5, // Fades the item while loading
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  congratsText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#4CAF50",
+  },
+  messageText: {
+    fontSize: 16,
+    marginVertical: 10,
+    textAlign: "center",
+  },
+  questionText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginVertical: 10,
+  },
+
+  buttonYes: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 25,
+  },
+  buttonNo: {
+    backgroundColor: "#FF5733",
+    padding: 10,
+    borderRadius: 5,
+    marginLeft: 15,
+  },
+  buttonText: {
+    color: "white",
+  },
+  codeText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#4CAF50",
+    marginTop: 20,
+  },
+  titleContainer: {
+    // marginBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#212529",
+  },
+  planContainer: {
+    // marginBottom: 16,
+  },
+  planTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#343a40",
+    marginBottom: 4,
+  },
+  planDescription: {
+    fontSize: 16,
+    color: "#495057",
+    lineHeight: 22,
+  },
+  orContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 16,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ced4da",
+  },
+  orText: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#e1e1e1",
-    elevation: 10,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#6c757d",
   },
   totalContainer: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    paddingVertical: 6,
   },
-  totalLabel: {
+  label: {
+    fontSize: 15,
+    color: "#495057",
+  },
+  value: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#212529",
+    textAlign: "right",
+  },
+  discountValue: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#2e7d32",
+    textAlign: "right",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#dee2e6",
+    marginVertical: 8,
+  },
+  grandTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 6,
+  },
+  grandTotalLabel: {
+    fontSize: 17,
+    fontWeight: "bold",
+    color: "#212529",
+  },
+  grandTotalValue: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: "#212529",
+    textAlign: "right",
   },
-  totalAmount: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: COLORS.primary,
+  offerText: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
   },
-  checkoutButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    alignItems: "center",
-  },
-  checkoutButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 12,
-  },
-  checkoutButtonText: {
+  okButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
   },
-  emptyCartContainer: {
+  offerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+    width: "100%",
+    textAlign: "center",
+  },
+  okButton: {
+    backgroundColor: "#2196F3",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 8,
+  },
+  noteText: {
+    fontSize: 12,
+    color: "#777",
+    textAlign: "center",
+    marginBottom: 20,
+    fontStyle: "italic",
+  },
+
+  messageText: {
+    textAlign: "center",
+    marginVertical: 10,
+  },
+
+  radioButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+
+  // --------------
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingHorizontal: 20,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 15,
+    padding: 25,
+    width: "100%",
+    maxWidth: 500,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  congratsText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#ff6b00",
+    marginBottom: 10,
+  },
+  messageText: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 5,
+    color: "#333",
+  },
+  highlight: {
+    fontWeight: "bold",
+    color: "#ff6b00",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#333",
+  },
+  plansContainer: {
+    marginBottom: 20,
+  },
+  planOption: {
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+    backgroundColor: "#f9f9f9",
+  },
+  selectedPlan: {
+    borderColor: "#ff6b00",
+    backgroundColor: "#fff8f0",
+  },
+  radioSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  planTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginLeft: 10,
+    color: "#444",
+  },
+  radioCircle: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ff6b00",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  selectedRb: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#ff6b00",
+  },
+  radioText: {
+    fontSize: 15,
+    color: "#000",
+    lineHeight: 20,
+    paddingLeft: 30,
+  },
+  questionText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: 15,
+    color: "#333",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  buttonNo: {
+    flex: 1,
+    paddingVertical: 12,
+    marginRight: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonYes: {
+    flex: 2,
+    paddingVertical: 12,
+    backgroundColor: "#ff6b00",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonDisabled: {
+    backgroundColor: "#ffb980",
+  },
+  buttonNoText: {
+    color: "#555",
+    fontWeight: "600",
+  },
+  buttonYesText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  footer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    elevation: 4,
+  },
+  grandTotalRowContainer: {
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+    borderTopWidth: 1,
+    borderColor: "#ddd",
+    position: "relative",
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginVertical: 2,
+  },
+  label: {
+    fontSize: 16,
+    color: "#555",
+  },
+  value: {
+    fontSize: 16,
+    color: "#555",
+  },
+  grandTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  grandTotalLabel: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  grandTotalValue: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  offerBadge: {
+    position: "absolute",
+    top: -10,
+    left: 5,
+    backgroundColor: "#FF5722",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderTopLeftRadius: 25,
+    borderBottomRightRadius: 8,
+    zIndex: 10,
+  },
+  offerBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+   emptyCartContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -1488,9 +1729,11 @@ const styles = StyleSheet.create({
     width: width * 0.5,
     height: width * 0.5,
     marginBottom: 20,
+    borderRadius: 20,
+    overflow: "hidden",
     backgroundColor: "#f0f0f0",
   },
-  emptyCartImage: {
+   emptyCartImage: {
     width: "100%",
     height: "100%",
   },
@@ -1500,7 +1743,7 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 20,
   },
-  shopNowButton: {
+   shopNowButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -1511,208 +1754,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#666",
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 16,
-    color: "red",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  retryButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    width: width * 0.85,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  modalHeader: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  modalBody: {
-    padding: 16,
-    alignItems: "center",
-  },
-  containerImage: {
-    width: width * 0.5,
-    height: width * 0.3,
-    marginBottom: 16,
-  },
-  modalText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  containerPrice: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: COLORS.primary,
-    marginBottom: 8,
-  },
-  modalFooter: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: "#e1e1e1",
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#f5f5f5",
-    borderRightWidth: 0.5,
-    borderRightColor: "#e1e1e1",
-  },
-  confirmButton: {
-    backgroundColor: COLORS.primary,
-    borderLeftWidth: 0.5,
-    borderLeftColor: "#e1e1e1",
-  },
-  buttonTextCancel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  buttonTextConfirm: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  stockIndicator: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    paddingVertical: 2,
-    alignItems: "center",
-  },
-  outOfStock: {
-    backgroundColor: "rgba(255, 0, 0, 0.7)",
-  },
-  lowStock: {
-    backgroundColor: "rgba(255, 165, 0, 0.7)",
-  },
-  stockIndicatorText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  disabledItem: {
-    opacity: 0.6,
-  },
-  offerModalContainer: {
-    width: width * 0.85,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  offerModalHeader: {
-    backgroundColor: "#FFD700",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  offerModalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  offerModalBody: {
-    padding: 16,
-    alignItems: "center",
-  },
-  offerImage: {
-    width: width * 0.3,
-    height: width * 0.3,
-    marginBottom: 10,
-  },
-  offerModalText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  offerModalFooter: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: "#e1e1e1",
-  },
-  offerModalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  offerCancelButton: {
-    backgroundColor: "#f5f5f5",
-  },
-  offerConfirmButton: {
-    backgroundColor: "#FFD700",
-  },
-  offerButtonTextCancel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  offerButtonTextConfirm: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  noteText: {
-    fontSize: 14,
-    color: '#777',
-    textAlign: 'center',
-    marginBottom: 20,
-    fontStyle: 'italic',
-  },
-
 });
 
 export default CartScreen;

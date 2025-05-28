@@ -101,9 +101,19 @@ const AskoxyOffers = () => {
             </TouchableOpacity>
           </View>
         </View>
+        <View style={styles.showMoreButton}>
+          <TouchableOpacity style={styles.roundButton} onPress={() => {navigation.navigate("Special Offers")}}>
+                {/* <Ionicons
+                  name="information-circle-outline"
+                  size={16}
+                  color="#7B1FA2"
+                /> */}
+                <Text style={styles.roundButtonText}>Show More Offer's</Text>
+              </TouchableOpacity>
+            </View>
       </LinearGradient>
 
-      <Modal
+      {/* <Modal
         animationType="slide"
         transparent={false}
         visible={modalVisible}
@@ -289,6 +299,198 @@ const AskoxyOffers = () => {
             </ScrollView>
           </View>
         </View>
+      </Modal> */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={["#9638eb", "#bc73fa"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.modalHeader}
+            >
+              <Text style={styles.modalTitle}>
+                Promotional Offers – Frequently Asked Questions
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <AntDesign name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </LinearGradient>
+
+          
+            <ScrollView
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollViewContent}
+              showsVerticalScrollIndicator={true}
+            >
+           
+              <View style={styles.faqItem}>
+                <View style={styles.faqQuestion}>
+                  <Text style={styles.questionText}>
+                    What are the current promotional offers?
+                  </Text>
+                </View>
+                <View style={styles.faqAnswer}>
+                  {/* <View style={styles.offerItem}>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>•</Text>
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.offerHighlight}>
+                        🧧 Buy 1 KG Rice
+                      </Text>{" "}
+                      — Get 1 KG Free{" "}
+                      <Text style={styles.offerTag}>(1+1 Offer)</Text>
+                    </Text>
+                  </View> */}
+
+                  <View style={styles.offerItem}>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>•</Text>
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.offerHighlight}>
+                        🧧 Buy 10 KG Rice
+                      </Text>{" "}
+                      — Get a FREE 18+ KG Steel Container{" "}
+                      <Text style={styles.offerWorth}>(Worth ₹1800)</Text>
+                    </Text>
+                  </View>
+
+                  <View style={styles.offerItem}>
+                    <View style={styles.bulletPoint}>
+                      <Text style={styles.bulletIcon}>•</Text>
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.offerHighlight}>
+                        🧧 Buy 26 KG Rice
+                      </Text>{" "}
+                      — Get a FREE 35+ KG Steel Container{" "}
+                      <Text style={styles.offerWorth}>(Worth ₹2300)</Text>
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.importantNotice}>
+                    <Text style={styles.importantText}>
+                      <Text style={styles.boldRedText}>IMPORTANT:</Text> All offers are valid for <Text style={styles.boldRedText}>ONE-TIME USE ONLY</Text> and limited to <Text style={styles.boldRedText}>ONE PER ADDRESS</Text>.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+         
+              <View style={styles.faqItem}>
+                <View style={styles.faqQuestion}>
+                  <Text style={styles.questionText}>
+                    Which rice brands are eligible?
+                  </Text>
+                </View>
+                <View style={styles.faqAnswer}>
+                  <View style={styles.offerItem}>
+                    <View style={styles.checkBox}>
+                      <Entypo name="check" size={14} color="#4CAF50" />
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.greenText}>All rice brands</Text> —
+                      Eligible for the steel container offers (10 KG & 26 KG
+                      packs)
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+           
+              <View style={styles.faqItem}>
+                <View style={styles.faqQuestion}>
+                  <Text style={styles.questionText}>
+                    Do I need to sign any agreement or policy?
+                  </Text>
+                </View>
+                <View style={styles.faqAnswer}>
+                  <View style={styles.offerItem}>
+                    <View style={styles.checkBox}>
+                      <Entypo name="check" size={14} color="#4CAF50" />
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.greenText}>Yes.</Text> To receive the
+                      steel container, you must sign the offer policy as part of
+                      the terms and conditions.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+            
+              <View style={styles.faqItem}>
+                <View style={styles.faqQuestion}>
+                  <Text style={styles.questionText}>
+                    How much rice should I buy to own the steel container?
+                  </Text>
+                </View>
+                <View style={styles.faqAnswer}>
+                  <Text style={styles.optionsText}>You have two options:</Text>
+
+                  <View style={styles.offerItem}>
+                    <View style={styles.planBullet}>
+                      <Text style={styles.planBulletText}>•</Text>
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.planText}>
+                        Plan A – Purchase-Based:
+                      </Text>{" "}
+                      Buy 9 rice bags (10 KG or 26 KG) within 3 years
+                    </Text>
+                  </View>
+
+                  <View style={styles.offerItem}>
+                    <View style={[styles.planBullet, styles.planBOrange]}>
+                      <Text style={styles.planBulletText}>•</Text>
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.planText}>
+                        Plan B – Referral-Based:
+                      </Text>{" "}
+                      Refer 9 new users to the ASKOXY.ai platform
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+        
+              <View style={styles.faqItem}>
+                <View style={styles.faqQuestion}>
+                  <Text style={styles.questionText}>
+                    Are steel container offers applicable more than once?
+                  </Text>
+                </View>
+                <View style={styles.faqAnswer}>
+                  <View style={styles.offerItem}>
+                    <View style={styles.crossBox}>
+                      <Entypo name="cross" size={14} color="#F44336" />
+                    </View>
+                    <Text style={styles.offerDetail}>
+                      <Text style={styles.redText}>No.</Text> These promotional offers are strictly limited to 
+                      <Text style={styles.boldRedText}> ONE-TIME USE ONLY</Text> and 
+                      <Text style={styles.boldRedText}> ONE PER ADDRESS</Text>. No exceptions will be made.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+         
+              <View style={styles.bottomSpace} />
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
     </>
   );
@@ -347,8 +549,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
     borderRadius: 24,
     maxWidth: "100%",
   },
@@ -547,5 +749,14 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: 20,
+  },
+  showMoreButton: {
+    marginTop: 20,
+    backgroundColor: "#fff",
+    paddingVertical: 2,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    elevation: 3,
+    alignSelf:"flex-end"
   },
 });
