@@ -70,6 +70,7 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL, { userStage } from "../../../../Config";
 import { getCoordinates } from "../../../Screens/View/Address/LocationService";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
+import { handleCustomerCartData } from "../../../ApiService";
 
 const CheckOut = ({ navigation, route }) => {
   // console.log("from cartscreen", route.params);
@@ -115,15 +116,15 @@ const CheckOut = ({ navigation, route }) => {
     longitude: "",
     area: "",
     houseType: "",
-    residenceName: "",
-  });
+    residenceName: "",
+  });
 
   useFocusEffect(
     useCallback(() => {
       // calculateTotal();
 
       fetchCartData();
-      totalCart();
+      // totalCart();
 
       console.log("from my location page", route.params.locationdata);
 
@@ -150,7 +151,7 @@ const CheckOut = ({ navigation, route }) => {
         // Clean up any side effects here if needed
       };
     }, [route.params.locationdata])
-  );
+  );
 
   const handleIncrease = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
@@ -164,67 +165,136 @@ const CheckOut = ({ navigation, route }) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
+  // const fetchCartData = async () => {
+  //   setLoading(true);
+  //   // axios
+  //   //   .get(
+  //   //      BASE_URL +
+  //   //           `cart-service/cart/customersCartItems?customerId=${customerId}`,
+  //   //     {
+  //   //       headers: {
+  //   //         Authorization: `Bearer ${token}`,
+  //   //       },
+  //   //     }
+  //   //   )
+  //     const response = await handleCustomerCartData(customerId)
+  //     .then((response) => {
+  //       console.log("mrpprices", response.data);
+  //       const cartData = response?.data?.customerCartResponseList;
+  //       if (!cartData || !Array.isArray(cartData)) {
+  //         setCartData([]);
+  //         setIsLimitedStock({});
+  //         setCartItems({});
+  //         return;
+  //       }
+  //       const limitedStockMap = cartData.reduce((acc, item) => {
+  //         if (item.quantity === 0) {
+  //           acc[item.itemId] = "outOfStock";
+  //         } else if (item.quantity <= 5) {
+  //           acc[item.itemId] = "lowStock";
+  //         }
+  //         return acc;
+  //       }, {});
+  //       console.log("limited stock map", limitedStockMap);
+  //       const cartItemsMap = cartData.reduce((acc, item) => {
+  //         if (
+  //           !item.itemId ||
+  //           item.cartQuantity === undefined ||
+  //           item.quantity === undefined||
+  //           item.status !="ADD"
+  //         ) {
+  //           console.error("Invalid item in cartData:", item);
+  //           return acc;
+  //         }
+  //         acc[item.itemId] = item.cartQuantity;
+  //         return acc;
+  //       }, {});
+
+  //       console.log("Cart Items Map:", cartItemsMap);
+  //       console.log("limited stock map", limitedStockMap);
+  //       setCartData(response.data.customerCartResponseList);
+  //       setIsLimitedStock(limitedStockMap);
+  //       setCartItems(cartItemsMap);
+
+  //       setLoading(false);
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+
+  //       setError("Failed to load cart data");
+  //     });
+  // };
+
   const fetchCartData = async () => {
-    setLoading(true);
-    axios
-      .get(
-         BASE_URL +
-              `cart-service/cart/customersCartItems?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
+    try {
+      setLoading(true);
 
-      .then((response) => {
-        console.log("mrpprices", response.data);
-        const cartData = response?.data?.customerCartResponseList;
-        if (!cartData || !Array.isArray(cartData)) {
-          setCartData([]);
-          setIsLimitedStock({});
-          setCartItems({});
-          return;
-        }
-        const limitedStockMap = cartData.reduce((acc, item) => {
-          if (item.quantity === 0) {
-            acc[item.itemId] = "outOfStock";
-          } else if (item.quantity <= 5) {
-            acc[item.itemId] = "lowStock";
-          }
-          return acc;
-        }, {});
-        console.log("limited stock map", limitedStockMap);
-        const cartItemsMap = cartData.reduce((acc, item) => {
-          if (
-            !item.itemId ||
-            item.cartQuantity === undefined ||
-            item.quantity === undefined
-          ) {
-            console.error("Invalid item in cartData:", item);
-            return acc;
-          }
-          acc[item.itemId] = item.cartQuantity;
-          return acc;
-        }, {});
+      const response = await handleCustomerCartData(customerId);
+      console.log("mrpprices", response.data);
+      const totalGstToPay = response.data?.totalGstAmountToPay || 0;
+      console.log("totalgsttopay", totalGstToPay);
 
-        console.log("Cart Items Map:", cartItemsMap);
-        console.log("limited stock map", limitedStockMap);
-        setCartData(response.data.customerCartResponseList);
-        setIsLimitedStock(limitedStockMap);
-        setCartItems(cartItemsMap);
+      setGrandTotal(response.data?.amountToPay + totalGstToPay);
+      const cartData = response?.data?.customerCartResponseList;
 
+      if (!cartData || !Array.isArray(cartData)) {
+        setCartData([]);
+        setIsLimitedStock({});
+        setCartItems({});
         setLoading(false);
-      })
-      .catch((error) => {
-        console.log(error);
+        return;
+      }
 
-        setError("Failed to load cart data");
-      });
+      const limitedStockMap = cartData.reduce((acc, item) => {
+        if (item.quantity === 0) {
+          acc[item.itemId] = "outOfStock";
+        } else if (item.quantity <= 5) {
+          acc[item.itemId] = "lowStock";
+        }
+        return acc;
+      }, {});
+
+      // const cartItemsMap = cartData.reduce((acc, item) => {
+      //   if (
+      //      !item.itemId ||
+      //         item.cartQuantity === undefined ||
+      //         item.quantity === undefined||
+      //         item.status !="ADD"
+      //   ) {
+      //     acc[item.itemId] = item.cartQuantity;
+      //   } else {
+      //     console.warn("Skipping invalid or non-ADD item:", item);
+      //   }
+      //   return acc;
+      // }, {});
+      const cartItemsMap = cartData.reduce((acc, item) => {
+        if (
+          !item.itemId ||
+          item.cartQuantity === undefined ||
+          item.quantity === undefined
+        ) {
+          console.error("Invalid item in cartData:", item);
+          return acc;
+        }
+
+        // 👉 Key is itemId + status (e.g. "7e56a04f..._ADD", "7e56a04f..._FREE")
+        const key = `${item.itemId}_${item.status}`;
+        acc[key] = item.cartQuantity;
+        return acc;
+      }, {});
+
+      setCartData(cartData);
+      setIsLimitedStock(limitedStockMap);
+      setCartItems(cartItemsMap);
+    } catch (error) {
+      console.error("Error fetching cart data:", error);
+      setError("Failed to load cart data");
+    } finally {
+      setLoading(false);
+    }
   };
 
   let alertShown = false;
-
 
   const handlePlaceOrder = async () => {
     console.log({ grandTotal });
@@ -244,7 +314,7 @@ const CheckOut = ({ navigation, route }) => {
       Alert.alert(
         "🚨 Some Items Are Out of Stock!",
         `The following items are currently unavailable:\n\n${outOfStockItems
-          .map((item) =>` - 🛑 ${item.itemName}`)
+          .map((item) => ` - 🛑 ${item.itemName}`)
           .join("\n")}\n\nPlease remove them to proceed.`,
         [{ text: "OK", style: "cancel" }]
       );
@@ -306,7 +376,7 @@ const CheckOut = ({ navigation, route }) => {
     const currentQuantity = item.cartQuantity;
     try {
       const response = await axios.patch(
-         BASE_URL + `cart-service/cart/incrementCartData`,
+        BASE_URL + `cart-service/cart/incrementCartData`,
         {
           customerId: customerId,
           itemId: item.itemId,
@@ -320,7 +390,7 @@ const CheckOut = ({ navigation, route }) => {
       console.log("incremented cart ", response.data);
 
       fetchCartData();
-      totalCart();
+      // totalCart();
       setLoading(false);
     } catch (err) {
       console.error("Error updating cart item quantity:", err.response);
@@ -333,7 +403,7 @@ const CheckOut = ({ navigation, route }) => {
         const newQuantity = item.cartQuantity;
 
         const response = await axios.patch(
-           BASE_URL + "cart-service/cart/decrementCartData",
+          BASE_URL + "cart-service/cart/decrementCartData",
           {
             // cartQuantity: newQuantity,
             customerId: customerId,
@@ -348,7 +418,7 @@ const CheckOut = ({ navigation, route }) => {
         );
 
         fetchCartData();
-        totalCart();
+        // totalCart();
         setLoading(false);
       } else {
         Alert.alert(
@@ -404,7 +474,7 @@ const CheckOut = ({ navigation, route }) => {
               console.log("Removing cart item with ID:", item.cartId);
 
               const response = await axios.delete(
-                 BASE_URL + "cart-service/cart/remove",
+                BASE_URL + "cart-service/cart/remove",
                 {
                   data: {
                     id: item.cartId,
@@ -419,7 +489,7 @@ const CheckOut = ({ navigation, route }) => {
               console.log("Item removed successfully", response.data);
 
               fetchCartData();
-              totalCart();
+              // totalCart();
               setLoading(false);
             } catch (error) {
               console.error(
@@ -443,8 +513,8 @@ const CheckOut = ({ navigation, route }) => {
           Authorization: `Bearer ${token}`,
         },
         url:
-           BASE_URL +
-              `user-service/customerProfileDetails?customerId=${customerId}`,
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${customerId}`,
       });
       console.log(response.data);
 
@@ -465,8 +535,7 @@ const CheckOut = ({ navigation, route }) => {
   const fetchOrderAddress = async () => {
     try {
       const response = await axios({
-        url:
-          BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
+        url: BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -496,30 +565,30 @@ const CheckOut = ({ navigation, route }) => {
     }
   };
 
-  const totalCart = async () => {
-    setLoading(true);
-    try {
-      const response = await axios({
-        url:
-           BASE_URL + "cart-service/cart/cartItemData",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        data: {
-          customerId: customerId,
-        },
-      });
+  // const totalCart = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await axios({
+  //       url:
+  //          BASE_URL + "cart-service/cart/cartItemData",
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       data: {
+  //         customerId: customerId,
+  //       },
+  //     });
 
-      setGrandTotal(response.data.totalSum);
-      console.log("sravani grand total ", response.data.totalSum);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching cart data:", error);
-      setError("Failed to fetch cart data");
-    }
-  };
+  //     setGrandTotal(response.data.totalSum);
+  //     console.log("sravani grand total ", response.data.totalSum);
+  //     setLoading(false);
+  //   } catch (error) {
+  //     console.error("Error fetching cart data:", error);
+  //     setError("Failed to fetch cart data");
+  //   }
+  // };
 
   const calculateTotal = () => {
     let total = subTotal + deliveryFee - discount;
@@ -608,7 +677,12 @@ const CheckOut = ({ navigation, route }) => {
                 paddingHorizontal: 20,
                 borderRadius: 5,
               }}
-              onPress={() => navigation.navigate("Rice Products",{screen:"Rice Products",category:"All CATEGORIES"})}
+              onPress={() =>
+                navigation.navigate("Rice Products", {
+                  screen: "Rice Products",
+                  category: "All CATEGORIES",
+                })
+              }
             >
               <Text style={{ color: "#fff", fontSize: 16 }}>
                 Browse Products
@@ -627,32 +701,28 @@ const CheckOut = ({ navigation, route }) => {
             data={cartData}
             keyExtractor={(item) => item.itemId.toString()}
             renderItem={({ item }) => (
-             
-              
               <View
                 style={[
                   styles.cartItem,
                   item.quantity === 0 && styles.outOfStockCard,
                 ]}
               >
-                 {isLimitedStock[item.itemId] == "lowStock" && (
-                <View style={styles.limitedStockBadge}>
-                  <Text style={styles.limitedStockText}>
-                    {item.quantity > 1
-                      ? `${item.quantity} items left`
-                      : `${item.quantity} item left`}
-                  </Text>
-                </View>
-              )}
-               
+                {isLimitedStock[item.itemId] == "lowStock" && (
+                  <View style={styles.limitedStockBadge}>
+                    <Text style={styles.limitedStockText}>
+                      {item.quantity > 1
+                        ? `${item.quantity} items left`
+                        : `${item.quantity} item left`}
+                    </Text>
+                  </View>
+                )}
+
                 {isLimitedStock[item.itemId] === "outOfStock" && (
                   <View style={styles.outOfStockContainer}>
-                    {/* Transparent overlay to block interactions on everything except the remove button */}
                     <View style={styles.disabledOverlay} />
 
                     <Text style={styles.outOfStockText}>Out of Stock</Text>
 
-                    {/* This button remains functional */}
                     <TouchableOpacity
                       onPress={() => removeCartItem(item)}
                       style={styles.removeButton}
@@ -703,17 +773,18 @@ const CheckOut = ({ navigation, route }) => {
                             )}
                             % OFF)
                           </Text>
-                          {/* <Text style={styles.itemWeight}>
-                            Weight: {item.weight} {item.units}
-                          </Text> */}
+
                           <Text style={styles.itemWeight}>
-                                         {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
-                         </Text>
-                          <View style={styles.quantityContainer}>
+                            {item.weight}{" "}
+                            {item.weight === 1
+                              ? item.units.replace(/s$/, "")
+                              : item.units}
+                          </Text>
+                          {/* <View style={styles.quantityContainer}>
                             <TouchableOpacity
                               style={styles.quantityButton}
                               onPress={() => handleDecrease(item)}
-                              disabled={loadingItems[item.itemId]}
+                              disabled={loadingItems[item.itemId]|| item.status === "FREE"}
                             >
                               <Text style={styles.buttonText}>-</Text>
                             </TouchableOpacity>
@@ -725,7 +796,7 @@ const CheckOut = ({ navigation, route }) => {
                               />
                             ) : (
                               <Text style={styles.quantityText}>
-                                {cartItems[item.itemId] || item.cartQuantity}
+                                {cartItems[item.itemId] ||item.cartQuantity}
                               </Text>
                             )}
                              {item.itemPrice==1 ?(
@@ -747,7 +818,7 @@ const CheckOut = ({ navigation, route }) => {
                               onPress={() => handleIncrease(item)}
                               disabled={
                                 loadingItems[item.itemId] ||
-                                cartItems[item.itemId] === item.quantity
+                                cartItems[item.itemId] === item.quantity||item.status ==="FREE"
                               }
                             >
                               <Text style={styles.buttonText}>+</Text>
@@ -759,6 +830,74 @@ const CheckOut = ({ navigation, route }) => {
                                 item.itemPrice *
                                 (cartItems[item.itemId] || item.cartQuantity)
                               ).toFixed(2)}
+                            </Text>
+                          </View> */}
+                          
+<View style={styles.quantityContainer}>
+                            <TouchableOpacity
+                              style={[
+                                styles.quantityButton,
+                                (loadingItems[item.itemId] ||
+                                  item.status === "FREE") &&
+                                  styles.disabledButton,
+                              ]}
+                              onPress={() => handleDecrease(item)}
+                              disabled={
+                                loadingItems[item.itemId] ||
+                                item.status === "FREE"
+                              }
+                            >
+                              <Text style={styles.buttonText}>-</Text>
+                            </TouchableOpacity>
+
+                            {loadingItems[item.itemId] ? (
+                              <ActivityIndicator
+                                size="small"
+                                color="#000"
+                                style={styles.loader}
+                              />
+                            ) : (
+                              <Text style={styles.quantityText}>
+                                {item.cartQuantity}
+                              </Text>
+                            )}
+
+                            {item.itemPrice === 1 ?
+                            // (containerDecision === "yes" &&
+                            //   containerItemIds.includes(item.itemId)) ? 
+                              (
+                              <View
+                                style={[
+                                  styles.quantityButton1,
+                                  item.status === "FREE" &&
+                                    styles.disabledButton,
+                                ]}
+                                disabled={true}
+                              >
+                                <Text style={styles.quantityButtonText}>+</Text>
+                              </View>
+                            ) : (
+                              <TouchableOpacity
+                                style={[
+                                  styles.quantityButton,
+                                  (loadingItems[item.itemId] ||
+                                    cartItems[item.itemId] === item.quantity ||
+                                    item.status === "FREE") &&
+                                    styles.disabledButton,
+                                ]}
+                                onPress={() => handleIncrease(item)}
+                                disabled={
+                                  loadingItems[item.itemId] ||
+                                  cartItems[item.itemId] === item.quantity ||
+                                  item.status === "FREE"
+                                }
+                              >
+                                <Text style={styles.buttonText}>+</Text>
+                              </TouchableOpacity>
+                            )}
+
+                            <Text style={styles.itemTotal}>
+                              ₹{(item.itemPrice * item.cartQuantity).toFixed(2)}
                             </Text>
                           </View>
                           <TouchableOpacity
@@ -782,7 +921,7 @@ const CheckOut = ({ navigation, route }) => {
             showsVerticalScrollIndicator={false}
             showsHorizontalScrollIndicator={false}
             style={{ flex: 1 }}
-              keyboardShouldPersistTaps="always"
+            keyboardShouldPersistTaps="always"
           />
         ) : (
           <View>
@@ -800,14 +939,11 @@ const CheckOut = ({ navigation, route }) => {
       )}
 
       <View style={{ marginTop: 30 }}>
-       <TouchableOpacity
-          style={[
-            styles.placeOrderButton,
-           
-          ]}
+        <TouchableOpacity
+          style={[styles.placeOrderButton]}
           onPress={() => handlePlaceOrder()}
         >
-       <Text style={styles.placeOrderButtonText}>CONTINUE</Text>
+          <Text style={styles.placeOrderButtonText}>CONTINUE</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -1012,7 +1148,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     // justifyContent:"center",
     // alignSelf:"center"
-    marginTop:20
+    marginTop: 20,
   },
   itemDetails: {
     flex: 1,

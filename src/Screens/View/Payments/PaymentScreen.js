@@ -29,7 +29,14 @@ import DeliveryTimelineModal from "./DeliveryModal";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 import RadioGroup from "react-native-radio-buttons-group";
 import TimeSlotModal from "./TimeSlotModal ";
-
+import {
+  handleCustomerCartData,
+  handleGetProfileData,
+  handleUserAddorIncrementCart,
+  handleDecrementorRemovalCart,
+  handleRemoveItem,
+  handleRemoveFreeItem,
+} from "../../../../src/ApiService";
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
@@ -70,9 +77,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [orderId, setOrderId] = useState("");
   const [orderDate, setOrderDate] = useState(new Date());
   const [updatedDate, setUpdatedate] = useState();
-  const [isDayPickerVisible, setIsDayPickerVisible] = useState(false);
-  const [isTimePickerVisible, setIsTimePickerVisible] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+ const [freeItemsDiscount,setFreeItemsDiscount] = useState();
   const [isChecked, setIsChecked] = useState(false);
   const [slotsData, setSlotsData] = useState();
   const [onlyOneKg, setOnlyOneKg] = useState(false);
@@ -343,20 +348,14 @@ const PaymentDetails = ({ navigation, route }) => {
   };
 
   const totalCart = async () => {
+    console.log("into total cart function");
+    
     try {
-      const response = await axios({
-        url: BASE_URL + "cart-service/cart/cartItemData",
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        data: {
-          customerId: customerId,
-        },
-      });
-
-      const cartResponse = response.data.cartResponseList;
+     
+        const response = await handleCustomerCartData(customerId);
+        console.log("cart response", response.data);
+     
+      const cartResponse = response.data?.customerCartResponseList;
       const onlyOneKg = items.every((item) => item.weight === 1);
       setOnlyOneKg(onlyOneKg);
       console.log(
@@ -366,13 +365,16 @@ const PaymentDetails = ({ navigation, route }) => {
       );
 
       setCartData(cartResponse);
-      const totalDeliveryFee = response.data?.cartResponseList.reduce(
+      const totalDeliveryFee = response.data?.customerCartResponseList.reduce(
         (sum, item) => sum + item.deliveryBoyFee,
         0
       );
-      setTotalGstSum(response.data.totalGstSum);
+      console.log("gst amount to pay",response.data.totalGstAmountToPay);
+      const totalGstAmountToPay = response.data?.totalGstAmountToPay
+      setFreeItemsDiscount(response.data?.discountedByFreeItems)
+      setTotalGstSum(response.data?.totalGstAmountToPay);
       setDeliveryBoyFee(totalDeliveryFee);
-      setGrandTotal(response.data.totalSumWithGstSum);
+      setGrandTotal(response.data?.amountToPay + totalGstAmountToPay);
       setOfferAvailable(response.data.offerElgible);
     } catch (error) {
       // setError("Failed to fetch cart data");
@@ -492,7 +494,7 @@ const PaymentDetails = ({ navigation, route }) => {
     checkOfferEligibility(customerId);
     handleGetPaymentMethod();
     // setDeliveryBoyFee(200);
-  }, [grandTotalAmount, deliveryBoyFee]);
+  }, [grandTotalAmount, deliveryBoyFee,totalGstSum]);
 
   const getWalletAmount = async () => {
     try {
@@ -1212,72 +1214,7 @@ const PaymentDetails = ({ navigation, route }) => {
           </View>
         )}
 
-        {/* <View style={styles.container1}>
-  <Text style={styles.label}>Select Day:</Text>
-
-  {Platform.OS === 'ios' ? (
- <RadioGroup
- radioButtons={days.map((d) => ({
-   id: d.value,
-   label: d.label,
-   value: d.value,
- }))}
- selectedId={selectedDay}
- onPress={(selectedId) => handleDayChange(selectedId)}
- containerStyle={styles.radioGroupContainer}
- labelStyle={styles.radioButtonLabel}
-/>
-
- 
-  ) : (
-    <View style={styles.pickerContainer}>
-      <Dropdown
-        data={days}
-        labelField="label"
-        valueField="value"
-        placeholder="SELECT A DAY"
-        value={selectedDay}
-        onChange={(item) => handleDayChange(item.value)}
-        style={styles.picker}
-        iconStyle={{ marginRight: 20 }}
-      />
-    </View>
-  )}
-
-  {timeSlots.length > 0 && (
-    <>
-      <Text style={styles.label}>Select Time Slot:</Text>
-
-      {Platform.OS != 'ios' ? (
-      <RadioGroup
-      radioButtons={timeSlots.map((slot) => ({
-        id: slot,
-        label: slot,
-        value: slot,
-        containerStyle: { marginBottom: 10 }, 
-      }))}
-      selectedId={selectedTimeSlot}
-      onPress={(selectedId) => setSelectedTimeSlot(selectedId)}
-      containerStyle={styles.radioGroupContainer}
-      labelStyle={styles.radioButtonLabel}
-    />
-    ) : (
-        <View style={styles.pickerContainer}>
-          <Dropdown
-            data={timeSlots.map((slot) => ({ label: slot, value: slot }))}
-            labelField="label"
-            valueField="value"
-            placeholder="Select a time slot"
-            value={selectedTimeSlot}
-            onChange={(item) => setSelectedTimeSlot(item.value)}
-            style={styles.picker}
-            iconStyle={{ marginRight: 20 }}
-          />
-        </View>
-      )}
-    </>
-  )}
-</View> */}
+      
 
         {Platform.OS === "android" && (
           <Text style={styles.headering}>
@@ -1425,25 +1362,7 @@ const PaymentDetails = ({ navigation, route }) => {
                                 <Text style={styles.optionText}>Cash on Delivery</Text>
                               </TouchableOpacity>
                             )} 
-                  {/* <TouchableOpacity
-                    style={[
-                      styles.paymentOption,
-                      selectedPaymentMode === "COD" && styles.selectedOption,
-                      { marginTop: 20 },
-                    ]}
-                    onPress={() => handlePaymentModeSelect("COD")}
-                  >
-                    <MaterialIcons
-                      name="delivery-dining"
-                      size={24}
-                      color={
-                        selectedPaymentMode === "COD"
-                          ? COLORS.backgroundcolour
-                          : "black"
-                      }
-                    />
-                    <Text style={styles.optionText}>Cash on Delivery</Text>
-                  </TouchableOpacity> */}
+                  
               </View>
             </View>
           )} 
@@ -1478,7 +1397,12 @@ const PaymentDetails = ({ navigation, route }) => {
             <Text style={styles.detailsLabel}>Sub Total</Text>
             <Text style={styles.detailsValue}>₹{subTotal}</Text>
           </View>
-
+          {freeItemsDiscount && (
+             <View style={styles.paymentRow}>
+              <Text style={styles.detailsLabel}>Discount</Text>
+              <Text style={styles.detailsValue}>-₹{freeItemsDiscount}</Text>
+            </View>
+          )}
           {coupenApplied == true && (
             <View style={styles.paymentRow}>
               <Text style={styles.detailsLabel}>Coupon Applied</Text>

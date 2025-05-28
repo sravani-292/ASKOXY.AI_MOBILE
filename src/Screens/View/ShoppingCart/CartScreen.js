@@ -202,7 +202,7 @@ const CartScreen = () => {
     try {
       setLoading(true);
       const response = await handleCustomerCartData(customerId);
-      // console.log("cart response", response.data.customerCartResponseList);
+      console.log("cart response", response.data);
       response.data.customerCartResponseList.map((item) => {
         if (
           (item.weight === 20 || item.weight === 35) &&

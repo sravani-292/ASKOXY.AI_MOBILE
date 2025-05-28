@@ -136,7 +136,7 @@ const UserDashboard = ({ route }) => {
   const fetchCartItems = async () => {
     try {
       const response = await handleCustomerCartData(customerId);
-      // console.log("cart response", response?.data);
+      console.log("cart response", response?.data);
 
       const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
@@ -157,7 +157,8 @@ const UserDashboard = ({ route }) => {
         if (
           !item.itemId ||
           item.cartQuantity === undefined ||
-          item.quantity === undefined
+          item.quantity === undefined||
+          item.status != "ADD"
         ) {
           console.error("Invalid item in cartData:", item);
           return acc;
@@ -166,7 +167,7 @@ const UserDashboard = ({ route }) => {
         return acc;
       }, {});
 
-      // console.log("cart items map", cartItemsMap);
+      console.log("cart items map", cartItemsMap);
 
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
@@ -443,7 +444,7 @@ const UserDashboard = ({ route }) => {
 
       // Filter only active offers
       const validActiveOffers = activeOffers.filter((offer) => offer.active);
-      if (!validActiveOffers.length) return; // No active offers, no alerts
+      if (!validActiveOffers.length) return; 
 
       // Extract used offer weights and names
       const usedOfferWeights = userEligibleOffers
