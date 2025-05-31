@@ -62,7 +62,8 @@ const AddressScreen = ({ route }) => {
   };
 
   const handleAddAddress = () => {
-    setModalVisible(true);
+    // setModalVisible(true);
+    navigation.navigate("New Address Book")
   };
 
   const handleTypePress = (type) => {

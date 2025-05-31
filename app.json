@@ -32,7 +32,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 39,
+      "versionCode": 42,
       "permissions": []
     },
     "web": {
@@ -51,7 +51,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "ce226648-f9fe-48e4-b9d1-02f76cf9fcee"
+        "projectId": "d3eaced1-e918-4de6-9350-176865238563"
       }
     }
   }

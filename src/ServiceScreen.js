@@ -16,7 +16,12 @@ import {
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { Ionicons, MaterialCommunityIcons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+  MaterialIcons,
+  FontAwesome5,
+} from "@expo/vector-icons";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -36,7 +41,8 @@ const defaultBanners = [
   require("../assets/Images/r2.png"),
 ];
 
-const DEFAULT_IMAGE = 'https://www.askoxy.ai/static/media/askoxylogostatic.3e03c861742645ba9a15.png';
+const DEFAULT_IMAGE =
+  "https://www.askoxy.ai/static/media/askoxylogostatic.3e03c861742645ba9a15.png";
 
 const services = [
   {
@@ -134,17 +140,16 @@ const ServiceScreen = () => {
         );
         return true;
       };
-  
+
       // ✅ Updated: Save the subscription and call remove() during cleanup
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
         handleBackPress
       );
-  
+
       return () => backHandler.remove(); // ✅ correct way to clean up
     }, [currentScreen])
   );
-  
 
   useFocusEffect(
     useCallback(() => {
@@ -184,37 +189,41 @@ const ServiceScreen = () => {
     try {
       // Replace with your personal API endpoint
       const response = await axios.get(`${BASE_URL}banner-service/getBanners`);
-      
+
       if (response.data && Array.isArray(response.data)) {
         // Assuming your API returns data in this format
         // Modify this structure based on your actual API response
-        const formattedBanners = response.data.map(item => ({
+        const formattedBanners = response.data.map((item) => ({
           id: item.id,
           imageUrl: item.imageUrl,
           name: item.title,
           navigationTarget: item.navigationScreen,
-          params: item.navigationParams
+          params: item.navigationParams,
         }));
-        
+
         setBanners(formattedBanners);
       } else {
         // Fallback to default banners if API fails
-        setBanners(defaultBanners.map((img, index) => ({
-          id: `default-${index}`,
-          image: img,
-          name: `Banner ${index + 1}`,
-          navigationTarget: null
-        })));
+        setBanners(
+          defaultBanners.map((img, index) => ({
+            id: `default-${index}`,
+            image: img,
+            name: `Banner ${index + 1}`,
+            navigationTarget: null,
+          }))
+        );
       }
     } catch (error) {
       // console.error("Error fetching banners:", error);
       // Set default banners as fallback
-      setBanners(defaultBanners.map((img, index) => ({
-        id: `default-${index}`,
-        image: img,
-        name: `Banner ${index + 1}`,
-        navigationTarget: null
-      })));
+      setBanners(
+        defaultBanners.map((img, index) => ({
+          id: `default-${index}`,
+          image: img,
+          name: `Banner ${index + 1}`,
+          navigationTarget: null,
+        }))
+      );
     } finally {
       setBannersLoading(false);
     }
@@ -226,50 +235,47 @@ const ServiceScreen = () => {
       .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
       .then((response) => {
         setLoading(false);
-  
+
         if (!Array.isArray(response.data)) {
           console.error("Invalid API response format");
           setData(services);
           return;
         }
-  
+
         const allCampaigns = response.data;
-  
+
         // for getting Study Abroad campaigns
         const studyAbroadCampaigns = allCampaigns.filter(
           (item) =>
             item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION") &&
             item.campaignStatus === true
         );
-  
+
         //  Filter all active campaigns
         const activeCampaigns = allCampaigns.filter(
           (item) => item.campaignStatus === true
         );
-  
+
         //  Build updated services: attach preview campaign only to STUDY ABROAD
         const updatedServices = services.map((service) => {
           if (service.screen === "STUDY ABROAD") {
             return {
               ...service,
-              previewCampaign: studyAbroadCampaigns[0], // show one preview campaign
-              campaigns: studyAbroadCampaigns,          // pass all campaigns for navigation
+              previewCampaign: studyAbroadCampaigns[0],
+              campaigns: studyAbroadCampaigns,
             };
           }
           return service;
         });
-  
+
         //  Filter out campaigns that are already handled (like STUDY ABROAD ones)
         const filteredCampaigns = activeCampaigns.filter(
           (item) => !item.campaignType.includes("STUDY ABROAD GLOBAL EDUCATION")
         );
-  
+
         // Merge updatedServices with remaining campaigns
-        const mergedData = [
-          ...updatedServices,
-          ...filteredCampaigns
-        ];
-  
+        const mergedData = [...updatedServices, ...filteredCampaigns];
+
         setData(mergedData);
       })
       .catch((error) => {
@@ -278,7 +284,7 @@ const ServiceScreen = () => {
         setLoading(false);
       });
   }
-  
+
   function getRiceCategories() {
     setLoading(true);
     axios({
@@ -297,7 +303,7 @@ const ServiceScreen = () => {
 
   const handleLogout = () => {
     Alert.alert(
-      "Logout Confirmation",
+      " Confirmation",
       "Are you sure you want to logout?",
       [
         {
@@ -323,7 +329,7 @@ const ServiceScreen = () => {
   const arrangeCategories = (categories) => {
     if (!categories || categories.length === 0) return [];
     // Remove the "Sample Rice" category if it exists
-    return categories.filter(cat => cat.categoryName !== "Sample Rice");
+    return categories.filter((cat) => cat.categoryName !== "Sample Rice");
   };
 
   const handleScroll = (event) => {
@@ -383,7 +389,7 @@ const ServiceScreen = () => {
   const renderServiceItem = ({ item }) => {
     // Safety check to ensure item is valid
     if (!item) return null;
-    
+
     return (
       <TouchableOpacity
         style={[styles.serviceItem, { width: serviceItemWidth }]}
@@ -391,10 +397,7 @@ const ServiceScreen = () => {
       >
         <View style={styles.serviceIconContainer}>
           {item.image ? (
-            <Image
-              source={item.image}
-              style={styles.serviceImage}
-            />
+            <Image source={item.image} style={styles.serviceImage} />
           ) : item.imageUrls && item.imageUrls[0]?.imageUrl ? (
             <Image
               source={{ uri: item.imageUrls[0]?.imageUrl }}
@@ -414,28 +417,28 @@ const ServiceScreen = () => {
       </TouchableOpacity>
     );
   };
-  
+
   const renderBannerItem = ({ item, index }) => {
     // Get dynamic height for responsive banners - using the same logic from your original code
     const bannerHeight = getResponsiveHeight(18);
-    
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.bannerImageContainer, { width }]}
         onPress={() => handleBannerPress(item)}
         activeOpacity={0.8}
       >
         {item.imageUrl ? (
-          <Image 
-            source={{ uri: item.imageUrl }} 
+          <Image
+            source={{ uri: item.imageUrl }}
             style={[styles.bannerImage, { height: bannerHeight }]}
             resizeMode="contain"
             defaultSource={require("../assets/Images/r1.png")}
           />
         ) : (
-          <Image 
-            source={item.image} 
-            style={[styles.bannerImage, { height: bannerHeight }]} 
+          <Image
+            source={item.image}
+            style={[styles.bannerImage, { height: bannerHeight }]}
             resizeMode="contain"
           />
         )}
@@ -449,12 +452,14 @@ const ServiceScreen = () => {
   };
 
   const renderCategoryItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[styles.categoryCard, { width: categoryCardWidth }]}
-      onPress={() => navigation.navigate("Rice Products", { 
-        screen: "Rice Products", 
-        category: item.categoryName 
-      })}
+      onPress={() =>
+        navigation.navigate("Rice Products", {
+          screen: "Rice Products",
+          category: item.categoryName,
+        })
+      }
     >
       <View style={styles.categoryImageContainer}>
         <Image
@@ -464,7 +469,9 @@ const ServiceScreen = () => {
         />
       </View>
       <View style={styles.categoryContent}>
-        <Text style={styles.categoryName} numberOfLines={1}>{item.categoryName}</Text>
+        <Text style={styles.categoryName} numberOfLines={1}>
+          {item.categoryName}
+        </Text>
         <View style={styles.viewItemsButton}>
           <Text style={styles.viewItemsText}>Browse Collection</Text>
           <MaterialIcons name="arrow-forward-ios" size={14} color="#FFFFFF" />
@@ -476,10 +483,10 @@ const ServiceScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A148C" barStyle="light-content" />
-      
+
       {loading ? (
         <View style={styles.loaderContainer}>
-          <LottieView 
+          <LottieView
             source={require("../assets/AnimationLoading.json")}
             autoPlay
             loop
@@ -500,7 +507,11 @@ const ServiceScreen = () => {
                   onPress={handleLogout}
                   style={styles.authButton}
                 >
-                  <MaterialCommunityIcons name="account-arrow-right-outline" size={22} color="#FFFFFF" />
+                  <MaterialCommunityIcons
+                    name="account-arrow-right-outline"
+                    size={22}
+                    color="#FFFFFF"
+                  />
                   <Text style={styles.authButtonText}>Logout</Text>
                 </TouchableOpacity>
               ) : (
@@ -508,22 +519,31 @@ const ServiceScreen = () => {
                   onPress={() => navigation.navigate("Login")}
                   style={styles.authButton}
                 >
-                  <MaterialCommunityIcons name="account-arrow-left-outline" size={22} color="#FFFFFF" />
+                  <MaterialCommunityIcons
+                    name="account-arrow-left-outline"
+                    size={22}
+                    color="#FFFFFF"
+                  />
                   <Text style={styles.authButtonText}>Login</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-          <ScrollView 
+          <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
             {/* Dynamic Banner Carousel */}
             <View style={[styles.bannerContainer, { height: bannerHeight }]}>
               {bannersLoading ? (
-                <View style={[styles.bannerLoadingContainer, { height: bannerHeight }]}>
-                  <LottieView 
+                <View
+                  style={[
+                    styles.bannerLoadingContainer,
+                    { height: bannerHeight },
+                  ]}
+                >
+                  <LottieView
                     source={require("../assets/AnimationLoading.json")}
                     autoPlay
                     loop
@@ -533,11 +553,15 @@ const ServiceScreen = () => {
               ) : (
                 <>
                   <FlatList
-                    data={banners.length > 0 ? banners : defaultBanners.map((img, index) => ({
-                      id: `default-${index}`,
-                      image: img,
-                      name: `Banner ${index + 1}`
-                    }))}
+                    data={
+                      banners.length > 0
+                        ? banners
+                        : defaultBanners.map((img, index) => ({
+                            id: `default-${index}`,
+                            image: img,
+                            name: `Banner ${index + 1}`,
+                          }))
+                    }
                     keyExtractor={(item) => item.id.toString()}
                     horizontal
                     pagingEnabled
@@ -548,20 +572,24 @@ const ServiceScreen = () => {
 
                   {/* Pagination Dots */}
                   <View style={styles.paginationContainer}>
-                    {(banners.length > 0 ? banners : defaultBanners).map((_, index) => (
-                      <View
-                        key={index}
-                        style={[
-                          styles.paginationDot,
-                          activeIndex === index ? styles.activeDot : styles.inactiveDot,
-                        ]}
-                      />
-                    ))}
+                    {(banners.length > 0 ? banners : defaultBanners).map(
+                      (_, index) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.paginationDot,
+                            activeIndex === index
+                              ? styles.activeDot
+                              : styles.inactiveDot,
+                          ]}
+                        />
+                      )
+                    )}
                   </View>
                 </>
               )}
             </View>
-           
+
             {/* Services Section */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeaderRow}>
@@ -571,16 +599,20 @@ const ServiceScreen = () => {
                   style={styles.viewAllButton}
                 >
                   <Text style={styles.viewAllText}>View All</Text>
-                  <MaterialIcons name="chevron-right" size={18} color="#4A148C" />
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={18}
+                    color="#4A148C"
+                  />
                 </TouchableOpacity>
               </View>
-              
+
               <View style={styles.servicesGridContainer}>
                 <FlatList
                   data={data.length > 0 ? data : services}
                   horizontal
                   showsHorizontalScrollIndicator={false}
-                  keyExtractor={(item, index) => (item?.id || `service-${index}`)}
+                  keyExtractor={(item, index) => item?.id || `service-${index}`}
                   renderItem={renderServiceItem}
                   contentContainerStyle={styles.servicesGridContent}
                   scrollEnabled={true}
@@ -588,7 +620,7 @@ const ServiceScreen = () => {
               </View>
             </View>
 
-            <AskoxyOffers/>
+            <AskoxyOffers />
 
             {/* Categories Section */}
             <View style={styles.sectionContainer}>
@@ -604,10 +636,14 @@ const ServiceScreen = () => {
                   style={styles.viewAllButton}
                 >
                   <Text style={styles.viewAllText}>View All</Text>
-                  <MaterialIcons name="chevron-right" size={18} color="#4A148C" />
+                  <MaterialIcons
+                    name="chevron-right"
+                    size={18}
+                    color="#4A148C"
+                  />
                 </TouchableOpacity>
               </View>
-              
+
               {getCategories && getCategories.length > 0 ? (
                 <FlatList
                   data={arrangeCategories(getCategories)}
@@ -625,9 +661,12 @@ const ServiceScreen = () => {
               )}
             </View>
           </ScrollView>
-          
+
           {userData == null && (
-            <LoginModal visible={loginModal} onClose={() => setLoginModal(false)} />
+            <LoginModal
+              visible={loginModal}
+              onClose={() => setLoginModal(false)}
+            />
           )}
         </>
       )}
@@ -639,8 +678,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F7",
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-    marginBottom: 25
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    marginBottom: 25,
   },
   scrollContent: {
     paddingBottom: 34,
@@ -697,21 +736,21 @@ const styles = StyleSheet.create({
     position: "relative",
     marginTop: 16,
     alignItems: "center",
-    borderRadius: 16, 
+    borderRadius: 16,
   },
-  
+
   bannerImageContainer: {
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
     borderRadius: 16,
   },
-  
+
   bannerImage: {
-    width: "94%", 
+    width: "94%",
     borderRadius: 16,
   },
-  
+
   bannerNameContainer: {
     position: "absolute",
     bottom: 12,
@@ -723,7 +762,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     maxWidth: "86%", // Match image width
   },
-  
+
   bannerName: {
     color: "#FFFFFF",
     fontSize: 14, // Slightly larger font

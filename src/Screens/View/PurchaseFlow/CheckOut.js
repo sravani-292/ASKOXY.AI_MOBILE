@@ -70,8 +70,14 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL, { userStage } from "../../../../Config";
 import { getCoordinates } from "../../../Screens/View/Address/LocationService";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
-import { handleCustomerCartData } from "../../../ApiService";
-
+import {
+  handleCustomerCartData,
+  handleGetProfileData,
+  handleUserAddorIncrementCart,
+  handleDecrementorRemovalCart,
+  handleRemoveItem,
+  handleRemoveFreeItem,
+} from "../../../../src/ApiService";
 const CheckOut = ({ navigation, route }) => {
   // console.log("from cartscreen", route.params);
 
@@ -165,74 +171,15 @@ const CheckOut = ({ navigation, route }) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
-  // const fetchCartData = async () => {
-  //   setLoading(true);
-  //   // axios
-  //   //   .get(
-  //   //      BASE_URL +
-  //   //           `cart-service/cart/customersCartItems?customerId=${customerId}`,
-  //   //     {
-  //   //       headers: {
-  //   //         Authorization: `Bearer ${token}`,
-  //   //       },
-  //   //     }
-  //   //   )
-  //     const response = await handleCustomerCartData(customerId)
-  //     .then((response) => {
-  //       console.log("mrpprices", response.data);
-  //       const cartData = response?.data?.customerCartResponseList;
-  //       if (!cartData || !Array.isArray(cartData)) {
-  //         setCartData([]);
-  //         setIsLimitedStock({});
-  //         setCartItems({});
-  //         return;
-  //       }
-  //       const limitedStockMap = cartData.reduce((acc, item) => {
-  //         if (item.quantity === 0) {
-  //           acc[item.itemId] = "outOfStock";
-  //         } else if (item.quantity <= 5) {
-  //           acc[item.itemId] = "lowStock";
-  //         }
-  //         return acc;
-  //       }, {});
-  //       console.log("limited stock map", limitedStockMap);
-  //       const cartItemsMap = cartData.reduce((acc, item) => {
-  //         if (
-  //           !item.itemId ||
-  //           item.cartQuantity === undefined ||
-  //           item.quantity === undefined||
-  //           item.status !="ADD"
-  //         ) {
-  //           console.error("Invalid item in cartData:", item);
-  //           return acc;
-  //         }
-  //         acc[item.itemId] = item.cartQuantity;
-  //         return acc;
-  //       }, {});
-
-  //       console.log("Cart Items Map:", cartItemsMap);
-  //       console.log("limited stock map", limitedStockMap);
-  //       setCartData(response.data.customerCartResponseList);
-  //       setIsLimitedStock(limitedStockMap);
-  //       setCartItems(cartItemsMap);
-
-  //       setLoading(false);
-  //     })
-  //     .catch((error) => {
-  //       console.log(error);
-
-  //       setError("Failed to load cart data");
-  //     });
-  // };
-
+  
   const fetchCartData = async () => {
     try {
       setLoading(true);
 
       const response = await handleCustomerCartData(customerId);
-      console.log("mrpprices", response.data);
+      // console.log("mrpprices", response.data);
       const totalGstToPay = response.data?.totalGstAmountToPay || 0;
-      console.log("totalgsttopay", totalGstToPay);
+      // console.log("totalgsttopay", totalGstToPay);
 
       setGrandTotal(response.data?.amountToPay + totalGstToPay);
       const cartData = response?.data?.customerCartResponseList;
@@ -254,19 +201,7 @@ const CheckOut = ({ navigation, route }) => {
         return acc;
       }, {});
 
-      // const cartItemsMap = cartData.reduce((acc, item) => {
-      //   if (
-      //      !item.itemId ||
-      //         item.cartQuantity === undefined ||
-      //         item.quantity === undefined||
-      //         item.status !="ADD"
-      //   ) {
-      //     acc[item.itemId] = item.cartQuantity;
-      //   } else {
-      //     console.warn("Skipping invalid or non-ADD item:", item);
-      //   }
-      //   return acc;
-      // }, {});
+      
       const cartItemsMap = cartData.reduce((acc, item) => {
         if (
           !item.itemId ||
@@ -297,9 +232,9 @@ const CheckOut = ({ navigation, route }) => {
   let alertShown = false;
 
   const handlePlaceOrder = async () => {
-    console.log({ grandTotal });
-    console.log("locationdata==================================", locationData);
-    console.log("addresslist", addressList);
+    // console.log({ grandTotal });
+    // console.log("locationdata==================================", locationData);
+    // console.log("addresslist", addressList);
 
     const outOfStockItems = cartData.filter((item) => {
       console.log(
@@ -308,7 +243,7 @@ const CheckOut = ({ navigation, route }) => {
       return isLimitedStock[item.itemId] === true;
     });
 
-    console.log("Out of Stock Items:", outOfStockItems);
+    // console.log("Out of Stock Items:", outOfStockItems);
 
     if (outOfStockItems.length > 0) {
       Alert.alert(
@@ -364,14 +299,14 @@ const CheckOut = ({ navigation, route }) => {
           });
         }
       } else {
-        console.log("Not within radius");
+        // console.log("Not within radius");
         return false;
       }
     }
   };
 
   const increaseCartItem = async (item) => {
-    console.log("for incrementing");
+    // console.log("for incrementing");
 
     const currentQuantity = item.cartQuantity;
     try {
@@ -387,7 +322,7 @@ const CheckOut = ({ navigation, route }) => {
           },
         }
       );
-      console.log("incremented cart ", response.data);
+      // console.log("incremented cart ", response.data);
 
       fetchCartData();
       // totalCart();
@@ -397,50 +332,62 @@ const CheckOut = ({ navigation, route }) => {
     }
   };
 
-  const decreaseCartItem = async (item) => {
-    try {
-      if (item.cartQuantity > 1) {
-        const newQuantity = item.cartQuantity;
+   const decreaseCartItem = async (item) => {
+      // console.log("item to decrement", item);
+      const data = {
+        customerId: customerId,
+        itemId: item.itemId,
+      };
+      try {
+        const response = await handleDecrementorRemovalCart(
+          data,
+         );
+        // console.log("Decrement response", response);
+        // Alert.alert("Success", response.data.errorMessage);
+        fetchCartData();
+      } catch (error) {
+        console.log("Error decrementing cart item:", error);
+      }
+    };
 
-        const response = await axios.patch(
-          BASE_URL + "cart-service/cart/decrementCartData",
-          {
-            // cartQuantity: newQuantity,
+
+    const handleRemove = async (item) => {
+      if (!item?.cartId) {
+        console.error("Invalid item data for removal", item);
+        return;
+      }
+    
+      try {
+        let response;
+    
+        if (item.status === "FREE") {
+          const freePayload = {
+            id: item.cartId,
             customerId: customerId,
             itemId: item.itemId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
+            status: "FREE",
+          };
+          response = await handleRemoveFreeItem(freePayload);
+        } else {
+          response = await handleRemoveItem(item.cartId);
+        }
+    
+        // console.log("Remove response:", response);
+        Alert.alert("Success", "Item removed successfully");
+    
         fetchCartData();
-        // totalCart();
-        setLoading(false);
-      } else {
-        Alert.alert(
-          "Remove Item",
-          "Cart quantity is at the minimum. Do you want to remove this item from the cart?",
-          [
-            {
-              text: "Cancel",
-              style: "cancel",
-            },
-            {
-              text: "Yes, Remove",
-              onPress: () => removeCartItem(item),
-            },
-          ],
-          { cancelable: false }
-        );
+      } catch (error) {
+        // console.error("Error removing item:", error.response);
+        Alert.alert("Error", "Failed to remove item. Please try again.");
+      } finally {
+        setRemovalLoading((prevState) => ({
+          ...prevState,
+          [item.cartId]: false,
+        }));
       }
-    } catch (error) {
-      console.error("Failed to decrease cart item:", error);
-    }
-  };
+    };
+
+
 
   function handleAddress(address) {
     setSelectedAddressId(address.id);
@@ -456,7 +403,7 @@ const CheckOut = ({ navigation, route }) => {
   }
 
   const removeCartItem = async (item) => {
-    console.log("removed items from cart", item);
+    // console.log("removed items from cart", item);
 
     Alert.alert(
       "Remove Item",
@@ -486,7 +433,7 @@ const CheckOut = ({ navigation, route }) => {
                 }
               );
 
-              console.log("Item removed successfully", response.data);
+              // console.log("Item removed successfully", response.data);
 
               fetchCartData();
               // totalCart();
@@ -541,7 +488,7 @@ const CheckOut = ({ navigation, route }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("address response", response.data);
+      // console.log("address response", response.data);
 
       setAddressList(response.data);
       response.data.slice(-1).map(
@@ -558,37 +505,14 @@ const CheckOut = ({ navigation, route }) => {
           })
         )
       );
-      console.log("address response", response.data);
+      // console.log("address response", response.data);
     } catch (error) {
       console.error("Error fetching order address data:", error.response);
       setError("Failed to fetch order address data");
     }
   };
 
-  // const totalCart = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const response = await axios({
-  //       url:
-  //          BASE_URL + "cart-service/cart/cartItemData",
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       data: {
-  //         customerId: customerId,
-  //       },
-  //     });
 
-  //     setGrandTotal(response.data.totalSum);
-  //     console.log("sravani grand total ", response.data.totalSum);
-  //     setLoading(false);
-  //   } catch (error) {
-  //     console.error("Error fetching cart data:", error);
-  //     setError("Failed to fetch cart data");
-  //   }
-  // };
 
   const calculateTotal = () => {
     let total = subTotal + deliveryFee - discount;
@@ -780,58 +704,7 @@ const CheckOut = ({ navigation, route }) => {
                               ? item.units.replace(/s$/, "")
                               : item.units}
                           </Text>
-                          {/* <View style={styles.quantityContainer}>
-                            <TouchableOpacity
-                              style={styles.quantityButton}
-                              onPress={() => handleDecrease(item)}
-                              disabled={loadingItems[item.itemId]|| item.status === "FREE"}
-                            >
-                              <Text style={styles.buttonText}>-</Text>
-                            </TouchableOpacity>
-                            {loadingItems[item.itemId] ? (
-                              <ActivityIndicator
-                                size="small"
-                                color="#000"
-                                style={styles.loader}
-                              />
-                            ) : (
-                              <Text style={styles.quantityText}>
-                                {cartItems[item.itemId] ||item.cartQuantity}
-                              </Text>
-                            )}
-                             {item.itemPrice==1 ?(
-                                                   <View
-                                                   style={styles.quantityButton1}
-                                                   // onPress={() => incrementQuantity(item)}
-                                                   onPress={() => handleIncrease(item)}
-                                                   disabled={loadingItems[item.itemId]}
-                                                 >
-                                                   <Text style={styles.quantityButtonText}>+</Text>
-                                                 </View>
-                                                ):(
-                            <TouchableOpacity
-                              style={[
-                                styles.quantityButton,
-                                cartItems[item.itemId] === item.quantity &&
-                                  styles.disabledButton,
-                              ]}
-                              onPress={() => handleIncrease(item)}
-                              disabled={
-                                loadingItems[item.itemId] ||
-                                cartItems[item.itemId] === item.quantity||item.status ==="FREE"
-                              }
-                            >
-                              <Text style={styles.buttonText}>+</Text>
-                            </TouchableOpacity>)}
-
-                            <Text style={styles.itemTotal}>
-                              Total: ₹
-                              {(
-                                item.itemPrice *
-                                (cartItems[item.itemId] || item.cartQuantity)
-                              ).toFixed(2)}
-                            </Text>
-                          </View> */}
+                        
                           
 <View style={styles.quantityContainer}>
                             <TouchableOpacity
@@ -902,7 +775,7 @@ const CheckOut = ({ navigation, route }) => {
                           </View>
                           <TouchableOpacity
                             style={{ marginLeft: 180 }}
-                            onPress={() => removeCartItem(item)}
+                            onPress={() => handleRemove(item)}
                           >
                             <MaterialIcons
                               name="delete"

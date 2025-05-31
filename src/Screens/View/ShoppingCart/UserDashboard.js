@@ -18,7 +18,7 @@ import {
   Platform,
   Animated,
   Easing,
-  TouchableWithoutFeedback
+  TouchableWithoutFeedback,
 } from "react-native";
 import React, {
   useEffect,
@@ -59,6 +59,7 @@ const UserDashboard = ({ route }) => {
   const [selectedCategory, setSelectedCategory] = useState(
     route?.params?.category || "All CATEGORIES"
   );
+  const [offerWeight, setOfferWeight] = useState(route?.params?.offerId || 1);
   const navigation = useNavigation();
   const [loadingItems, setLoadingItems] = useState({});
   const [cartCount, setCartCount] = useState();
@@ -81,10 +82,11 @@ const UserDashboard = ({ route }) => {
   const [offerItems, setOfferItems] = useState();
   const [has5kgsOffer, setHas5kgsOffer] = useState(false);
   const [offeravail5kgs, setOfferavail5kgs] = useState(false);
-
   const scrollViewRef = useRef(null);
+  //  const offerweight = route.params.offerId;
+  //  console.log("offer weight",offerweight);
 
-   useEffect(() => {
+  useEffect(() => {
     if (showOffer) {
       Animated.timing(scaleValue, {
         toValue: 1, // Fully expanded
@@ -112,7 +114,7 @@ const UserDashboard = ({ route }) => {
     await decrementQuantity(item);
     setTimeout(() => {
       setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-    }, 5000);
+    }, 3000);
   };
 
   const userData = useSelector((state) => state.counter);
@@ -136,7 +138,7 @@ const UserDashboard = ({ route }) => {
   const fetchCartItems = async () => {
     try {
       const response = await handleCustomerCartData(customerId);
-      console.log("cart response", response?.data);
+      // console.log("cart response", response?.data);
 
       const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
@@ -157,17 +159,17 @@ const UserDashboard = ({ route }) => {
         if (
           !item.itemId ||
           item.cartQuantity === undefined ||
-          item.quantity === undefined||
+          item.quantity === undefined ||
           item.status != "ADD"
         ) {
-          console.error("Invalid item in cartData:", item);
+          // console.error("Invalid item in cartData:", item);
           return acc;
         }
         acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
 
-      console.log("cart items map", cartItemsMap);
+      // console.log("cart items map", cartItemsMap);
 
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
@@ -348,6 +350,8 @@ const UserDashboard = ({ route }) => {
 
     // Filter by price and weight range
     const filtered = filteredByWeight.filter((item) => {
+      console.log("item",item);
+      
       const itemPrice = parseFloat(item.itemPrice);
       const itemWeight = parseWeight(item.weight);
       return (
@@ -362,53 +366,7 @@ const UserDashboard = ({ route }) => {
     return sortItems(filtered, sortOrder);
   };
 
-  //   const handleAddToCart = async (item) => {
-  //     console.log("item added to cart", item);
-
-  //     if (!userData) {
-  //       Alert.alert("Alert", "Please login to continue", [
-  //         { text: "Cancel" },
-  //         { text: "OK", onPress: () => navigation.navigate("Login") },
-  //       ]);
-  //       return;
-  //     }
-
-  //     const data = { customerId: customerId, itemId: item.itemId };
-  //     console.log("added data", data);
-
-  //     try {
-  //       const response = await handleUserAddorIncrementCart(data);
-  //       console.log("item added response", response.data);
-  //       Alert.alert("Success", response.data.errorMessage);
-  //       fetchCartItems();
-  // if(item.weight.toString()==1){
-  // Alert.alert(
-  //   "Special Offer",
-  //   "Buy 2 bags (1kg each) of the same item and get 1kg free! Add one more bag to your cart to avail the offer."
-  // );
-  // }
-  // if(item.weight.toString()==5){
-  // Alert.alert(
-  //   "Offer Availed",
-  //   "Buy a 5kgs bag, get 2kg free of the same item! Check your cart."
-  // );
-  // }
-  // if(item.weight.toString()==10){
-  // Alert.alert(
-  //   "Offer Availed",
-  //   "Buy a 10kgs bag, get 20kgs container free! Check your cart."
-  // );
-  // }
-  // if(item.weight.toString()==26){
-  // Alert.alert(
-  //   "Offer Availed",
-  //   "Buy a 26kgs bag, get 35kgs container free! Check your cart."
-  // );
-  // }
-  //     } catch (error) {
-  //       setLoader(false);
-  //     }
-  //   };
+ 
 
   const handleAddToCart = async (item) => {
     if (!userData) {
@@ -441,10 +399,12 @@ const UserDashboard = ({ route }) => {
 
       const activeOffers = await activeRes.json();
       const userEligibleOffers = await eligibleRes.json();
-
+      console.log("active offers",activeOffers);
+      console.log("user eligible offers",userEligibleOffers);
+      
       // Filter only active offers
       const validActiveOffers = activeOffers.filter((offer) => offer.active);
-      if (!validActiveOffers.length) return; 
+      if (!validActiveOffers.length) return;
 
       // Extract used offer weights and names
       const usedOfferWeights = userEligibleOffers
@@ -455,6 +415,7 @@ const UserDashboard = ({ route }) => {
         .map((o) => o.offerName);
 
       const itemWeight = item.weight;
+      const units = item.units;
       let alertShown = false;
 
       // Check if user has already used an offer for this weight
@@ -495,7 +456,7 @@ const UserDashboard = ({ route }) => {
         } else {
           const matchedContainerOffer = validActiveOffers.find(
             (offer) =>
-              offer.minQtyKg === itemWeight &&
+              offer.minQtyKg === itemWeight && units == "kgs" &&
               (offer.minQtyKg === 10 || offer.minQtyKg === 26) &&
               !usedOfferNames.includes(offer.offerName)
           );
@@ -504,7 +465,8 @@ const UserDashboard = ({ route }) => {
             setTimeout(() => {
               Alert.alert(
                 "Container Offer",
-                `${matchedContainerOffer.offerName} is active! Buy 1 bag of ${matchedContainerOffer.minQtyKg}kg and get a ${matchedContainerOffer.freeItemName} free.`
+                `${matchedContainerOffer.offerName} FREE! `
+              //  ` Buy ${matchedContainerOffer.minQtyKg}kg and get a ${matchedContainerOffer.freeItemName} free.`
               );
             }, 1000);
             alertShown = true;
@@ -523,7 +485,7 @@ const UserDashboard = ({ route }) => {
         );
 
         if (matchedSpecialOffer) {
-          console.log("Matched Special Offer:", matchedSpecialOffer);
+          // console.log("Matched Special Offer:", matchedSpecialOffer);
           setTimeout(() => {
             Alert.alert(
               "Special Offer",
@@ -546,7 +508,7 @@ const UserDashboard = ({ route }) => {
     };
     try {
       const response = await handleUserAddorIncrementCart(data);
-      console.log("increment response", response.data);
+      // console.log("increment response", response);
       Alert.alert("Success", response.data.errorMessage);
       await fetchCartItems();
     } catch (error) {}
@@ -559,20 +521,18 @@ const UserDashboard = ({ route }) => {
       (cartData) => cartData.itemId === item.itemId
     );
     // console.log("customer cart items", cartItem);
+     const data = {
+      customerId: customerId,
+      itemId: item.itemId,
+    };
     // console.log({userData})
     try {
-      const response = await handleDecrementorRemovalCart(
-        cartItem,
-        userData.userId
-      );
-      console.log("decrement response", response);
+      const response = await handleDecrementorRemovalCart(data);
+      // console.log("decrement response", response);
       Alert.alert("Success", response.data.errorMessage);
       fetchCartItems();
     } catch (error) {
-      console.log(
-        "Error decrementing item cart quantity:",
-        error.response.data.errorMessage
-      );
+      // console.log("Error decrementing item cart quantity:", error.response);
       Alert.alert("Failed", error.response.data.errorMessage);
       fetchCartItems();
     }
@@ -582,7 +542,6 @@ const UserDashboard = ({ route }) => {
     const fetchData = async () => {
       getAllCategories();
     };
-
     fetchData();
   }, []);
 
@@ -593,6 +552,10 @@ const UserDashboard = ({ route }) => {
       .get(`${BASE_URL}product-service/showItemsForCustomrs`)
       .then((response) => {
         setCategories(response.data);
+        // console.log(
+        //   "products response",
+        //   JSON.stringify(response.data, null, 2)
+        // );
 
         // Get all items
         const items = response.data.flatMap(
@@ -601,24 +564,48 @@ const UserDashboard = ({ route }) => {
 
         setAllItems(items);
 
-        if (selectedCategory === "All CATEGORIES") {
-          setFilteredItems(sortItems(items, "weightAsc"));
+        if (route.params.offerId) {
+          const weight = route.params.offerId;
+          const finalWeightFilter =
+            selectedWeightFilter === weight ? null : weight;
+
+          setSelectedWeightFilter(finalWeightFilter);
+
+          // console.log({ finalWeightFilter });
+
+          let itemsToFilter = [];
+
+          if (selectedCategory === "All CATEGORIES") {
+            itemsToFilter = items;
+          } else {
+            itemsToFilter = items
+              .filter(
+                (cat) =>
+                  cat.categoryName.trim().toLowerCase() ===
+                  selectedCategory.trim().toLowerCase()
+              )
+              .flatMap((cat) => cat.itemsResponseDtoList || []);
+          }
+          // console.log("selected category", selectedCategory);
+
+          setFilteredItems(
+            applyFiltersAndSort(itemsToFilter, finalWeightFilter)
+          );
         } else {
-          const filtered = response.data
-            .filter(
-              (cat) =>
-                cat.categoryName.trim().toLowerCase() ===
-                selectedCategory.trim().toLowerCase()
-            )
-            .flatMap((cat) => cat.itemsResponseDtoList || []);
+          if (selectedCategory === "All CATEGORIES") {
+            setFilteredItems(sortItems(items, "weightAsc"));
+          } else {
+            const filtered = response.data
+              .filter(
+                (cat) =>
+                  cat.categoryName.trim().toLowerCase() ===
+                  selectedCategory.trim().toLowerCase()
+              )
+              .flatMap((cat) => cat.itemsResponseDtoList || []);
 
-          setFilteredItems(sortItems(filtered, "weightAsc"));
+            setFilteredItems(sortItems(filtered, "weightAsc"));
+          }
         }
-
-        // if(route?.params?.offerId) {
-        //   filterByWeight(route?.params?.offerId);
-        // }
-
         setTimeout(() => {
           setLoading(false);
 
@@ -629,6 +616,7 @@ const UserDashboard = ({ route }) => {
           }, 100);
         }, 1000);
       })
+
       .catch((error) => {
         console.error("Error fetching categories:", error);
         setLoading(false);
@@ -636,30 +624,30 @@ const UserDashboard = ({ route }) => {
       });
   };
 
-  // Filter by category
+ 
+
+
   const filterByCategory = (category) => {
-    setSelectedCategory(category);
-    setSelectedWeightFilter(null);
-
-    if (category === "All CATEGORIES") {
+  setSelectedCategory(category); 
+  // console.log("selected category (param)", category);
+  const matchedCategory = categories.find(
+    (cat) =>
+      cat.categoryName.trim().toLowerCase() === category.trim().toLowerCase()
+  ); if (category === "All CATEGORIES") {
       setFilteredItems(applyFiltersAndSort(allItems, null));
-    } else {
-      const filtered = categories
-        .filter(
-          (cat) =>
-            cat.categoryName.trim().toLowerCase() ===
-            category.trim().toLowerCase()
-        )
-        .flatMap((cat) => cat.itemsResponseDtoList || []);
+     }
+     else{
+   const filtered = matchedCategory?.itemsResponseDtoList || [];
+  // console.log("Filtered Items: ", filtered);
+  setFilteredItems(filtered); 
+  }
+};
 
-      setFilteredItems(applyFiltersAndSort(filtered, null));
-    }
-  };
 
   // Filter by weight
   const filterByWeight = (weight) => {
-    const newWeightFilter = selectedWeightFilter === weight ? null : weight;
-    setSelectedWeightFilter(newWeightFilter);
+    let finalWeightFilter = selectedWeightFilter === weight ? null : weight;
+    setSelectedWeightFilter(finalWeightFilter);
 
     let itemsToFilter = [];
 
@@ -675,7 +663,8 @@ const UserDashboard = ({ route }) => {
         .flatMap((cat) => cat.itemsResponseDtoList || []);
     }
 
-    setFilteredItems(applyFiltersAndSort(itemsToFilter, newWeightFilter));
+    // Apply filters
+    setFilteredItems(applyFiltersAndSort(itemsToFilter, finalWeightFilter));
   };
 
   // Apply filters
@@ -812,7 +801,6 @@ const UserDashboard = ({ route }) => {
     }
   };
 
-
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -831,7 +819,7 @@ const UserDashboard = ({ route }) => {
     return <View style={styles.footer} />;
   }
 
-   const renderItem = ({ item }) => (
+  const renderItem = ({ item }) => (
     <View style={styles.itemContainer}>
       <TouchableOpacity
         onPress={() => navigation.navigate("Item Details", { item })}
@@ -864,22 +852,11 @@ const UserDashboard = ({ route }) => {
               }}
               style={styles.itemImage}
               resizeMode="contain"
-              onError={() => handleImageError(item.itemId)}
+              // onError={() => handleImageError(item.itemId)}
             />
           )}
-
-          {/* Stock indicator */}
-          {item.quantity === 0 && (
-            <View style={styles.outOfStockBadge}>
-              <Text style={styles.outOfStockText}>Out of Stock</Text>
-            </View>
-          )}
-          {item.quantity > 0 && item.quantity <= 5 && (
-            <View style={styles.limitedStockBadge}>
-              <Text style={styles.limitedStockText}>Limited Stock</Text>
-            </View>
-          )}
         </View>
+
       </TouchableOpacity>
 
       <View style={styles.itemDetailsContainer}>
@@ -1197,54 +1174,6 @@ const UserDashboard = ({ route }) => {
               </TouchableOpacity>
             </View>
 
-            {/* <View style={styles.filterSection}>
-                <Text style={styles.sectionTitle}>Price Range</Text>
-                <View style={styles.rangeContainer}>
-                  <View style={styles.rangeInputContainer}>
-                    <Text style={styles.rangeLabel}>Min</Text>
-                    <TextInput
-                      style={styles.rangeInput}
-                      value={priceRange.min.toString()}
-                      onChangeText={(text) => setPriceRange({...priceRange, min: parseInt(text) || 0})}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                  <View style={styles.rangeInputContainer}>
-                    <Text style={styles.rangeLabel}>Max</Text>
-                    <TextInput
-                      style={styles.rangeInput}
-                      value={priceRange.max.toString()}
-                      onChangeText={(text) => setPriceRange({...priceRange, max: parseInt(text) || 0})}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
-              </View> */}
-
-            {/* <View style={styles.filterSection}>
-                <Text style={styles.sectionTitle}>Weight Range</Text>
-                <View style={styles.rangeContainer}>
-                  <View style={styles.rangeInputContainer}>
-                    <Text style={styles.rangeLabel}>Min</Text>
-                    <TextInput
-                      style={styles.rangeInput}
-                      value={weightRange.min.toString()}
-                      onChangeText={(text) => setWeightRange({...weightRange, min: parseFloat(text) || 0})}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                  <View style={styles.rangeInputContainer}>
-                    <Text style={styles.rangeLabel}>Max</Text>
-                    <TextInput
-                      style={styles.rangeInput}
-                      value={weightRange.max.toString()}
-                      onChangeText={(text) => setWeightRange({...weightRange, max: parseFloat(text) || 0})}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
-              </View> */}
-
             <View style={styles.filterSection}>
               <Text style={styles.sectionTitle}>Sort By</Text>
               <View style={styles.sortOptions}>
@@ -1347,17 +1276,29 @@ const UserDashboard = ({ route }) => {
           </Text>
         </View>
       ) : (
+        // <FlatList
+        //   contentContainerStyle={styles.listContainer}
+        //   data={filteredItems}
+        //   renderItem={renderItem}
+        //   keyExtractor={(item) => item.itemId.toString()}
+        //    extraData={filteredItems}
+        //   numColumns={2}
+        //   ListFooterComponent={footer}
+        //   showsVerticalScrollIndicator={false}
+        // />
+
         <FlatList
-          contentContainerStyle={styles.listContainer}
+          key={selectedCategory}
           data={filteredItems}
+          extraData={filteredItems}
           renderItem={renderItem}
           keyExtractor={(item) => item.itemId.toString()}
           numColumns={2}
           ListFooterComponent={footer}
+          contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
         />
       )}
-
     </SafeAreaView>
   );
 };
@@ -1472,8 +1413,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
     overflow: "hidden",
-    height: 320, // Fixed height for consistent card sizes
-    width: (width - 40) / 2, // Calculate exact width for 2 columns with margins
+    height: 320,
+    width: (width - 40) / 2,
   },
   itemImageContainer: {
     width: "100%",
@@ -1506,18 +1447,18 @@ const styles = StyleSheet.create({
   itemDetailsContainer: {
     padding: 12,
     flex: 1,
-    height: 180, // Fixed height for content area
-    justifyContent: "flex-start", // Start from top instead of space-between
+    height: 180, 
+    justifyContent: "flex-start", 
   },
-  // New container for name and weight
+ 
   itemInfoContainer: {
-    height: 80, // Fixed height for name and weight section
+    height: 80,
   },
   iconNameContainer: {
     flexDirection: "row",
-    alignItems: "flex-start", // Align to top
+    alignItems: "flex-start", 
     marginBottom: 8,
-    height: 40, // Fixed height for name area
+    height: 40, 
   },
   itemName: {
     fontSize: 14,
@@ -1525,19 +1466,19 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     marginLeft: 6,
     flex: 1,
-    lineHeight: 18, // Consistent line height
+    lineHeight: 18, 
   },
   itemWeight: {
     fontSize: 13,
     color: "#6b7280",
     marginBottom: 8,
-    marginLeft: 26, // Align with item name (icon width + left margin)
+    marginLeft: 26, 
   },
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
-    height: 24, // Fixed height for price area
+    height: 24, 
   },
   itemPrice: {
     fontSize: 16,
@@ -1550,12 +1491,11 @@ const styles = StyleSheet.create({
     textDecorationLine: "line-through",
     marginLeft: 8,
   },
-  // Fixed position button container at bottom
   buttonContainer: {
     height: 44,
-    marginTop: "auto", // Push to bottom of container
+    marginTop: "auto",
     justifyContent: "center",
-    width: "100%", // Ensure full width
+    width: "100%", 
     position: "absolute",
     bottom: 12,
     left: 12,
@@ -1578,7 +1518,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 40, // Fixed height matching add button
+    height: 40, 
   },
   quantityButton: {
     width: 40,
@@ -1895,6 +1835,21 @@ const oneKgModal = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
+  },
+  limitedStockBadge: {
+    position: "absolute",
+    bottom: 2,
+    left: 15,
+    backgroundColor: "#6b21a8",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 5,
+    zIndex: 1,
+  },
+  limitedStockText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
   },
 });
 

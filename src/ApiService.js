@@ -15,10 +15,10 @@ export const handleCustomerCartData = async (customerId) => {
     return response;
   } catch (error) {
     console.error("Error fetching customer cart data:", error);
-    Alert.alert(
-      "Error",
-      "Failed to fetch customer cart data. Please try again later."
-    );
+    // Alert.alert(
+    //   "Error",
+    //   "Failed to fetch customer cart data. Please try again later."
+    // );
     throw error;
   }
 };
@@ -44,12 +44,11 @@ export const handleUserAddorIncrementCart = async (data) => {
 };
 
 // for removal or decrement cart data
-export const handleDecrementorRemovalCart = async (data, customerId) => {
-  console.log({ customerId });
+export const handleDecrementorRemovalCart = async (data) => {
   console.log({ data });
   try {
     const response = axios.patch(`${BASE_URL}cart-service/cart/minusCartItem`, {
-      customerId: customerId,
+      customerId: data.customerId,
       itemId: data.itemId,
     });
 
@@ -60,7 +59,7 @@ export const handleDecrementorRemovalCart = async (data, customerId) => {
   }
 };
 
-// for removing item from the cart completely
+// for removing item from the cart
 export const handleRemoveItem = async (item) => {
   console.log({ item });
   let requestBody = {
@@ -76,7 +75,7 @@ export const handleRemoveItem = async (item) => {
         "Content-Type": "application/json",
       },
     });
-    console.log(" cart response", response.data);
+    // console.log(" cart response", response.data);
   } catch (error) {
     console.log(error.response);
   }
@@ -90,18 +89,16 @@ export const handleRemoveFreeItem = async (item) => {
     const response = await axios.delete(
       `${BASE_URL}cart-service/cart/removeFreeContainer`,
       {
-        data: { id: item.id },
+        data: item,
       }
     );
     console.log("Cart response", response);
     return response;
   } catch (error) {
     console.error("Error in handleRemoveFreeItem:", error);
-    // Throw the error to be caught in the main function
     throw error;
   }
 };
-
 
 //for getting Offers eligible for customer
 export const getCustomerEligibleOfferDetails = async (CustomerId) => {
@@ -119,21 +116,29 @@ export const getCustomerEligibleOfferDetails = async (CustomerId) => {
 };
 
 // for getting profile data
-export const handleGetProfileData = async (customerId) => {
-  // console.log('customerId', customerId);
+export const handleGetProfileData = async (customerId,token) => {
+  console.log("customerId", customerId);
+
+  console.log("into the profile data call");
 
   try {
-    const response = await axios.get(
-      `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`,
-      {}
-    );
-    return response;
+     const response = await axios({
+      method:"Get",
+      url:`${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`,
+      headers:{
+        Authorization:`Bearer ${token}`
+      }
+     })
+
+     
+
+     return response
+    // const response = await axios.get(
+    //   `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`
+    // );
+    // return response;
   } catch (error) {
-    console.error("Error fetching profile data:", error);
-    Alert.alert(
-      "Error",
-      "Failed to fetch profile data. Please try again later."
-    );
+    // console.error("Error fetching profile data:", error);
     throw error;
   }
 };

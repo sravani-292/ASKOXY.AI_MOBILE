@@ -38,10 +38,10 @@ const ContainerSoftCopy = ({
   const token = userData.accessToken;
   const customerId = userData?.userId;
   const mobileNumber = userData?.mobileNumber;
-  // console.log("mobilenumber",mobileNumber);
+  console.log("mobilenumber",mobileNumber);
 
   const whatsappNumber = userData?.whatsappNumber;
-  // console.log("whatsappnumber",whatsappNumber);
+  console.log("whatsappnumber",whatsappNumber);
 
   const [modalVisible, setModalVisible] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -84,6 +84,13 @@ const ContainerSoftCopy = ({
   };
 
   const handleNext = () => {
+     let numberToSend =
+      mobileNumber ||
+      (whatsappNumber &&
+        (whatsappNumber.length === 13
+          ? whatsappNumber.slice(3)
+          : whatsappNumber));
+
     if (currentMobile.trim() === "") {
       Alert.alert("Please enter a mobile number.");
       return;
@@ -107,8 +114,12 @@ const ContainerSoftCopy = ({
       );
       return;
     }
+    console.log("current mobile number",currentMobile);
+    
     if (currentMobile == numberToSend) {
       Alert.alert("Self Referral is not allowed");
+      setCurrentMobile("")
+
       return;
     }
 
@@ -125,10 +136,24 @@ const ContainerSoftCopy = ({
   const handleSubmit = (numbersArray) => {
     console.log("Submitting Numbers:", numbersArray);
 
+     let numberToSend =
+      mobileNumber ||
+      (whatsappNumber &&
+        (whatsappNumber.length === 13
+          ? whatsappNumber.slice(3)
+          : whatsappNumber));
+
     let finalNumbersArray = [];
 
     if (selectedPlanB) {
+      console.log({numbersArray});
+      
       finalNumbersArray = [...numbersArray];
+       if(currentMobile == numberToSend||numbersArray.includes(numberToSend)){
+        Alert.alert("Self Referral is not allowed")
+        setCurrentMobile("");
+        return;
+       }
       if (finalNumbersArray.length === 0 && currentMobile.trim() !== "") {
         finalNumbersArray.push(currentMobile.trim());
       }
@@ -143,12 +168,8 @@ const ContainerSoftCopy = ({
 
     setLoading(true);
     console.log("current mobile", currentMobile);
-    let numberToSend =
-      mobileNumber ||
-      (whatsappNumber &&
-        (whatsappNumber.length === 13
-          ? whatsappNumber.slice(3)
-          : whatsappNumber));
+    console.log("mobileNumber check" , mobileNumber)
+   
 
     console.log("numberToSend:", numberToSend);
     const itemIds = cartData.map((item) => item.itemId);
@@ -170,8 +191,7 @@ const ContainerSoftCopy = ({
 
     console.log("Final requestBody:", requestBody);
     // Inside your API success callback
-    setIsApiCalled(true);
-
+  
     const API_URL = BASE_URL + `reference-service/referenceoffer`;
 
     axios
@@ -180,7 +200,7 @@ const ContainerSoftCopy = ({
       })
       .then((response) => {
         console.log("API Response:", response);
-
+         
         const alreadySaved = response.data?.alreadySavedReferences;
         const newlySaved = response.data?.newlySavedReferences;
         let message = "Reference offer saved successfully.";
@@ -198,14 +218,14 @@ const ContainerSoftCopy = ({
           {
             text: "OK",
             onPress: () => {
-              handleNo();
-              addContainer();
+              handleSuccess();
+              // addContainer();
             },
           },
         ]);
         // selectedPlan(" ");
         setSelectedPlanA(" ");
-        selectedPlanB(" ");
+        setSelectedPlanB(" ");
       })
       .catch((error) => {
         console.log("error", error);
@@ -221,22 +241,30 @@ const ContainerSoftCopy = ({
       .finally(() => {
         setLoading(false);
         setModalVisible(false);
+         setIsApiCalled(true)
+
         // addContainer();
       });
   };
 
   const handleNo = () => {
+    console.log({isApiCalled});
+    
     if (isApiCalled) {
       setModalVisible(false);
       onClose();
       return;
     }
-
+   else{
+    
+    
     const hasProgress =
       selectedPlanA ||
       selectedPlanB ||
       numbersArray.length > 0 ||
       currentMobile.trim().length > 0;
+
+      console.log("has pregress",hasProgress);
 
     Alert.alert(
       hasProgress ? "Discard Changes?" : "Exit Without Proceeding?",
@@ -251,19 +279,33 @@ const ContainerSoftCopy = ({
         },
       ]
     );
+  }
   };
-  const handleOk = () => {
-      if (removeItem && itemToRemove) {
-        removeItem(itemToRemove); 
-      }
 
-    setModalVisible(false);
-    onClose(); // close modal
+  const handleSuccess =()=>{
+   onClose();
+     setSelectedPlanA(false);
+    setSelectedPlanB(false);
+    setNumbersArray([]);
+    setCurrentMobile("");
+    setIsApiCalled(false)
+  }
+
+  
+  const handleOk = () => {
+   if (removeItem && itemToRemove ) {
+     removeItem(itemToRemove); 
+   }
+   setModalVisible(false);
+    onClose(); 
     setSelectedPlanA(false);
     setSelectedPlanB(false);
     setNumbersArray([]);
     setCurrentMobile("");
+    setIsApiCalled(false)
   };
+
+
 
   const handleRemoveNumber = (indexToRemove) => {
     setNumbersArray((prev) =>

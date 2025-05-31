@@ -117,7 +117,7 @@ const CartScreen = () => {
           setContainerDecision(savedDecision);
         }
       } catch (error) {
-        console.log("Error loading container decision:", error);
+        // console.log("Error loading container decision:", error);
       }
     };
 
@@ -147,7 +147,7 @@ const CartScreen = () => {
     try {
       await AsyncStorage.setItem("containerDecision", "yes");
     } catch (error) {
-      console.log("Error saving container decision:", error);
+      // console.log("Error saving container decision:", error);
     }
     setModalVisible(false);
 
@@ -160,7 +160,7 @@ const CartScreen = () => {
     try {
       const response = await handleCustomerCartData(data);
 
-      console.log("Container added response", response);
+      // console.log("Container added response", response);
       if (response.data.errorMessage === "Item added to cart successfully") {
         Alert.alert(
           "Success",
@@ -199,6 +199,7 @@ const CartScreen = () => {
   };
 
   const fetchCartData = async () => {
+    
     try {
       setLoading(true);
       const response = await handleCustomerCartData(customerId);
@@ -227,33 +228,12 @@ const CartScreen = () => {
             ]
           );
         }
-        // else{
-        //   //  Alert.alert(
-        //   //   "🎁 Special Offer!",
-        //   //   `Your cart includes a ${item.weight} rice bag that qualifies for a FREE ${item.itemName}!\n\nAre you sure you want to avail this offer?`,
-        //   //   [
-        //   //     {
-        //   //       text: "No",
-        //   //       onPress: () => handleRemove(item),
-        //   //       style: "cancel"
-        //   //     },
-        //   //     {
-        //   //       text: "Yes",
-        //   //       onPress: () => console.log("Yes Clicked")
-        //   //     }
-        //   //   ]
-        //   // );
-        // }
-        // }
+       
+      
       });
-      // console.log("amount to pay", response.data.amountToPay);
-      // console.log("totalCartValue", response.data?.totalCartValue);
+      
       setTotalCartValue(response.data?.totalCartValue);
-      // console.log("freeItemPriceTotal", response.data?.freeItemPriceTotal);
-      // console.log(
-      //   "discountedByFreeItems",
-      //   response.data?.discountedByFreeItems
-      // );
+      
       setFreeItemPrice(response.data?.freeItemPriceTotal);
       // console.log("totalGstAmountToPay", response.data?.totalGstAmountToPay);
       setGstAmount(response.data?.totalGstAmountToPay);
@@ -299,226 +279,29 @@ const CartScreen = () => {
       }));
       return weightArray;
     } catch (error) {
-      console.log(error.response);
+      console.log(error);
       setError("Failed to load cart data");
       setLoading(false);
     }
   };
 
-  // function FreeContainerfunc(cartData) {
-  //   axios
-  //     .get(BASE_URL + `cart-service/cart/ContainerInterested/${customerId}`)
-  //     .then((response) => {
-  //       console.log("Cart API called successfully", response.data);
-  //     if (!cartData || cartData.length === 0) {
-  //         console.log("Cart is empty, no alert triggered.");
-  //         return;
-  //       }
-
-  //       if (response.data.freeContainerStatus === null) {
-
-  //         let has10kg = cartData.some((item) => item.weight === 10);
-  //         let has26kg = cartData.some((item) => item.weight === 26);
-  //         let has1kg = cartData.some(
-  //           (item) =>
-  //             item.weight === 1 &&
-  //             (item.units === "kg" || item.units === "kgs") &&
-  //             item.itemName.toLowerCase().includes("rice") &&
-  //             !containerItemIds.includes(item.itemId)
-  //         );
-  //          if (cartData.length > 0) {
-  //           if (has10kg && has26kg) {
-  //             setHasWeight("26kgs");
-  //             setContainerAddedPrice(true);
-  //             setModalVisible(true);
-  //           } else if (has26kg) {
-  //             setHasWeight("26kgs");
-  //             setContainerAddedPrice(true);
-  //             setModalVisible(true);
-  //           } else if (has10kg) {
-  //             setHasWeight("10kgs");
-  //             setContainerAddedPrice(true);
-  //             setModalVisible(true);
-  //           } else if (has1kg) {
-  //             const oneKgBags = cartData.filter(
-  //               (item) => parseFloat(item.weight?.toString() || "0") === 1
-  //             );
-  //             const anyOneKgHasTwoOrMore = oneKgBags.some(
-  //               (item) => item.cartQuantity >= 2
-  //             );
-
-  //             let offeravail = 0;
-
-  //             axios
-  //               .get(
-  //                 `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
-  //               )
-  //               .then((response) => {
-  //                 console.log("One kg offer API response", response.data);
-  //                 if (response.data) {
-  //                   offeravail = response.data.cartQuantity;
-  //                 }
-  //               });
-
-  //             if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
-  //               setShowOffer(true);
-  //             }
-
-  //             if (has1kg) {
-  //               console.log("1kg Bags in Cart:");
-  //               oneKgBags.forEach((bag) => {
-  //                 console.log(
-  //                   `Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`
-  //                 );
-  //               });
-  //             }
-  //           }
-  //         }
-  //       } else {
-  //         console.log(
-  //           "User container status is not null or 'Interested', no alert triggered."
-  //         );
-  //         setModalVisible(false);
-  //         let has1kg =
-  //           item.weight === 1 &&
-  //           (item.units === "kg" || item.units === "kgs") &&
-  //           item.itemName.includes("ASKOXY.AI");
-  //         console.log("has1kggg", has1kg);
-  //         const oneKgBags = cartData.filter(
-  //           (item) => parseFloat(item.weight?.toString() || "0") === 1
-  //         );
-  //         const anyOneKgHasTwoOrMore = oneKgBags.some(
-  //           (item) => item.cartQuantity >= 2
-  //         );
-
-  //         let offeravail = 0;
-
-  //         axios
-  //           .get(
-  //             `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
-  //           )
-  //           .then((response) => {
-  //             console.log("One kg offer API response", response.data);
-  //             if (response.data) {
-  //               offeravail = response.data.cartQuantity;
-  //             }
-  //           });
-  //         console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
-  //         if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
-  //           setShowOffer(true);
-  //         }
-
-  //         if (has1kg) {
-  //           console.log("1kg Bags in Cart:");
-  //           oneKgBags.forEach((bag) => {
-  //             console.log(
-  //               `Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`
-  //             );
-  //           });
-  //         }
-
-  //         console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       console.log("Error fetching cart data:", error?.response);
-  //       let has1kg = cartData.some(
-  //         (item) =>
-  //           item.weight === 1 &&
-  //           (item.units === "kg" || item.units === "kgs") &&
-  //           item.itemName.includes("ASKOXY.AI")
-  //       );
-  //       console.log("has1kg", has1kg);
-  //       const oneKgBags = cartData.filter(
-  //         (item) => parseFloat(item.weight?.toString() || "0") === 1
-  //       );
-  //       const anyOneKgHasTwoOrMore = oneKgBags.some(
-  //         (item) => item.cartQuantity >= 2
-  //       );
-  //       let offeravail = 0;
-  //       axios
-  //         .get(
-  //           `${BASE_URL}cart-service/cart/oneKgOffer?customerId=${customerId}`
-  //         )
-  //         .then((response) => {
-  //           console.log("One kg offer API response", response.data);
-  //           if (response.data) {
-  //             offeravail = response.data.cartQuantity;
-  //           }
-  //         });
-  //       console.log(has1kg && !anyOneKgHasTwoOrMore && offeravail < 2);
-
-  //       if (has1kg && !anyOneKgHasTwoOrMore && offeravail < 2) {
-  //         setShowOffer(true);
-  //       }
-
-  //       if (has1kg) {
-  //         console.log("1kg Bags in Cart:");
-  //         oneKgBags.forEach((bag) => {
-  //           console.log(`Item: ${bag.itemName}, Quantity: ${bag.cartQuantity}`);
-  //         });
-  //       }
-
-  //       console.log("Any 1kg bag has quantity >= 2:", anyOneKgHasTwoOrMore);
-  //     });
-  // }
-
-  // const handleAddCheapest1kgBag = async () => {
-  //   try {
-
-  //     const oneKgBags = cartData.filter(
-  //       (item) => parseFloat(item.weight?.toString() || "0") === 1
-  //     );
-
-  //     if (oneKgBags.length === 0) {
-
-  //       return;
-  //     }
-
-  //     // 2. Find the one with the lowest itemPrice
-  //     const cheapestBag = oneKgBags.reduce((min, curr) =>
-  //       parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
-  //     );
-
-  //     const currentQuantity = cartItems[cheapestBag.itemId] || 0;
-  //     const newQuantity = currentQuantity + 1;
-
-  //     // 3. Call API to increase quantity
-  //     await axios.patch(
-  //       `${BASE_URL}cart-service/cart/incrementCartData`,
-  //       {
-  //         cartQuantity: newQuantity,
-  //         customerId,
-  //         itemId: cheapestBag.itemId,
-  //       },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-  //     setShowOffer(false);
-
-  //     await fetchCartData();
-  //   } catch (error) {
-  //     console.error("Failed to add 1kg item:", error);
-  //   }
-  // };
+ 
 
   useFocusEffect(
     useCallback(() => {
       fetchCartData();
+      getProfile()
     }, [])
   );
 
   const onRefresh = () => {
     fetchCartData();
+   
   };
 
   const getProfile = async () => {
     try {
-      const response = await handleGetProfileData(customerId);
+      const response = await handleGetProfileData(customerId,token);
       if (response.status === 200) {
         if (!response.data.firstName) {
           Alert.alert(
@@ -559,24 +342,95 @@ const CartScreen = () => {
   };
 
   const decreaseCartItem = async (item) => {
-    // console.log("item to decrement", item);
+    console.log("item to decrement", item);
     const data = {
       customerId: customerId,
       itemId: item.itemId,
     };
-    // console.log({data})
     try {
       const response = await handleDecrementorRemovalCart(
         data,
-        userData.userId
-      );
-      console.log("Decrement response", response);
-      Alert.alert("Success", response.data.errorMessage);
+       );
+      // console.log("Decrement response", response);
+      // Alert.alert("Success", response.data.errorMessage);
       fetchCartData();
     } catch (error) {
-      console.log("Error decrementing cart item:", error);
+      // console.log("Error decrementing cart item:", error.response);
     }
   };
+
+// const handleRemove = async (item) => {
+//   if (!item?.cartId) {
+//     console.error("Invalid item data for removal", item);
+//     return;
+//   }
+
+//   try {
+//     const itemWeight = Number(item.weight);
+//     const isWeight10or26 = itemWeight === 10 || itemWeight === 26;
+
+//     const freeItem = cartData.find((i) => i.status === "FREE");
+//     const sameWeightAddItems = cartData.filter(
+//       (i) => i.status === "ADD" && Number(i.weight) === itemWeight
+//     );
+
+//     let response;
+
+//     // Begin Logic Check
+//     let shouldRemoveFreeItem = false;
+
+//     if (freeItem && isWeight10or26) {
+//       const freeWeight = Number(freeItem.weight);
+
+//       if (itemWeight === 10) {
+//         if (freeWeight === 35) {
+//           // Don't remove free item if it's 35kg and removing 10kg
+//           shouldRemoveFreeItem = false;
+//         } else if (freeWeight === 20) {
+//           shouldRemoveFreeItem = sameWeightAddItems.length === 1; 
+//         }
+//       } else if (itemWeight === 26) {
+//         if (freeWeight === 20) {
+//           shouldRemoveFreeItem = false;
+//         } else if (freeWeight === 35) {
+//           shouldRemoveFreeItem = sameWeightAddItems.length === 1; 
+//         }
+//       }
+//     }
+
+//     if (shouldRemoveFreeItem) {
+//       console.log("Removing both selected item and FREE item.");
+//       // Remove selected item
+//       response = await handleRemoveItem(item.cartId);
+
+//       // Remove FREE item
+//       const freePayload = {
+//         id: freeItem.cartId,
+//         customerId: customerId,
+//         itemId: freeItem.itemId,
+//         status: "FREE",
+//       };
+//       response = await handleRemoveFreeItem(freePayload);
+//     } else {
+//       console.log("Removing only the selected item.");
+//       response = await handleRemoveItem(item.cartId);
+//     }
+
+//     console.log("Remove response:", response);
+//     Alert.alert("Success", "Item removed successfully");
+
+//     fetchCartData();
+//   } catch (error) {
+//     console.error("Error removing item:", error.response);
+//     Alert.alert("Error", "Failed to remove item. Please try again.");
+//   } finally {
+//     setRemovalLoading((prevState) => ({
+//       ...prevState,
+//       [item.cartId]: false,
+//     }));
+//   }
+// };
+
 
 const handleRemove = async (item) => {
   if (!item?.cartId) {
@@ -585,62 +439,26 @@ const handleRemove = async (item) => {
   }
 
   try {
-    const itemWeight = Number(item.weight);
-    const isWeight10or26 = itemWeight === 10 || itemWeight === 26;
-
-    const freeItem = cartData.find((i) => i.status === "FREE");
-    const sameWeightAddItems = cartData.filter(
-      (i) => i.status === "ADD" && Number(i.weight) === itemWeight
-    );
-
     let response;
 
-    // Begin Logic Check
-    let shouldRemoveFreeItem = false;
-
-    if (freeItem && isWeight10or26) {
-      const freeWeight = Number(freeItem.weight);
-
-      if (itemWeight === 10) {
-        if (freeWeight === 35) {
-          // Don't remove free item if it's 35kg and removing 10kg
-          shouldRemoveFreeItem = false;
-        } else if (freeWeight === 20) {
-          shouldRemoveFreeItem = sameWeightAddItems.length === 1; // Only remove if it's last 10kg
-        }
-      } else if (itemWeight === 26) {
-        if (freeWeight === 20) {
-          shouldRemoveFreeItem = false;
-        } else if (freeWeight === 35) {
-          shouldRemoveFreeItem = sameWeightAddItems.length === 1; // Only remove if it's last 26kg
-        }
-      }
-    }
-
-    if (shouldRemoveFreeItem) {
-      console.log("Removing both selected item and FREE item.");
-      // Remove selected item
-      response = await handleRemoveItem(item.cartId);
-
-      // Remove FREE item
+    if (item.status === "FREE") {
       const freePayload = {
-        id: freeItem.cartId,
-        customerId: freeItem.customerId,
-        itemId: freeItem.itemId,
+        id: item.cartId,
+        customerId: customerId,
+        itemId: item.itemId,
         status: "FREE",
       };
       response = await handleRemoveFreeItem(freePayload);
     } else {
-      console.log("Removing only the selected item.");
       response = await handleRemoveItem(item.cartId);
     }
 
-    console.log("Remove response:", response);
+    // console.log("Remove response:", response);
     Alert.alert("Success", "Item removed successfully");
 
     fetchCartData();
   } catch (error) {
-    console.error("Error removing item:", error);
+    // console.error("Error removing item:", error.response);
     Alert.alert("Error", "Failed to remove item. Please try again.");
   } finally {
     setRemovalLoading((prevState) => ({
@@ -650,17 +468,37 @@ const handleRemove = async (item) => {
   }
 };
 
+const handleProfileCheck = async () => {
+  try {
+    // if (!customerId) {
+    //   Alert.alert("Error", "Customer ID is not available.");
+    //   return false;
+    // }
 
+    const response = await handleGetProfileData(customerId,token);
 
-  const handleProfileCheck = async () => {
-    const profile = await getProfile();
-
-    if (!profile) {
-      return;
+    if (response.status === 200) {
+      if (!response.data.firstName) {
+        Alert.alert(
+          "Incomplete Profile",
+          "Please fill out your profile to proceed.",
+          [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate("Profile"),
+            },
+          ]
+        );
+        return false;
+      }
+    } else {
+      Alert.alert("Error", "Failed to fetch profile data.");
+      return false;
     }
-    const outOfStockItems = cartData.filter((item) => {
-      return isLimitedStock[item.itemId] === "outOfStock";
-    });
+
+    const outOfStockItems = cartData.filter(
+      (item) => isLimitedStock[item.itemId] === "outOfStock"
+    );
 
     if (outOfStockItems.length > 0) {
       Alert.alert(
@@ -670,7 +508,7 @@ const handleRemove = async (item) => {
           .join("\n")}\n\nPlease remove them to proceed.`,
         [{ text: "OK", style: "cancel" }]
       );
-      return;
+      return false;
     }
 
     let insufficientStockItems = [];
@@ -709,18 +547,20 @@ const handleRemove = async (item) => {
       locationdata,
       addressdata,
     });
-  };
+  } catch (error) {
+    console.error("Error in handleProfileCheck:", error.response);
+    Alert.alert("Error", "Something went wrong while fetching profile data.");
+    return false;
+  }
+};
 
-    // Empty cart component
+ 
+
+// for empty cart component
   const EmptyCartComponent = () => {
     return (
       <View style={styles.emptyCartContainer}> 
-      {/* <MaterialIcons
-                  name="shopping-cart"
-                  size={80}
-                  color="#A9A9A9"
-                  style={styles.emptyCartImage}
-                /> */}
+      
       <View style={styles.emptyCartView}>
         <LottieView 
           source={require("../../../../assets/emptyLoading.json")}
@@ -988,7 +828,8 @@ const handleRemove = async (item) => {
 
               <TouchableOpacity
                 style={styles.checkoutButton}
-                onPress={handleProfileCheck}
+                onPress={()=>handleProfileCheck()}
+                
               >
                 <Text style={styles.actionButtonText}>Checkout</Text>
               </TouchableOpacity>
@@ -1007,46 +848,7 @@ const handleRemove = async (item) => {
         removeItem={handleRemove}
       />
 
-      {/* <Modal
-        visible={showOffer}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowOffer(false)}
-        onDismiss={() => {
-          scaleValue.setValue(100);
-        }}
-      >
-        <View style={styles.modalContainer} pointerEvents="auto">
-          <Animated.View
-            style={[
-              styles.modalContent,
-              {
-                transform: [{ scale: scaleValue }],
-              },
-            ]}
-            pointerEvents="auto"
-          >
-            <Text style={styles.offerTitle}>🎁 Special Offer!</Text>
-            <Text style={styles.offerText}>
-              Buy 1kg and Get 1kg Absolutely FREE! 🛍
-            </Text>
-            <Text style={styles.noteText}>
-              <Text style={{ fontWeight: "bold" }}>Note:</Text>
-              This 1kg + 1kg Free Offer is available only once per user and
-              applies only to 1kg bags. Once used, the offer cannot be claimed
-              again. Grab it while it lasts!
-            </Text>
-            <TouchableOpacity
-              style={styles.okButton}
-              onPress={() => {
-                setShowOfferAvail(true), handleAddCheapest1kgBag();
-              }}
-            >
-              <Text style={styles.okButtonText}>Claim Offer</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </Modal> */}
+     
     </View>
   );
 };

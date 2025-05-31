@@ -1,6 +1,4 @@
- 
- 
-import React, { useEffect, useState } from 'react';
+ import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity,
 } from 'react-native';
@@ -89,7 +87,7 @@ const OffersModel = ({ navigation }) => {
         });
       }
 
-      console.log(`Final offers after eligibility check: ${finalOffers}`);
+console.log("Final offers after eligibility check:", JSON.stringify(finalOffers, null, 2));
       
       // If no eligible offers found but we have the example container offers, use them
       // This is just for testing - you can remove this in production
@@ -157,12 +155,12 @@ const OffersModel = ({ navigation }) => {
               offer.offerName.toLowerCase().includes('steel'))
           );
         }
-        // Otherwise when freeContainerStatus IS null, keep container offers
       }
       
       // Pre-process offers to add display-friendly details
       finalOffers = finalOffers.map(offer => {
         const processedOffer = { ...offer };
+        console.log({finalOffers});
         
         // Identify offer type
         if (offer.offerName.toLowerCase().includes('rice vault') || 
@@ -172,6 +170,8 @@ const OffersModel = ({ navigation }) => {
           
           // Parse the container offer format (e.g. "10 + STAINLESS STEEL RICE VAULT - 20KG+")
           const parts = offer.offerName.split('+');
+          console.log("parts",parts);
+          
           processedOffer.displayBuyAmount = parts[0].trim();
           processedOffer.displayFreeItem = parts[1].trim();
           
@@ -203,10 +203,14 @@ const OffersModel = ({ navigation }) => {
               // Extract buy quantity and item
               const buyMatch = buyPart.match(/buy\s+(\d+)\s+(.+)/i) || 
                                buyPart.match(/(\d+)\s*(.+)/i);
+
+
               
               if (buyMatch) {
                 processedOffer.displayBuyQty = buyMatch[1];
                 processedOffer.displayBuyItem = buyMatch[2].trim();
+                console.log("Display Buy Item",processedOffer);
+                
               }
               
               // Extract free quantity and item
@@ -315,25 +319,29 @@ const OffersModel = ({ navigation }) => {
     
     if (isContainerOffer) {
       primaryTitle = `Free ${item.containerCapacity || 'Premium'} Rice Container`;
-      buyDetails = `Buy ${item.displayBuyAmount || item.minQtyKg}KG of Rice`;
+      buyDetails = ` ${item.displayBuyAmount || item.minQtyKg}`;
       freeDetails = item.displayFreeItem || `Premium Rice Storage Container`;
+
     } else {
-      // Regular rice offers
-      const riceVariety = item.displayBuyItem ? 
-        (item.displayBuyItem.includes('-') ? item.displayBuyItem.split('-')[0].trim() : item.displayBuyItem) : 
+      const riceVariety = item.displayBuyItem ? item.displayBuyItem : 
         'Premium Rice';
-        
-      primaryTitle = `${riceVariety} Special Offer`;
+        console.log("rice variety",riceVariety);
+      
       
       // Buy details with size if available
       buyDetails = `Buy ${item.displayBuyQty || item.minQty}`;
+      console.log("buy details",buyDetails);
+      
       if (item.displayBuyKg) {
         buyDetails += ` (${item.displayBuyKg})`;
       }
       buyDetails += ` ${item.displayBuyItem || 'Rice'}`;
+
+      console.log({buyDetails});
+       primaryTitle= buyDetails
       
       // Free details
-      freeDetails = `Get ${item.displayFreeQty || item.freeQty} ${item.displayFreeItem || item.freeItemName} Free`;
+      freeDetails = ` ${item.displayFreeQty || item.freeQty} ${ item.freeItemName} Free`;
     }
 
     return (

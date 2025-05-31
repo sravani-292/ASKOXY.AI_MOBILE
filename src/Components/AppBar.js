@@ -4,7 +4,6 @@ import { getHeaderTitle } from '@react-navigation/elements';
 import { Alert } from "react-native";
 import { DrawerActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 export default function CustomNavigationBar({
   navigation,
   route,
@@ -15,7 +14,6 @@ export default function CustomNavigationBar({
   const [visible, setVisible] = React.useState(false);
   const openMenu = () => setVisible(true);
   const closeMenu = () => setVisible(false);
-
   const title = getHeaderTitle(options, route.name);
 
   console.log(title);
@@ -43,6 +41,8 @@ export default function CustomNavigationBar({
           onPress: async () => {
             try {
               await AsyncStorage.removeItem("userData");
+              
+
               navigation.navigate("Login");
               
             } catch (error) {

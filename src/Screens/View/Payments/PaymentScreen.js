@@ -77,7 +77,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [orderId, setOrderId] = useState("");
   const [orderDate, setOrderDate] = useState(new Date());
   const [updatedDate, setUpdatedate] = useState();
- const [freeItemsDiscount,setFreeItemsDiscount] = useState();
+ const [freeItemsDiscount,setFreeItemsDiscount] = useState("");
   const [isChecked, setIsChecked] = useState(false);
   const [slotsData, setSlotsData] = useState();
   const [onlyOneKg, setOnlyOneKg] = useState(false);
@@ -1397,7 +1397,7 @@ const PaymentDetails = ({ navigation, route }) => {
             <Text style={styles.detailsLabel}>Sub Total</Text>
             <Text style={styles.detailsValue}>₹{subTotal}</Text>
           </View>
-          {freeItemsDiscount && (
+          {freeItemsDiscount>0 && (
              <View style={styles.paymentRow}>
               <Text style={styles.detailsLabel}>Discount</Text>
               <Text style={styles.detailsValue}>-₹{freeItemsDiscount}</Text>

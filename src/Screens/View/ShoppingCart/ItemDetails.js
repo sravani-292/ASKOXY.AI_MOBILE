@@ -20,6 +20,14 @@ import Icon from "react-native-vector-icons/Ionicons";
 import BASE_URL, { userStage } from "../../../../Config";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
+import {
+  handleCustomerCartData,
+  handleGetProfileData,
+  handleUserAddorIncrementCart,
+  handleDecrementorRemovalCart,
+  handleRemoveItem,
+  handleRemoveFreeItem,
+} from "../../../../src/ApiService";
 const ItemDetails = ({ route, navigation }) => {
   const { item } = route?.params;
   console.log("Item details page", item);
@@ -52,20 +60,12 @@ const ItemDetails = ({ route, navigation }) => {
     console.log("fetching cart data");
 
     try {
-      const response = await axios.get(
-        BASE_URL +
-          `cart-service/cart/customersCartItems?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+     
+      const response = await handleCustomerCartData(customerId)
       console.log("API Response from cart", response);
       const cartData = response?.data?.customerCartResponseList;
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
-        console.error("cartData is empty or invalid:", cartData);
         setCartData([]);
         setCartItems({});
         setIsLimitedStock({});
@@ -80,9 +80,10 @@ const ItemDetails = ({ route, navigation }) => {
         if (
           !item.itemId ||
           item.cartQuantity === undefined ||
-          item.quantity === undefined
+          item.quantity === undefined ||
+          item.status != "ADD"
         ) {
-          console.error("Invalid item in cartData:", item);
+          // console.error("Invalid item in cartData:", item);
           return acc;
         }
         acc[item.itemId] = item.cartQuantity;
@@ -140,89 +141,47 @@ const ItemDetails = ({ route, navigation }) => {
   };
 
   const decreaseCartItem = async (item) => {
-    console.log("decrememt cart");
-
-    try {
-      const currentQuantity = cartItems[item.itemId];
-      console.log("Decreasing item ID:", currentQuantity);
-
-      if (currentQuantity > 1) {
-        const response = await axios.patch(
-          BASE_URL + "cart-service/cart/decrementCartData",
-          {
-            customerId: customerId,
-            itemId: item.itemId,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("Item decremented successfully", response.data);
-
-        fetchCartData();
-      } else {
-        Alert.alert(
-          "Remove Item",
-          "Cart quantity is at the minimum. Do you want to remove this item from the cart?",
-          [
-            {
-              text: "Cancel",
-              style: "cancel",
-            },
-            {
-              text: "Yes, Remove",
-              onPress: () => removeCartItem(item),
-            },
-          ],
-          { cancelable: false }
-        );
-      }
-    } catch (error) {
-      console.error("Failed to decrease cart item:", error);
-    }
-  };
+     // console.log("item to decrement", item);
+     const data = {
+       customerId: customerId,
+       itemId: item.itemId,
+     };
+     // console.log({data})
+     try {
+       const response = await handleDecrementorRemovalCart(
+         data,
+         );
+      //  console.log("Decrement response", response);
+       Alert.alert("Success", response.data.errorMessage);
+       fetchCartData();
+     } catch (error) {
+       console.log("Error decrementing cart item:", error);
+     }
+   };
 
   const increaseCartItem = async (item) => {
-    try {
-      console.log("Increasing item ID:", item.itemId);
-
-      const currentQuantity = cartItems[item.itemId] || 0;
-
-      const response = await axios.patch(
-        BASE_URL + `cart-service/cart/incrementCartData`,
-        {
-          customerId: customerId,
-          itemId: item.itemId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Item incremented successfully");
-
-      fetchCartData();
-    } catch (error) {
-      console.error("Failed to increase cart item:", error);
-    }
-  };
+     const data = {
+       customerId: customerId,
+       itemId: item.itemId,
+     };
+     try {
+       const response = await handleUserAddorIncrementCart(data);
+      //  console.log("Increment response", response);
+       fetchCartData();
+     } catch (error) {
+       console.error("Error incrementing cart item:", error.response);
+     }
+   };
 
   const getCartItemById = (targetCartId) => {
-    console.log({ targetCartId });
+    // console.log({ targetCartId });
 
     const filteredCart = cartData.filter(
       (item) => item.itemId === targetCartId
     );
 
     if (filteredCart.length > 0) {
-      console.log("Item found:", filteredCart[0]);
+      // console.log("Item found:", filteredCart[0]);
       return filteredCart[0];
     } else {
       console.log("No item found with cartId:", targetCartId);
@@ -230,62 +189,7 @@ const ItemDetails = ({ route, navigation }) => {
     }
   };
 
-  const removeCartItem = async () => {
-    console.log("removed items from cart", cartData);
-    console.log("Item", item.itemId);
-    const getRemoveId = getCartItemById(item.itemId);
-   
-    console.log("Item found:", getRemoveId);
-
-    if (getRemoveId) {
-      console.log("Item found:", getRemoveId);
-    } else {
-      console.log("Item not found with cartId:", getRemoveId);
-    }
-
-    Alert.alert(
-      "Remove Item",
-      "Are you sure you want to remove this item from your cart?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              console.log("Removing cart item with ID:", getRemoveId);
-
-              const response = await axios.delete(
-                BASE_URL + "cart-service/cart/remove",
-                {
-                  data: {
-                    id: getRemoveId.cartId,
-                  },
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-
-              console.log("Item removed successfully", response.data);
-
-              fetchCartData();
-            } catch (error) {
-              console.error(
-                "Failed to remove cart item:",
-                error.response || error.message
-              );
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  };
+  
 
   const getProfile = async () => {
     try {
@@ -301,7 +205,7 @@ const ItemDetails = ({ route, navigation }) => {
       });
 
       if (response.status === 200) {
-        console.log("profile get call response");
+        // console.log("profile get call response");
         setUser(response.data);
       }
     } catch (error) {
@@ -309,38 +213,137 @@ const ItemDetails = ({ route, navigation }) => {
       showToast("Error loading profile");
     }
   };
-  const handleAddToCart = async (item) => {
-    console.log("Adding item to cart:", item);
 
+
+ const handleAddToCart = async (item) => {
     if (!userData) {
       Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
         { text: "Cancel" },
+        { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
       return;
     }
 
-    const data = { customerId: customerId, itemId: item.itemId };
-    try {
-      const response = await axios.post(
-        BASE_URL + "cart-service/cart/add_Items_ToCart",
-        data,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      Alert.alert(response.data.errorMessage);
-      console.log("Added item to cart:", response.data);
-      GoogleAnalyticsService.addToCart(
-        item.itemId,
-        item.itemName,
-        item.itemPrice,
-        1
-      ) 
+    const data = {
+      customerId: customerId,
+      itemId: item.itemId,
+    };
 
-      fetchCartData();
+    try {
+      // Add item to cart
+      const response = await handleUserAddorIncrementCart(data);
+      // console.log("response",response);
+      
+      Alert.alert(
+        "Success",
+        response.data.errorMessage || "Item added to cart"
+      );
+       fetchCartData();
+
+      // Fetch active and eligible offers
+      const [activeRes, eligibleRes] = await Promise.all([
+        fetch(`${BASE_URL}cart-service/cart/activeOffers`),
+        fetch(`${BASE_URL}cart-service/cart/userEligibleOffer/${customerId}`),
+      ]);
+
+      const activeOffers = await activeRes.json();
+      const userEligibleOffers = await eligibleRes.json();
+
+      // Filter only active offers
+      const validActiveOffers = activeOffers.filter((offer) => offer.active);
+      if (!validActiveOffers.length) return;
+
+      // Extract used offer weights and names
+      const usedOfferWeights = userEligibleOffers
+        .filter((o) => o.eligible)
+        .map((o) => o.weight);
+      const usedOfferNames = userEligibleOffers
+        .filter((o) => o.eligible)
+        .map((o) => o.offerName);
+
+      const itemWeight = item.weight;
+      let alertShown = false;
+
+      // Check if user has already used an offer for this weight
+      const hasUsedOfferForWeight = usedOfferWeights.includes(itemWeight);
+
+      // 1️⃣ Check for already used offer for the same weight (non-container offers)
+      if (hasUsedOfferForWeight && itemWeight !== 10 && itemWeight !== 26) {
+        const usedOffer = userEligibleOffers.find(
+          (o) => o.eligible && o.weight === itemWeight
+        );
+        if (usedOffer) {
+          setTimeout(() => {
+            Alert.alert(
+              "Offer Already Availed",
+              `You have already availed the ${usedOffer.offerName} for ${itemWeight}kg.`
+            );
+          }, 1000);
+
+          alertShown = true;
+        }
+      }
+
+      // 2️⃣ Container Offer (10kg or 26kg, only one per user)
+      if (!alertShown && (itemWeight === 10 || itemWeight === 26)) {
+        // Check if user has already used a container offer (10kg or 26kg)
+        const hasUsedContainer = userEligibleOffers.some(
+          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26)
+        );
+
+        if (hasUsedContainer) {
+          setTimeout(() => {
+            Alert.alert(
+              "Container Offer Already Availed",
+              "You have already availed a container offer. Only one container offer (10kg or 26kg) can be used."
+            );
+          }, 1000);
+          alertShown = true;
+        } else {
+          const matchedContainerOffer = validActiveOffers.find(
+            (offer) =>
+              offer.minQtyKg === itemWeight &&
+              (offer.minQtyKg === 10 || offer.minQtyKg === 26) &&
+              !usedOfferNames.includes(offer.offerName)
+          );
+
+         if (matchedContainerOffer) {
+                setTimeout(() => {
+                      Alert.alert(
+                        "Container Offer",
+                        `${matchedContainerOffer.offerName} FREE! `
+                      //  ` Buy ${matchedContainerOffer.minQtyKg}kg and get a ${matchedContainerOffer.freeItemName} free.`
+                      );
+                    }, 1000);
+                    alertShown = true;
+            }
+        }
+      }
+
+      // 3️⃣ Special Offer (2+1 for 1kg or 5+2 for 5kg)
+      if (!alertShown && (itemWeight === 1 || itemWeight === 5)) {
+        const matchedSpecialOffer = validActiveOffers.find(
+          (offer) =>
+            offer.minQtyKg === itemWeight &&
+            (offer.minQtyKg === 1 || offer.minQtyKg === 5) &&
+            !usedOfferNames.includes(offer.offerName) &&
+            offer.freeItemName.toLowerCase() === item.itemName.toLowerCase()
+        );
+
+        if (matchedSpecialOffer) {
+          console.log("Matched Special Offer:", matchedSpecialOffer);
+          setTimeout(() => {
+            Alert.alert(
+              "Special Offer",
+              `${matchedSpecialOffer.offerName} is active! Buy ${matchedSpecialOffer.minQty} bag(s) of ${matchedSpecialOffer.minQtyKg}kg and get ${matchedSpecialOffer.freeQty}kg free.`
+            );
+          }, 1000);
+          alertShown = true;
+        }
+      }
     } catch (error) {
-      console.error("Error adding item to cart:", error.response);
+      console.error("Add to cart error", error);
+      Alert.alert("Error", "Failed to add item to cart. Please try again.");
     }
   };
 
@@ -428,7 +431,7 @@ const ItemDetails = ({ route, navigation }) => {
               
                 <TouchableOpacity
                   style={styles.quantityButton}
-                  onPress={() => handleDecrease(item)}
+                  onPress={() => decreaseCartItem(item)}
                   disabled={loadingItems[item.itemId]}
                 >
                   <Text style={styles.quantityButtonText}>-</Text>

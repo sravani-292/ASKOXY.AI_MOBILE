@@ -1,8 +1,9 @@
-import React from 'react';
+import React,{useCallback} from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, SafeAreaView, StatusBar,Platform,Alert,Dimensions,Modal } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, Feather,MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from "@react-navigation/native";
 import axios from 'axios';
 import * as Clipboard from "expo-clipboard";
 import BASE_URL from "../../../../Config";
@@ -131,10 +132,18 @@ export default function ProfileSettings({ navigation }) {
     return name?.charAt(0).toUpperCase();
   };
 
-  React.useEffect(() => {
-    getProfile();
-    profile()
-  }, []);
+  // React.useEffect(() => {
+  //   getProfile();
+  //   profile()
+  // }, []);
+
+
+ useFocusEffect(
+    useCallback(() => {
+      getProfile();
+    profile();
+    }, [])
+  );
 
    const handleLogout = () => {
       Alert.alert(
@@ -163,20 +172,23 @@ export default function ProfileSettings({ navigation }) {
     };
 
     const profile = async () => {
+      console.log("userId",customerId);
+      
       if (userData) {
         try {
           const response = await axios({
             method: "get",
-            url: BASE_URL + `user-service/getProfile/${userData.userId}`,
-            headers: {
-              Authorization: `Bearer ${userData.accessToken}`,
-            },
+            url: BASE_URL + `user-service/getProfile/${customerId}`,
+            // headers: {
+            //   Authorization: `Bearer ${userData.accessToken}`,
+            // },
           });
+          console.log("get profile call response",response);
           
           setChainId(response.data.multiChainId);
           setCoin(response.data.coinAllocated);
         } catch (error) {
-          console.error("Error fetching profile:", error);
+          console.error("Error fetching profile:", error.response);
         }
       }
     };
@@ -211,7 +223,7 @@ export default function ProfileSettings({ navigation }) {
       }
     } catch (error) {
       setProfileLoader(false);
-      console.error("ERROR", error);
+      console.error("ERROR", error.response);
     } finally {
       setProfileLoader(false);
     }

@@ -98,7 +98,10 @@ const CoinsTransferrModal = ({ visible, onClose, availableCoins }) => {
       ],
       { cancelable: false }
     );
+      setRecipientMobile("");
+        setAmount("");
         onClose();
+      
       } else {
         Alert.alert("Failed", response.data.message || "Transfer failed.");
       }
