@@ -67,12 +67,47 @@ export default function App() {
       }
     };
 
-    const checkInitialLink = async () => {
-      const url = await Linking.getInitialURL();
-      if (url) {
-        handleDeepLink({ url });
+    const resolveDynamicLink = async (shortLink) => {
+  try {
+    const API_KEY = 'AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE'; // Replace with your real key if needed
+    const response = await fetch(
+      `https://firebasedynamiclinks.googleapis.com/v1/shortLinks/resolve?shortDynamicLink=${encodeURIComponent(shortLink)}&key=${API_KEY}`
+    );
+    const data = await response.json();
+    const resolvedUrl = data.previewLink || data.deepLink;
+
+    if (resolvedUrl) {
+      const parsed = Linking.parse(resolvedUrl);
+      const { queryParams } = parsed;
+
+      console.log('🎯 UTM Params:', queryParams);
+
+      const utmSource = queryParams?.utm_source;
+      const utmMedium = queryParams?.utm_medium;
+      const utmCampaign = queryParams?.utm_campaign;
+
+      if (utmSource || utmCampaign) {
+        Alert.alert('Campaign Info', `Source: ${utmSource}\nCampaign: ${utmCampaign}`);
       }
-    };
+    }
+  } catch (error) {
+    console.error('🔥 Error resolving dynamic link:', error);
+  }
+};
+
+const checkInitialLink = async () => {
+  const url = await Linking.getInitialURL();
+  if (url) {
+    console.log('🔗 Initial URL:', url);
+
+    if (url.includes('page.link')) {
+      await resolveDynamicLink(url); // UTM extractor
+    }
+
+    handleDeepLink({ url }); // Navigate to correct screen
+  }
+};
+
 
     const subscription = Linking.addEventListener('url', handleDeepLink);
     checkInitialLink();

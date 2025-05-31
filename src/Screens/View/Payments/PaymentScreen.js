@@ -357,12 +357,12 @@ const PaymentDetails = ({ navigation, route }) => {
      
       const cartResponse = response.data?.customerCartResponseList;
       const onlyOneKg = items.every((item) => item.weight === 1);
-      setOnlyOneKg(onlyOneKg);
-      console.log(
-        onlyOneKg
-          ? "✅ All items are 1kg bags"
-          : "❌ There are items other than 1kg bags"
-      );
+      // setOnlyOneKg(onlyOneKg);
+      // console.log(
+      //   onlyOneKg
+      //     ? "✅ All items are 1kg bags"
+      //     : "❌ There are items other than 1kg bags"
+      // );
 
       setCartData(cartResponse);
       const totalDeliveryFee = response.data?.customerCartResponseList.reduce(
@@ -371,11 +371,14 @@ const PaymentDetails = ({ navigation, route }) => {
       );
       console.log("gst amount to pay",response.data.totalGstAmountToPay);
       const totalGstAmountToPay = response.data?.totalGstAmountToPay
-      setFreeItemsDiscount(response.data?.discountedByFreeItems)
+      setFreeItemsDiscount(response.data?.discountedByFreeItems || 0);
       setTotalGstSum(response.data?.totalGstAmountToPay);
       setDeliveryBoyFee(totalDeliveryFee);
-      setGrandTotal(response.data?.amountToPay + totalGstAmountToPay);
-      setOfferAvailable(response.data.offerElgible);
+      const amountToPay = Number(response.data?.amountToPay || 0);
+      const gst = Number(totalGstAmountToPay || 0);
+setGrandTotal(amountToPay + gst);
+      // setGrandTotal(response.data?.amountToPay + totalGstAmountToPay);
+      // setOfferAvailable(response.data.offerElgible);
     } catch (error) {
       // setError("Failed to fetch cart data");
     }
@@ -610,7 +613,7 @@ const PaymentDetails = ({ navigation, route }) => {
 
     console.log(addressDetails);
 
-    const avail = offeravailable === "YES" ? "YES" : null;
+    // const avail = offeravailable === "YES" ? "YES" : null;
 
     postData = {
       address: addressDetails.address,
@@ -638,7 +641,7 @@ const PaymentDetails = ({ navigation, route }) => {
       timeSlot: selectedTimeSlot,
       latitude: addressDetails.latitude ?? 0,
       longitude: addressDetails.longitude ?? 0,
-      freeTicketAvailable: avail,
+      freeTicketAvailable: null,
     };
 
     console.log({ postData });
@@ -1225,7 +1228,6 @@ const PaymentDetails = ({ navigation, route }) => {
         {Platform.OS === "ios" ? (
           <View
             style={styles.selectButton}
-            onPress={() => setModalVisible(true)}
           >
             <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
               Your order will be delivered on:
@@ -1233,29 +1235,28 @@ const PaymentDetails = ({ navigation, route }) => {
             <Text style={styles.selectButtonText}>
               {!selectedDay && !selectedTimeSlot
                 ? "Select Date & Time"
-                : `${updatedDate} (${selectedDay}) ,${selectedTimeSlot}`}
+                : `${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
             </Text>
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.selectButton}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={styles.selectButtonText}>
+              style={styles.selectButton}
+              onPress={() => setModalVisible(true)}
+            >
               {!selectedDay && !selectedTimeSlot ? (
-                "Select Date & Time"
+                <Text style={styles.selectButtonText}>Select Date & Time</Text>
               ) : (
-                <>
-                  <Text style={[styles.selectButtonText, { marginBottom: 10 }]}>
+                <View>
+                  <Text style={[styles.selectButtonText, { marginBottom: 4 }]}>
                     Your order will be delivered on:
                   </Text>
-                  {"\n"}
-                  {`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
-                </>
+                  <Text style={styles.selectButtonText}>
+                    {`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}
+                  </Text>
+                </View>
               )}
-            </Text>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+           )}
         <TimeSlotModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
@@ -1389,7 +1390,7 @@ const PaymentDetails = ({ navigation, route }) => {
               >
                 10 days
               </Text>{" "}
-              of your order being delivered.          
+              of your order being delivered.
             </Text>
           </TouchableOpacity>
           <Text style={styles.detailsHeader}>Payment Details</Text>
@@ -1397,7 +1398,7 @@ const PaymentDetails = ({ navigation, route }) => {
             <Text style={styles.detailsLabel}>Sub Total</Text>
             <Text style={styles.detailsValue}>₹{subTotal}</Text>
           </View>
-          {freeItemsDiscount>0 && (
+          {freeItemsDiscount!==0 && (
              <View style={styles.paymentRow}>
               <Text style={styles.detailsLabel}>Discount</Text>
               <Text style={styles.detailsValue}>-₹{freeItemsDiscount}</Text>
@@ -1429,7 +1430,6 @@ const PaymentDetails = ({ navigation, route }) => {
 
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabelBold}>Grand Total</Text>
-            {/* <Text style={styles.detailsValueBold}>₹{grandTotalAmount+deliveryBoyFee}</Text> */}
             <Text style={styles.detailsValueBold}>
               ₹{Number(grandTotalAmount || 0).toFixed(2)}
             </Text>
