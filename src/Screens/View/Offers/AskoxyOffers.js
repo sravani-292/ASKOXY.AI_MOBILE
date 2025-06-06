@@ -56,11 +56,11 @@ const AskoxyOffers = () => {
                   style={styles.icon}
                 />
                 <Text style={styles.offerText}>
-                  Buy 10kg Get 18KG+ Steel Container
+                  Buy 10kgs or 26kgs Get 20KG+ Steel Container
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.offerButton}>
+              {/* <TouchableOpacity style={styles.offerButton}>
                 <MaterialIcons
                   name="kitchen"
                   size={18}
@@ -70,7 +70,7 @@ const AskoxyOffers = () => {
                 <Text style={styles.offerText}>
                   Buy 26kg Get 35KG+ Steel Container
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
           </View>
 
@@ -359,14 +359,14 @@ const AskoxyOffers = () => {
                     </View>
                     <Text style={styles.offerDetail}>
                       <Text style={styles.offerHighlight}>
-                        🧧 Buy 10 KG Rice
+                        🧧 Buy 10KGS or 26KGS Rice
                       </Text>{" "}
-                      — Get a FREE 18+ KG Steel Container{" "}
+                      — Get a FREE 20+ KG Steel Container{" "}
                       <Text style={styles.offerWorth}>(Worth ₹1800)</Text>
                     </Text>
                   </View>
 
-                  <View style={styles.offerItem}>
+                  {/* <View style={styles.offerItem}>
                     <View style={styles.bulletPoint}>
                       <Text style={styles.bulletIcon}>•</Text>
                     </View>
@@ -377,7 +377,7 @@ const AskoxyOffers = () => {
                       — Get a FREE 35+ KG Steel Container{" "}
                       <Text style={styles.offerWorth}>(Worth ₹2300)</Text>
                     </Text>
-                  </View>
+                  </View> */}
                   
                   <View style={styles.importantNotice}>
                     <Text style={styles.importantText}>

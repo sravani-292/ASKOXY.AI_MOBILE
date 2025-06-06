@@ -124,7 +124,7 @@ const[show,setShow]=useState(false)
     {
       id:3,
       question:"What is the Free Steel Container offer?",
-      answer:"Customers who purchase a 26kg rice bag will receive a FREE steel rice container. However, the container remains the property of OXY Group  until ownership is earned."
+      answer:"Customers who purchase a 26kg or 10kg rice bag will receive a FREE steel rice container. However, the container remains the property of OXY Group  until ownership is earned."
     },
     {
       id:4,

@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../../../../Redux/constants/theme";
 import { Alert } from "react-native";
+import PriceBreakdownModal from "./PriceBreakdownModal";
 import { TouchableWithoutFeedback } from "react-native";
 import {
   handleCustomerCartData,
@@ -29,6 +30,7 @@ import {
   handleRemoveItem,
   handleRemoveFreeItem,
 } from "../../../../src/ApiService";
+import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");
 import BASE_URL, { userStage } from "../../../../Config";
@@ -49,6 +51,9 @@ const CartScreen = () => {
   const [grandTotal, setGrandTotal] = useState(null);
   const [loadingItems, setLoadingItems] = useState({});
   const [removalLoading, setRemovalLoading] = useState({});
+  const [itemsGstAmount, setItemsGstAmount] = useState("");
+  const [goldMakingCost, setGoldMakingCost] = useState("");
+  const [goldGstAmount, setGoldGstAmont] = useState("");
 
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
@@ -56,6 +61,7 @@ const CartScreen = () => {
   const [freeItemPrice, setFreeItemPrice] = useState("");
   const [gstAmount, setGstAmount] = useState("");
   const [totalCartValue, setTotalCartValue] = useState("");
+  const [showPriceBreakdown, setShowPriceBreakdown] = useState(false);
 
   const [containerAddedPrice, setContainerAddedPrice] = useState(false);
   const [itemToRemove, setItemToRemove] = useState(null);
@@ -198,8 +204,7 @@ const CartScreen = () => {
     // }, 5000);
   };
 
-  const fetchCartData = async () => {
-    
+const fetchCartData = async () => {
     try {
       setLoading(true);
       const response = await handleCustomerCartData(customerId);
@@ -228,18 +233,33 @@ const CartScreen = () => {
             ]
           );
         }
-       
-      
       });
-      
+
       setTotalCartValue(response.data?.totalCartValue);
-      
+
       setFreeItemPrice(response.data?.freeItemPriceTotal);
       // console.log("totalGstAmountToPay", response.data?.totalGstAmountToPay);
       setGstAmount(response.data?.totalGstAmountToPay);
       setLoading(false);
       setGrandTotal(response.data.amountToPay);
       const cartData = response?.data?.customerCartResponseList;
+      const itemsGst = cartData.reduce((sum, item) => {
+        if ((item?.goldGst || 0) === 0) {
+          return sum + (item?.gstAmount || 0);
+        }
+        return sum;
+      }, 0);
+      setItemsGstAmount(itemsGst);
+      const totalGoldGst = cartData.reduce(
+        (sum, item) => sum + (item?.goldGst || 0),
+        0
+      );
+      setGoldGstAmont(totalGoldGst);
+      const totalGoldMakingCost = cartData.reduce(
+        (sum, item) => sum + (item?.goldMakingCost || 0),
+        0
+      );
+      setGoldMakingCost(totalGoldMakingCost);
       const weightArray = cartData?.map((item) => item.weight);
       if (!cartData || !Array.isArray(cartData)) {
         setCartData([]);
@@ -282,9 +302,8 @@ const CartScreen = () => {
       console.log(error);
       setError("Failed to load cart data");
       setLoading(false);
-    }
-  };
-
+    }
+  };
  
 
   useFocusEffect(
@@ -782,7 +801,7 @@ const handleProfileCheck = async () => {
         <>
           {!loading && (
             <View style={styles.grandTotalRowContainer}>
-              {totalCartValue > 0 && (
+              {/* {totalCartValue > 0 && (
                 <View style={styles.row}>
                   <Text style={styles.label}>Sub Total:</Text>
                   <Text style={styles.value}>₹{totalCartValue}</Text>
@@ -801,7 +820,7 @@ const handleProfileCheck = async () => {
                   <Text style={styles.label}>GST:</Text>
                   <Text style={styles.value}>+ ₹{gstAmount?.toFixed(2)}</Text>
                 </View>
-              )}
+              )} */}
 
               <View style={styles.grandTotalRow}>
                 <Text style={styles.grandTotalLabel}>Grand Total:</Text>
@@ -809,8 +828,39 @@ const handleProfileCheck = async () => {
                   ₹{grandTotal + gstAmount}
                 </Text>
               </View>
+              <View style={{ flexDirection: "row",justifyContent:"flex-end"}}>
+                <TouchableOpacity
+                  style={styles.priceBreakupButton}
+                  onPress={() => setShowPriceBreakdown(true)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name="information-circle-outline"
+                    size={18}
+                    color="#4B0082"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.priceBreakupText}>
+                    View Details
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
+
+          {showPriceBreakdown && (
+            <PriceBreakdownModal
+              visible={showPriceBreakdown}
+              onClose={() => setShowPriceBreakdown(false)}
+              totalCartValue={totalCartValue}
+              freeItemPrice={freeItemPrice}
+              itemsGstAmount={itemsGstAmount}
+              goldGstAmount={goldGstAmount}
+              goldMakingCost={goldMakingCost}
+              gstAmount={gstAmount}
+              grandTotal={grandTotal}
+            />
+          )}
 
           {!loading && (
             <View style={styles.actionButtonsContainer}>

@@ -73,6 +73,9 @@ import OfferLetters from "../Dashboard/offerletters";
 import StudyAbroad from "../StudyAbroad";
 import AllService from "../AllService";
 import AccountDeletionScreen from "../Authorization/AccountDeletion";
+
+import * as Linking from 'expo-linking';
+
 const json = require("../../app.json"); 
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -81,7 +84,24 @@ const LoadingScreen = () => (
   </View>
 );
 
+// Define deep link configuration
+const linking = {
+  prefixes: [
+    'https://askoxy.ai',
+    'askoxy.ai://'
+  ],
+  config: {
+    screens: {
+      Home: 'home',
+      Product: 'Rice Product/:id',
+      OrderSummary: 'order-summary/:id',
+      // Add more routes here as needed
+    },
+  },
+};
+
 export default function StacksScreens() {
+
   const Stack = createStackNavigator();
   const [platform, setPlatform] = useState("");
   const [updateStatus, setUpdateStatus] = useState(null);
@@ -101,6 +121,7 @@ export default function StacksScreens() {
       setCurrentVersion(parseInt(json.expo?.android?.versionCode || "1", 10));
     }
   }, []);
+  
 
   useEffect(() => {
     if (platform) {
@@ -171,9 +192,9 @@ export default function StacksScreens() {
     return <LoadingScreen />;
   }
 
- 
   return (
     <Stack.Navigator
+      linking={linking}
       initialRouteName={needsUpdate ? "App Update" : "Service Screen"}
       screenOptions={{
         headerShown: true,
@@ -326,7 +347,7 @@ export default function StacksScreens() {
         name="Explore Gpt"
         component={UniversityGPT}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" },
+          headerStyle: { backgroundColor: "#3d2a71" }
         }}
       />
       <Stack.Screen

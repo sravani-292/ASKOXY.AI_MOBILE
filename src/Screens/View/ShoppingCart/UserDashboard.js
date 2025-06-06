@@ -442,7 +442,7 @@ const UserDashboard = ({ route }) => {
       if (!alertShown && (itemWeight === 10 || itemWeight === 26)) {
         // Check if user has already used a container offer (10kg or 26kg)
         const hasUsedContainer = userEligibleOffers.some(
-          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26)
+          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26 && uo.units === "kgs")
         );
 
         if (hasUsedContainer) {

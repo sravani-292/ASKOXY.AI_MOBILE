@@ -25,15 +25,17 @@ const linking = {
   prefixes: [
     Linking.createURL('/'),
     'https://oxyrice.page.link',
+    'exp://192.168.0.124:8081'
   ],
   config: {
     screens: {
-      // Offer: 'offer/:id?',
-      Product: 'offer/:id',
+      OxyLoans: 'offer/:id',
+      'Rice Products': 'rice-products/:id?',
       NotFound: '*',
     },
   },
 };
+
 
 export default function App() {
   const navigationRef = useRef();
@@ -51,21 +53,45 @@ export default function App() {
 
 
   useEffect(() => {
-    const handleDeepLink = (event) => {
-      const url = event.url;
-      const { path, queryParams } = Linking.parse(url);
+   const handleDeepLink = (event) => {
+  const url = event.url;
+  const { path, queryParams } = Linking.parse(url);
 
-      console.log('🔗 Dynamic link opened:', url);
-      console.log('Parsed path:', path, 'Query:', queryParams);
+  console.log('🔗 Dynamic link opened:', url);
+  console.log('Parsed path:', path, 'Query:', queryParams);
 
-      if (path && navigationRef.current) {
-        const segments = path.split('/');
-        const screen = segments[0];
-        const id = segments[1];
+  // Handle query-based navigation (e.g., ?screen=Rice Products&id=123)
+  if (queryParams?.screen && navigationRef.current) {
+    const screenName = queryParams.screen;
+    const id = queryParams.id;
 
-        navigationRef.current.navigate(screen.charAt(0).toUpperCase() + screen.slice(1), { id });
-      }
+    // Optional: validate screen name or map it if needed
+    if (screenName === 'Rice Products') {
+      navigationRef.current.navigate(screenName, { id });
+      return;
+    }
+  }
+
+  // Fallback path-based navigation
+  if (path && navigationRef.current) {
+    const segments = path.split('/');
+    const screenKey = segments[0];
+    const id = segments[1];
+    
+    const pathMap = {
+      'rice-products': 'Rice Products',
+      'offer': 'OxyLoans',
     };
+
+    const screenName = pathMap[screenKey];
+    if (screenName) {
+      navigationRef.current.navigate(screenName, { id });
+    } else {
+      console.warn('No screen mapped for path:', screenKey);
+    }
+  }
+};
+
 
     const resolveDynamicLink = async (shortLink) => {
   try {

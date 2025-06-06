@@ -613,6 +613,8 @@ setGrandTotal(amountToPay + gst);
 
     console.log(addressDetails);
 
+    const paymentMode = grandTotalAmount === 0 ? "COD" : selectedPaymentMode;
+
     // const avail = offeravailable === "YES" ? "YES" : null;
 
     postData = {
@@ -622,7 +624,7 @@ setGrandTotal(amountToPay + gst);
       customerId: customerId,
       flatNo: addressDetails.flatNo,
       landMark: addressDetails.landMark,
-      orderStatus: selectedPaymentMode,
+      orderStatus: paymentMode,
       pincode: addressDetails.pincode,
       latitude: addressDetails.latitude ?? 0,
       longitude: addressDetails.longitude ?? 0,

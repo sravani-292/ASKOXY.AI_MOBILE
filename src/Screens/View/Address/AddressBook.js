@@ -136,7 +136,7 @@ const AddressBook = ({ route }) => {
 
     setSelectedAddress(address);
     const value =
-      address.address + "," + address.landMark + "," + address.pincode;
+      address.address + "," + address.landMark + ","+address.area+"," + address.pincode;
     console.log({ value });
     getCoordinates(value);
   };
@@ -231,6 +231,8 @@ const AddressBook = ({ route }) => {
       locationdata.address +
       "," +
       locationdata.landMark +
+      "," +
+      locationdata.area +
       "," +
       locationdata.pincode;
     console.log("value for saving api", value);

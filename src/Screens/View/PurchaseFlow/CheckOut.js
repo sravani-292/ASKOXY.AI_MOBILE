@@ -261,6 +261,8 @@ const CheckOut = ({ navigation, route }) => {
       "," +
       locationData.landMark +
       "," +
+      locationData.area +
+      "," +
       locationData.pincode;
 
     if (
