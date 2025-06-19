@@ -3,16 +3,24 @@ import { View, Text, TouchableOpacity, Alert, ScrollView, StyleSheet,ActivityInd
 import axios from "axios";
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../Config";
-
+import {
+  getAllCampaignDetails,
+  getUserFeedback,
+  submitUserIntrest,
+  handleGetProfileData,
+} from "../ApiService";
+import UserTypeModal from "./UserTypeModal";
 const { width, height } = Dimensions.get("window");
- 
-const FreeContainer = ({navigation}) => {
+ const FreeContainer = ({navigation}) => {
   const userData = useSelector((state) => state.counter);
-//   console.log({ userData });
+  const token = userData.accessToken;
+  const customerId = userData.userId;
   const [loading, setLoading] = useState(false);
   const[AlreadyInterested,setAlreadyInterested]=useState(false)
   const[profileData,setProfileData]=useState()
-// const[number,setNumber]=useState()
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedUserTypes, setSelectedUserTypes] = useState("");
+
     console.log("userData", userData);
     let number;
 
@@ -29,109 +37,133 @@ const FreeContainer = ({navigation}) => {
     }
   },[])
 
-  const getProfile = async () => {
-    axios({
-     method:"get",
-     url:BASE_URL+ `user-service/customerProfileDetails?customerId=${userData.userId}`
-    })
-    .then((response)=>{
-     console.log(response.data)
-     setProfileData(response.data)
-    })
-    .catch((error)=>{
-     console.log(error.response.data)
-    })
-   };
-  
-    function getCall(){
-      let data={
-        userId: userData.userId
+
+const getProfile = async () => {
+    console.log("customerId",customerId);
+     try {
+      const response = await handleGetProfileData(customerId);
+      // console.log("Profile Response:", response);
+
+      if (response && response.status === 200) {
+        setProfileData(response.data); // assuming setProfileData is defined
+      } else {
+        console.warn("Unexpected response status:", response.status);
       }
-      // console.log({data})
-      axios.post(BASE_URL+`marketing-service/campgin/allOfferesDetailsForAUser`,data)
-      .then((response)=>{
-        console.log(response.data)
-        const hasFreeAI = response.data.some(item => item.askOxyOfers === "FREESAMPLE");
+    } catch (error) {
+      console.error("Failed to fetch profile:", error);
+    }
+  };
   
-    if (hasFreeAI) {
-      // Alert.alert("Yes", "askOxyOfers contains FREEAI");
-      setAlreadyInterested(true)
-    } else {
-      // Alert.alert("No","askOxyOfers does not contain FREEAI");
-      setAlreadyInterested(false)
-    }
-      })
-      .catch((error)=>{
-        console.log(error.response)
-      })
-    }
-
-  function interestedfunc() {
-   if (userData == null) {
-         Alert.alert("Alert", "Please login to continue", [
-           { text: "OK", onPress: () => navigation.navigate("Login") },
-           { text: "Cancel" },
-         ]);
-         return;
-       } 
-     
-       console.log("varalakshmi");
-     
-       let number = null; 
-     
-       if (profileData?.whatsappNumber && profileData?.mobileNumber) {
-         console.log("sravani");
-         number = profileData.whatsappNumber;
-         console.log("whatsapp number", number);
-       } else if (profileData?.whatsappNumber && profileData?.whatsappNumber !== "") {
-         number = profileData.whatsappNumber;
-       } else if (profileData?.mobileNumber && profileData?.mobileNumber !== "") {
-         number = profileData.mobileNumber;
+  const getCall = async () => {
+     try {
+       const data = {
+         userId: userData.userId,
+       };
+ 
+       const response = await getUserFeedback(data);
+ 
+       const hasFreeAI = response?.data?.some(
+         (item) => item.askOxyOfers === "FREESAMPLE"
+       );
+ 
+       if (hasFreeAI) {
+         setAlreadyInterested(true);
+       } else {
+         setAlreadyInterested(false);
        }
-     
-       if (!number) {
-       console.log ("Error", "No valid phone number found.");
-         return;
-       }
+     } catch (error) {
+       console.log(
+         "Error fetching user feedback:",
+         error?.response || error.message
+       );
+     }
+   };
 
-      let data = {
-        askOxyOfers: "FREESAMPLE",
-        userId: userData.userId,
-        mobileNumber: number,
-        projectType: "ASKOXY",
-      };
-      console.log(data);
-      setLoading(true);
-      axios({
-        method: "post",
-        url:BASE_URL + "marketing-service/campgin/askOxyOfferes",
-        data: data,
-      })
-        .then((response) => {
-          console.log(response.data);
-          setLoading(false);
-          getCall()
-          Alert.alert(
-            "Success",
-            "Your interest has been submitted successfully!"
-          );
-          //  if (response.data.status == "SUCCESS") {
-          //    navigation.navigate("Otp", { mobileNumber: mobileNumber });
-          //  } else {
-          //    alert(response.data.message);
-          //  }
-        })
-        .catch((error) => {
-          console.log(error);
-          setLoading(false);
-          if (error.response.status == 400) {
-            Alert.alert("Failed", "You have already participated. Thank you!");
-          } else {
-            Alert.alert("Failed", error.response.data);
-          }
-        });
-    
-  }  
+  const handleInterestedClick = () => {
+     if (!userData) {
+       Alert.alert("Alert", "Please login to continue", [
+         { text: "OK", onPress: () => navigation.navigate("Login") },
+         { text: "Cancel" },
+       ]);
+       return;
+     }
+     setModalVisible(true);
+   };
+ 
+   // Handle modal submission
+   const handleModalSubmit = async (selectedTypesString) => {
+     setSelectedUserTypes(selectedTypesString);
+     setModalVisible(false);
+     
+     // Call the API with selected types
+     await interestedfunc(selectedTypesString);
+   };
+ 
+   // Handle modal cancellation
+   const handleModalCancel = () => {
+     setModalVisible(false);
+   };
+ 
+ 
+  const interestedfunc = async (selectedTypes = "") => {
+     console.log("I am interested in abroad with types:", selectedTypes);
+ 
+     if (!userData) {
+       Alert.alert("Alert", "Please login to continue", [
+         { text: "OK", onPress: () => navigation.navigate("Login") },
+         { text: "Cancel" },
+       ]);
+       return;
+     }
+ 
+     let number = null;
+    console.log("profiledata",profileData);
+ 
+     if (profileData?.whatsappNumber) {
+       number = profileData.whatsappNumber;
+     } else if (profileData?.mobileNumber) {
+       number = profileData.mobileNumber;
+     }
+ 
+     if (!number) {
+       Alert.alert("Error", "No valid phone number found. Please update your profile.");
+       return;
+     }
+ 
+     const data = {
+       askOxyOfers: "FREESAMPLE",
+       userId: userData.userId,
+       mobileNumber: number,
+       projectType: "ASKOXY",
+       userRole: selectedTypes.toLocaleUpperCase(), 
+     };
+ 
+     console.log("Sending Data:", data);
+     setLoading(true);
+ 
+     try {
+       const response = await submitUserIntrest(data);
+       console.log("STUDYABROAD Response:", response.data);
+       await getCall();
+       Alert.alert(
+         "Success", 
+         `Your interest as ${selectedTypes} has been submitted successfully!`,
+         [{ text: "OK" }]
+       );
+     } catch (error) {
+       console.error("Error:", error);
+       if (error.response?.status === 400) {
+         Alert.alert("Already Registered", "You have already participated. Thank you!");
+       } else {
+         Alert.alert(
+           "Failed", 
+           error.response?.data?.message || "Something went wrong. Please try again."
+         );
+       }
+     } finally {
+       setLoading(false);
+     }
+   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f8f8f8" }}>
@@ -221,7 +253,7 @@ const FreeContainer = ({navigation}) => {
         {loading == false ? (
           <TouchableOpacity
             style={[styles.button, { backgroundColor: "#6f2dbd" }]} // Add background color here
-            onPress={() => interestedfunc()}
+            onPress={() => handleInterestedClick()}
           >
             <Text style={styles.buttonText}>I'm Interested</Text>
           </TouchableOpacity>
@@ -238,13 +270,24 @@ const FreeContainer = ({navigation}) => {
         :
         <View
         style={[styles.button, { backgroundColor: "#9367c7" }]} // Add background color here
-        onPress={() => interestedfunc()}
+        onPress={() => handleInterestedClick()}
       >
         <Text style={styles.buttonText}>Already Participated</Text>
       </View>
         }
       </View>
     </ScrollView>
+     {selectedUserTypes !== "" && (
+                  <View style={styles.selectedTypesContainer}>
+                    <Text style={styles.selectedTypesLabel}>Selected as:</Text>
+                    <Text style={styles.selectedTypesText}>{selectedUserTypes}</Text>
+                  </View>
+                )}
+         <UserTypeModal
+        visible={modalVisible}
+        onSubmit={handleModalSubmit}
+        onCancel={handleModalCancel}
+      />
     </View>
 </SafeAreaView>
   );

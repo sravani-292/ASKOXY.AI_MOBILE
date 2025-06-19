@@ -1037,13 +1037,13 @@ const UserDashboard = ({ route }) => {
           <TouchableOpacity
             style={[
               styles.weightFilterButton,
-              selectedWeightFilter === 1 && styles.selectedWeightFilterButton,
+              selectedWeightFilter === 1 || selectedWeightFilter === "1" && styles.selectedWeightFilterButton,
             ]}
             onPress={() => filterByWeight(1)}
           >
             <Text
               style={
-                selectedWeightFilter === 1
+                selectedWeightFilter === 1 || selectedWeightFilter === "1"
                   ? styles.selectedWeightFilterText
                   : styles.weightFilterText
               }
@@ -1055,13 +1055,13 @@ const UserDashboard = ({ route }) => {
           <TouchableOpacity
             style={[
               styles.weightFilterButton,
-              selectedWeightFilter === 5 && styles.selectedWeightFilterButton,
+              selectedWeightFilter === 5 || selectedWeightFilter === "5" && styles.selectedWeightFilterButton,
             ]}
             onPress={() => filterByWeight(5)}
           >
             <Text
               style={
-                selectedWeightFilter === 5
+                selectedWeightFilter === 5 || selectedWeightFilter === "5"
                   ? styles.selectedWeightFilterText
                   : styles.weightFilterText
               }
@@ -1073,13 +1073,13 @@ const UserDashboard = ({ route }) => {
           <TouchableOpacity
             style={[
               styles.weightFilterButton,
-              selectedWeightFilter === 10 && styles.selectedWeightFilterButton,
+              selectedWeightFilter === 10 || selectedWeightFilter === "10" && styles.selectedWeightFilterButton,
             ]}
             onPress={() => filterByWeight(10)}
           >
             <Text
               style={
-                selectedWeightFilter === 10
+                selectedWeightFilter === 10 || selectedWeightFilter === "10"
                   ? styles.selectedWeightFilterText
                   : styles.weightFilterText
               }
@@ -1091,13 +1091,13 @@ const UserDashboard = ({ route }) => {
           <TouchableOpacity
             style={[
               styles.weightFilterButton,
-              selectedWeightFilter === 26 && styles.selectedWeightFilterButton,
+              selectedWeightFilter === 26 || selectedWeightFilter === "26" && styles.selectedWeightFilterButton,
             ]}
             onPress={() => filterByWeight(26)}
           >
             <Text
               style={
-                selectedWeightFilter === 26
+                selectedWeightFilter === 26 || selectedWeightFilter === "26"
                   ? styles.selectedWeightFilterText
                   : styles.weightFilterText
               }

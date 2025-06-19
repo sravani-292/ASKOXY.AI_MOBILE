@@ -3,10 +3,10 @@ import { StyleSheet, View, Text, ScrollView, TouchableOpacity,Linking,
           Modal, Image,Platform,SafeAreaView, Dimensions,Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-
 import axios from 'axios';
 import { useSelector } from "react-redux";
 import BASE_URL,{userStage} from "../../Config";
+import {getAllCampaignDetails,getUserFeedback,submitUserIntrest,handleGetProfileData} from '../ApiService'
 
 
 const { width,height } = Dimensions.get('window');
@@ -15,7 +15,7 @@ const cardWidth = width * 0.92;
 export default function CryptoCurrency({navigation}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [blockchainId, setBlockchainId] = useState('');
-  const[coins,setCoins]=useState('')
+   const[coins,setCoins]=useState('')
    const userData = useSelector((state) => state.counter);
       // console.log({ userData });
       const [copied, setCopied] = useState(false);

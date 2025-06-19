@@ -57,7 +57,7 @@ export default function ProfileSettings({ navigation }) {
         label: 'Referral History',
         navigation: "Referral History",  
         showArrow: true,
-        gradient: ['#00C9FF', '#92FE9D'] // fresh and clean, reflects activity
+        gradient: ['#00C9FF', '#92FE9D'] 
       },
       { 
         id: 4, 
@@ -68,9 +68,19 @@ export default function ProfileSettings({ navigation }) {
         navigation: 'View BMVcoins History',
         gradient: ['#00B4DB', '#0083B0'] 
       },
-      { id: 5, type: 'divider' },
       { 
-        id: 6, 
+        id: 5, 
+        icon: 'user-plus', 
+        type: 'Feather', 
+        label: 'Coupons', 
+        showArrow: true,
+        navigation: "Oxy Coupons", 
+        gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
+      },
+
+      { id: 6, type: 'divider' },
+      { 
+        id: 7, 
         icon: 'credit-card', 
         type: 'Feather', 
         label: 'Subscription',
@@ -79,7 +89,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#F7971E', '#FFD200'] // gold/yellow hues, finance-friendly
       },
       { 
-        id: 7, 
+        id: 8, 
         icon: 'help-circle', 
         type: 'Feather', 
         label: 'FAQ\'s', 
@@ -88,7 +98,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#36D1DC', '#5B86E5'] // consistent with helpful/support tone
       },
       { 
-        id: 8, 
+        id: 9, 
         icon: 'phone', 
         type: 'Feather', 
         label: 'Contact Us', 
@@ -96,9 +106,9 @@ export default function ProfileSettings({ navigation }) {
         navigation: 'Write To Us',
         gradient: ['#00B4DB', '#0083B0'] // professional blue gradient
       },
-      { id: 9, type: 'divider' },
+      { id: 10, type: 'divider' },
       {
-        id: 10, 
+        id: 11, 
         icon: 'user-x', 
         type: 'Feather', 
         label: 'DeActivate Account', 
@@ -107,14 +117,23 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#FF4B2B', '#FF416C'] // serious red-pink for account closure
       },
       {
-        id: 11,
+        id: 12,
         icon: 'user-minus',
         type: 'Feather',
         label: 'Delete Account',
         showArrow: true,
         navigation: 'Account Deletion',
         gradient: ['#8B0000', '#B22222'] // deep red tones for account deletion
-      }
+      },
+      // {
+      //   id: 13,
+      //   icon: 'user-minus',
+      //   type: 'Feather',
+      //   label: 'Blogs',
+      //   showArrow: true,
+      //   navigation: 'Blog Post',
+      //   gradient: ['#7B61FF', '#4D2CFF'] 
+      // }
       
     ];
     
@@ -173,7 +192,6 @@ export default function ProfileSettings({ navigation }) {
 
     const profile = async () => {
       console.log("userId",customerId);
-      
       if (userData) {
         try {
           const response = await axios({
@@ -184,8 +202,8 @@ export default function ProfileSettings({ navigation }) {
             // },
           });
           console.log("get profile call response",response);
-          
           setChainId(response.data.multiChainId);
+          console.log(response.data.coinAllocated);
           setCoin(response.data.coinAllocated);
         } catch (error) {
           console.error("Error fetching profile:", error.response);

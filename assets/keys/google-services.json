@@ -1,0 +1,69 @@
+{
+  "project_info": {
+    "project_number": "834341780860",
+    "firebase_url": "https://erice-241012.firebaseio.com",
+    "project_id": "erice-241012",
+    "storage_bucket": "erice-241012.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834341780860:android:2a62736e85889c243cb8f9",
+        "android_client_info": {
+          "package_name": "com.oxyrice.oxyrice_customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "834341780860-c0qshtg99lvob387qdkbmav55nfhqknk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "834341780860-c0qshtg99lvob387qdkbmav55nfhqknk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834341780860:android:1b10bc7277e280d9",
+        "android_client_info": {
+          "package_name": "erice.customer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "834341780860-c0qshtg99lvob387qdkbmav55nfhqknk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "834341780860-c0qshtg99lvob387qdkbmav55nfhqknk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,6 +1,12 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View, Platform, ActivityIndicator } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
 import axios from "axios";
 import BASE_URL from "../../Config";
 // Screens imports
@@ -73,12 +79,17 @@ import OfferLetters from "../Dashboard/offerletters";
 import StudyAbroad from "../StudyAbroad";
 import AllService from "../AllService";
 import AccountDeletionScreen from "../Authorization/AccountDeletion";
+import Home from "../Home";
+import Notifications from "../Notifications";
 
-import * as Linking from 'expo-linking';
+import * as Linking from "expo-linking";
+import ChatScreen from "../Dashboard/LegalChatbot";
+import AboutService from "../Dashboard/AboutUS";
+import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
 
-const json = require("../../app.json"); 
+const json = require("../../app.json");
 const LoadingScreen = () => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <ActivityIndicator size="large" color={COLORS.services} />
     <Text style={{ marginTop: 20 }}>Checking for updates...</Text>
   </View>
@@ -86,22 +97,18 @@ const LoadingScreen = () => (
 
 // Define deep link configuration
 const linking = {
-  prefixes: [
-    'https://askoxy.ai',
-    'askoxy.ai://'
-  ],
+  prefixes: ["https://askoxy.ai", "askoxy.ai://"],
   config: {
     screens: {
-      Home: 'home',
-      Product: 'Rice Product/:id',
-      OrderSummary: 'order-summary/:id',
+      Home: "home",
+      Product: "Rice Product/:id",
+      OrderSummary: "order-summary/:id",
       // Add more routes here as needed
     },
   },
 };
 
 export default function StacksScreens() {
-
   const Stack = createStackNavigator();
   const [platform, setPlatform] = useState("");
   const [updateStatus, setUpdateStatus] = useState(null);
@@ -121,7 +128,6 @@ export default function StacksScreens() {
       setCurrentVersion(parseInt(json.expo?.android?.versionCode || "1", 10));
     }
   }, []);
-  
 
   useEffect(() => {
     if (platform) {
@@ -136,13 +142,13 @@ export default function StacksScreens() {
       const response = await axios.get(
         `${BASE_URL}product-service/getAllVersions?userType=CUSTOMER&versionType=${platform}`
       );
-      
+
       const data = response.data;
-      
+
       // Process the update data - handle both array and single object response
       if (data) {
         let latestVersion;
-        
+
         if (Array.isArray(data) && data.length > 0) {
           latestVersion = data.reduce((latest, current) => {
             const currentVersionNum = parseInt(current.version, 10);
@@ -153,13 +159,12 @@ export default function StacksScreens() {
           // Single object response
           latestVersion = data;
         }
-        
+
         // Parse the server version as integer for proper comparison
         const latestVersionNum = parseInt(latestVersion.version, 10);
-        
-       
+
         const updateRequired = latestVersionNum > currentVersion;
-        
+
         console.log(
           "Update needed:",
           updateRequired,
@@ -168,18 +173,17 @@ export default function StacksScreens() {
           "Current:",
           currentVersion
         );
-        
+
         // Set the update status
         setUpdateStatus({ available: updateRequired });
         setNeedsUpdate(updateRequired);
       } else {
-      
         setUpdateStatus({ available: false });
         setNeedsUpdate(false);
       }
     } catch (err) {
       console.error("Error checking for updates:", err);
-     
+
       setUpdateStatus({ available: false });
       setNeedsUpdate(false);
     } finally {
@@ -187,7 +191,6 @@ export default function StacksScreens() {
     }
   };
 
- 
   if (isCheckingForUpdates) {
     return <LoadingScreen />;
   }
@@ -196,8 +199,11 @@ export default function StacksScreens() {
     <Stack.Navigator
       linking={linking}
       initialRouteName={needsUpdate ? "App Update" : "Service Screen"}
+      // initialRouteName={needsUpdate ? "App Update" : "Main Screen"}
+      // initialRouteName="Notifications"
       screenOptions={{
         headerShown: true,
+        presentation: "card",
         headerTintColor: "white",
         headerTitleStyle: styles.headerTitleStyle,
         headerMode: "float",
@@ -249,7 +255,7 @@ export default function StacksScreens() {
       <Stack.Screen name="Subscription" component={Main} />
 
       <Stack.Screen name="Terms and Conditions" component={About} />
-      <Stack.Screen name="Account Deletion" component={AccountDeletionScreen}/>
+      <Stack.Screen name="Account Deletion" component={AccountDeletionScreen} />
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
       <Stack.Screen name="Checkout" component={CheckOut} />
@@ -265,6 +271,8 @@ export default function StacksScreens() {
       <Stack.Screen name="Write To Us" component={WriteToUs} />
       <Stack.Screen name="ChatGpt" component={ChatGpt} />
       <Stack.Screen name="Referral History" component={ReferralHistory} />
+      <Stack.Screen name="Legal GPT" component={ChatScreen} />
+      <Stack.Screen name="About Us" component={AboutService} />
 
       <Stack.Screen
         name="My Cancelled Item Details"
@@ -347,7 +355,7 @@ export default function StacksScreens() {
         name="Explore Gpt"
         component={UniversityGPT}
         options={{
-          headerStyle: { backgroundColor: "#3d2a71" }
+          headerStyle: { backgroundColor: "#3d2a71" },
         }}
       />
       <Stack.Screen
@@ -424,7 +432,7 @@ export default function StacksScreens() {
       <Stack.Screen
         name="Offer Letters"
         component={OfferLetters}
-       options={{ headerShown: true }}
+        options={{ headerShown: true }}
       />
 
       <Stack.Screen
@@ -433,32 +441,34 @@ export default function StacksScreens() {
         options={{ headerShown: true }}
       />
 
-
-
-<Stack.Screen
-   name="Services"
-   component={AllService}
-    options={{ headerShown: true }}
-  />
-
-<Stack.Screen
-        name="My Exchanged Item Details"
-        component={UserExchangeOrderDetails}
-      />
+      <Stack.Screen
+        name="Services"
+        component={AllService}
+        options={{ headerShown: true }}
+      />
 
       <Stack.Screen
-        name = "View BMVcoins History"
+        name="My Exchanged Item Details"
+        component={UserExchangeOrderDetails}
+      />
+
+      <Stack.Screen
+        name="View BMVcoins History"
         component={ViewCoinsTransferHistory}
-        />
+      />
 
-      <Stack.Screen 
-         name= "Special Offers"
-         component={OffersModel}
-         />
+      <Stack.Screen name="Special Offers" component={OffersModel} />
 
-        <Stack.Screen name="New Address Book" component={NewAddressBook}/>
+      <Stack.Screen
+        name="Main Screen"
+        component={Home}
+        options={{ headerShown: false }}
+      />
 
+      <Stack.Screen name="Notifications" component={Notifications} />
 
+      <Stack.Screen name="New Address Book" component={NewAddressBook} />
+      <Stack.Screen name="Oxy Coupons" component={OxyCoupens} />
     </Stack.Navigator>
   );
 }

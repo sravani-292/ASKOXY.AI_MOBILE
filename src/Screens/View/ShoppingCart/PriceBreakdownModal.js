@@ -108,7 +108,7 @@ const PriceBreakdownModal = ({
                 {hasValue(finalTotal) && (
                   <View style={[styles.priceRow, styles.grandTotalRow]}>
                     <Text style={styles.grandTotalLabel}>Grand Total:</Text>
-                    <Text style={styles.grandTotalValue}>₹{finalTotal}</Text>
+                    <Text style={styles.grandTotalValue}>₹{finalTotal.toFixed(2)}</Text>
                   </View>
                 )}
               </>

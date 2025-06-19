@@ -801,50 +801,29 @@ const handleProfileCheck = async () => {
         <>
           {!loading && (
             <View style={styles.grandTotalRowContainer}>
-              {/* {totalCartValue > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Sub Total:</Text>
-                  <Text style={styles.value}>₹{totalCartValue}</Text>
-                </View>
-              )}
-
-              {freeItemPrice > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>Discount:</Text>
-                  <Text style={styles.value}>- ₹{freeItemPrice}</Text>
-                </View>
-              )}
-
-              {gstAmount > 0 && (
-                <View style={styles.row}>
-                  <Text style={styles.label}>GST:</Text>
-                  <Text style={styles.value}>+ ₹{gstAmount?.toFixed(2)}</Text>
-                </View>
-              )} */}
-
               <View style={styles.grandTotalRow}>
                 <Text style={styles.grandTotalLabel}>Grand Total:</Text>
                 <Text style={styles.grandTotalValue}>
-                  ₹{grandTotal + gstAmount}
+                  ₹{(Number(grandTotal) + Number(gstAmount)).toFixed(2)}
                 </Text>
               </View>
-              <View style={{ flexDirection: "row",justifyContent:"flex-end"}}>
+              <View style={{ flexDirection: "row",justifyContent:"flex-end" }}>
                 <TouchableOpacity
                   style={styles.priceBreakupButton}
                   onPress={() => setShowPriceBreakdown(true)}
-                  activeOpacity={0.8}
+                  // activeOpacity={0.8}
                 >
                   <Ionicons
                     name="information-circle-outline"
-                    size={18}
+                    size={14}
                     color="#4B0082"
-                    style={{ marginRight: 6 }}
+                    style={{ marginRight: 2 }}
                   />
                   <Text style={styles.priceBreakupText}>
                     View Details
                   </Text>
                 </TouchableOpacity>
-              </View>
+              </View>
             </View>
           )}
 
@@ -1605,6 +1584,22 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  priceBreakupButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    // backgroundColor: "#f0f0f0",
+    // paddingVertical: 10,
+    // paddingHorizontal: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    marginTop:8
+  },
+  priceBreakupText: {
+    color: "#4B0082",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginLeft: 5,
   },
 });
 

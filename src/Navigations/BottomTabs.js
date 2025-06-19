@@ -13,6 +13,7 @@ import MainWallet from "../Screens/View/Wallet/Main";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
 import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import ServiceScreen from "../ServiceScreen";
+import Home from "../Home";
 import { COLORS } from "../../Redux/constants/theme";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -75,7 +76,7 @@ const Tabs = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="Home"
+      initialRouteName="Landing"
       screenOptions={{
         headerShown: true,
         tabBarShowLabel: false,
@@ -84,8 +85,31 @@ const Tabs = () => {
       }}
     >
 
+{/* <Tab.Screen
+        name="Landing"
+        component={Home}
+        options={{
+          headerShown: false,
+          tabBarShowLabel: false,
+          tabBarStyle: styles.tabBar,
+          tabBarIcon: ({ focused }) => (
+            <View style={[styles.tabIconContainer]}>
+              <Image
+                source={require("../../assets/BottomTabImages/landing.png")}
+                resizeMode="contain"
+                style={[styles.tabIcon,getIconColor(focused)]}
+              />
+              <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
+                Home
+              </Text>
+            </View>
+          ),
+        }}
+      /> */}
+
+
 <Tab.Screen
-        name="Home"
+        name="Dashboard"
         component={ServiceScreen}
         options={{
           headerShown: false,
@@ -99,7 +123,7 @@ const Tabs = () => {
                 style={[styles.tabIcon,getIconColor(focused)]}
               />
               <Text style={[styles.tabLabel, focused && styles.focusedLabel]}>
-                Home
+                Dashboard
               </Text>
             </View>
           ),
@@ -266,6 +290,11 @@ const styles = StyleSheet.create({
   tabIcon: {
     width: 35,
     height: 30,
+    fontWeight:"bold"
+  },
+  tabIconHome: {
+    width: 45,
+    height: 35,
     fontWeight:"bold"
   },
   cartBadge: {

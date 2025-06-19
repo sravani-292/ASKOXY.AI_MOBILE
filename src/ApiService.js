@@ -15,13 +15,11 @@ export const handleCustomerCartData = async (customerId) => {
     return response;
   } catch (error) {
     console.error("Error fetching customer cart data:", error);
-    // Alert.alert(
-    //   "Error",
-    //   "Failed to fetch customer cart data. Please try again later."
-    // );
+   
     throw error;
   }
 };
+
 // for adding or increment cart data
 export const handleUserAddorIncrementCart = async (data) => {
   console.log("data", data);
@@ -116,7 +114,7 @@ export const getCustomerEligibleOfferDetails = async (CustomerId) => {
 };
 
 // for getting profile data
-export const handleGetProfileData = async (customerId,token) => {
+export const handleGetProfileData = async (customerId) => {
   console.log("customerId", customerId);
 
   console.log("into the profile data call");
@@ -125,20 +123,68 @@ export const handleGetProfileData = async (customerId,token) => {
      const response = await axios({
       method:"Get",
       url:`${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`,
-      headers:{
-        Authorization:`Bearer ${token}`
-      }
+      // headers:{
+      //   Authorization:`Bearer ${token}`
+      // }
      })
-
-     
-
-     return response
-    // const response = await axios.get(
-    //   `${BASE_URL}user-service/customerProfileDetails?customerId=${customerId}`
-    // );
-    // return response;
+       return response
   } catch (error) {
     // console.error("Error fetching profile data:", error);
     throw error;
   }
 };
+
+
+export const getCoinsCount = async(customerId)=>{
+  console.log("into the coins function");
+  try{
+    const response = await axios.get(
+      `${BASE_URL}user-service/getProfile/${customerId}`
+    );
+    console.log("response",response);
+    
+  }catch(error){
+    console.log("error",error);
+    
+  }
+  
+}
+
+
+// FOR SERVICES AND CAMPAIGNS  APIS
+export const getAllCampaignDetails = async()=>{
+  console.log("into  the campaign call");
+  try{
+  const response = await axios.get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
+  return response;
+ } catch(error){
+  console.log("error",error.response);
+}
+}
+
+
+export const getUserFeedback = async (data)=>{
+  console.log("inot the function for getting to know the whether the user showed intrest or not");
+  try{
+  const response =  await axios.post( BASE_URL + `marketing-service/campgin/allOfferesDetailsForAUser`,data )
+  console.log("response",response);
+  return response;
+  }
+  catch(error){
+    console.log("error",error);
+     return error
+  }
+}
+
+export const submitUserIntrest = async(data)=>{
+console.log("into the intrest submit function",data);
+try{
+const response = await axios.post(BASE_URL + "marketing-service/campgin/askOxyOfferes", data)
+console.log("user intrest",response);
+return response
+}
+catch(error){
+  console.log("error",error);
+  return error
+}
+}

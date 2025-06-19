@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import UserTypeModal from './Dashboard/UserTypeModal';
 import BASE_URL from "../Config";
 import { ScrollView } from 'react-native-gesture-handler';
 import { useSelector } from 'react-redux';
@@ -192,9 +192,12 @@ const ImageCarousel = ({ images }) => {
 // Single Campaign Card component
 const SingleCampaignCard = ({ item, fadeAnim, handleComirmation, handleWriteToUs, getImages,navigation,AlreadyInterested,userData }) => {
   // Determine the title and description based on item type
+   console.log("SingleCampaignCard item",item);
+   
   const title = item.campaignType || item.name || 'Unnamed Campaign';
   const description = item.campaignDescription || `Learn more about our ${item.name || 'services'}.`;
   const images = getImages(item);
+  const campaignType = item.campainInputType || 'General Campaign';
   
   // Animation for scale effect on cards
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
@@ -271,6 +274,20 @@ const SingleCampaignCard = ({ item, fadeAnim, handleComirmation, handleWriteToUs
               <Text style={styles.secondaryButtonText}>Write to Us</Text>
             </TouchableOpacity>)}
           </View>
+          {campaignType =="PRODUCT" && (
+             <TouchableOpacity 
+              style={[styles.button, styles.secondaryButton1]} 
+              onPress={() => {
+                if(item?.campaignType?.includes("GOLD")){
+                  navigation.navigate("Rice Products",{
+                    category: "GOLD",
+                  })
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.secondaryButtonText}>Buy Now</Text>
+            </TouchableOpacity>)}
         </View>
       </LinearGradient>
     </Animated.View>
@@ -284,12 +301,13 @@ export default function CampaignScreen({ route, navigation }) {
   const [currentCampaign, setCurrentCampaign] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-   const[profileData,setProfileData]=useState()
-    const [AlreadyInterested,setAlreadyInterested]=useState(false)
+  const[profileData,setProfileData]=useState()
+  const [AlreadyInterested,setAlreadyInterested]=useState(false)
 //    const navigation = useNavigation();
 
-   const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedUserTypes, setSelectedUserTypes] = useState("");
 
   const userData = useSelector(state => state.counter);
 
@@ -367,8 +385,8 @@ console.log("campainType",campaignType);
   useEffect(() => {
     
     if (campaignData.length > 0) {
-      selectCampaign();
-      console.log("Selected campaign ID:", campaignId);
+    selectCampaign();
+    console.log("Selected campaign ID:", campaignId);
     console.log("Selected campaign type:", campaignType);
     }
   }, [campaignData, campaignId, campaignType]);
@@ -543,21 +561,26 @@ console.log("campainType",campaignType);
     setModalVisible(true);
   };
 
-  const handleConfirm = (item) => {
-    handleInterested(item);
-    setModalVisible(false);
-  };
-
-  const handleCancel = () => {
-    setModalVisible(false);
-  };
-
-  // Replace your current handleConfirmation function with this:
+ 
+// Replace your current handleConfirmation function with this:
   const handleConfirmation = (item) => {
     showConfirmationModal(item);
   };
 
-  const handleInterested = (item) => {   
+
+
+   const handleModalSubmit = async (selectedTypesString) => {
+    setSelectedUserTypes(selectedTypesString);
+    setModalVisible(false);
+    
+    // Call the API with selected types
+    await handleInterested(selectedTypesString);
+  };
+  const handleModalCancel = () => {
+    setModalVisible(false);
+  };
+
+  const handleInterested = async(selectedTypes = "") => {   
         if (userData == null) {
           Alert.alert("Alert", "Please login to continue", [
             { text: "OK", onPress: () => navigation.navigate("Login") },
@@ -588,8 +611,10 @@ console.log("campainType",campaignType);
             userId: userData.userId,
             mobileNumber: number,
             projectType: "ASKOXY",
+            userRole: selectedTypes.toLocaleUpperCase(), 
+
           };
-          console.log(data);
+          console.log("for api hit",data);
            setLoading(true)
           axios({
             method: "post",
@@ -704,12 +729,12 @@ Thank you!
         )}
       </ScrollView>
 
-      <ConfirmationModal
-        visible={modalVisible}
-        onCancel={handleCancel}
-        onConfirm={handleConfirm}
-        item={selectedItem}
-      />
+   
+       <UserTypeModal
+              visible={modalVisible}
+              onSubmit={handleModalSubmit}
+              onCancel={handleModalCancel}
+            />
     </SafeAreaView>
   );
 }
@@ -850,6 +875,14 @@ const styles = StyleSheet.create({
     borderColor: '#3498db',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+   secondaryButton1: {
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#3498db',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
   },
   secondaryButtonText: {
     color: '#3498db',

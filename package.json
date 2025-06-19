@@ -53,7 +53,6 @@
     "react-dom": "18.3.1",
     "react-native": "0.76.9",
     "react-native-animatable": "^1.4.0",
-    "react-native-branch": "^6.7.1",
     "react-native-config": "^1.5.5",
     "react-native-country-picker-modal": "^2.0.0",
     "react-native-device-info": "^14.0.4",
@@ -82,7 +81,9 @@
     "react-native-webview": "13.12.5",
     "react-redux": "^9.1.2",
     "redux": "^5.0.1",
-    "sonner-native": "^0.17.0"
+    "sonner-native": "^0.17.0",
+    "expo-image-picker": "~16.0.6",
+    "expo-notifications": "~0.29.14"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

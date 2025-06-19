@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "ASKOXY.AI",
-    "slug": "oxyrice_customer",
-    "version": "1.0.51",
+    "slug": "Oxyrice",
+    "version": "1.0.54",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -15,9 +15,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "50",
+      "buildNumber": "53",
       "associatedDomains": [
-        "applinks:www.askoxy.ai"
+        "applinks:www.askoxy.ai",
+        "applinks:askoxy.app.link",
+        "applinks:askoxy-alternate.test-app.link",
+        "applinks:askoxy.test-app.link",
+        "applinks:askoxy-alternate.app.link"
       ],
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "We need your location to show available delivery options, calculate delivery times, and ensure your order reaches you accurately.",
@@ -35,7 +39,8 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 46,
+      "versionCode": 49,
+      "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "intentFilters": [
         {
@@ -53,7 +58,12 @@
             "DEFAULT"
           ]
         }
-      ]
+      ],
+      "config": {
+        "branch": {
+          "apiKey": "key_test_bEzlort5V0pqEdfqpZNxrcmaFsi34wUH"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -64,14 +74,26 @@
     "updates": {
       "url": "https://u.expo.dev/ce226648-f9fe-48e4-b9d1-02f76cf9fcee"
     },
-      "plugins": [
-    "expo-font",
-    "expo-localization",
-    "react-native-video"
-  ],
+    "plugins": [
+      "expo-font",
+      "expo-localization",
+      "react-native-video",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification_icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": [
+            "./assets/notification_sound.wav"
+          ],
+          "enableBackgroundRemoteNotifications": true
+        }
+      ]
+    ],
     "extra": {
       "eas": {
-        "projectId": "5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
+        "projectId": "ce226648-f9fe-48e4-b9d1-02f76cf9fcee"
       }
     }
   }

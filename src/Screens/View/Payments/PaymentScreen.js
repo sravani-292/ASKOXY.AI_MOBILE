@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import * as Clipboard from 'expo-clipboard';
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { RadioButton, Checkbox, ActivityIndicator } from "react-native-paper";
@@ -37,10 +38,11 @@ import {
   handleRemoveItem,
   handleRemoveFreeItem,
 } from "../../../../src/ApiService";
+import calculateDeliveryFee from "./DeliveryFeeCalculator"
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
-  // console.log("payment screen", route.params);
+  console.log("payment screen", route.params.addressData);
   // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
 
   const userData = useSelector((state) => state.counter);
@@ -83,6 +85,11 @@ const PaymentDetails = ({ navigation, route }) => {
   const [onlyOneKg, setOnlyOneKg] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [gstAmount,setGstAmount] = useState("");
+  const [itemsGstAmount, setItemsGstAmount] = useState("");
+  const [goldMakingCost,setGoldMakingCost]  = useState("");
+  const [goldGstAmount,setGoldGstAmont] =useState("");
+   const [coupons, setCoupons] = React.useState([]);
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
@@ -94,6 +101,29 @@ const PaymentDetails = ({ navigation, route }) => {
 
   const [offeravailable, setOfferAvailable] = useState();
   const [showCOD, setShowCOD] = useState(false);
+
+
+ 
+  
+const copyToClipboard = async(couponCode, discountAmount) => {
+  console.log("Copying coupon code:", couponCode);
+  
+  await Clipboard.setStringAsync(couponCode);
+
+
+ Alert.alert(
+    '🎉 Success!', 
+    `💰 You will save ₹${discountAmount}! 💰\n\n✨ Coupon copied to clipboard `,
+    [{ text: 'Got it! ✅' }]
+  );
+  setCouponCode(couponCode);
+};
+
+
+  const applyCouponDirectly = (couponCode) => {
+    setCouponCode(couponCode);
+    handleApplyCoupon();
+  };
 
   const fetchTimeSlots = async () => {
     try {
@@ -232,10 +262,10 @@ const PaymentDetails = ({ navigation, route }) => {
         const response = await axios.get(
           BASE_URL + `order-service/getCodAndOnlinePaymetStatus`
         );
-        console.log("Payment method response", response.data);
+        // console.log("Payment method response", response.data);
         const data = response.data;
         const paymentMethods = data.filter((item) => item.status === true);
-        console.log("Payment methods", paymentMethods);
+        // console.log("Payment methods", paymentMethods);
         setPaymentMethods(paymentMethods);
       } catch (error) {
         console.log("Error fetching payment methods", error);
@@ -353,22 +383,29 @@ const PaymentDetails = ({ navigation, route }) => {
     try {
      
         const response = await handleCustomerCartData(customerId);
-        console.log("cart response", response.data);
+        // console.log("cart response", response.data);
      
       const cartResponse = response.data?.customerCartResponseList;
       const onlyOneKg = items.every((item) => item.weight === 1);
-      // setOnlyOneKg(onlyOneKg);
-      // console.log(
-      //   onlyOneKg
-      //     ? "✅ All items are 1kg bags"
-      //     : "❌ There are items other than 1kg bags"
-      // );
+      
 
       setCartData(cartResponse);
       const totalDeliveryFee = response.data?.customerCartResponseList.reduce(
         (sum, item) => sum + item.deliveryBoyFee,
         0
       );
+        const itemsGst = cartResponse.reduce((sum, item) => {
+       if ((item?.goldGst || 0) === 0) {
+        return sum + (item?.gstAmount || 0);
+       }
+       return sum;
+       }, 0);
+       setItemsGstAmount(itemsGst)
+      const totalGoldGst = cartResponse.reduce((sum, item) => sum + (item?.goldGst || 0), 0);
+      setGoldGstAmont(totalGoldGst)
+     const totalGoldMakingCost = cartResponse.reduce((sum, item) => sum + (item?.goldMakingCost || 0), 0);
+      setGoldMakingCost(totalGoldMakingCost);
+
       console.log("gst amount to pay",response.data.totalGstAmountToPay);
       const totalGstAmountToPay = response.data?.totalGstAmountToPay
       setFreeItemsDiscount(response.data?.discountedByFreeItems || 0);
@@ -376,7 +413,11 @@ const PaymentDetails = ({ navigation, route }) => {
       setDeliveryBoyFee(totalDeliveryFee);
       const amountToPay = Number(response.data?.amountToPay || 0);
       const gst = Number(totalGstAmountToPay || 0);
-setGrandTotal(amountToPay + gst);
+      setGrandTotal(amountToPay + gst);
+      const fee = calculateDeliveryFee(addressDetails?.latitude, addressDetails?.longitude);
+      // const fee = calculateDeliveryFee(17.50, 78.52);
+      console.log("fee", fee);
+      setDeliveryBoyFee(fee || 0);
       // setGrandTotal(response.data?.amountToPay + totalGstAmountToPay);
       // setOfferAvailable(response.data.offerElgible);
     } catch (error) {
@@ -613,7 +654,7 @@ setGrandTotal(amountToPay + gst);
 
     console.log(addressDetails);
 
-    const paymentMode = grandTotalAmount === 0 ? "COD" : selectedPaymentMode;
+    const type = grandTotal === 0 ? "COD" : selectedPaymentMode;
 
     // const avail = offeravailable === "YES" ? "YES" : null;
 
@@ -624,7 +665,7 @@ setGrandTotal(amountToPay + gst);
       customerId: customerId,
       flatNo: addressDetails.flatNo,
       landMark: addressDetails.landMark,
-      orderStatus: paymentMode,
+      orderStatus: type,
       pincode: addressDetails.pincode,
       latitude: addressDetails.latitude ?? 0,
       longitude: addressDetails.longitude ?? 0,
@@ -754,6 +795,24 @@ setGrandTotal(amountToPay + gst);
                   },
                 },
               ];
+
+              axios.post(
+                BASE_URL + "user-service/bmvCashBack",
+                {
+                  customerId: customerId,
+                orderAmount: grandTotalAmount,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              ).then((response) => {
+                console.log("BMV Cash Back Response:", response.data);
+              })
+              .catch((error) => {
+                console.error("Error fetching data: ", error);
+              });
 
           Alert.alert("Order Confirmed!", message, buttons);
         } else {
@@ -888,31 +947,37 @@ setGrandTotal(amountToPay + gst);
       });
   };
 
-  const getOffers = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        BASE_URL + "order-service/getAllCoupons",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data) {
-        setLoading(false);
-      }
-    } catch (error) {
-      // console.log(error.response);
-      setLoading(false);
-    }
-  };
+   const getOffers = async () => {
+    //  console.log("Fetching offers for customerId:", customerId);
+     setLoading(true);
+    //  console.log("BASE_URL", BASE_URL);
+ 
+     try {
+       const response = await axios.get(
+         BASE_URL + "order-service/getAllCoupons",
+       );
+      //  console.log("Response from getAllCoupons:", response);
+ 
+       if (response && response.data) {
+        //  console.log("Offers fetched successfully", response);
+         // Filter only active coupons
+        const activeCoupons = response.data.filter(
+       (coupon) => coupon.isActive === true && coupon.status === "PUBLIC"
+        );
+        setCoupons(activeCoupons);
+       setLoading(false);
+       }
+     } catch (error) {
+       console.log("Error fetching coupons:", error);
+       setLoading(false);
+     }
+   };
 
   const handleApplyCoupon = () => {
     const data = {
       couponCode: couponCode.toUpperCase(),
       customerId: customerId,
-      subTotal: subTotal,
+      subTotal: grandTotalAmount,
     };
     // console.log("Total amount is  :", subTotal);
 
@@ -1084,7 +1149,26 @@ setGrandTotal(amountToPay + gst);
                         },
                       ];
 
+                       axios.post(
+                BASE_URL + "user-service/bmvCashBack",
+                {
+                  customerId: customerId,
+                orderAmount: grandTotalAmount,
+                },
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              ).then((response) => {
+                console.log("BMV Cash Back Response:", response.data);
+              })
+              .catch((error) => {
+                console.error("Error fetching data: ", error);
+              });
+
                   Alert.alert("Order Confirmed!", message, buttons);
+
                 })
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
@@ -1156,6 +1240,42 @@ setGrandTotal(amountToPay + gst);
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
       >
+        {coupons.length > 0 && (
+        <View style={styles.activeCouponsCard}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+     
+        <Text style={styles.cardHeader}>Available Coupons</Text>
+       
+      </View>
+      
+      <ScrollView 
+        horizontal={true} 
+        showsHorizontalScrollIndicator={true}
+        style={styles.couponsScrollView}
+        // persistentScrollbar={true}
+      >
+        {coupons.map((coupon, index) => (
+          <View key={index} style={styles.couponItem}>
+            <View style={styles.couponContent}>
+              <Text style={styles.couponCode}>{coupon.couponCode}</Text>
+             
+            </View>
+            
+            <View style={styles.couponActions}>
+              <TouchableOpacity 
+                style={styles.copyButton}
+                onPress={() => copyToClipboard(coupon.couponCode,coupon.maxDiscount)}
+              >
+                <Text style={styles.copyButtonText}>Copy</Text>
+              </TouchableOpacity>
+              
+            
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>)}
+    
         <View style={styles.card}>
           <View style={{ flexDirection: "row" }}>
             <Text style={styles.cardHeader}>Apply Coupon</Text>
@@ -1280,26 +1400,7 @@ setGrandTotal(amountToPay + gst);
           ]}
         >
           <Text style={styles.paymentHeader}>Choose Payment Method</Text>
-          {/*<View>
-            <TouchableOpacity
-              style={[
-                styles.paymentOption,
-                selectedPaymentMode === "ONLINE" && styles.selectedOption,
-              ]}
-              onPress={() => handlePaymentModeSelect("ONLINE")}
-            >
-              <FontAwesome5
-                name="credit-card"
-                size={24}
-                color={
-                  selectedPaymentMode === "ONLINE"
-                    ? COLORS.backgroundcolour
-                    : "black"
-                }
-              />
-              <Text style={styles.optionText}>Online Payment</Text>
-            </TouchableOpacity>
-          </View>*/}
+         
 
           {paymentMethods.some(
                       (method) =>
@@ -1422,6 +1523,25 @@ setGrandTotal(amountToPay + gst);
             <Text style={styles.detailsLabel}>Delivery Fee</Text>
             <Text style={styles.detailsValue}>+₹{deliveryBoyFee}</Text>
           </View>
+            {/* {itemsGstAmount > 0 &&(
+                  <View style={styles.paymentRow}>
+                  <Text style={styles.detailsLabel}>Items GST:</Text>
+                  <Text style={styles.detailsValue}>+ ₹{itemsGstAmount?.toFixed(2)}</Text>
+                </View>
+              )}
+              {goldGstAmount > 0 &&(
+                <View style={styles.paymentRow}>
+                  <Text style={styles.detailsLabel}>Gold GST:</Text>
+                  <Text style={styles.detailsValue}>+ ₹{goldGstAmount?.toFixed(2)}</Text>
+                </View>
+              )}
+              {goldMakingCost > 0 && (
+                <View style={styles.paymentRow}>
+                  <Text style={styles.detailsLabel}>Gold Making Cost:</Text>
+                  <Text style={styles.detailsValue}>+ ₹{goldMakingCost?.toFixed(2)}</Text>
+                </View>
+              )} */}
+
           <View style={styles.paymentRow}>
             <Text style={styles.detailsLabel}>GST</Text>
             <Text style={styles.detailsValue}>
@@ -1501,21 +1621,7 @@ const styles = StyleSheet.create({
   totalLabel: { fontSize: 18, fontWeight: "bold" },
   totalAmount: { fontSize: 18, fontWeight: "bold", color: "green" },
   paymentHeader: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
-  // paymentOptions: {
-  //   width: width * 0.7,
-  //   flexDirection: "row",
-  //   justifyContent: "space-around",
-  //   marginBottom: 16,
-  //   marginVertical: 20,
-  //   padding: 10,
-  //   // backgroundColor: "#4DA1A9",
-  //   borderRadius: 12,
-  //   // shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 4 },
-  //   shadowOpacity: 0.2,
-  //   shadowRadius: 6,
-  //   elevation: 6,
-  // },
+  
   paymentOption: {
     alignItems: "center",
     padding: 16,
@@ -1899,6 +2005,97 @@ const styles = StyleSheet.create({
     // color: "#333",
     marginTop: 10,
     marginLeft: 10,
+  },
+   activeCouponsCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  
+  availableCount: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  
+  couponsScrollView: {
+    marginTop: 12,
+    // height: 140,
+    
+  },
+  
+  couponItem: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginRight: 12,
+    width: 200,
+    borderLeftWidth: 4,
+    borderLeftColor: '#28a745',
+  },
+  
+  couponContent: {
+    marginBottom: 10,
+  },
+  
+  couponCode: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  
+  couponDescription: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  
+  couponExpiry: {
+    fontSize: 10,
+    color: '#999',
+  },
+  
+  couponActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  
+  copyButton: {
+    backgroundColor: COLORS.services,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    flex: 0.45,
+    alignItems: 'center',
+  },
+  
+  copyButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  
+  useButton: {
+    backgroundColor: '#28a745',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    flex: 0.45,
+    alignItems: 'center',
+  },
+  
+  useButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

@@ -257,6 +257,12 @@ const CheckOut = ({ navigation, route }) => {
     }
 
     const value =
+      locationData.flatNo + 
+      "," +
+      locationData.houseType +
+      "," +
+      locationData.residenceName +
+      "," +
       locationData.address +
       "," +
       locationData.landMark +
@@ -398,6 +404,9 @@ const CheckOut = ({ navigation, route }) => {
       landMark: address.landMark,
       pincode: address.pincode,
       address: address.address,
+      area: address.area || "",
+      houseType: address.houseType || "",
+      residenceName: address.residenceName || "",
       addressType: "",
       latitude: "",
       longitude: "",
@@ -501,6 +510,9 @@ const CheckOut = ({ navigation, route }) => {
             landMark: address.landMark,
             pincode: address.pincode,
             address: address.address,
+            area: address.area || "",
+            residenceName: address.residenceName || "",
+            houseType: address.houseType || "",
             addressType: "",
             latitude: address.latitude,
             longitude: address.longitude,
@@ -547,11 +559,11 @@ const CheckOut = ({ navigation, route }) => {
       {status ? (
         <View style={styles.addressRow}>
           <Text style={styles.addressText}>
-            {locationData.flatNo}, {locationData.landMark}
+            {locationData?.flatNo},{locationData?.residenceName},{locationData?.area}, {locationData?.landMark},{locationData?.pincode}
           </Text>
-          <Text style={styles.addressDetail}>
+          {/* <Text style={styles.addressDetail}>
             Address: {locationData.address}
-          </Text>
+          </Text> */}
         </View>
       ) : addressList.length > 0 ? (
         addressList.slice(-1).map((address, index) => (
@@ -566,10 +578,10 @@ const CheckOut = ({ navigation, route }) => {
               />
               <View style={styles.addressContainer}>
                 <Text style={styles.addressText}>
-                  {address.flatNo}, {address.landMark},{address.pincode}
+                  {address?.flatNo},{address?.residenceName},{address?.area}, {address?.landMark},{address?.pincode}
                 </Text>
 
-                <Text style={styles.addressText}>{address.address}</Text>
+                <Text style={styles.addressText}>{address?.address}</Text>
               </View>
             </View>
           </View>
@@ -809,7 +821,7 @@ const CheckOut = ({ navigation, route }) => {
         <ActivityIndicator size="large" color="#000" />
       ) : (
         <View style={styles.paymentDetails}>
-          <Text style={styles.grandTotalText}>Grand Total: ₹{grandTotal}</Text>
+          <Text style={styles.grandTotalText}>Grand Total: ₹{grandTotal.toFixed(2)}</Text>
         </View>
       )}
 
