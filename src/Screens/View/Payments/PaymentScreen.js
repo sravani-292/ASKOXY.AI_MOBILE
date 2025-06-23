@@ -410,7 +410,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
       const totalGstAmountToPay = response.data?.totalGstAmountToPay
       setFreeItemsDiscount(response.data?.discountedByFreeItems || 0);
       setTotalGstSum(response.data?.totalGstAmountToPay);
-      setDeliveryBoyFee(totalDeliveryFee);
+      // setDeliveryBoyFee(totalDeliveryFee);
       const amountToPay = Number(response.data?.amountToPay || 0);
       const gst = Number(totalGstAmountToPay || 0);
       setGrandTotal(amountToPay + gst);
@@ -538,7 +538,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     checkOfferEligibility(customerId);
     handleGetPaymentMethod();
     // setDeliveryBoyFee(200);
-  }, [grandTotalAmount, deliveryBoyFee,totalGstSum]);
+  }, [grandTotalAmount,totalGstSum]);
 
   const getWalletAmount = async () => {
     try {
@@ -720,7 +720,8 @@ const copyToClipboard = async(couponCode, discountAmount) => {
         // }
         if (response.data.status) {
           const message = response.data.status;
-
+          console.log("message",message);
+          
           if (message === "Item not found or out of stock. Order not placed.") {
             Alert.alert("Out of Stock", message, [
               {

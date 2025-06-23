@@ -240,12 +240,12 @@ const interestedfunc = async (selectedTypes = "") => {
             <Text style={styles.buttonText}>Already Participated</Text>
           </View>
         }
-        <TouchableOpacity
+        {/* <TouchableOpacity
             style={[styles.button,{marginLeft: 10}]}
             onPress={() => navigation.navigate("Legal GPT")}
           >
             <Text style={styles.buttonText}>Legal GPT</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
          </View>
         
       </View>

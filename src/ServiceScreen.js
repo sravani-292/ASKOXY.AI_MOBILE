@@ -467,6 +467,18 @@ const ServiceScreen = () => {
           style={styles.categoryImage}
           defaultSource={require("../assets/icon.png")}
         />
+        {(() => {
+    const cashbackMatch = item.categoryName.match(/₹(\d+)\s*cashback/i);
+    if (cashbackMatch) {
+      return (
+        <View style={styles.cashbackTag}>
+<Text style={styles.cashbackText}>upto ₹{cashbackMatch[1]}</Text>
+          <Text style={styles.cashbackSubText}>Cashback</Text>
+        </View>
+      );
+    }
+    return null;
+  })()}
       </View>
       <View style={styles.categoryContent}>
         <Text style={styles.categoryName} numberOfLines={1}>
@@ -621,7 +633,9 @@ const ServiceScreen = () => {
             </View>
 
             <AskoxyOffers />
-
+  <View style={styles.banner}>
+      <Text style={styles.bannerText}>🎉 Get ₹50 cashback on your first order!</Text>
+    </View>
             {/* Categories Section */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeaderRow}>
@@ -924,6 +938,73 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#4A148C",
   },
+    cashbackTag: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: '#FF3B30', 
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 16,
+    elevation: 8, // Enhanced shadow for Android
+    shadowColor: '#FF3B30', // Colored shadow
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    // Pulsing animation effect (if you want to add later)
+  },
+  
+  cashbackText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900', // Extra bold
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  
+  cashbackSubText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginTop: 1,
+    letterSpacing: 0.8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+  banner: {
+    backgroundColor: '#FFD700',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderRadius: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  bannerText: {
+    color: '#1A1A1A',
+    fontWeight: '600',
+    fontSize: 18,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  
 });
 
 export default ServiceScreen;

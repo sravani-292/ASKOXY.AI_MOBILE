@@ -11,7 +11,7 @@ import StacksScreens from "./src/Navigations/StacksScreens";
 import GoogleAnalyticsService from "./src/Components/GoogleAnalytic";
 import * as Linking from 'expo-linking';
 import { initializeApp, getApps } from 'firebase/app';
-import * as Notifications from 'expo-notifications';
+// import * as Notifications from 'expo-notifications';
 
 LogBox.ignoreLogs([
   'EventEmitter.removeListener',
@@ -45,14 +45,14 @@ export default function App() {
   const [getInitialURL, setInitialURL] = useState(null);
   const [screenName, setScreenName] = useState(null);
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
+// Notifications.setNotificationHandler({
+//   handleNotification: async () => ({
+//     shouldShowBanner: true,
+//     shouldShowList: true,
+//     shouldPlaySound: false,
+//     shouldSetBadge: false,
+//   }),
+// });
 
  useEffect(() => {
   const validScreens = [

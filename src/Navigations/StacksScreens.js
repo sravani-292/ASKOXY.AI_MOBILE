@@ -80,10 +80,10 @@ import StudyAbroad from "../StudyAbroad";
 import AllService from "../AllService";
 import AccountDeletionScreen from "../Authorization/AccountDeletion";
 import Home from "../Home";
-import Notifications from "../Notifications";
+// import Notifications from "../Notifications";
 
 import * as Linking from "expo-linking";
-import ChatScreen from "../Dashboard/LegalChatbot";
+// import ChatScreen from "../Dashboard/LegalChatbot";
 import AboutService from "../Dashboard/AboutUS";
 import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
 
@@ -271,7 +271,7 @@ export default function StacksScreens() {
       <Stack.Screen name="Write To Us" component={WriteToUs} />
       <Stack.Screen name="ChatGpt" component={ChatGpt} />
       <Stack.Screen name="Referral History" component={ReferralHistory} />
-      <Stack.Screen name="Legal GPT" component={ChatScreen} />
+      {/* <Stack.Screen name="Legal GPT" component={ChatScreen} /> */}
       <Stack.Screen name="About Us" component={AboutService} />
 
       <Stack.Screen
@@ -465,7 +465,7 @@ export default function StacksScreens() {
         options={{ headerShown: false }}
       />
 
-      <Stack.Screen name="Notifications" component={Notifications} />
+      {/* <Stack.Screen name="Notifications" component={Notifications} /> */}
 
       <Stack.Screen name="New Address Book" component={NewAddressBook} />
       <Stack.Screen name="Oxy Coupons" component={OxyCoupens} />

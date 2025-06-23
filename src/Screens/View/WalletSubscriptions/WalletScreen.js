@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import BASE_URL,{userStage} from '../../../../Config';
 import { COLORS } from '../../../../Redux/constants/theme';
+import { useFocusEffect } from '@react-navigation/native';
 const {width,height} = Dimensions.get('window');
 const WalletPage = ({ route }) => {
   const userData = useSelector((state) => state.counter);
@@ -16,9 +17,11 @@ const WalletPage = ({ route }) => {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     getWallet();
-  }, []);
+   },[])
+);
 
   const getWallet = async () => {
     setLoading(true)

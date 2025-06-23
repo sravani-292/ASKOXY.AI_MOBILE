@@ -52,6 +52,8 @@ import {
 } from "../../../../src/ApiService";
 
 const UserDashboard = ({ route }) => {
+  console.log("from routes",route?.params?.category);
+  
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -439,12 +441,12 @@ const UserDashboard = ({ route }) => {
       }
 
       // 2️⃣ Container Offer (10kg or 26kg, only one per user)
-      if (!alertShown && (itemWeight === 10 || itemWeight === 26)) {
-        // Check if user has already used a container offer (10kg or 26kg)
+  if (!alertShown && (itemWeight === 10 || itemWeight === 26) && units === "kgs") {        // Check if user has already used a container offer (10kg or 26kg)
         const hasUsedContainer = userEligibleOffers.some(
-          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26 && uo.units === "kgs")
+          (uo) =>
+            uo.eligible &&
+            (uo.weight === 10 || uo.weight === 26 )
         );
-
         if (hasUsedContainer) {
           setTimeout(() => {
             Alert.alert(
@@ -544,6 +546,21 @@ const UserDashboard = ({ route }) => {
     };
     fetchData();
   }, []);
+
+useEffect(() => {
+  if (selectedCategory?.includes("Cashew nuts")) {
+    const timer = setTimeout(() => {
+      Alert.alert(
+        "🎉 Hurray!",
+        "Get upto ₹40 cashback on your first Cashew nuts purchase!",
+        [{ text: "Great!", style: "default" }]
+      );
+    }, 1300); // Delay by 500ms
+
+    return () => clearTimeout(timer);
+  }
+}, [selectedCategory]);
+
 
   // Get all categories and items
   const getAllCategories = () => {
@@ -670,7 +687,8 @@ const UserDashboard = ({ route }) => {
   // Apply filters
   const applyFilters = () => {
     let itemsToFilter = [];
-
+    console.log("selected category",selectedCategory);
+    
     if (selectedCategory === "All CATEGORIES") {
       itemsToFilter = allItems;
     } else {
@@ -1156,6 +1174,20 @@ const UserDashboard = ({ route }) => {
             ))}
           </View>
         </ScrollView>
+   
+{/* {selectedCategory?.includes("Cashew nuts") && (
+  <View style={styles.cashbackBannerSimple}>
+    <MaterialIcons name="local-offer" size={20} color="#FF6B35" />
+    <Text style={styles.cashbackBannerTextSimple}>Get ₹40 Cashback!</Text>
+  </View>
+)} */}
+{/* {selectedCategory?.includes("Cashew nuts") && 
+ Alert.alert(
+      "🎉 Hurrah!",
+      "Get ₹40 cashback on your first Cashew nuts purchase!",
+      [{ text: "Great!", style: "default" }]
+    )
+} */}
       </View>
 
       {/* Filter Modal */}
@@ -1851,6 +1883,27 @@ const oneKgModal = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
+  cashbackBannerSimple: {
+  backgroundColor: '#FFF3E0',
+  borderLeftWidth: 4,
+  borderLeftColor: '#FF6B35',
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  marginVertical: 8,
+  marginHorizontal: 16,
+  flexDirection: 'row',
+
+  borderRadius: 8,
+  fontSize:20,
+  textAlign:"center",
+},
+
+cashbackBannerTextSimple: {
+  color: '#FF6B35',
+  fontSize:36,
+  fontWeight: 'bold',
+  marginLeft: 8,
+},
 });
 
 export default UserDashboard;
