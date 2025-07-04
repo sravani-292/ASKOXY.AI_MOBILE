@@ -11,8 +11,10 @@ import ProfileSettings from "../Screens/View/Profile/ProfileView";
 // import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import MainWallet from "../Screens/View/Wallet/Main";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
-import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
-import ServiceScreen from "../ServiceScreen";
+// import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
+import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
+// import ServiceScreen from "../ServiceScreen";
+import ServiceScreen from "../Screens/ServiceScreen";
 import Home from "../Home";
 import { COLORS } from "../../Redux/constants/theme";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -76,7 +78,7 @@ const Tabs = () => {
 
   return (
     <Tab.Navigator
-      initialRouteName="Landing"
+      initialRouteName="Dashboard"
       screenOptions={{
         headerShown: true,
         tabBarShowLabel: false,

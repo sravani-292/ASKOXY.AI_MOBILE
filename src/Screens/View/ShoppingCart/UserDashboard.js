@@ -39,21 +39,19 @@ import Icon from "react-native-vector-icons/Ionicons";
 import { Ionicons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome } from "@expo/vector-icons";
-
 import { COLORS } from "../../../../Redux/constants/theme";
 import LottieView from "lottie-react-native";
 import RiceLoader from "./RiceLoader";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
-
 import {
   handleCustomerCartData,
   handleUserAddorIncrementCart,
   handleDecrementorRemovalCart,
 } from "../../../../src/ApiService";
-
+// import GoldDetailModal from "./GoldDetailedModal";
 const UserDashboard = ({ route }) => {
-  console.log("from routes",route?.params?.category);
-  
+  // console.log("UserDashboard route params:", route.params.categoryType);
+
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -67,8 +65,7 @@ const UserDashboard = ({ route }) => {
   const [cartCount, setCartCount] = useState();
   const [cartItems, setCartItems] = useState({});
   const [cartData, setCartData] = useState([]);
-  const [loader, setLoader] = useState(false);
-  const [seletedState, setSelectedState] = useState(null);
+
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [removalLoading, setRemovalLoading] = useState({});
   const [searchText, setSearchText] = useState("");
@@ -81,12 +78,11 @@ const UserDashboard = ({ route }) => {
   const [showOffer, setShowOffer] = useState(false);
   const [selectedWeightFilter, setSelectedWeightFilter] = useState(null);
   const [imageErrors, setImageErrors] = useState({});
-  const [offerItems, setOfferItems] = useState();
-  const [has5kgsOffer, setHas5kgsOffer] = useState(false);
-  const [offeravail5kgs, setOfferavail5kgs] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState(null);
+
   const scrollViewRef = useRef(null);
-  //  const offerweight = route.params.offerId;
-  //  console.log("offer weight",offerweight);
 
   useEffect(() => {
     if (showOffer) {
@@ -128,6 +124,7 @@ const UserDashboard = ({ route }) => {
       if (userData) {
         fetchCartItems();
       }
+
       getAllCategories();
       // console.log(route?.params?.category);
     }, [userData])
@@ -140,14 +137,12 @@ const UserDashboard = ({ route }) => {
   const fetchCartItems = async () => {
     try {
       const response = await handleCustomerCartData(customerId);
-      // console.log("cart response", response?.data);
 
       const cartData = response?.data?.customerCartResponseList;
       const totalCartCount = cartData.reduce(
         (total, item) => total + item.cartQuantity,
         0
       );
-      //  console.log("total cart count", totalCartCount);
 
       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
         setCartData([]);
@@ -164,14 +159,11 @@ const UserDashboard = ({ route }) => {
           item.quantity === undefined ||
           item.status != "ADD"
         ) {
-          // console.error("Invalid item in cartData:", item);
           return acc;
         }
         acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
-
-      // console.log("cart items map", cartItemsMap);
 
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
@@ -182,7 +174,6 @@ const UserDashboard = ({ route }) => {
         return acc;
       }, {});
 
-      // console.log({ limitedStockMap });
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
@@ -199,8 +190,6 @@ const UserDashboard = ({ route }) => {
   };
 
   const checkAndShowOneKgOfferModal = async () => {
-    // console.log("checking one kg offer modal");
-
     const oneKgBags = cartData.filter(
       (item) =>
         parseFloat(item.weight?.toString() || "0") === 1 &&
@@ -227,81 +216,52 @@ const UserDashboard = ({ route }) => {
         const cheapestBag = oneKgBags.reduce((min, curr) =>
           parseFloat(curr.itemPrice) < parseFloat(min.itemPrice) ? curr : min
         );
-        // console.log("cheapest bag", cheapestBag);
-
-        // Alert.alert(
-        //   "🎁 1+1 Offer!",
-        //   `You're eligible for a free ${cheapestBag.itemName}!`,
-        //   [
-        //     {
-        //       text: "Add Free Bag",
-        //       onPress: async () => {
-        //         await addFreeOneKgBag(cheapestBag, cartData);
-        //       },
-        //     },
-        //     {
-        //       text: "No Thanks",
-        //       style: "cancel",
-        //     },
-        //   ]
-        // );
       }
     } catch (error) {
       console.error("Error checking 1kg offer:", error);
     }
   };
 
-  const addFreeOneKgBag = async (item) => {
-    try {
-      console.log("item ID", item.itemId);
-      await axios.patch(
-        `${BASE_URL}cart-service/cart/incrementCartData`,
-        {
-          // cartQuantity: newQuantity,
-          customerId,
-          itemId: item.itemId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      Alert.alert(
-        "Success",
-        `🎉 1+1 Offer applied! Free ${item.itemName} added.`
-      );
-      await fetchCartItems();
-    } catch (error) {
-      console.error("Error applying free 1kg bag:", error.response);
-      message.error("Failed to add the free bag. Try again.");
-    }
-  };
+  const arrangeCategories = (allCategoryGroups) => {
+    const { category, categoryType } = route.params;
 
-  const arrangeCategories = (categories) => {
-    if (!categories || categories.length === 0) return [];
+    console.log("from routes category:", category);
+    console.log("from routes categoryType:", categoryType);
 
-    // Find the exact "Sample Rice" category
+    if (!Array.isArray(allCategoryGroups) || allCategoryGroups.length === 0)
+      return [];
+
+    const matchedGroup = allCategoryGroups.find(
+      (group) =>
+        group.categoryType?.trim().toLowerCase() ===
+        categoryType?.trim().toLowerCase()
+    );
+
+    const matchedItems = matchedGroup?.categories?.find(
+      (cat) =>
+        cat.categoryName?.trim().toLowerCase() ===
+        category?.trim().toLowerCase()
+    );
+
+    if (!matchedGroup || !Array.isArray(matchedGroup.categories)) return [];
+
+    let categories = [...matchedGroup.categories];
+
     const sampleRiceIndex = categories.findIndex(
       (cat) => cat.categoryName === "Sample Rice"
     );
 
-    // If "Sample Rice" category is found, move it to the first position
     if (sampleRiceIndex !== -1) {
-      const result = [...categories];
-      const sampleRiceCategory = result.splice(sampleRiceIndex, 1)[0];
-      return [sampleRiceCategory, ...result];
+      const sampleRice = categories.splice(sampleRiceIndex, 1)[0];
+      return [sampleRice, ...categories];
     }
 
     return categories;
   };
 
-  // Helper function to parse weight for sorting
   const parseWeight = (weightStr) => {
     if (!weightStr) return 0;
 
-    // Try to extract numeric value
     const numMatch = weightStr.toString().match(/(\d+(\.\d+)?)/);
     if (numMatch) {
       return parseFloat(numMatch[0]);
@@ -311,6 +271,8 @@ const UserDashboard = ({ route }) => {
 
   // Sort items by weight in ascending order (changed from descending)
   const sortItems = (items, order) => {
+    console.log("sort items", items);
+
     return [...items].sort((a, b) => {
       // First priority: in-stock items
       if (a.quantity > 0 && b.quantity === 0) return -1;
@@ -335,6 +297,21 @@ const UserDashboard = ({ route }) => {
     });
   };
 
+
+  
+useEffect(() => {
+  if (selectedCategory?.includes("Cashew nuts")) {
+    const timer = setTimeout(() => {
+      Alert.alert(
+        "🎉 Hurray!",
+        "Get upto ₹40 cashback on your first Cashew nuts purchase!",
+        [{ text: "Great!", style: "default" }]
+      );
+    }, 1300); // Delay by 500ms
+
+    return () => clearTimeout(timer);
+  }
+}, [selectedCategory]);
   // Apply all filters and sorting
   const applyFiltersAndSort = (
     items,
@@ -352,8 +329,8 @@ const UserDashboard = ({ route }) => {
 
     // Filter by price and weight range
     const filtered = filteredByWeight.filter((item) => {
-      console.log("item",item);
-      
+      console.log("item", item);
+
       const itemPrice = parseFloat(item.itemPrice);
       const itemWeight = parseWeight(item.weight);
       return (
@@ -364,11 +341,11 @@ const UserDashboard = ({ route }) => {
       );
     });
 
+    console.log({ filtered });
+
     // Sort the filtered items
     return sortItems(filtered, sortOrder);
   };
-
- 
 
   const handleAddToCart = async (item) => {
     if (!userData) {
@@ -401,12 +378,13 @@ const UserDashboard = ({ route }) => {
 
       const activeOffers = await activeRes.json();
       const userEligibleOffers = await eligibleRes.json();
-      console.log("active offers",activeOffers);
-      console.log("user eligible offers",userEligibleOffers);
-      
+      console.log("active offers", activeOffers);
+      console.log("user eligible offers", userEligibleOffers);
+
       // Filter only active offers
       const validActiveOffers = activeOffers.filter((offer) => offer.active);
       if (!validActiveOffers.length) return;
+      console.log("valid active ", validActiveOffers);
 
       // Extract used offer weights and names
       const usedOfferWeights = userEligibleOffers
@@ -430,10 +408,10 @@ const UserDashboard = ({ route }) => {
         );
         if (usedOffer) {
           setTimeout(() => {
-            Alert.alert(
-              "Offer Already Availed",
-              `You have already availed the ${usedOffer.offerName} for ${itemWeight}kg.`
-            );
+            // Alert.alert(
+            //   "Offer Already Availed",
+            //   `You have already availed the ${usedOffer.offerName} for ${itemWeight}kg.`
+            // );
           }, 1000);
 
           alertShown = true;
@@ -441,24 +419,32 @@ const UserDashboard = ({ route }) => {
       }
 
       // 2️⃣ Container Offer (10kg or 26kg, only one per user)
-  if (!alertShown && (itemWeight === 10 || itemWeight === 26) && units === "kgs") {        // Check if user has already used a container offer (10kg or 26kg)
+      if (
+        !alertShown &&
+        (itemWeight === 10 || itemWeight === 26) &&
+        units === "kgs"
+      ) {
+        // Check if user has already used a container offer (10kg or 26kg)
+        console.log("user eligible offers", userEligibleOffers);
+
         const hasUsedContainer = userEligibleOffers.some(
-          (uo) =>
-            uo.eligible &&
-            (uo.weight === 10 || uo.weight === 26 )
+          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26)
         );
+        console.log("has used container", hasUsedContainer);
+
         if (hasUsedContainer) {
           setTimeout(() => {
-            Alert.alert(
-              "Container Offer Already Availed",
-              "You have already availed a container offer. Only one container offer (10kg or 26kg) can be used."
-            );
+            // Alert.alert(
+            //   "Container Offer Already Availed",
+            //   "You have already availed a container offer. Only one container offer (10kg or 26kg) can be used."
+            // );
           }, 1000);
           alertShown = true;
         } else {
           const matchedContainerOffer = validActiveOffers.find(
             (offer) =>
-              offer.minQtyKg === itemWeight && units == "kgs" &&
+              offer.minQtyKg === itemWeight &&
+              units == "kgs" &&
               (offer.minQtyKg === 10 || offer.minQtyKg === 26) &&
               !usedOfferNames.includes(offer.offerName)
           );
@@ -468,7 +454,6 @@ const UserDashboard = ({ route }) => {
               Alert.alert(
                 "Container Offer",
                 `${matchedContainerOffer.offerName} FREE! `
-              //  ` Buy ${matchedContainerOffer.minQtyKg}kg and get a ${matchedContainerOffer.freeItemName} free.`
               );
             }, 1000);
             alertShown = true;
@@ -483,22 +468,24 @@ const UserDashboard = ({ route }) => {
             offer.minQtyKg === itemWeight &&
             (offer.minQtyKg === 1 || offer.minQtyKg === 5) &&
             !usedOfferNames.includes(offer.offerName) &&
-            offer.freeItemName.toLowerCase() === item.itemName.toLowerCase()
+            offer.freeItemName.toLowerCase() === item.itemName.toLowerCase() &&
+            offer.freeItemId === item.itemId
         );
-
+       console.log("matched special offer",matchedSpecialOffer);
+       
         if (matchedSpecialOffer) {
-          // console.log("Matched Special Offer:", matchedSpecialOffer);
           setTimeout(() => {
             Alert.alert(
               "Special Offer",
-              `${matchedSpecialOffer.offerName} is active! Buy ${matchedSpecialOffer.minQty} bag(s) of ${matchedSpecialOffer.minQtyKg}kg and get ${matchedSpecialOffer.freeQty}kg free.`
+              `${matchedSpecialOffer.offerName} is active!.` 
+              // Buy ${matchedSpecialOffer.minQty} bag(s) of ${matchedSpecialOffer.minQtyKg}kg and get ${matchedSpecialOffer.freeQty}kg free
             );
           }, 1000);
           alertShown = true;
         }
       }
     } catch (error) {
-      console.error("Add to cart error", error);
+      console.error("Add to cart error", error.response);
       Alert.alert("Error", "Failed to add item to cart. Please try again.");
     }
   };
@@ -510,7 +497,6 @@ const UserDashboard = ({ route }) => {
     };
     try {
       const response = await handleUserAddorIncrementCart(data);
-      // console.log("increment response", response);
       Alert.alert("Success", response.data.errorMessage);
       await fetchCartItems();
     } catch (error) {}
@@ -522,91 +508,71 @@ const UserDashboard = ({ route }) => {
     const cartItem = cartData.find(
       (cartData) => cartData.itemId === item.itemId
     );
-    // console.log("customer cart items", cartItem);
-     const data = {
+    const data = {
       customerId: customerId,
       itemId: item.itemId,
     };
-    // console.log({userData})
     try {
       const response = await handleDecrementorRemovalCart(data);
-      // console.log("decrement response", response);
       Alert.alert("Success", response.data.errorMessage);
       fetchCartItems();
     } catch (error) {
-      // console.log("Error decrementing item cart quantity:", error.response);
       Alert.alert("Failed", error.response.data.errorMessage);
       fetchCartItems();
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      getAllCategories();
-    };
-    fetchData();
-  }, []);
+  
 
-useEffect(() => {
-  if (selectedCategory?.includes("Cashew nuts")) {
-    const timer = setTimeout(() => {
-      Alert.alert(
-        "🎉 Hurray!",
-        "Get upto ₹40 cashback on your first Cashew nuts purchase!",
-        [{ text: "Great!", style: "default" }]
-      );
-    }, 1300); // Delay by 500ms
-
-    return () => clearTimeout(timer);
-  }
-}, [selectedCategory]);
-
-
-  // Get all categories and items
   const getAllCategories = () => {
     setLoading(true);
     axios
-      .get(`${BASE_URL}product-service/showItemsForCustomrs`)
+      .get(`${BASE_URL}product-service/showGroupItemsForCustomrs`)
       .then((response) => {
         setCategories(response.data);
-        // console.log(
-        //   "products response",
-        //   JSON.stringify(response.data, null, 2)
-        // );
 
-        // Get all items
-        const items = response.data.flatMap(
-          (category) => category.itemsResponseDtoList || []
-        );
+        console.log("categoryType", route.params.categoryType);
+        const categoryType = route?.params?.categoryType;
+
+        const items = response.data
+          .filter(
+            (group) =>
+              group.categoryType?.toLowerCase() === categoryType?.toLowerCase()
+          )
+          .flatMap(
+            (group) =>
+              group.categories?.flatMap(
+                (cat) => cat.itemsResponseDtoList || []
+              ) || []
+          );
 
         setAllItems(items);
 
-        if (route.params.offerId) {
+        if (route.params.category) {
           const weight = route.params.offerId;
           const finalWeightFilter =
             selectedWeightFilter === weight ? null : weight;
 
           setSelectedWeightFilter(finalWeightFilter);
 
-          // console.log({ finalWeightFilter });
-
           let itemsToFilter = [];
 
           if (selectedCategory === "All CATEGORIES") {
             itemsToFilter = items;
           } else {
-            itemsToFilter = items
+            itemsToFilter = response.data
+              .flatMap((group) => group.categories || [])
               .filter(
                 (cat) =>
-                  cat.categoryName.trim().toLowerCase() ===
-                  selectedCategory.trim().toLowerCase()
+                  cat.categoryName?.trim().toLowerCase() ===
+                  route.params.category?.trim().toLowerCase()
               )
               .flatMap((cat) => cat.itemsResponseDtoList || []);
           }
-          // console.log("selected category", selectedCategory);
 
           setFilteredItems(
-            applyFiltersAndSort(itemsToFilter, finalWeightFilter)
+            itemsToFilter
+            // applyFiltersAndSort(itemsToFilter, finalWeightFilter)
           );
         } else {
           if (selectedCategory === "All CATEGORIES") {
@@ -615,8 +581,8 @@ useEffect(() => {
             const filtered = response.data
               .filter(
                 (cat) =>
-                  cat.categoryName.trim().toLowerCase() ===
-                  selectedCategory.trim().toLowerCase()
+                  cat.categoryName?.trim().toLowerCase() ===
+                  selectedCategory?.trim().toLowerCase()
               )
               .flatMap((cat) => cat.itemsResponseDtoList || []);
 
@@ -641,43 +607,78 @@ useEffect(() => {
       });
   };
 
- 
-
-
   const filterByCategory = (category) => {
-  setSelectedCategory(category); 
-  // console.log("selected category (param)", category);
-  const matchedCategory = categories.find(
-    (cat) =>
-      cat.categoryName.trim().toLowerCase() === category.trim().toLowerCase()
-  ); if (category === "All CATEGORIES") {
-      setFilteredItems(applyFiltersAndSort(allItems, null));
-     }
-     else{
-   const filtered = matchedCategory?.itemsResponseDtoList || [];
-  // console.log("Filtered Items: ", filtered);
-  setFilteredItems(filtered); 
-  }
-};
+    console.log("into the filter by category function");
+    console.log("filtering by category:", category);
 
+    const flattenedCategories = categories.flatMap(
+      (wrapper) => wrapper.categories || []
+    );
+    setSelectedCategory(category);
+
+    console.log("Available categories:");
+    flattenedCategories.forEach((cat) =>
+      console.log(" -", cat.categoryName?.trim().toLowerCase())
+    );
+    console.log("Matching against:", category?.trim().toLowerCase());
+
+    const matchedCategory = flattenedCategories.find(
+      (cat) =>
+        cat.categoryName?.trim().toLowerCase() ===
+        category?.trim().toLowerCase()
+    );
+
+    console.log("Matched Category: ", matchedCategory);
+
+    if (category === "All CATEGORIES") {
+      setFilteredItems(
+        allItems
+        // applyFiltersAndSort(allItems, null)
+      );
+    } else {
+      const filtered = matchedCategory?.itemsResponseDtoList || [];
+      console.log("Filtered Items: ", filtered);
+      setFilteredItems(filtered);
+    }
+  };
 
   // Filter by weight
   const filterByWeight = (weight) => {
+    console.log(" item weight", weight);
+
     let finalWeightFilter = selectedWeightFilter === weight ? null : weight;
     setSelectedWeightFilter(finalWeightFilter);
+    console.log("final weight filter", finalWeightFilter);
 
     let itemsToFilter = [];
 
     if (selectedCategory === "All CATEGORIES") {
       itemsToFilter = allItems;
     } else {
-      itemsToFilter = categories
-        .filter(
-          (cat) =>
-            cat.categoryName.trim().toLowerCase() ===
-            selectedCategory.trim().toLowerCase()
-        )
-        .flatMap((cat) => cat.itemsResponseDtoList || []);
+      console.log(
+        "All available categories:",
+        JSON.stringify(categories, null, 2)
+      );
+      console.log("selected category", selectedCategory);
+
+      const allCategories = categories.flatMap(
+        (group) => group.categories || []
+      );
+
+      const matchedCategories = allCategories.filter(
+        (cat) =>
+          cat.categoryName?.trim().toLowerCase() ===
+          selectedCategory?.trim().toLowerCase()
+      );
+
+      console.log(
+        "Matched categories:",
+        matchedCategories.map((cat) => cat.categoryName)
+      );
+
+      itemsToFilter = matchedCategories.flatMap(
+        (cat) => cat.itemsResponseDtoList || []
+      );
     }
 
     // Apply filters
@@ -687,16 +688,15 @@ useEffect(() => {
   // Apply filters
   const applyFilters = () => {
     let itemsToFilter = [];
-    console.log("selected category",selectedCategory);
-    
+
     if (selectedCategory === "All CATEGORIES") {
       itemsToFilter = allItems;
     } else {
       itemsToFilter = categories
         .filter(
           (cat) =>
-            cat.categoryName.trim().toLowerCase() ===
-            selectedCategory.trim().toLowerCase()
+            cat.categoryName?.trim().toLowerCase() ===
+            selectedCategory?.trim().toLowerCase()
         )
         .flatMap((cat) => cat.itemsResponseDtoList || []);
     }
@@ -716,82 +716,120 @@ useEffect(() => {
     setFilterModalVisible(false);
   };
 
-  // Filter items by search
-  const filterItemsBySearch = (searchText) => {
-    if (!searchText.trim()) {
-      if (selectedCategory === "All CATEGORIES") {
-        setFilteredItems(applyFiltersAndSort(allItems, selectedWeightFilter));
-      } else {
-        const filtered = categories
-          .filter(
-            (cat) =>
-              cat.categoryName.trim().toLowerCase() ===
-              selectedCategory.trim().toLowerCase()
-          )
-          .flatMap((cat) => cat.itemsResponseDtoList || []);
-        setFilteredItems(applyFiltersAndSort(filtered, selectedWeightFilter));
-      }
-    } else {
-      let normalizedSearchText = searchText.toLowerCase().trim();
-      normalizedSearchText = normalizedSearchText
-        .replace(/(\d+)(kgs|kg)/g, "$1 kgs")
-        .replace(/\s+/g, " ");
-
-      const searchWords = normalizedSearchText.split(" ");
-      const packagingKeywords = [
-        "bag",
-        "bags",
-        "packet",
-        "pack",
-        "sack",
-        "sacks",
-        "kg",
-        "kgs",
-      ];
-
-      const allItems = categories.flatMap(
-        (category) => category.itemsResponseDtoList || []
-      );
-
-      const searchResults = allItems.filter((item) => {
-        const itemName = item.itemName.toLowerCase();
-        const itemWeight = item.weight
-          ? item.weight.toString().toLowerCase()
-          : "";
-        const itemUnits = item.units ? item.units.toLowerCase() : "";
-
-        const combinedWeightUnit = `${itemWeight} ${itemUnits}`.trim();
-        const normalizedItemName = itemName.replace(/(\d+)(kgs|kg)/g, "$1 kgs");
-
-        const searchableText =
-          `${normalizedItemName} ${itemWeight} ${itemUnits} ${combinedWeightUnit} ${packagingKeywords.join(
-            " "
-          )}`.trim();
-
-        return searchWords.every((word) => searchableText.includes(word));
-      });
-
-      setFilteredItems(
-        applyFiltersAndSort(searchResults, selectedWeightFilter)
-      );
-    }
+  const handleGoldItemPress = (itemId) => {
+    setSelectedItemId(itemId);
+    setModalVisible(true);
   };
 
-  // Clear search
-  const handleClearText = () => {
-    setSearchText("");
-    if (selectedCategory === "All CATEGORIES") {
-      setFilteredItems(applyFiltersAndSort(allItems, selectedWeightFilter));
-    } else {
-      const filtered = categories
-        .filter(
-          (cat) =>
-            cat.categoryName.trim().toLowerCase() ===
-            selectedCategory.trim().toLowerCase()
-        )
-        .flatMap((cat) => cat.itemsResponseDtoList || []);
-      setFilteredItems(applyFiltersAndSort(filtered, selectedWeightFilter));
+  const filterItemsBySearch = (searchText) => {
+    const categoryType = route.params?.categoryType;
+    console.log("selected category from search:", selectedCategory);
+    console.log("from routes categoryType:", categoryType);
+
+    const isAllCategories = selectedCategory === "All CATEGORIES";
+    const normalizedSearchText = searchText?.toLowerCase().trim() || "";
+
+    const normalizeWeightText = (text) =>
+      text.replace(/(\d+)\s*(kg|kgs)/g, "$1 kgs").replace(/\s+/g, " ");
+
+    const searchWords = normalizeWeightText(normalizedSearchText).split(" ");
+    const packagingKeywords = [
+      "bag",
+      "bags",
+      "packet",
+      "pack",
+      "sack",
+      "sacks",
+      "kg",
+      "kgs",
+    ];
+
+    // ✅ Step 1: Find group by categoryType (e.g., "GOLD", "RICE", etc.)
+    const matchedGroup = categories.find(
+      (group) =>
+        group.categoryType?.trim().toLowerCase() ===
+        categoryType?.trim().toLowerCase()
+    );
+
+    if (!matchedGroup) {
+      console.warn("No group matched for categoryType:", categoryType);
+      setFilteredItems([]);
+      return;
     }
+
+    // ✅ Step 2: Narrow down by selectedCategory inside that group
+    const itemsFromSelectedCategory = matchedGroup.categories
+      ?.filter((cat) =>
+        isAllCategories
+          ? true
+          : cat.categoryName?.trim().toLowerCase() ===
+            selectedCategory?.trim().toLowerCase()
+      )
+      ?.flatMap((cat) => cat.itemsResponseDtoList || []);
+    console.log(itemsFromSelectedCategory);
+
+    // ✅ Step 3: If search is empty, just return all items
+    if (!normalizedSearchText) {
+      const filtered = applyFiltersAndSort(
+        itemsFromSelectedCategory,
+        selectedWeightFilter
+      );
+      setFilteredItems(filtered);
+      return;
+    }
+
+    // ✅ Step 4: Apply search filtering logic
+    const filteredBySearch = itemsFromSelectedCategory.filter((item) => {
+      const itemName = normalizeWeightText(item?.itemName?.toLowerCase() || "");
+      const weight = item?.weight?.toString().toLowerCase() || "";
+      const units = item?.units?.toLowerCase() || "";
+      const combinedWeight = `${weight} ${units}`.trim();
+
+      const searchableText = `${itemName} ${weight} ${units} ${combinedWeight} ${packagingKeywords.join(
+        " "
+      )}`;
+
+      return searchWords.every((word) => searchableText.includes(word));
+    });
+
+    setFilteredItems(filteredBySearch);
+  };
+
+  const handleClearText = () => {
+    const categoryType = route.params?.categoryType;
+    console.log("categoryType:", categoryType);
+
+    setSearchText("");
+
+    const isAllCategories =
+      selectedCategory?.trim().toLowerCase() === "all categories";
+
+    const matchedGroup = categories.find(
+      (group) =>
+        group.categoryType?.trim().toLowerCase() ===
+        categoryType?.trim().toLowerCase()
+    );
+
+    console.log("matchedGroup:", matchedGroup);
+
+    if (!matchedGroup || !matchedGroup.categories) {
+      setFilteredItems([]);
+      return;
+    }
+
+    // Show all items in that categoryType (GOLD, KOLAM, etc.)
+    const items = matchedGroup.categories
+      .filter((cat) =>
+        isAllCategories
+          ? true // return all items under categoryType
+          : cat.categoryName?.trim().toLowerCase() ===
+            selectedCategory?.trim().toLowerCase()
+      )
+      .flatMap((cat) => cat.itemsResponseDtoList || []);
+
+    console.log("items after clear:", items);
+    setFilteredItems(items)
+    // setFilteredItems(applyFiltersAndSort(items, selectedWeightFilter));
   };
 
   // Get appropriate icon for item
@@ -874,7 +912,6 @@ useEffect(() => {
             />
           )}
         </View>
-
       </TouchableOpacity>
 
       <View style={styles.itemDetailsContainer}>
@@ -973,8 +1010,19 @@ useEffect(() => {
               )}
             </TouchableOpacity>
           )}
+          {/* {route.params?.categoryType == "GOLD" && (
+            <TouchableOpacity onPress={() => handleGoldItemPress(item.itemId)}>
+              <Text style={{ textAlign: "center" }}>View Details</Text>
+            </TouchableOpacity>
+          )} */}
         </View>
       </View>
+      {/* Gold Detail Modal */}
+      {/* <GoldDetailModal
+        visible={modalVisible}
+        itemId={selectedItemId}
+        onClose={() => setModalVisible(false)}
+      /> */}
     </View>
   );
 
@@ -1001,6 +1049,7 @@ useEffect(() => {
               placeholder="Search for items..."
               value={searchText}
               onChangeText={(text) => {
+                console.log("User is typing:", text);
                 setSearchText(text);
                 filterItemsBySearch(text);
               }}
@@ -1022,12 +1071,12 @@ useEffect(() => {
           </View>
 
           {/* Filter Button */}
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setFilterModalVisible(true)}
           >
             <Icon name="filter" size={24} color="#6b21a8" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {userData && cartCount > 0 && (
             <Pressable
@@ -1046,85 +1095,88 @@ useEffect(() => {
         </View>
 
         {/* Weight Filter Buttons */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.weightFilterContainer}
-          contentContainerStyle={styles.weightFilterContent}
-        >
-          <TouchableOpacity
-            style={[
-              styles.weightFilterButton,
-              selectedWeightFilter === 1 || selectedWeightFilter === "1" && styles.selectedWeightFilterButton,
-            ]}
-            onPress={() => filterByWeight(1)}
+        {route.params?.categoryType == "RICE" && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.weightFilterContainer}
+            contentContainerStyle={styles.weightFilterContent}
           >
-            <Text
-              style={
-                selectedWeightFilter === 1 || selectedWeightFilter === "1"
-                  ? styles.selectedWeightFilterText
-                  : styles.weightFilterText
-              }
+            <TouchableOpacity
+              style={[
+                styles.weightFilterButton,
+                selectedWeightFilter === 1 && styles.selectedWeightFilterButton,
+              ]}
+              onPress={() => filterByWeight(1)}
             >
-              1kg
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={
+                  selectedWeightFilter === 1
+                    ? styles.selectedWeightFilterText
+                    : styles.weightFilterText
+                }
+              >
+                1kg
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.weightFilterButton,
-              selectedWeightFilter === 5 || selectedWeightFilter === "5" && styles.selectedWeightFilterButton,
-            ]}
-            onPress={() => filterByWeight(5)}
-          >
-            <Text
-              style={
-                selectedWeightFilter === 5 || selectedWeightFilter === "5"
-                  ? styles.selectedWeightFilterText
-                  : styles.weightFilterText
-              }
+            <TouchableOpacity
+              style={[
+                styles.weightFilterButton,
+                selectedWeightFilter === 5 && styles.selectedWeightFilterButton,
+              ]}
+              onPress={() => filterByWeight(5)}
             >
-              5kg
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={
+                  selectedWeightFilter === 5
+                    ? styles.selectedWeightFilterText
+                    : styles.weightFilterText
+                }
+              >
+                5kg
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.weightFilterButton,
-              selectedWeightFilter === 10 || selectedWeightFilter === "10" && styles.selectedWeightFilterButton,
-            ]}
-            onPress={() => filterByWeight(10)}
-          >
-            <Text
-              style={
-                selectedWeightFilter === 10 || selectedWeightFilter === "10"
-                  ? styles.selectedWeightFilterText
-                  : styles.weightFilterText
-              }
+            <TouchableOpacity
+              style={[
+                styles.weightFilterButton,
+                selectedWeightFilter === 10 &&
+                  styles.selectedWeightFilterButton,
+              ]}
+              onPress={() => filterByWeight(10)}
             >
-              10kg
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={
+                  selectedWeightFilter === 10
+                    ? styles.selectedWeightFilterText
+                    : styles.weightFilterText
+                }
+              >
+                10kg
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.weightFilterButton,
-              selectedWeightFilter === 26 || selectedWeightFilter === "26" && styles.selectedWeightFilterButton,
-            ]}
-            onPress={() => filterByWeight(26)}
-          >
-            <Text
-              style={
-                selectedWeightFilter === 26 || selectedWeightFilter === "26"
-                  ? styles.selectedWeightFilterText
-                  : styles.weightFilterText
-              }
+            <TouchableOpacity
+              style={[
+                styles.weightFilterButton,
+                selectedWeightFilter === 26 &&
+                  styles.selectedWeightFilterButton,
+              ]}
+              onPress={() => filterByWeight(26)}
             >
-              26kg
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-
+              <Text
+                style={
+                  selectedWeightFilter === 26
+                    ? styles.selectedWeightFilterText
+                    : styles.weightFilterText
+                }
+              >
+                26kg
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        )}
         {/* Category Horizontal Scroll */}
         <ScrollView
           horizontal
@@ -1174,20 +1226,6 @@ useEffect(() => {
             ))}
           </View>
         </ScrollView>
-   
-{/* {selectedCategory?.includes("Cashew nuts") && (
-  <View style={styles.cashbackBannerSimple}>
-    <MaterialIcons name="local-offer" size={20} color="#FF6B35" />
-    <Text style={styles.cashbackBannerTextSimple}>Get ₹40 Cashback!</Text>
-  </View>
-)} */}
-{/* {selectedCategory?.includes("Cashew nuts") && 
- Alert.alert(
-      "🎉 Hurrah!",
-      "Get ₹40 cashback on your first Cashew nuts purchase!",
-      [{ text: "Great!", style: "default" }]
-    )
-} */}
       </View>
 
       {/* Filter Modal */}
@@ -1308,17 +1346,6 @@ useEffect(() => {
           </Text>
         </View>
       ) : (
-        // <FlatList
-        //   contentContainerStyle={styles.listContainer}
-        //   data={filteredItems}
-        //   renderItem={renderItem}
-        //   keyExtractor={(item) => item.itemId.toString()}
-        //    extraData={filteredItems}
-        //   numColumns={2}
-        //   ListFooterComponent={footer}
-        //   showsVerticalScrollIndicator={false}
-        // />
-
         <FlatList
           key={selectedCategory}
           data={filteredItems}
@@ -1479,18 +1506,18 @@ const styles = StyleSheet.create({
   itemDetailsContainer: {
     padding: 12,
     flex: 1,
-    height: 180, 
-    justifyContent: "flex-start", 
+    height: 180,
+    justifyContent: "flex-start",
   },
- 
+
   itemInfoContainer: {
     height: 80,
   },
   iconNameContainer: {
     flexDirection: "row",
-    alignItems: "flex-start", 
+    alignItems: "flex-start",
     marginBottom: 8,
-    height: 40, 
+    height: 40,
   },
   itemName: {
     fontSize: 14,
@@ -1498,19 +1525,19 @@ const styles = StyleSheet.create({
     color: "#1f2937",
     marginLeft: 6,
     flex: 1,
-    lineHeight: 18, 
+    lineHeight: 18,
   },
   itemWeight: {
     fontSize: 13,
     color: "#6b7280",
     marginBottom: 8,
-    marginLeft: 26, 
+    marginLeft: 26,
   },
   priceContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
-    height: 24, 
+    height: 24,
   },
   itemPrice: {
     fontSize: 16,
@@ -1527,7 +1554,7 @@ const styles = StyleSheet.create({
     height: 44,
     marginTop: "auto",
     justifyContent: "center",
-    width: "100%", 
+    width: "100%",
     position: "absolute",
     bottom: 12,
     left: 12,
@@ -1550,7 +1577,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 40, 
+    height: 40,
   },
   quantityButton: {
     width: 40,
@@ -1736,174 +1763,6 @@ const styles = StyleSheet.create({
     color: "#6b21a8",
     fontWeight: "600",
   },
-});
-
-const modalStyles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 22,
-    width: "85%",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  offerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FF6B6B",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  offerText: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 20,
-    // textAlign: "center",
-    color: "#333",
-  },
-  noteText: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  okButton: {
-    backgroundColor: "#4CAF50",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 25,
-    marginTop: 5,
-    elevation: 2,
-  },
-  okButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-});
-
-const oneKgModal = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  offerModalContainer: {
-    width: width * 0.85,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  offerModalHeader: {
-    backgroundColor: "#FFD700",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  offerModalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  closeButton: {
-    padding: 4,
-  },
-  offerModalBody: {
-    padding: 16,
-    alignItems: "center",
-  },
-  offerImage: {
-    width: width * 0.3,
-    height: width * 0.3,
-    marginBottom: 10,
-  },
-  offerModalText: {
-    fontSize: 16,
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  offerModalFooter: {
-    flexDirection: "row",
-    borderTopWidth: 1,
-    borderTopColor: "#e1e1e1",
-  },
-  offerModalButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  offerCancelButton: {
-    backgroundColor: "#f5f5f5",
-  },
-  offerConfirmButton: {
-    backgroundColor: "#FFD700",
-  },
-  offerButtonTextCancel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
-  },
-  offerButtonTextConfirm: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  limitedStockBadge: {
-    position: "absolute",
-    bottom: 2,
-    left: 15,
-    backgroundColor: "#6b21a8",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 5,
-    zIndex: 1,
-  },
-  limitedStockText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  cashbackBannerSimple: {
-  backgroundColor: '#FFF3E0',
-  borderLeftWidth: 4,
-  borderLeftColor: '#FF6B35',
-  paddingVertical: 12,
-  paddingHorizontal: 16,
-  marginVertical: 8,
-  marginHorizontal: 16,
-  flexDirection: 'row',
-
-  borderRadius: 8,
-  fontSize:20,
-  textAlign:"center",
-},
-
-cashbackBannerTextSimple: {
-  color: '#FF6B35',
-  fontSize:36,
-  fontWeight: 'bold',
-  marginLeft: 8,
-},
 });
 
 export default UserDashboard;

@@ -37,9 +37,9 @@ import UserCancelledOrderDetails from "../Screens/View/Orders/UserCancelledOrder
 import UserExchangeOrderDetails from "../Screens/View/Orders/UserExchangeOrderDetails";
 import ContainerPolicy from "../Dashboard/FreeContainer";
 import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
-import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
+// import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
+import UserDashboard from "../Screens/View/ShoppingCart/DashboardProduct/UserDashboard";
 import ChatGpt from "../Authorization/NewLogin";
-import CartScreen from "../Screens/View/ShoppingCart/CartScreen1";
 
 import LinearGradient from "react-native-linear-gradient";
 import { COLORS } from "../../Redux/constants/theme";
@@ -66,7 +66,8 @@ import UniversityGPT from "../Dashboard/ExploreGpts/UniversityGpt";
 import CountriesDisplay from "../Dashboard/StudentX/CountriesDisplay";
 import UniversitiesDisplay from "../Dashboard/StudentX/UniversitiesDisplay";
 import UniversityDetails from "../Dashboard/StudentX/UniversitiesDetails";
-import ServiceScreen from "../ServiceScreen";
+// import ServiceScreen from "../ServiceScreen";
+import ServiceScreen from "../Screens/ServiceScreen";
 import ReferFriend from "../Screens/View/Referral Links/ReferFriend";
 import BarcodeScanner from "../Screens/View/Profile/BarcodeScanner";
 import AddressBookScreen from "../Screens/View/Profile/AddressScreen";
@@ -195,6 +196,16 @@ export default function StacksScreens() {
     return <LoadingScreen />;
   }
 
+  const formatSentence = (text) => {
+  return text
+    .split(' ')
+    .map(formatWord)
+    .join(' ');
+}
+
+const formatWord = (word) => {
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+};
   return (
     <Stack.Navigator
       linking={linking}
@@ -267,7 +278,15 @@ export default function StacksScreens() {
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
       <Stack.Screen name="Item Details" component={ItemDetails} />
       <Stack.Screen name="Refund" component={Refund} />
-      <Stack.Screen name="Rice Products" component={UserDashboard} />
+      <Stack.Screen
+        name="Rice Products"
+        component={UserDashboard}
+        options={({ route }) => ({
+          title: route?.params?.categoryType
+            ? `${formatSentence(route.params.categoryType)} Products`
+            : "Rice Products",
+        })}
+        />
       <Stack.Screen name="Write To Us" component={WriteToUs} />
       <Stack.Screen name="ChatGpt" component={ChatGpt} />
       <Stack.Screen name="Referral History" component={ReferralHistory} />

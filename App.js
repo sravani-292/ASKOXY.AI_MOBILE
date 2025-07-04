@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, LogBox, Alert } from "react-native";
-import { NavigationContainer } from "@react-navigation/native";
+import { createNavigationContainerRef, NavigationContainer,useNavigation  } from "@react-navigation/native";
 import { PaperProvider } from "react-native-paper";
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
@@ -10,8 +10,9 @@ import NetworkAlert from "./src/Authorization/NetworkAlert";
 import StacksScreens from "./src/Navigations/StacksScreens";
 import GoogleAnalyticsService from "./src/Components/GoogleAnalytic";
 import * as Linking from 'expo-linking';
-import { initializeApp, getApps } from 'firebase/app';
-// import * as Notifications from 'expo-notifications';
+import * as Notifications from 'expo-notifications';
+import { registerAndSaveTokenToSupabase } from './src/Config/notificationService';
+// import { navigationRef, isNavigationReadyRef } from './src/NavigationService';
 
 LogBox.ignoreLogs([
   'EventEmitter.removeListener',
@@ -37,22 +38,104 @@ const linking = {
   },
 };
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true, // optional
+  }),
+});
 
+const navigationRef = createNavigationContainerRef();
 export default function App() {
-  const navigationRef = useRef();
+  // const navigationRef = useRef();
   const routeNameRef = useRef();
+    const notificationListener = useRef();
+  const responseListener = useRef();
+  const isNavigationReadyRef = useRef(false);
 
-  const [getInitialURL, setInitialURL] = useState(null);
+
+
   const [screenName, setScreenName] = useState(null);
 
-// Notifications.setNotificationHandler({
-//   handleNotification: async () => ({
-//     shouldShowBanner: true,
-//     shouldShowList: true,
-//     shouldPlaySound: false,
-//     shouldSetBadge: false,
-//   }),
-// });
+  
+
+ useEffect(() => {
+    // Handle foreground notification
+    const receivedListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received in foreground:', notification);
+    });
+
+    // Handle tap on notification (background or foreground)
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Tapped notification:', response);
+      handleNavigationFromNotification(response);
+    });
+
+    // Handle tap when app was killed
+    const checkInitialNotification = async () => {
+      const response = await Notifications.getLastNotificationResponseAsync();
+      if (response) {
+        console.log('App opened via notification (cold start)', response);
+        handleNavigationFromNotification(response);
+      }
+    };
+
+    checkInitialNotification();
+
+    return () => {
+      Notifications.removeNotificationSubscription(receivedListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
+  }, []);
+
+ const handleNavigationFromNotification = (response) => {
+  const data = response?.notification?.request?.content?.data;
+  if (!data) return;
+
+  const { screen, params } = data;
+
+  const validScreens = [
+    'Order Details',
+    'Rice Product Detail',
+    'Campaign',
+    'Wallet',
+    'Notifications',
+    'Study',
+    'Profile Edit',
+    'Main Screen',
+    'Referral History',
+    'Product View',
+    'Invite a friend',
+    'Rice Products',
+    // Add more screen names as needed
+  ];
+
+  const tryNavigate = () => {
+    if (screen && validScreens.includes(screen)) {
+      console.log('✅ Navigating to screen:', screen, 'with params:', params);
+      navigationRef.current?.navigate(screen, params || {});
+    } else {
+      console.warn('❌ Screen not matched or invalid:', screen);
+    }
+  };
+
+  if (isNavigationReadyRef.current) {
+    tryNavigate();
+  } else {
+    const interval = setInterval(() => {
+      if (isNavigationReadyRef.current) {
+        tryNavigate();
+        clearInterval(interval);
+      }
+    }, 500);
+
+    // Clear interval if still not ready after 10s
+    setTimeout(() => clearInterval(interval), 10000);
+  }
+};
+
+ 
 
  useEffect(() => {
   const validScreens = [
@@ -75,15 +158,6 @@ export default function App() {
     'offer': 'OxyLoans',
   };
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE",
-    authDomain: "erice-241012.firebaseapp.com",
-    projectId: "erice-241012",
-    appId: "1:834341780860:android:2a62736e85889c243cb8f9",
-    databaseURL: "https://erice-241012.firebaseio.com",
-    storageBucket: "erice-241012.firebasestorage.app",
-    messagingSenderId: "834341780860",
-  };
 
   const handleDeepLink = (event) => {
     const url = event.url;
@@ -124,6 +198,7 @@ export default function App() {
     }
   };
 
+
   const resolveDynamicLink = async (shortLink) => {
     try {
       const API_KEY = 'AIzaSyBIm498LNCbEUlatGp4k6JQXOrrUI0SjFE';
@@ -160,17 +235,12 @@ export default function App() {
 
   checkInitialLink();
 
-  try {
-    if (!getApps().length) {
-      initializeApp(firebaseConfig);
-      console.log('✅ Firebase initialized');
-    }
-  } catch (e) {
-    console.error('❌ Firebase init error:', e);
-  }
+   registerAndSaveTokenToSupabase();
+ 
 
   return () => {
     subscription.remove();
+     isNavigationReadyRef.current = false;
   };
 }, []);
 
@@ -179,10 +249,11 @@ export default function App() {
   return (
     <Provider store={store}>
       <PaperProvider>
-        <NavigationContainer
+        {/* <NavigationContainer
           ref={navigationRef}
           // linking={linking}
-          onReady={async () => {
+           onReady={async () => {
+            isNavigationReadyRef.current = true; // ✅ mark as ready
             routeNameRef.current = navigationRef.current.getCurrentRoute().name;
             await GoogleAnalyticsService.screenView(routeNameRef.current);
           }}
@@ -196,7 +267,26 @@ export default function App() {
 
             routeNameRef.current = currentRouteName;
           }}
-        >
+        > */}
+
+        <NavigationContainer
+  ref={navigationRef}
+  onReady={async () => {
+    isNavigationReadyRef.current = true;
+    routeNameRef.current = navigationRef.current.getCurrentRoute().name;
+    await GoogleAnalyticsService.screenView(routeNameRef.current);
+  }}
+  onStateChange={async () => {
+    const previousRouteName = routeNameRef.current;
+    const currentRouteName = navigationRef.current.getCurrentRoute().name;
+
+    if (previousRouteName !== currentRouteName) {
+      await GoogleAnalyticsService.screenView(currentRouteName);
+    }
+
+    routeNameRef.current = currentRouteName;
+  }}
+>
           <NetworkAlert />
           <StacksScreens />
           <StatusBar style="auto" />

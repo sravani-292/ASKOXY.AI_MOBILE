@@ -53,7 +53,7 @@ const CartScreen = () => {
   const [removalLoading, setRemovalLoading] = useState({});
   const [itemsGstAmount, setItemsGstAmount] = useState("");
   const [goldMakingCost, setGoldMakingCost] = useState("");
-  const [goldGstAmount, setGoldGstAmont] = useState("");
+  const [goldGstAmount, setGoldGstAmont] = useState("");
 
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [cartItems, setCartItems] = useState({});
@@ -204,7 +204,7 @@ const CartScreen = () => {
     // }, 5000);
   };
 
-const fetchCartData = async () => {
+  const fetchCartData = async () => {
     try {
       setLoading(true);
       const response = await handleCustomerCartData(customerId);
@@ -302,25 +302,23 @@ const fetchCartData = async () => {
       console.log(error);
       setError("Failed to load cart data");
       setLoading(false);
-    }
-  };
- 
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
       fetchCartData();
-      getProfile()
+      getProfile();
     }, [])
   );
 
   const onRefresh = () => {
     fetchCartData();
-   
   };
 
   const getProfile = async () => {
     try {
-      const response = await handleGetProfileData(customerId,token);
+      const response = await handleGetProfileData(customerId, token);
       if (response.status === 200) {
         if (!response.data.firstName) {
           Alert.alert(
@@ -367,9 +365,7 @@ const fetchCartData = async () => {
       itemId: item.itemId,
     };
     try {
-      const response = await handleDecrementorRemovalCart(
-        data,
-       );
+      const response = await handleDecrementorRemovalCart(data);
       // console.log("Decrement response", response);
       // Alert.alert("Success", response.data.errorMessage);
       fetchCartData();
@@ -378,223 +374,218 @@ const fetchCartData = async () => {
     }
   };
 
-// const handleRemove = async (item) => {
-//   if (!item?.cartId) {
-//     console.error("Invalid item data for removal", item);
-//     return;
-//   }
+  // const handleRemove = async (item) => {
+  //   if (!item?.cartId) {
+  //     console.error("Invalid item data for removal", item);
+  //     return;
+  //   }
 
-//   try {
-//     const itemWeight = Number(item.weight);
-//     const isWeight10or26 = itemWeight === 10 || itemWeight === 26;
+  //   try {
+  //     const itemWeight = Number(item.weight);
+  //     const isWeight10or26 = itemWeight === 10 || itemWeight === 26;
 
-//     const freeItem = cartData.find((i) => i.status === "FREE");
-//     const sameWeightAddItems = cartData.filter(
-//       (i) => i.status === "ADD" && Number(i.weight) === itemWeight
-//     );
+  //     const freeItem = cartData.find((i) => i.status === "FREE");
+  //     const sameWeightAddItems = cartData.filter(
+  //       (i) => i.status === "ADD" && Number(i.weight) === itemWeight
+  //     );
 
-//     let response;
+  //     let response;
 
-//     // Begin Logic Check
-//     let shouldRemoveFreeItem = false;
+  //     // Begin Logic Check
+  //     let shouldRemoveFreeItem = false;
 
-//     if (freeItem && isWeight10or26) {
-//       const freeWeight = Number(freeItem.weight);
+  //     if (freeItem && isWeight10or26) {
+  //       const freeWeight = Number(freeItem.weight);
 
-//       if (itemWeight === 10) {
-//         if (freeWeight === 35) {
-//           // Don't remove free item if it's 35kg and removing 10kg
-//           shouldRemoveFreeItem = false;
-//         } else if (freeWeight === 20) {
-//           shouldRemoveFreeItem = sameWeightAddItems.length === 1; 
-//         }
-//       } else if (itemWeight === 26) {
-//         if (freeWeight === 20) {
-//           shouldRemoveFreeItem = false;
-//         } else if (freeWeight === 35) {
-//           shouldRemoveFreeItem = sameWeightAddItems.length === 1; 
-//         }
-//       }
-//     }
+  //       if (itemWeight === 10) {
+  //         if (freeWeight === 35) {
+  //           // Don't remove free item if it's 35kg and removing 10kg
+  //           shouldRemoveFreeItem = false;
+  //         } else if (freeWeight === 20) {
+  //           shouldRemoveFreeItem = sameWeightAddItems.length === 1;
+  //         }
+  //       } else if (itemWeight === 26) {
+  //         if (freeWeight === 20) {
+  //           shouldRemoveFreeItem = false;
+  //         } else if (freeWeight === 35) {
+  //           shouldRemoveFreeItem = sameWeightAddItems.length === 1;
+  //         }
+  //       }
+  //     }
 
-//     if (shouldRemoveFreeItem) {
-//       console.log("Removing both selected item and FREE item.");
-//       // Remove selected item
-//       response = await handleRemoveItem(item.cartId);
+  //     if (shouldRemoveFreeItem) {
+  //       console.log("Removing both selected item and FREE item.");
+  //       // Remove selected item
+  //       response = await handleRemoveItem(item.cartId);
 
-//       // Remove FREE item
-//       const freePayload = {
-//         id: freeItem.cartId,
-//         customerId: customerId,
-//         itemId: freeItem.itemId,
-//         status: "FREE",
-//       };
-//       response = await handleRemoveFreeItem(freePayload);
-//     } else {
-//       console.log("Removing only the selected item.");
-//       response = await handleRemoveItem(item.cartId);
-//     }
+  //       // Remove FREE item
+  //       const freePayload = {
+  //         id: freeItem.cartId,
+  //         customerId: customerId,
+  //         itemId: freeItem.itemId,
+  //         status: "FREE",
+  //       };
+  //       response = await handleRemoveFreeItem(freePayload);
+  //     } else {
+  //       console.log("Removing only the selected item.");
+  //       response = await handleRemoveItem(item.cartId);
+  //     }
 
-//     console.log("Remove response:", response);
-//     Alert.alert("Success", "Item removed successfully");
+  //     console.log("Remove response:", response);
+  //     Alert.alert("Success", "Item removed successfully");
 
-//     fetchCartData();
-//   } catch (error) {
-//     console.error("Error removing item:", error.response);
-//     Alert.alert("Error", "Failed to remove item. Please try again.");
-//   } finally {
-//     setRemovalLoading((prevState) => ({
-//       ...prevState,
-//       [item.cartId]: false,
-//     }));
-//   }
-// };
+  //     fetchCartData();
+  //   } catch (error) {
+  //     console.error("Error removing item:", error.response);
+  //     Alert.alert("Error", "Failed to remove item. Please try again.");
+  //   } finally {
+  //     setRemovalLoading((prevState) => ({
+  //       ...prevState,
+  //       [item.cartId]: false,
+  //     }));
+  //   }
+  // };
 
-
-const handleRemove = async (item) => {
-  if (!item?.cartId) {
-    console.error("Invalid item data for removal", item);
-    return;
-  }
-
-  try {
-    let response;
-
-    if (item.status === "FREE") {
-      const freePayload = {
-        id: item.cartId,
-        customerId: customerId,
-        itemId: item.itemId,
-        status: "FREE",
-      };
-      response = await handleRemoveFreeItem(freePayload);
-    } else {
-      response = await handleRemoveItem(item.cartId);
+  const handleRemove = async (item) => {
+    if (!item?.cartId) {
+      console.error("Invalid item data for removal", item);
+      return;
     }
 
-    // console.log("Remove response:", response);
-    Alert.alert("Success", "Item removed successfully");
+    try {
+      let response;
 
-    fetchCartData();
-  } catch (error) {
-    // console.error("Error removing item:", error.response);
-    Alert.alert("Error", "Failed to remove item. Please try again.");
-  } finally {
-    setRemovalLoading((prevState) => ({
-      ...prevState,
-      [item.cartId]: false,
-    }));
-  }
-};
+      if (item.status === "FREE") {
+        const freePayload = {
+          id: item.cartId,
+          customerId: customerId,
+          itemId: item.itemId,
+          status: "FREE",
+        };
+        response = await handleRemoveFreeItem(freePayload);
+      } else {
+        response = await handleRemoveItem(item.cartId);
+      }
 
-const handleProfileCheck = async () => {
-  try {
-    // if (!customerId) {
-    //   Alert.alert("Error", "Customer ID is not available.");
-    //   return false;
-    // }
+      // console.log("Remove response:", response);
+      Alert.alert("Success", "Item removed successfully");
 
-    const response = await handleGetProfileData(customerId,token);
+      fetchCartData();
+    } catch (error) {
+      // console.error("Error removing item:", error.response);
+      Alert.alert("Error", "Failed to remove item. Please try again.");
+    } finally {
+      setRemovalLoading((prevState) => ({
+        ...prevState,
+        [item.cartId]: false,
+      }));
+    }
+  };
 
-    if (response.status === 200) {
-      if (!response.data.firstName) {
+  const handleProfileCheck = async () => {
+    try {
+      // if (!customerId) {
+      //   Alert.alert("Error", "Customer ID is not available.");
+      //   return false;
+      // }
+
+      const response = await handleGetProfileData(customerId, token);
+
+      if (response.status === 200) {
+        if (!response.data.firstName) {
+          Alert.alert(
+            "Incomplete Profile",
+            "Please fill out your profile to proceed.",
+            [
+              {
+                text: "OK",
+                onPress: () => navigation.navigate("Profile"),
+              },
+            ]
+          );
+          return false;
+        }
+      } else {
+        Alert.alert("Error", "Failed to fetch profile data.");
+        return false;
+      }
+
+      const outOfStockItems = cartData.filter(
+        (item) => isLimitedStock[item.itemId] === "outOfStock"
+      );
+
+      if (outOfStockItems.length > 0) {
         Alert.alert(
-          "Incomplete Profile",
-          "Please fill out your profile to proceed.",
+          "🚨 Some Items Are Out of Stock!",
+          `The following items are currently unavailable:\n\n${outOfStockItems
+            .map((item) => `- 🛑 ${item.itemName}`)
+            .join("\n")}\n\nPlease remove them to proceed.`,
+          [{ text: "OK", style: "cancel" }]
+        );
+        return false;
+      }
+
+      let insufficientStockItems = [];
+
+      cartData.forEach((item) => {
+        if (item.cartQuantity > item.quantity) {
+          insufficientStockItems.push(
+            `${item.itemName}: Only ${item.quantity} left, but you added ${item.cartQuantity}`
+          );
+        }
+      });
+
+      if (insufficientStockItems.length > 0) {
+        Alert.alert(
+          "Insufficient Stock",
+          "Some items in your cart have insufficient stock:\n" +
+            insufficientStockItems.join("\n"),
           [
             {
               text: "OK",
-              onPress: () => navigation.navigate("Profile"),
+              onPress: () => {
+                navigation.navigate("My Cart");
+              },
             },
           ]
         );
         return false;
       }
-    } else {
-      Alert.alert("Error", "Failed to fetch profile data.");
+
+      navigation.navigate("Checkout", {
+        subtotal: cartData.reduce(
+          (acc, item) =>
+            acc + item.priceMrp * (cartItems[item.itemId] || item.cartQuantity),
+          0
+        ),
+        locationdata,
+        addressdata,
+      });
+    } catch (error) {
+      console.error("Error in handleProfileCheck:", error.response);
+      Alert.alert("Error", "Something went wrong while fetching profile data.");
       return false;
     }
+  };
 
-    const outOfStockItems = cartData.filter(
-      (item) => isLimitedStock[item.itemId] === "outOfStock"
-    );
-
-    if (outOfStockItems.length > 0) {
-      Alert.alert(
-        "🚨 Some Items Are Out of Stock!",
-        `The following items are currently unavailable:\n\n${outOfStockItems
-          .map((item) => `- 🛑 ${item.itemName}`)
-          .join("\n")}\n\nPlease remove them to proceed.`,
-        [{ text: "OK", style: "cancel" }]
-      );
-      return false;
-    }
-
-    let insufficientStockItems = [];
-
-    cartData.forEach((item) => {
-      if (item.cartQuantity > item.quantity) {
-        insufficientStockItems.push(
-          `${item.itemName}: Only ${item.quantity} left, but you added ${item.cartQuantity}`
-        );
-      }
-    });
-
-    if (insufficientStockItems.length > 0) {
-      Alert.alert(
-        "Insufficient Stock",
-        "Some items in your cart have insufficient stock:\n" +
-          insufficientStockItems.join("\n"),
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              navigation.navigate("My Cart");
-            },
-          },
-        ]
-      );
-      return false;
-    }
-
-    navigation.navigate("Checkout", {
-      subtotal: cartData.reduce(
-        (acc, item) =>
-          acc + item.priceMrp * (cartItems[item.itemId] || item.cartQuantity),
-        0
-      ),
-      locationdata,
-      addressdata,
-    });
-  } catch (error) {
-    console.error("Error in handleProfileCheck:", error.response);
-    Alert.alert("Error", "Something went wrong while fetching profile data.");
-    return false;
-  }
-};
-
- 
-
-// for empty cart component
+  // for empty cart component
   const EmptyCartComponent = () => {
     return (
-      <View style={styles.emptyCartContainer}> 
-      
-      <View style={styles.emptyCartView}>
-        <LottieView 
-          source={require("../../../../assets/emptyLoading.json")}
-          autoPlay
-          loop
-          style={styles.emptyCartImage}
-        />
+      <View style={styles.emptyCartContainer}>
+        <View style={styles.emptyCartView}>
+          <LottieView
+            source={require("../../../../assets/emptyLoading.json")}
+            autoPlay
+            loop
+            style={styles.emptyCartImage}
+          />
         </View>
         <Text style={styles.emptyCartText}>Your cart is empty</Text>
         <TouchableOpacity
           style={styles.shopNowButton}
-          onPress={() => navigation.navigate("Rice Products", {
-            screen: "Rice Products",
-            category: "All CATEGORIES",
-          })}
+          onPress={() =>
+            navigation.navigate("Dashboard")
+          }
         >
           <Text style={styles.shopNowButtonText}>Shop Now</Text>
         </TouchableOpacity>
@@ -688,12 +679,13 @@ const handleProfileCheck = async () => {
                           </Text>
                         </View>
                         <Text style={{ marginTop: 5 }}>
-                          (
-                          {Math.round(
-                            ((item.priceMrp - item.itemPrice) / item.priceMrp) *
-                              100
-                          )}
-                          % OFF)
+                          {item?.priceMrp === item?.itemPrice
+                            ? "(0% OFF)"
+                            : `(${Math.round(
+                                ((item?.priceMrp - item?.itemPrice) /
+                                  item?.priceMrp) *
+                                  100
+                              )}% OFF)`}
                         </Text>
 
                         <Text style={styles.itemWeight}>
@@ -795,7 +787,7 @@ const handleProfileCheck = async () => {
           showsHorizontalScrollIndicator={false}
         />
       ) : (
-          <EmptyCartComponent />
+        <EmptyCartComponent />
       )}
       {cartData && cartData.length > 0 && (
         <>
@@ -807,7 +799,9 @@ const handleProfileCheck = async () => {
                   ₹{(Number(grandTotal) + Number(gstAmount)).toFixed(2)}
                 </Text>
               </View>
-              <View style={{ flexDirection: "row",justifyContent:"flex-end" }}>
+              <View
+                style={{ flexDirection: "row", justifyContent: "flex-end" }}
+              >
                 <TouchableOpacity
                   style={styles.priceBreakupButton}
                   onPress={() => setShowPriceBreakdown(true)}
@@ -819,9 +813,7 @@ const handleProfileCheck = async () => {
                     color="#4B0082"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.priceBreakupText}>
-                    View Details
-                  </Text>
+                  <Text style={styles.priceBreakupText}>View Details</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -838,18 +830,15 @@ const handleProfileCheck = async () => {
               goldMakingCost={goldMakingCost}
               gstAmount={gstAmount}
               grandTotal={grandTotal}
-            />
-          )}
+            />
+          )}
 
           {!loading && (
             <View style={styles.actionButtonsContainer}>
               <TouchableOpacity
                 style={styles.addButton}
                 onPress={() =>
-                  navigation.navigate("Rice Products", {
-                    screen: "Rice Products",
-                    category: "All CATEGORIES",
-                  })
+                  navigation.navigate("Dashboard")
                 }
               >
                 <Text style={styles.actionButtonText}>Add More</Text>
@@ -857,8 +846,7 @@ const handleProfileCheck = async () => {
 
               <TouchableOpacity
                 style={styles.checkoutButton}
-                onPress={()=>handleProfileCheck()}
-                
+                onPress={() => handleProfileCheck()}
               >
                 <Text style={styles.actionButtonText}>Checkout</Text>
               </TouchableOpacity>
@@ -876,8 +864,6 @@ const handleProfileCheck = async () => {
         itemToRemove={itemToRemove} // Add this
         removeItem={handleRemove}
       />
-
-     
     </View>
   );
 };
@@ -1550,13 +1536,13 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "bold",
   },
-   emptyCartContainer: {
+  emptyCartContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
   },
-  emptyCartView:{
+  emptyCartView: {
     width: width * 0.5,
     height: width * 0.5,
     marginBottom: 20,
@@ -1564,7 +1550,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#f0f0f0",
   },
-   emptyCartImage: {
+  emptyCartImage: {
     width: "100%",
     height: "100%",
   },
@@ -1574,7 +1560,7 @@ const styles = StyleSheet.create({
     color: "#666",
     marginBottom: 20,
   },
-   shopNowButton: {
+  shopNowButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
@@ -1593,7 +1579,7 @@ const styles = StyleSheet.create({
     // paddingHorizontal: 15,
     borderRadius: 8,
     marginBottom: 10,
-    marginTop:8
+    marginTop: 8,
   },
   priceBreakupText: {
     color: "#4B0082",

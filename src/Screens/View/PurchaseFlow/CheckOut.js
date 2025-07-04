@@ -1,74 +1,23 @@
-/**
- * CheckOut component handles the checkout process for a user.
- * It allows the user to view and select a delivery address, choose a payment method,
- * and place an order with the selected options.
- *
- * Props:
- * - navigation: The navigation object for navigating between screens.
- * - route: The route object containing parameters passed to this screen.
- *
- * State:
- * - addressList: An array of user's addresses fetched from the server.
- * - selectedAddressId: The ID of the currently selected address.
- * - paymentType: The selected payment method (COD or ONLINE).
- * - couponCode: The entered coupon code for discounts.
- * - couponApplied: A boolean indicating whether a coupon has been applied.
- * - applyWalletAmount: A boolean indicating whether wallet amount is being applied.
- * - availableWalletAmount: The available amount in the user's wallet.
- * - subTotal: The subtotal amount of the cart.
- * - discount: The discount amount applied to the cart.
- * - deliveryFee: The delivery fee for the order.
- * - grandTotal: The grand total amount for the order after all calculations.
- * - waitingLoader: A boolean indicating whether a loading indicator should be shown.
- * - addressData: The data of the selected address.
- * - status: A boolean indicating whether a location has been selected.
- * - locationData: The data structure to hold location details.
- *
- * Effects:
- * - useFocusEffect: Calculates totals and sets up address data when component is focused.
- * - useEffect: Fetches cart data when component mounts.
- *
- * Functions:
- * - fetchOrderAddress: Fetches user's address from the server.
- * - totalCart: Fetches and sets the grand total of the cart.
- * - calculateTotal: Calculates the grand total of the order.
- * - changeLocation: Navigates to the MyLocationPage screen.
- * - selectAddress: Selects an address from the list and updates location data.
- * - applyCoupon: Applies the entered coupon code.
- * - removeCoupon: Removes the applied coupon code.
- * - changePaymentType: Sets the payment method.
- * - placeOrder: Places an order with the selected details and handles payment.
- */
-
 import axios from "axios";
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
-  Button,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
-  Image,
-  TextInput,
   Alert,
-  Linking,
   FlatList,
   ActivityIndicator,
   Dimensions,
 } from "react-native";
-import { RadioButton, Checkbox } from "react-native-paper";
 import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSelector } from "react-redux";
-import encryptEas from "../Payments/components/encryptEas";
-import decryptEas from "../Payments/components/decryptEas";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { COLORS } from "../../../../Redux/constants/theme";
 const { width, height } = Dimensions.get("window");
 import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL, { userStage } from "../../../../Config";
-import { getCoordinates } from "../../../Screens/View/Address/LocationService";
+import { getCoordinates } from "../Address/LocationService";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 import {
   handleCustomerCartData,
@@ -77,7 +26,8 @@ import {
   handleDecrementorRemovalCart,
   handleRemoveItem,
   handleRemoveFreeItem,
-} from "../../../../src/ApiService";
+} from "../../../ApiService";
+import CartCard from "../ShoppingCart/Cart/CartCard";
 const CheckOut = ({ navigation, route }) => {
   // console.log("from cartscreen", route.params);
 
@@ -93,18 +43,10 @@ const CheckOut = ({ navigation, route }) => {
   });
   const [addressList, setAddressList] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [paymentType, setPaymentType] = useState("");
-  const [couponCode, setCouponCode] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [applyWalletAmount, setApplyWalletAmount] = useState(false);
-  const [availableWalletAmount, setAvailableWalletAmount] = useState(1000);
-  const [subTotal, setSubTotal] = useState();
-  const [discount, setDiscount] = useState(0);
-  const [deliveryFee, setDeliveryFee] = useState(0);
+
   const [grandTotal, setGrandTotal] = useState(0);
   const [addressData, setAddressData] = useState();
   const [status, setStatus] = useState(false);
-  const [transactionId, setTransactionId] = useState("");
   const [cartData, setCartData] = useState();
   const [removalLoading, setRemovalLoading] = useState({});
   const [loadingItems, setLoadingItems] = useState({});
@@ -125,20 +67,19 @@ const CheckOut = ({ navigation, route }) => {
     residenceName: "",
   });
 
+
   useFocusEffect(
     useCallback(() => {
-      // calculateTotal();
-
+      setLoading(true)
       fetchCartData();
-      // totalCart();
-
       console.log("from my location page", route.params.locationdata);
-
       if (route.params.locationdata.status == false) {
         fetchOrderAddress();
       } else {
         setStatus(route.params.locationdata.status);
         setAddressData(route.params.locationdata);
+        console.log("location data", route.params.locationdata);
+
         setLocationData({
           customerId: customerId,
           flatNo: route.params.locationdata?.flatNo,
@@ -171,16 +112,11 @@ const CheckOut = ({ navigation, route }) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
-  
   const fetchCartData = async () => {
     try {
-      setLoading(true);
-
+      // setLoading(true);
       const response = await handleCustomerCartData(customerId);
-      // console.log("mrpprices", response.data);
       const totalGstToPay = response.data?.totalGstAmountToPay || 0;
-      // console.log("totalgsttopay", totalGstToPay);
-
       setGrandTotal(response.data?.amountToPay + totalGstToPay);
       const cartData = response?.data?.customerCartResponseList;
 
@@ -188,6 +124,7 @@ const CheckOut = ({ navigation, route }) => {
         setCartData([]);
         setIsLimitedStock({});
         setCartItems({});
+        setGrandStatus(true);
         setLoading(false);
         return;
       }
@@ -201,7 +138,6 @@ const CheckOut = ({ navigation, route }) => {
         return acc;
       }, {});
 
-      
       const cartItemsMap = cartData.reduce((acc, item) => {
         if (
           !item.itemId ||
@@ -232,19 +168,12 @@ const CheckOut = ({ navigation, route }) => {
   let alertShown = false;
 
   const handlePlaceOrder = async () => {
-    // console.log({ grandTotal });
-    // console.log("locationdata==================================", locationData);
-    // console.log("addresslist", addressList);
-
     const outOfStockItems = cartData.filter((item) => {
       console.log(
         `Checking item: ${item.itemId}, Stock: ${isLimitedStock[item.itemId]}`
       );
       return isLimitedStock[item.itemId] === true;
     });
-
-    // console.log("Out of Stock Items:", outOfStockItems);
-
     if (outOfStockItems.length > 0) {
       Alert.alert(
         "🚨 Some Items Are Out of Stock!",
@@ -257,17 +186,9 @@ const CheckOut = ({ navigation, route }) => {
     }
 
     const value =
-      locationData.flatNo + 
-      "," +
-      locationData.houseType +
-      "," +
-      locationData.residenceName +
-      "," +
       locationData.address +
       "," +
       locationData.landMark +
-      "," +
-      locationData.area +
       "," +
       locationData.pincode;
 
@@ -314,8 +235,6 @@ const CheckOut = ({ navigation, route }) => {
   };
 
   const increaseCartItem = async (item) => {
-    // console.log("for incrementing");
-
     const currentQuantity = item.cartQuantity;
     try {
       const response = await axios.patch(
@@ -330,163 +249,59 @@ const CheckOut = ({ navigation, route }) => {
           },
         }
       );
-      // console.log("incremented cart ", response.data);
 
       fetchCartData();
-      // totalCart();
       setLoading(false);
     } catch (err) {
       console.error("Error updating cart item quantity:", err.response);
     }
   };
 
-   const decreaseCartItem = async (item) => {
-      // console.log("item to decrement", item);
-      const data = {
-        customerId: customerId,
-        itemId: item.itemId,
-      };
-      try {
-        const response = await handleDecrementorRemovalCart(
-          data,
-         );
-        // console.log("Decrement response", response);
-        // Alert.alert("Success", response.data.errorMessage);
-        fetchCartData();
-      } catch (error) {
-        console.log("Error decrementing cart item:", error);
-      }
+  const decreaseCartItem = async (item) => {
+    const data = {
+      customerId: customerId,
+      itemId: item.itemId,
     };
+    try {
+      const response = await handleDecrementorRemovalCart(data);
 
-
-    const handleRemove = async (item) => {
-      if (!item?.cartId) {
-        console.error("Invalid item data for removal", item);
-        return;
-      }
-    
-      try {
-        let response;
-    
-        if (item.status === "FREE") {
-          const freePayload = {
-            id: item.cartId,
-            customerId: customerId,
-            itemId: item.itemId,
-            status: "FREE",
-          };
-          response = await handleRemoveFreeItem(freePayload);
-        } else {
-          response = await handleRemoveItem(item.cartId);
-        }
-    
-        // console.log("Remove response:", response);
-        Alert.alert("Success", "Item removed successfully");
-    
-        fetchCartData();
-      } catch (error) {
-        // console.error("Error removing item:", error.response);
-        Alert.alert("Error", "Failed to remove item. Please try again.");
-      } finally {
-        setRemovalLoading((prevState) => ({
-          ...prevState,
-          [item.cartId]: false,
-        }));
-      }
-    };
-
-
-
-  function handleAddress(address) {
-    setSelectedAddressId(address.id);
-    setLocationData({
-      flatNo: address.flatNo,
-      landMark: address.landMark,
-      pincode: address.pincode,
-      address: address.address,
-      area: address.area || "",
-      houseType: address.houseType || "",
-      residenceName: address.residenceName || "",
-      addressType: "",
-      latitude: "",
-      longitude: "",
-    });
-  }
-
-  const removeCartItem = async (item) => {
-    // console.log("removed items from cart", item);
-
-    Alert.alert(
-      "Remove Item",
-      "Are you sure you want to remove this item from your cart?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              console.log("Removing cart item with ID:", item.cartId);
-
-              const response = await axios.delete(
-                BASE_URL + "cart-service/cart/remove",
-                {
-                  data: {
-                    id: item.cartId,
-                  },
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                }
-              );
-
-              // console.log("Item removed successfully", response.data);
-
-              fetchCartData();
-              // totalCart();
-              setLoading(false);
-            } catch (error) {
-              console.error(
-                "Failed to remove cart item:",
-                error.response || error.message
-              );
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+      fetchCartData();
+    } catch (error) {
+      console.log("Error decrementing cart item:", error);
+    }
   };
 
-  const getProfile = async () => {
+  const handleRemove = async (item) => {
+    if (!item?.cartId) {
+      console.error("Invalid item data for removal", item);
+      return;
+    }
     try {
-      const response = await axios({
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        url:
-          BASE_URL +
-          `user-service/customerProfileDetails?customerId=${customerId}`,
-      });
-      console.log(response.data);
+      let response;
 
-      if (response.status === 200) {
-        console.log(response.data);
-        // setUser(response.data);
-        setProfileForm({
-          customer_name: response.data.name,
-          customer_email: response.data.email,
-          customer_mobile: response.data.mobileNumber,
-        });
+      if (item.status === "FREE") {
+        const freePayload = {
+          id: item.cartId,
+          customerId: customerId,
+          itemId: item.itemId,
+          status: "FREE",
+        };
+        response = await handleRemoveFreeItem(freePayload);
+      } else {
+        response = await handleRemoveItem(item.cartId);
       }
+
+      // console.log("Remove response:", response);
+      Alert.alert("Success", "Item removed successfully");
+
+      fetchCartData();
     } catch (error) {
-      console.error(error);
+      Alert.alert("Error", "Failed to remove item. Please try again.");
+    } finally {
+      setRemovalLoading((prevState) => ({
+        ...prevState,
+        [item.cartId]: false,
+      }));
     }
   };
 
@@ -499,7 +314,7 @@ const CheckOut = ({ navigation, route }) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      // console.log("address response", response.data);
+      console.log("address responseeeeeeee", response.data);
 
       setAddressList(response.data);
       response.data.slice(-1).map(
@@ -510,12 +325,12 @@ const CheckOut = ({ navigation, route }) => {
             landMark: address.landMark,
             pincode: address.pincode,
             address: address.address,
-            area: address.area || "",
-            residenceName: address.residenceName || "",
-            houseType: address.houseType || "",
-            addressType: "",
+            addressType: address?.addressType,
             latitude: address.latitude,
             longitude: address.longitude,
+            area: address?.area || "",
+            houseType: address?.houseType || "",
+            residenceName: address?.residenceName || "",
           })
         )
       );
@@ -524,14 +339,6 @@ const CheckOut = ({ navigation, route }) => {
       console.error("Error fetching order address data:", error.response);
       setError("Failed to fetch order address data");
     }
-  };
-
-
-
-  const calculateTotal = () => {
-    let total = subTotal + deliveryFee - discount;
-    setGrandTotal(total);
-    return total;
   };
 
   const changeLocation = () => {
@@ -559,11 +366,11 @@ const CheckOut = ({ navigation, route }) => {
       {status ? (
         <View style={styles.addressRow}>
           <Text style={styles.addressText}>
-            {locationData?.flatNo},{locationData?.residenceName},{locationData?.area}, {locationData?.landMark},{locationData?.pincode}
+            {locationData.flatNo}, {locationData.landMark}
           </Text>
-          {/* <Text style={styles.addressDetail}>
+          <Text style={styles.addressDetail}>
             Address: {locationData.address}
-          </Text> */}
+          </Text>
         </View>
       ) : addressList.length > 0 ? (
         addressList.slice(-1).map((address, index) => (
@@ -578,10 +385,10 @@ const CheckOut = ({ navigation, route }) => {
               />
               <View style={styles.addressContainer}>
                 <Text style={styles.addressText}>
-                  {address?.flatNo},{address?.residenceName},{address?.area}, {address?.landMark},{address?.pincode}
+                  {address.flatNo}, {address.landMark},{address.pincode}
                 </Text>
 
-                <Text style={styles.addressText}>{address?.address}</Text>
+                <Text style={styles.addressText}>{address.address}</Text>
               </View>
             </View>
           </View>
@@ -594,11 +401,10 @@ const CheckOut = ({ navigation, route }) => {
         </View>
       )}
 
-      {grandStatus == true ? (
-        <View>
-          {/* <Text>Browse</Text> */}
-
-          <View style={styles.card}>
+      {
+        grandStatus === true &&
+         (
+           <View style={styles.card}>
             <MaterialIcons
               name="shopping-cart"
               size={80}
@@ -616,10 +422,7 @@ const CheckOut = ({ navigation, route }) => {
                 borderRadius: 5,
               }}
               onPress={() =>
-                navigation.navigate("Rice Products", {
-                  screen: "Rice Products",
-                  category: "All CATEGORIES",
-                })
+                navigation.navigate("Dashboard")
               }
             >
               <Text style={{ color: "#fff", fontSize: 16 }}>
@@ -627,8 +430,8 @@ const CheckOut = ({ navigation, route }) => {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-      ) : null}
+        )
+      }
 
       <View style={styles.container1}>
         {!grandStatus ? <Text>My Cart</Text> : null}
@@ -639,170 +442,18 @@ const CheckOut = ({ navigation, route }) => {
             data={cartData}
             keyExtractor={(item) => item.itemId.toString()}
             renderItem={({ item }) => (
-              <View
-                style={[
-                  styles.cartItem,
-                  item.quantity === 0 && styles.outOfStockCard,
-                ]}
-              >
-                {isLimitedStock[item.itemId] == "lowStock" && (
-                  <View style={styles.limitedStockBadge}>
-                    <Text style={styles.limitedStockText}>
-                      {item.quantity > 1
-                        ? `${item.quantity} items left`
-                        : `${item.quantity} item left`}
-                    </Text>
-                  </View>
-                )}
-
-                {isLimitedStock[item.itemId] === "outOfStock" && (
-                  <View style={styles.outOfStockContainer}>
-                    <View style={styles.disabledOverlay} />
-
-                    <Text style={styles.outOfStockText}>Out of Stock</Text>
-
-                    <TouchableOpacity
-                      onPress={() => removeCartItem(item)}
-                      style={styles.removeButton}
-                    >
-                      <Text style={styles.removeText}>Please remove it</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {removalLoading[item.itemId] ? (
-                  <View style={styles.loaderContainer}>
-                    <ActivityIndicator size="large" color="#000" />
-                  </View>
-                ) : (
-                  <>
-                    {item.itemQuantity === 1 && (
-                      <Text style={styles.noteText}>
-                        Note: Only one free sample is allowed per user.
-                      </Text>
-                    )}
-                    <View style={{ flexDirection: "row" }}>
-                      <View>
-                        <Image
-                          source={{ uri: item.image }}
-                          style={styles.itemImage}
-                          onError={() => console.log("Failed to load image")}
-                        />
-                      </View>
-                      <View>
-                        <View style={styles.itemDetails}>
-                          <Text style={styles.itemName}>{item.itemName}</Text>
-                          <View style={styles.priceContainer}>
-                            <Text
-                              style={[styles.itemPrice, styles.crossedPrice]}
-                            >
-                              MRP: ₹{item.priceMrp}
-                            </Text>
-                            <Text style={[styles.itemPrice, styles.boldPrice]}>
-                              ₹{item.itemPrice}
-                            </Text>
-                          </View>
-                          <Text style={{ marginTop: 5 }}>
-                            (
-                            {Math.round(
-                              ((item.priceMrp - item.itemPrice) /
-                                item.priceMrp) *
-                                100
-                            )}
-                            % OFF)
-                          </Text>
-
-                          <Text style={styles.itemWeight}>
-                            {item.weight}{" "}
-                            {item.weight === 1
-                              ? item.units.replace(/s$/, "")
-                              : item.units}
-                          </Text>
-                        
-                          
-<View style={styles.quantityContainer}>
-                            <TouchableOpacity
-                              style={[
-                                styles.quantityButton,
-                                (loadingItems[item.itemId] ||
-                                  item.status === "FREE") &&
-                                  styles.disabledButton,
-                              ]}
-                              onPress={() => handleDecrease(item)}
-                              disabled={
-                                loadingItems[item.itemId] ||
-                                item.status === "FREE"
-                              }
-                            >
-                              <Text style={styles.buttonText}>-</Text>
-                            </TouchableOpacity>
-
-                            {loadingItems[item.itemId] ? (
-                              <ActivityIndicator
-                                size="small"
-                                color="#000"
-                                style={styles.loader}
-                              />
-                            ) : (
-                              <Text style={styles.quantityText}>
-                                {item.cartQuantity}
-                              </Text>
-                            )}
-
-                            {item.itemPrice === 1 ?
-                            // (containerDecision === "yes" &&
-                            //   containerItemIds.includes(item.itemId)) ? 
-                              (
-                              <View
-                                style={[
-                                  styles.quantityButton1,
-                                  item.status === "FREE" &&
-                                    styles.disabledButton,
-                                ]}
-                                disabled={true}
-                              >
-                                <Text style={styles.quantityButtonText}>+</Text>
-                              </View>
-                            ) : (
-                              <TouchableOpacity
-                                style={[
-                                  styles.quantityButton,
-                                  (loadingItems[item.itemId] ||
-                                    cartItems[item.itemId] === item.quantity ||
-                                    item.status === "FREE") &&
-                                    styles.disabledButton,
-                                ]}
-                                onPress={() => handleIncrease(item)}
-                                disabled={
-                                  loadingItems[item.itemId] ||
-                                  cartItems[item.itemId] === item.quantity ||
-                                  item.status === "FREE"
-                                }
-                              >
-                                <Text style={styles.buttonText}>+</Text>
-                              </TouchableOpacity>
-                            )}
-
-                            <Text style={styles.itemTotal}>
-                              ₹{(item.itemPrice * item.cartQuantity).toFixed(2)}
-                            </Text>
-                          </View>
-                          <TouchableOpacity
-                            style={{ marginLeft: 180 }}
-                            onPress={() => handleRemove(item)}
-                          >
-                            <MaterialIcons
-                              name="delete"
-                              size={23}
-                              color="#FF0000"
-                            />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  </>
-                )}
-              </View>
+              <CartCard
+                item={item}
+                isLimitedStock={isLimitedStock}
+                loadingItems={loadingItems}
+                removalLoading={removalLoading}
+                cartItems={cartItems}
+                //   containerDecision={containerDecision}
+                //   containerItemIds={containerItemIds}
+                onIncrease={handleIncrease}
+                onDecrease={handleDecrease}
+                onRemove={handleRemove}
+              />
             )}
             contentContainerStyle={styles.flatListContent}
             showsVerticalScrollIndicator={false}
@@ -812,8 +463,8 @@ const CheckOut = ({ navigation, route }) => {
           />
         ) : (
           <View>
-            <Text>Cart is empty</Text>
-          </View>
+          {/* <Text>Browse</Text> */}
+        </View>
         )}
       </View>
       {/* Payment Details */}
@@ -848,7 +499,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     padding: 10,
     height: height * 0.3,
-
     flex: 2,
   },
   title: {
@@ -860,7 +510,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   addButton: {
-    // color: '#007bff',
     color: "#ecb01e",
     textAlign: "right",
     fontWeight: "600",
@@ -896,108 +545,31 @@ const styles = StyleSheet.create({
   noDeliveryText: {
     color: "#6c757d",
   },
-  selectButton: {
-    color: "#28a745",
-    fontWeight: "600",
-    marginTop: 5,
-  },
-  selectedButton: {
-    color: "#007bff",
-    fontWeight: "600",
-    marginTop: 5,
-  },
-  paymentTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#343a40",
-    marginTop: 15,
-    marginBottom: 8,
-  },
-  paymentRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 1,
-    elevation: 2,
-  },
-  paymentImage: {
-    width: 30,
-    height: 30,
-    marginRight: 8,
-  },
-  couponRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ced4da",
-    padding: 8,
-    borderRadius: 5,
-    backgroundColor: "#fff",
-  },
-  applyButton: {
-    color: "#007bff",
-    marginLeft: 8,
-    fontWeight: "600",
-  },
-  removeCouponButton: {
-    color: "#dc3545",
-    marginLeft: 8,
-    fontWeight: "600",
-  },
-  walletRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+
   paymentDetails: {
     // marginTop:30,
     alignSelf: "center",
     marginRight: 10,
   },
-  detailText: {
-    fontSize: 14,
-    color: "#495057",
-    marginBottom: 5,
-    marginLeft: 40,
-  },
+
   grandTotalText: {
     alignSelf: "center",
     fontSize: 20,
     fontWeight: "bold",
     color: "#28a745",
   },
-  grandTotalText1: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#28a745",
-    marginBottom: 2,
-    marginTop: 9,
-  },
+
   placeOrderButton: {
     backgroundColor: COLORS.services,
     padding: 10,
-
     alignSelf: "center",
     borderRadius: 8,
     width: width * 0.9,
-
     borderRadius: 5,
     alignItems: "center",
-
     marginBottom: 20,
   },
   placeOrderButtonText: {
-    // marginBottom:20,
     color: "#fff",
     fontSize: 14,
     fontWeight: "bold",
@@ -1005,109 +577,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     justifyContent: "center",
   },
-  cartItem: {
-    // flexDirection: "row",
-    padding: 16,
-    marginBottom: 8,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  loaderContainer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    zIndex: 1,
-  },
-  itemImage: {
-    width: width * 0.2,
-    height: 80,
-    marginRight: 16,
-    borderRadius: 8,
-    // justifyContent:"center",
-    // alignSelf:"center"
-    marginTop: 20,
-  },
-  itemDetails: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  itemName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    width: width * 0.5,
-  },
-  itemPrice: {
-    color: "#16A34A",
-  },
-  itemWeight: {
-    color: "#6B7280",
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  quantityButton: {
-    backgroundColor: "#a593df",
-    padding: 8,
-    borderRadius: 4,
-    marginHorizontal: 8,
-  },
-  quantityButton1: {
-    backgroundColor: "#D1D5DB",
-    padding: 8,
-    borderRadius: 4,
-    marginHorizontal: 8,
-  },
-  buttonText: {
-    fontWeight: "bold",
-  },
-  quantityText: {
-    fontWeight: "bold",
-  },
-  removeButton: {
-    backgroundColor: "#EF4444",
-    padding: 8,
-    borderRadius: 4,
-    marginTop: 8,
-    width: 150,
-  },
-  removeButtonText: {
-    color: "#FFFFFF",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
+
   flatListContent: {
     paddingBottom: 80,
   },
-  loader: {
-    // marginHorizontal: 10,
-    alignSelf: "center",
-  },
-  cardContainer: {
-    backgroundColor: "#fff",
-    padding: 16,
-    marginVertical: 10,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-    flexDirection: "column",
-    borderColor: "#FA7070",
-    borderStyle: "solid",
-  },
+
   iconAndTextContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -1116,145 +590,17 @@ const styles = StyleSheet.create({
   addressContainer: {
     flex: 1,
   },
-  addressText: {
-    paddingLeft: 15,
-    marginLeft: 5,
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "500",
-    marginBottom: 4,
-  },
-  addressDetail: {
-    fontSize: 14,
-    color: "#555",
-    fontStyle: "italic",
-  },
-  card: {
-    marginTop: 40,
-    width: "80%",
-    alignItems: "center",
-    padding: 20,
-    marginLeft: 35,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  smallButton: {
-    marginTop: 10,
-    marginLeft: 280,
-    backgroundColor: COLORS.services,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
-    width: width / 5,
-    textDecorationColor: "white",
-    fontWeight: "bold",
-  },
-  smallButtonText: {
-    color: "#FFF",
-    fontSize: 12,
-    fontWeight: "bold",
-    alignSelf: "center",
-    textAlign: "center",
-  },
-  priceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 3,
-  },
-  itemPrice: {
-    fontSize: 16,
-    marginRight: 10,
-  },
-  crossedPrice: {
-    textDecorationLine: "line-through",
-    color: "#D32F2F",
-  },
-  boldPrice: {
-    fontWeight: "bold",
-    color: "#388E3C",
-  },
+
   icon: {
     paddingLeft: 30,
     marginRight: 5,
     fontWeight: "bold",
   },
-  limitedStockBadge: {
-    position: "absolute",
-    top: 10,
-    left: 20,
-    alignSelf: "center",
-    alignItems: "center",
-    backgroundColor: "red",
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 5,
-    zIndex: 10,
-    marginBottom: 20,
-  },
-  limitedStockText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  disabledButton: {
-    backgroundColor: "gray",
-    opacity: 0.5,
-  },
-  outOfStockCard: {
-    opacity: 0.5,
-  },
-  outOfStockContainer: {
-    position: "relative",
-    padding: 10,
-    backgroundColor: COLORS.backgroundcolour,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  outOfStockOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  outOfStockText: {
-    color: "red",
-    position: "relative",
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 5,
-    fontSize: 16,
-  },
-  outOfStockText: {
-    color: COLORS.services,
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  removeText: {
-    alignSelf: "center",
-    textAlign: "center",
-    color: "#fff",
-    zIndex: 1,
-    fontSize: 14,
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-    marginTop: 5,
-    padding: 5,
-    borderRadius: 5,
-    overflow: "hidden",
-  },
+  card:{
+    justifyContent:"center",
+    alignSelf:"center",
+    marginTop:30
+  }
 });
 
 export default CheckOut;

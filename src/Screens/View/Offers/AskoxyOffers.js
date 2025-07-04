@@ -56,7 +56,7 @@ const AskoxyOffers = () => {
                   style={styles.icon}
                 />
                 <Text style={styles.offerText}>
-                  Buy 10kgs or 26kgs Get 20KG+ Steel Container
+                  Buy 26kgs Get 20KG+ Steel Container
                 </Text>
               </TouchableOpacity>
 
@@ -101,16 +101,16 @@ const AskoxyOffers = () => {
             </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.showMoreButton}>
+        {/* <View style={styles.showMoreButton}>
           <TouchableOpacity style={styles.roundButton} onPress={() => {navigation.navigate("Special Offers")}}>
-                {/* <Ionicons
+                <Ionicons
                   name="information-circle-outline"
                   size={16}
                   color="#7B1FA2"
-                /> */}
+                />
                 <Text style={styles.roundButtonText}>Show More Offer's</Text>
               </TouchableOpacity>
-            </View>
+            </View> */}
       </LinearGradient>
 
       {/* <Modal

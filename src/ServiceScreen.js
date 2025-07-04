@@ -34,10 +34,13 @@ import { AccessToken } from "../Redux/action/index";
 import FreeSampleScreen from "./FreeSample";
 import GoogleAnalyticsService from "./Components/GoogleAnalytic";
 import AskoxyOffers from "./Screens/View/Offers/AskoxyOffers";
-
+import { COLORS } from "../Redux/constants/theme";
+import {registerAndSaveTokenToSupabase} from "../src/Config/notificationService";
+import {useUIVisibility} from "../until/useUIVisibility";
+const { width, height } = Dimensions.get("window");
 // Default banners as fallback
 const defaultBanners = [
-  require("../assets/Images/r1.png"),
+  // require("../assets/Images/r1.png"),
   require("../assets/Images/r2.png"),
 ];
 
@@ -98,14 +101,11 @@ const ServiceScreen = () => {
   const [data, setData] = useState([]);
   const [getCategories, setGetCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [chainId, setChainId] = useState("");
-  const [coin, setCoin] = useState("");
   const [loginModal, setLoginModal] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [infoModalVisible, setInfoModalVisible] = useState(false);
-  const [studyAbroad, setStudyAbroad] = useState([]);
   const [banners, setBanners] = useState([]);
   const [bannersLoading, setBannersLoading] = useState(true);
+  const [selectedMainCategory, setSelectedMainCategory] = useState(null);
+  const { visibilityMap } = useUIVisibility();
   const dispatch = useDispatch();
 
   const currentScreen = useNavigationState(
@@ -159,6 +159,12 @@ const ServiceScreen = () => {
       fetchDynamicBanners();
     }, [currentScreen])
   );
+
+  useEffect(() => {
+    if (userData) {
+      registerAndSaveTokenToSupabase(userData.userId); // Will save with actual userId
+    }
+  }, [userData]);
 
   const checkLoginData = async () => {
     if (userData && userData.accessToken) {
@@ -234,7 +240,7 @@ const ServiceScreen = () => {
     axios
       .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
       .then((response) => {
-        setLoading(false);
+        // setLoading(false);
 
         if (!Array.isArray(response.data)) {
           console.error("Invalid API response format");
@@ -281,19 +287,30 @@ const ServiceScreen = () => {
       .catch((error) => {
         console.error("Error fetching campaigns", error);
         setData(services);
-        setLoading(false);
+        // setLoading(false);
       });
   }
 
   function getRiceCategories() {
     setLoading(true);
+
     axios({
       method: "get",
-      url: BASE_URL + "product-service/showItemsForCustomrs",
+      url: BASE_URL + "product-service/showGroupItemsForCustomrs",
     })
       .then((response) => {
         setLoading(false);
         setGetCategories(response.data);
+        // Select RICE by default
+        const riceCategory = response.data.find(
+          (categoryGroup) => categoryGroup.categoryType === "RICE"
+        );
+        if (riceCategory) {
+          setSelectedMainCategory(riceCategory);
+        } else {
+          // fallback to first group if RICE not found
+          setSelectedMainCategory(data[0]);
+        }
       })
       .catch((error) => {
         setLoading(false);
@@ -451,47 +468,6 @@ const ServiceScreen = () => {
     );
   };
 
-  const renderCategoryItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.categoryCard, { width: categoryCardWidth }]}
-      onPress={() =>
-        navigation.navigate("Rice Products", {
-          screen: "Rice Products",
-          category: item.categoryName,
-        })
-      }
-    >
-      <View style={styles.categoryImageContainer}>
-        <Image
-          source={{ uri: item.categoryLogo }}
-          style={styles.categoryImage}
-          defaultSource={require("../assets/icon.png")}
-        />
-        {(() => {
-    const cashbackMatch = item.categoryName.match(/₹(\d+)\s*cashback/i);
-    if (cashbackMatch) {
-      return (
-        <View style={styles.cashbackTag}>
-<Text style={styles.cashbackText}>upto ₹{cashbackMatch[1]}</Text>
-          <Text style={styles.cashbackSubText}>Cashback</Text>
-        </View>
-      );
-    }
-    return null;
-  })()}
-      </View>
-      <View style={styles.categoryContent}>
-        <Text style={styles.categoryName} numberOfLines={1}>
-          {item.categoryName}
-        </Text>
-        <View style={styles.viewItemsButton}>
-          <Text style={styles.viewItemsText}>Browse Collection</Text>
-          <MaterialIcons name="arrow-forward-ios" size={14} color="#FFFFFF" />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A148C" barStyle="light-content" />
@@ -602,6 +578,12 @@ const ServiceScreen = () => {
               )}
             </View>
 
+            <View style={styles.banner}>
+              <Text style={styles.bannerText}>
+                🎉 Get ₹50 cashback on your first order!
+              </Text>
+            </View>
+
             {/* Services Section */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeaderRow}>
@@ -631,20 +613,21 @@ const ServiceScreen = () => {
                 />
               </View>
             </View>
-
+          {/* Offers Section */}
+          {visibilityMap.show_offer_modal && (
             <AskoxyOffers />
-  <View style={styles.banner}>
-      <Text style={styles.bannerText}>🎉 Get ₹50 cashback on your first order!</Text>
-    </View>
+          )}
+            
             {/* Categories Section */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeaderRow}>
                 <Text style={styles.sectionTitle}>Popular Categories</Text>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   onPress={() =>
                     navigation.navigate("Rice Products", {
                       screen: "Rice Products",
                       category: "All CATEGORIES",
+                      categoryType: selectedMainCategory,
                     })
                   }
                   style={styles.viewAllButton}
@@ -655,23 +638,96 @@ const ServiceScreen = () => {
                     size={18}
                     color="#4A148C"
                   />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScrollView}
+                contentContainerStyle={styles.categoryScrollContent}
+              >
+                {getCategories.map((group, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    onPress={() => setSelectedMainCategory(group)}
+                    style={[
+                      styles.mainCategoryButton,
+                      selectedMainCategory?.categoryType ===
+                        group.categoryType && styles.mainCategoryButtonActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.mainCategoryText,
+                        selectedMainCategory?.categoryType ===
+                          group.categoryType && { color: "#fff" },
+                      ]}
+                    >
+                      {group.categoryType}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
-              {getCategories && getCategories.length > 0 ? (
+              {selectedMainCategory && (
                 <FlatList
-                  data={arrangeCategories(getCategories)}
-                  keyExtractor={(item, index) => `category-${index}`}
+                  data={selectedMainCategory.categories}
+                  keyExtractor={(item, index) => index.toString()}
                   numColumns={2}
-                  scrollEnabled={false}
-                  showsVerticalScrollIndicator={false}
-                  columnWrapperStyle={styles.categoriesColumnWrapper}
-                  renderItem={renderCategoryItem}
+                  contentContainerStyle={styles.subCategoryBlock}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.subCategoryHeader}
+                      onPress={() =>
+                        navigation.navigate("Rice Products", {
+                          screen: "Rice Products",
+                          category: item.categoryName,
+                          categoryType: selectedMainCategory.categoryType,
+                        })
+                      }
+                    >
+                      <View style={styles.categoryImageContainer}>
+                        <Image
+                          source={{ uri: item.categoryLogo }}
+                          style={styles.categoryImage}
+                          defaultSource={require("../assets/icon.png")}
+                        />
+                        {(() => {
+                          const cashbackMatch =
+                            item.categoryName.match(/^Cashew\s*nuts?/i)
+                          if (cashbackMatch) {
+                            return (
+                              <View style={styles.cashbackTag}>
+                                <Text style={styles.cashbackText}>
+                                  upto ₹40
+                                </Text>
+                                <Text style={styles.cashbackSubText}>
+                                  Cashback
+                                </Text>
+                              </View>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </View>
+                      <View style={styles.categoryContent}>
+                        <Text style={styles.categoryName} numberOfLines={1}>
+                          {item.categoryName}
+                        </Text>
+                        <View style={styles.viewItemsButton}>
+                          <Text style={styles.viewItemsText}>
+                            Browse Collection
+                          </Text>
+                          <MaterialIcons
+                            name="arrow-forward-ios"
+                            size={14}
+                            color="#FFFFFF"
+                          />
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  )}
                 />
-              ) : (
-                <View style={styles.noDataContainer}>
-                  <Text style={styles.noDataText}>No categories available</Text>
-                </View>
               )}
             </View>
           </ScrollView>
@@ -807,6 +863,7 @@ const styles = StyleSheet.create({
   sectionContainer: {
     marginTop: 24,
     paddingHorizontal: 16,
+    // marginBottom:100
   },
   sectionTitle: {
     fontSize: 20,
@@ -846,10 +903,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    width: width / 2,
   },
   categoryImageContainer: {
     width: "100%",
-    aspectRatio: 1.5, // Maintain aspect ratio
+    aspectRatio: 1.5,
     overflow: "hidden",
   },
   categoryImage: {
@@ -861,8 +919,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   categoryName: {
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 20,
     marginBottom: 8,
     color: "#212121",
   },
@@ -908,7 +965,7 @@ const styles = StyleSheet.create({
   },
   serviceImage: {
     width: "75%",
-    height: "75%",
+    height: "80%",
     resizeMode: "contain",
   },
   serviceName: {
@@ -937,6 +994,375 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: "#4A148C",
+  },
+  categoryScrollView: {
+    marginTop: 12,
+    maxHeight: 50,
+  },
+  categoryScrollContent: {
+    paddingHorizontal: 1,
+    alignItems: "center",
+  },
+
+  mainCategoryButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#f1f5f9", // light background
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+  },
+  mainCategoryButtonActive: {
+    backgroundColor: COLORS.services,
+    borderColor: COLORS.services,
+  },
+  mainCategoryText: {
+    fontSize: 14,
+    color: "#1e293b", // default text color
+    fontWeight: "600",
+  },
+
+  subCategoryText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  itemCard: {
+    width: 160,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  itemImage: {
+    width: "100%",
+    height: 100,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  itemName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  categoryHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    marginBottom: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    marginHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  categoryLogo: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    marginRight: 16,
+  },
+  categoryInfo: {
+    flex: 1,
+  },
+
+  categoryItemCount: {
+    fontSize: 16,
+    color: "#64748b",
+    fontWeight: "500",
+  },
+
+  subCategoryText: {
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  // Header section
+  headerContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 15,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1F2937",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+
+  headerSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+  },
+
+  // Main category horizontal scroll
+  categoryScrollView: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+
+  categoryScrollContent: {
+    paddingHorizontal: 15,
+    gap: 12,
+  },
+
+  mainCategoryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    minWidth: 100,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+
+  mainCategoryButtonActive: {
+    backgroundColor: COLORS.services,
+    borderColor: COLORS.services,
+    shadowColor: COLORS.services,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  mainCategoryText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    textAlign: "center",
+  },
+
+  // Sub-category grid section
+  subCategoryBlock: {
+    marginVertical: 5,
+    paddingHorizontal: 5,
+    gap: 12,
+  },
+
+  subCategoryHeader: {
+    flex: 1,
+    marginHorizontal: 8,
+    marginBottom: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+
+  // Category image container
+  categoryImageContainer: {
+    width: "100%",
+    height: 150,
+    backgroundColor: "#F8F9FA",
+    alignItems: "center",
+    justifyContent: "center",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: "hidden",
+  },
+
+  categoryImage: {
+    width: "100%",
+    height: "90%",
+    resizeMode: "cover",
+  },
+
+  // Category content section
+  categoryContent: {
+    padding: 16,
+    minHeight: 80,
+    justifyContent: "space-between",
+  },
+
+  categoryName: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+
+  // View items button
+  viewItemsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: COLORS.services,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    minHeight: 36,
+  },
+
+  viewItemsText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#FFFFFF",
+    flex: 1,
+  },
+
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+  },
+
+  loadingText: {
+    fontSize: 16,
+    color: "#6B7280",
+    marginTop: 12,
+  },
+
+  // Empty state
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#374151",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+
+  emptySubText: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+
+  premiumCategoryHeader: {
+    flex: 1,
+    marginHorizontal: 8,
+    marginBottom: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+
+  gradientOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "flex-end",
+    padding: 12,
+  },
+
+  overlayText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  // Responsive adjustments
+  tabletContainer: {
+    maxWidth: 800,
+    alignSelf: "center",
+    width: "100%",
+  },
+
+  // Animation styles for smooth transitions
+  categoryButtonPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.8,
+  },
+
+  // Badge/count styles
+  categoryBadge: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    backgroundColor: "#EF4444",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  badgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "600",
+  },
+  banner: {
+    backgroundColor: "#FFD700",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    borderRadius: 10,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  bannerText: {
+    color: "#1A1A1A",
+    fontWeight: "600",
+    fontSize: 18,
+    letterSpacing: 0.5,
+    textAlign: "center",
   },
     cashbackTag: {
     position: 'absolute',
@@ -970,39 +1396,6 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
-  },
-  
-  cashbackSubText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginTop: 1,
-    letterSpacing: 0.8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
-  },
-  banner: {
-    backgroundColor: '#FFD700',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    borderRadius: 10,
-    marginHorizontal: 10,
-    marginVertical: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  bannerText: {
-    color: '#1A1A1A',
-    fontWeight: '600',
-    fontSize: 18,
-    letterSpacing: 0.5,
-    textAlign: 'center',
   },
   
 });

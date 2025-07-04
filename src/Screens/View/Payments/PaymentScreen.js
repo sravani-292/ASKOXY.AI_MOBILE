@@ -15,7 +15,7 @@ import {
   Modal,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+
 import * as Clipboard from 'expo-clipboard';
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -31,19 +31,17 @@ import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 import RadioGroup from "react-native-radio-buttons-group";
 import TimeSlotModal from "./TimeSlotModal ";
 import {
-  handleCustomerCartData,
-  handleGetProfileData,
-  handleUserAddorIncrementCart,
-  handleDecrementorRemovalCart,
-  handleRemoveItem,
-  handleRemoveFreeItem,
+  handleCustomerCartData
 } from "../../../../src/ApiService";
-import calculateDeliveryFee from "./DeliveryFeeCalculator"
+import {getFinalDeliveryFee} from "./DeliveryFeeCalculator"
+import PaymentType from "./PaymentType";
+import BillDetails from "./PaymentDetails";
+import ConfirmationModal from "./ConfirmationModal";
+import CustomModal from "../../../../until/CustomModal";
 const { width, height } = Dimensions.get("window");
 
 const PaymentDetails = ({ navigation, route }) => {
-  console.log("payment screen", route.params.addressData);
-  // "totalGstSum": 0, "totalSum": 1295, "totalSumWithGstSum": 1295,
+  // console.log("payment screen", route.params.addressData);
 
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
@@ -79,7 +77,7 @@ const PaymentDetails = ({ navigation, route }) => {
   const [orderId, setOrderId] = useState("");
   const [orderDate, setOrderDate] = useState(new Date());
   const [updatedDate, setUpdatedate] = useState();
- const [freeItemsDiscount,setFreeItemsDiscount] = useState("");
+  const [freeItemsDiscount,setFreeItemsDiscount] = useState("");
   const [isChecked, setIsChecked] = useState(false);
   const [slotsData, setSlotsData] = useState();
   const [onlyOneKg, setOnlyOneKg] = useState(false);
@@ -89,21 +87,38 @@ const PaymentDetails = ({ navigation, route }) => {
   const [itemsGstAmount, setItemsGstAmount] = useState("");
   const [goldMakingCost,setGoldMakingCost]  = useState("");
   const [goldGstAmount,setGoldGstAmont] =useState("");
+  const [noteMessage, setNoteMessage] = useState("");
    const [coupons, setCoupons] = React.useState([]);
+   const [smallValue, setSmallValue] = useState(0);
+   const [serviceFee, setServiceFee] = useState(0);
+   const [handlingFees, setHandlingFees] = useState(0);
+   const [distance,setDistance] = useState(0); 
   const [profileForm, setProfileForm] = useState({
     customer_name: "",
     customer_email: "",
     customer_mobile: "",
   });
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const items = route.params?.items || [];
-  const [paymentMethods, setPaymentMethods] = useState([]);
-
   const [offeravailable, setOfferAvailable] = useState();
-  const [showCOD, setShowCOD] = useState(false);
+  const [modalVissible, setModalVissible] = useState(false);
+  const [messageModal, setMessageModal] = useState(false);
+  const [title, setTitle] = useState("");
+  const [type, setType] = useState("");
+  const [primaryButtonText, setPrimaryButtonText] = useState("");
+  const [secondaryButtonText, setSecondaryButtonText] = useState("");
+  const [link, setLink] = useState("");
+  const [waitingLoader, setWaitingLoader] = useState(false);
 
-
- 
+const openModal = (title,message,primaryButtonText,secondaryButtonText,type) => {
+  setModalVissible(!modalVissible);
+  setTitle(title)
+  setMessageModal(message)
+  setPrimaryButtonText(primaryButtonText)
+  setSecondaryButtonText(secondaryButtonText)
+  setType(type)
+};
   
 const copyToClipboard = async(couponCode, discountAmount) => {
   console.log("Copying coupon code:", couponCode);
@@ -125,13 +140,18 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     handleApplyCoupon();
   };
 
+  const handleExchangePolicyChange = (isAccepted) => {
+    console.log('Exchange policy accepted:', isAccepted);
+     setIsChecked(isAccepted);
+  };
+
   const fetchTimeSlots = async () => {
     try {
       const response = await axios.get(
         `${BASE_URL}order-service/fetchTimeSlotlist`
       );
       const data = response.data;
-      console.log({ data });
+      // console.log({ data });
 
       setSlotsData(data);
       let updatedOrderDate = new Date();
@@ -143,7 +163,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
         .split("/")
         .join("-");
 
-      console.log("New Date (Updatedate):", tomorrowDate);
+      // console.log("New Date (Updatedate):", tomorrowDate);
 
       const nextSevenDays = Array.from({ length: 7 }, (_, i) => {
         const date = new Date(updatedOrderDate);
@@ -161,7 +181,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
         };
       });
 
-      console.log("Next seven days:", nextSevenDays);
+      // console.log("Next seven days:", nextSevenDays);
 
       // Fixed the filter condition - changed isAvailable === false to isAvailable === true
       const availableDays = nextSevenDays
@@ -171,7 +191,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
         })
         .slice(0, 3);
 
-      console.log("Filtered available days:", availableDays);
+      // console.log("Filtered available days:", availableDays);
 
       const transformedDays = availableDays.map((day) => ({
         label: `${day.dayOfWeek} (${day.formattedDate})`,
@@ -179,7 +199,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
         formattedDate: day.formattedDate,
       }));
 
-      console.log("Transformed days:", transformedDays);
+      // console.log("Transformed days:", transformedDays);
       setDays(transformedDays);
 
       if (Platform.OS === "ios") {
@@ -190,7 +210,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
             selectedDay?.trim()?.toUpperCase()
         );
 
-        console.log({ selectedDayData });
+        // console.log({ selectedDayData });
 
         if (selectedDayData) {
           const fullDayData = slotsData.find(
@@ -254,24 +274,6 @@ const copyToClipboard = async(couponCode, discountAmount) => {
       // setShowButtons(true);
     }
   };
-
-   const handleGetPaymentMethod = async () => {
-      console.log("into payment method");
-  
-      try {
-        const response = await axios.get(
-          BASE_URL + `order-service/getCodAndOnlinePaymetStatus`
-        );
-        // console.log("Payment method response", response.data);
-        const data = response.data;
-        const paymentMethods = data.filter((item) => item.status === true);
-        // console.log("Payment methods", paymentMethods);
-        setPaymentMethods(paymentMethods);
-      } catch (error) {
-        console.log("Error fetching payment methods", error);
-      }
-    };
-
   const handleTimeSlotChange = (timeSlot) => {
     setSelectedTimeSlot(timeSlot);
   };
@@ -401,10 +403,10 @@ const copyToClipboard = async(couponCode, discountAmount) => {
        return sum;
        }, 0);
        setItemsGstAmount(itemsGst)
-      const totalGoldGst = cartResponse.reduce((sum, item) => sum + (item?.goldGst || 0), 0);
-      setGoldGstAmont(totalGoldGst)
-     const totalGoldMakingCost = cartResponse.reduce((sum, item) => sum + (item?.goldMakingCost || 0), 0);
-      setGoldMakingCost(totalGoldMakingCost);
+        const totalGoldGst = cartResponse.reduce((sum, item) => sum + (item?.goldGst || 0), 0);
+        setGoldGstAmont(totalGoldGst)
+        const totalGoldMakingCost = cartResponse.reduce((sum, item) => sum + (item?.goldMakingCost || 0), 0);
+        setGoldMakingCost(totalGoldMakingCost);
 
       console.log("gst amount to pay",response.data.totalGstAmountToPay);
       const totalGstAmountToPay = response.data?.totalGstAmountToPay
@@ -413,13 +415,18 @@ const copyToClipboard = async(couponCode, discountAmount) => {
       // setDeliveryBoyFee(totalDeliveryFee);
       const amountToPay = Number(response.data?.amountToPay || 0);
       const gst = Number(totalGstAmountToPay || 0);
+      const cartAmount = amountToPay + gst;
       setGrandTotal(amountToPay + gst);
-      const fee = calculateDeliveryFee(addressDetails?.latitude, addressDetails?.longitude);
-      // const fee = calculateDeliveryFee(17.50, 78.52);
-      console.log("fee", fee);
-      setDeliveryBoyFee(fee || 0);
-      // setGrandTotal(response.data?.amountToPay + totalGstAmountToPay);
-      // setOfferAvailable(response.data.offerElgible);
+      const { fee, distance, note,handlingFee, grandTotal } = await getFinalDeliveryFee(addressDetails?.latitude, addressDetails?.longitude, cartAmount);
+      // const { fee, distance, note, smallCartFee, grandTotal,serviceFee } = getFinalDeliveryWithCartFeeAndTotal(addressDetails?.latitude, addressDetails?.longitude, cartAmount);
+        console.log("fee", fee);
+            console.log("distance", distance);
+            console.log("note", note);
+            console.log("handlingFee", handlingFee);
+            console.log("grandTotal", grandTotal);
+            setDeliveryBoyFee(fee || 0);
+            setHandlingFees(handlingFee || 0);
+            setDistance(distance || 0);       
     } catch (error) {
       // setError("Failed to fetch cart data");
     }
@@ -446,11 +453,6 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     grandTotalfunc();
   }, [items]);
 
-  const handlePaymentModeSelect = (mode) => {
-    setSelectedPaymentMode(mode);
-    // console.log({ mode });
-  };
-
   const deleteCoupen = () => {
     setCouponCode("");
     setCoupenApplied(false);
@@ -459,16 +461,42 @@ const copyToClipboard = async(couponCode, discountAmount) => {
   };
 
   const confirmPayment = () => {
-    // if(selez
     if (selectedTimeSlot == null || selectedTimeSlot == "") {
-      Alert.alert("Please select time slot to proceed");
-    } else if (selectedPaymentMode == null || selectedPaymentMode == "") {
-      Alert.alert("Please select payment method");
+      // Alert.alert("Please select time slot to proceed");
+          openModal(
+            "Oops! Something went wrong",
+            "Please select time slot to proceed",
+            "OK",
+            "Cancel",
+            "error",
+          )
       return;
-    } else {
-      handleOrderConfirmation();
+    } else if (selectedPaymentMode == null || selectedPaymentMode == "") {
+      // Alert.alert("Please select payment method");
+       openModal(
+          "Oops! Something went wrong",
+          "Please select payment method",
+          "OK",
+          "Cancel",
+          "error",
+       )
+      return;
+    }
+    else if(!isChecked){
+        openModal(
+          "Confirmation Required",
+          "Please confirm that the exchange can be taken within 10 days after delivery.",
+          "OK",
+          "Cancel",
+          "info",
+        )
+        return
+    }
+    else {
+      setShowConfirmModal(true)
     }
   };
+
 
   const validateCartBeforeCheckout = (cartItems, navigation) => {
     let insufficientStockItems = [];
@@ -536,7 +564,6 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     totalCart();
     fetchTimeSlots();
     checkOfferEligibility(customerId);
-    handleGetPaymentMethod();
     // setDeliveryBoyFee(200);
   }, [grandTotalAmount,totalGstSum]);
 
@@ -661,7 +688,6 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     postData = {
       address: addressDetails.address,
       amount: grandTotalAmount,
-
       customerId: customerId,
       flatNo: addressDetails.flatNo,
       landMark: addressDetails.landMark,
@@ -685,6 +711,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
       latitude: addressDetails.latitude ?? 0,
       longitude: addressDetails.longitude ?? 0,
       freeTicketAvailable: null,
+      handlingFee: handlingFees,
     };
 
     console.log({ postData });
@@ -791,7 +818,9 @@ const copyToClipboard = async(couponCode, discountAmount) => {
                 {
                   text: "OK",
                   onPress: () => {
-                    setLoading(false);
+                    // setLoading(false);
+                    setWaitingLoader(false)
+                    setModalVissible(false)
                     navigation.navigate("My Orders");
                   },
                 },
@@ -812,10 +841,15 @@ const copyToClipboard = async(couponCode, discountAmount) => {
                 console.log("BMV Cash Back Response:", response.data);
               })
               .catch((error) => {
-                console.error("Error fetching data: ", error);
+                console.error("Error fetching data: ", error.response);
               });
-
-          Alert.alert("Order Confirmed!", message, buttons);
+              setLoading(false);
+              setWaitingLoader(true)
+              setTimeout(() => {
+                  Alert.alert("Order Confirmed!", message, buttons);
+                //  setWaitingLoader(false)
+              },1000)
+         
         } else {
           setTransactionId(response.data.paymentId);
 
@@ -918,34 +952,48 @@ const copyToClipboard = async(couponCode, discountAmount) => {
         // console.log(data);
         data = JSON.parse(data);
         setPaymentId(data.paymentId);
+        setLink(data.qrIntent);
         // paymentID = data.paymentId
-        Alert.alert(
-          "Cart Summary",
+        // Alert.alert(
+        //   "Cart Summary",
+        //   `The total amount for your cart is ₹${grandTotalAmount.toFixed(
+        //     2
+        //   )}. Please proceed to checkout to complete your purchase.`,
+        //   [
+        //     {
+        //       text: "No",
+        //       onPress: () => {
+        //         setLoading(false);
+        //       },
+        //     },
+        //     {
+        //       text: "yes",
+        //       onPress: () => {
+        //         setLoading(false);
+        //       },
+        //     },
+        //   ]
+        // );
+        openModal(
+          "Confirmation Required",
           `The total amount for your cart is ₹${grandTotalAmount.toFixed(
             2
           )}. Please proceed to checkout to complete your purchase.`,
-          [
-            {
-              text: "No",
-              onPress: () => {
-                setLoading(false);
-              },
-            },
-            {
-              text: "yes",
-              onPress: () => {
-                Linking.openURL(data.qrIntent);
-                Requery(data.paymentId);
-                setPaymentStatus(null);
-              },
-            },
-          ]
-        );
+          "Pay Now",
+          "Cancel",
+          "payment",
+        )
       })
       .catch((error) => {
         console.log("getepayPortal", error.response);
         setLoading(false);
       });
+  };
+
+  const processThePayment = () => {
+        Linking.openURL(link);
+                Requery(paymentId);
+                setPaymentStatus(null);
   };
 
    const getOffers = async () => {
@@ -978,7 +1026,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     const data = {
       couponCode: couponCode.toUpperCase(),
       customerId: customerId,
-      subTotal: grandTotalAmount,
+      subTotal: subTotal,
     };
     // console.log("Total amount is  :", subTotal);
 
@@ -1187,8 +1235,10 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     }
   }
 
-  function grandTotalfunc() {
-    let total = grandTotal + deliveryBoyFee;
+async  function grandTotalfunc() {
+  console.log("into grand total function",grandTotal,deliveryBoyFee,handlingFees);
+    let total = grandTotal + deliveryBoyFee + handlingFees;
+
     let usedWallet = 0;
 
     if (coupenApplied) {
@@ -1230,6 +1280,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
     grandTotal,
     deliveryBoyFee,
     totalGstSum,
+    handlingFees,
   ]);
 
   return (
@@ -1334,10 +1385,14 @@ const copyToClipboard = async(couponCode, discountAmount) => {
             </Text>
           </View>
         ) : (
+          <>
+          {message && (
           <View style={styles.wallet}>
             <Text style={styles.label}>Note:</Text>
             <Text style={styles.message}>{message}</Text>
           </View>
+          )}
+          </>
         )}
 
       
@@ -1394,169 +1449,42 @@ const copyToClipboard = async(couponCode, discountAmount) => {
           }}
         />
         {/* Payment Methods */}
-        <View
-          style={[
-            styles.paymentMethodContainer,
-            { marginTop: 20, marginBottom: 20 },
-          ]}
-        >
-          <Text style={styles.paymentHeader}>Choose Payment Method</Text>
-         
+      <PaymentType selectedPaymentMode={selectedPaymentMode} setSelectedPaymentMode={setSelectedPaymentMode}  grandTotalAmount={grandTotalAmount}/>
 
-          {paymentMethods.some(
-                      (method) =>
-                        method.paymentStatus === "ONLINE" && method.status === true
-                    ) && (
-                      <TouchableOpacity
-                        style={[
-                          styles.paymentOption,
-                          selectedPaymentMode === "ONLINE" && styles.selectedOption,
-                        ]}
-                        onPress={() => handlePaymentModeSelect("ONLINE")}
-                      >
-                        <FontAwesome5
-                          name="credit-card"
-                          size={24}
-                          color={
-                            selectedPaymentMode === "ONLINE"
-                              ? COLORS.backgroundcolour
-                              : "black"
-                          }
-                        />
-                        <Text style={styles.optionText}>Online Payment</Text>
-                      </TouchableOpacity>
-                    )}
-
-          {grandTotalAmount > 100 && (
-            <View>
-              <TouchableOpacity
-                style={styles.otherOptionContainer}
-                onPress={() => setShowCOD(!showCOD)}
-              >
-                <View style={styles.otherOptionTextContainer}>
-                  <Text style={styles.otherOptionText}>Other</Text>
-                  <MaterialIcons
-                    name="keyboard-arrow-right"
-                    size={24}
-                    color="black"
-                    style={styles.otherOptionIcon}
-                  />
-                </View>
-              </TouchableOpacity>
-              <View>
-                {showCOD &&  paymentMethods.some(
-                              (method) =>
-                                method.paymentStatus === "COD" && method.status === true
-                            ) && (
-                              <TouchableOpacity
-                                style={[
-                                  styles.paymentOption,
-                                  selectedPaymentMode === "COD" && styles.selectedOption,
-                                ]}
-                                onPress={() => handlePaymentModeSelect("COD")}
-                              >
-                                <MaterialIcons
-                                  name="delivery-dining"
-                                  size={24}
-                                  color={
-                                    selectedPaymentMode === "COD"
-                                      ? COLORS.backgroundcolour
-                                      : "black"
-                                  }
-                                />
-                                <Text style={styles.optionText}>Cash on Delivery</Text>
-                              </TouchableOpacity>
-                            )} 
-                  
-              </View>
-            </View>
-          )} 
-        </View>
+      <BillDetails
+        // Basic payment details
+        subTotal={subTotal}
+        freeItemsDiscount={freeItemsDiscount}
+        coupenApplied={coupenApplied}
+        coupenDetails={coupenDetails}
+        useWallet={useWallet}
+        usedWalletAmount={usedWalletAmount}
+        deliveryBoyFee={deliveryBoyFee}
+        totalGstSum={Number((totalGstSum || 0.0).toFixed(2))}
+        grandTotalAmount={grandTotalAmount}
+        
+        // Exchange policy settings
+        exchangePeriod={10}
+        exchangePeriodUnit="days"
+        showExchangePolicy={true}
+        onExchangePolicyChange={handleExchangePolicyChange}
+        
+        // Additional customizations
+        currency="₹"
+        noteMessage="Free delivery on orders above ₹499"
+        
+        // Custom discounts and charges
+        customDiscounts={[
+          { label: 'Member Discount', amount: 0 },
+          { label: 'Festival Offer', amount: 0 }
+        ]}
+        handlingFee={handlingFees}
+        shippingFee={deliveryBoyFee}
+        distance={distance}
+      />
 
         {/* Payment Details */}
         <View style={styles.paymentDetails}>
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setIsChecked(!isChecked)}
-          >
-            <Ionicons
-              name={isChecked ? "checkbox" : "square-outline"}
-              size={24}
-              color={isChecked ? "green" : "gray"}
-            />
-            <Text style={styles.label1}>
-              You can request an exchange within{" "}
-              <Text
-                style={[
-                  styles.label1,
-                  { fontWeight: "bold", textTransform: "capitalize" },
-                ]}
-              >
-                10 days
-              </Text>{" "}
-              of your order being delivered.
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.detailsHeader}>Payment Details</Text>
-          <View style={styles.paymentRow}>
-            <Text style={styles.detailsLabel}>Sub Total</Text>
-            <Text style={styles.detailsValue}>₹{subTotal}</Text>
-          </View>
-          {freeItemsDiscount!==0 && (
-             <View style={styles.paymentRow}>
-              <Text style={styles.detailsLabel}>Discount</Text>
-              <Text style={styles.detailsValue}>-₹{freeItemsDiscount}</Text>
-            </View>
-          )}
-          {coupenApplied == true && (
-            <View style={styles.paymentRow}>
-              <Text style={styles.detailsLabel}>Coupon Applied</Text>
-              <Text style={styles.detailsValue}>-₹{coupenDetails}</Text>
-            </View>
-          )}
-          {useWallet == true && (
-            <View style={styles.paymentRow}>
-              <Text style={styles.detailsLabel}>from Wallet</Text>
-              <Text style={styles.detailsValue}>-₹{usedWalletAmount}</Text>
-            </View>
-          )}
-          <View style={styles.paymentRow}>
-            <Text style={styles.detailsLabel}>Delivery Fee</Text>
-            <Text style={styles.detailsValue}>+₹{deliveryBoyFee}</Text>
-          </View>
-            {/* {itemsGstAmount > 0 &&(
-                  <View style={styles.paymentRow}>
-                  <Text style={styles.detailsLabel}>Items GST:</Text>
-                  <Text style={styles.detailsValue}>+ ₹{itemsGstAmount?.toFixed(2)}</Text>
-                </View>
-              )}
-              {goldGstAmount > 0 &&(
-                <View style={styles.paymentRow}>
-                  <Text style={styles.detailsLabel}>Gold GST:</Text>
-                  <Text style={styles.detailsValue}>+ ₹{goldGstAmount?.toFixed(2)}</Text>
-                </View>
-              )}
-              {goldMakingCost > 0 && (
-                <View style={styles.paymentRow}>
-                  <Text style={styles.detailsLabel}>Gold Making Cost:</Text>
-                  <Text style={styles.detailsValue}>+ ₹{goldMakingCost?.toFixed(2)}</Text>
-                </View>
-              )} */}
-
-          <View style={styles.paymentRow}>
-            <Text style={styles.detailsLabel}>GST</Text>
-            <Text style={styles.detailsValue}>
-              +₹{Number((totalGstSum || 0.0).toFixed(2))}
-            </Text>
-          </View>
-          <View style={styles.divider} />
-
-          <View style={styles.paymentRow}>
-            <Text style={styles.detailsLabelBold}>Grand Total</Text>
-            <Text style={styles.detailsValueBold}>
-              ₹{Number(grandTotalAmount || 0).toFixed(2)}
-            </Text>
-          </View>
 
           {loading == true ? (
             <View style={styles.confirmButton}>
@@ -1565,7 +1493,7 @@ const copyToClipboard = async(couponCode, discountAmount) => {
           ) : (
             <TouchableOpacity
               style={styles.confirmButton}
-              onPress={confirmPayment}
+              onPress={()=>confirmPayment()}
             >
               <Text style={styles.confirmText}>Confirm Order</Text>
             </TouchableOpacity>
@@ -1575,6 +1503,61 @@ const copyToClipboard = async(couponCode, discountAmount) => {
       <DeliveryTimelineModal
         visible={showModal}
         onClose={() => setShowModal(false)}
+      />
+  
+{/* call this where needed */}
+{/* <ConfirmationModal
+  visible={showConfirmModal}
+  onClose={() => setShowConfirmModal(false)}
+  onConfirm={confirmPayment}
+  subTotal={subTotal}
+  deliveryFee={deliveryBoyFee}
+  handlingFee={handlingFees}
+/> */}
+
+<ConfirmationModal
+  visible={showConfirmModal}
+  onClose={() => setShowConfirmModal(false)}
+  onConfirm={handleOrderConfirmation}
+  subTotal={subTotal}
+  deliveryFee={deliveryBoyFee}
+  handlingFee={handlingFees}
+  deliveryAddress={addressDetails}
+  paymentMethod={selectedPaymentMode}
+  loading={loading}
+  walletBalance={useWallet ? useWallet : 0}
+  walletAmountUsed={usedWalletAmount}
+  isWalletEnabled={true}
+  onWalletToggle={(enabled) => setWalletEnabled(enabled)}
+  couponApplied={{
+    code: couponCode,
+    discount: coupenDetails,
+    type: 'fixed'
+  }}
+/>
+
+      {/* Custom Modal */}
+      <CustomModal
+        visible={modalVissible}
+        type={type}
+        title={title}
+        message={messageModal}
+        primaryButtonText={primaryButtonText}
+        secondaryButtonText={secondaryButtonText}
+        onClose={() => setModalVissible(false)}
+        onPrimaryPress={() => {
+          setModalVissible(false);
+          if(primaryButtonText=="Pay Now") processThePayment();
+        }}
+        onSecondaryPress={() => {
+          console.log('Payment deferred');
+          setModalVissible(false);
+          if(secondaryButtonText=="Cancel") {
+            setLink("");
+            setPaymentId("");  
+            setLoading(false);   
+          }
+        }}
       />
     </View>
   );
@@ -1621,34 +1604,6 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 18, fontWeight: "bold" },
   totalAmount: { fontSize: 18, fontWeight: "bold", color: "green" },
-  paymentHeader: { fontSize: 18, fontWeight: "bold", marginBottom: 16 },
-  
-  paymentOption: {
-    alignItems: "center",
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    width: width * 0.8,
-    backgroundColor: "#c0c0c0",
-    borderRadius: 10,
-    // width: 180,
-    height: 90,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  selectedOption: { borderColor: COLORS.services, backgroundColor: "#e6f7ff" },
-  optionText: {
-    fontSize: 16,
-    marginTop: 8,
-    width: 150,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
   confirmButton: {
     backgroundColor: COLORS.title,
     padding: 16,
@@ -1694,21 +1649,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
-  paymentHeader: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  paymentOptions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-
-  selectedOption: {
-    borderColor: COLORS.services,
-    borderWidth: 2,
-  },
   paymentDetails: {
     backgroundColor: "white",
     padding: 20,
@@ -1734,6 +1674,7 @@ const styles = StyleSheet.create({
   detailsLabel: {
     fontSize: 16,
     color: "#555",
+    width: "60%",
   },
   detailsLabelBold: {
     fontSize: 16,
@@ -1921,44 +1862,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 18,
   },
-  otherOptionContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    width: width * 0.8,
-    paddingHorizontal: 10,
-    marginLeft: 5,
-  },
-  otherOptionTextContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: 10,
-    justifyContent: "space-between",
-    width: width * 0.7,
-  },
-  otherOptionIcon: {
-    fontSize: 24,
-    color: "#333",
-    alignSelf: "flex-end",
-  },
-  otherOptionText: {
-    fontSize: 16,
-    color: "#333",
-    marginLeft: 10,
-    fontWeight: "bold",
-    alignSelf: "flex-start",
-  },
-  paymentMethodContainer: {
-    padding: 20,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    width: width * 0.9,
-    alignSelf: "center",
-  },
   radioGroupContainer: {
     flexDirection: "column",
     alignItems: "flex-start",
@@ -2098,6 +2001,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  noteMessage:{
+    fontSize: 12,
+    color: "#666",
+    marginLeft: 5,
+    fontStyle: "italic",
+    color: "green",
+  }
 });
 
 export default PaymentDetails;

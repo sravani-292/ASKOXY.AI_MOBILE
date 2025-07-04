@@ -361,22 +361,22 @@ console.log("Final offers after eligibility check:", JSON.stringify(finalOffers,
         <View style={styles.divider} />
         
         <View style={styles.row}>
-          <MaterialCommunityIcons 
+          {/* <MaterialCommunityIcons 
             name={isContainerOffer ? "rice" : "weight-kilogram"} 
             size={20} 
             color="#333" 
-          />
-          <Text style={styles.label}>You Purchase:</Text>
-          <Text style={styles.value}>{buyDetails}</Text>
+          /> */}
+          {/* <Text style={styles.label}>You Purchase:</Text>
+          <Text style={styles.value}>{buyDetails}</Text> */}
         </View>
 
         <View style={styles.row}>
-          <MaterialCommunityIcons 
+          {/* <MaterialCommunityIcons 
             name={isContainerOffer ? "package-variant" : "gift-outline"} 
             size={20} 
             color={isContainerOffer ? "#ff6d00" : "#4caf50"} 
-          />
-          <Text style={styles.label}>You Receive:</Text>
+          /> */}
+          {/* <Text style={styles.label}>You Receive:</Text>
           <Text style={[styles.value, { 
             color: isContainerOffer ? "#ff6d00" : "#4caf50",
             flex: 1,
@@ -384,7 +384,7 @@ console.log("Final offers after eligibility check:", JSON.stringify(finalOffers,
             textAlign: 'right'
           }]}>
             {freeDetails}
-          </Text>
+          </Text> */}
         </View>
         
         <Text style={[styles.description, isPersonalizedOffer && styles.personalizedDescription]}>
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   },
   description: {
     marginTop: 12,
-    fontSize: 14,
+    fontSize: 16,
     color: '#1976d2',
     fontStyle: 'italic',
   },

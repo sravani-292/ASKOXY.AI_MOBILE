@@ -186,14 +186,6 @@ const AppUpdateScreen = () => {
               Alert.alert('Error', 'Could not open app store.');
             });
           }
-        },
-        {
-          text: "Later",
-          style: "cancel",
-          onPress: () => {
-            // Navigate to Login screen even if user chooses "Later"
-            navigation.navigate('Service Screen');
-          }
         }
       ]
     );
