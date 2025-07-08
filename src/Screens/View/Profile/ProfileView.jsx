@@ -75,7 +75,7 @@ export default function ProfileSettings({ navigation }) {
         label: 'Coupons', 
         showArrow: true,
         navigation: "Oxy Coupons", 
-        gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
+        gradient: ['#7B61FF', '#4D2CFF'] 
       },
 
       { id: 6, type: 'divider' },
@@ -86,7 +86,7 @@ export default function ProfileSettings({ navigation }) {
         label: 'Subscription',
         navigation: "Subscription", 
         showArrow: true,
-        gradient: ['#F7971E', '#FFD200'] // gold/yellow hues, finance-friendly
+        gradient: ['#F7971E', '#FFD200'] 
       },
       { 
         id: 8, 
@@ -95,7 +95,7 @@ export default function ProfileSettings({ navigation }) {
         label: 'FAQ\'s', 
         showArrow: true,
         navigation: "Terms and Conditions",
-        gradient: ['#36D1DC', '#5B86E5'] // consistent with helpful/support tone
+        gradient: ['#36D1DC', '#5B86E5'] 
       },
       { 
         id: 9, 
@@ -104,7 +104,7 @@ export default function ProfileSettings({ navigation }) {
         label: 'Contact Us', 
         showArrow: true,
         navigation: 'Write To Us',
-        gradient: ['#00B4DB', '#0083B0'] // professional blue gradient
+        gradient: ['#00B4DB', '#0083B0'] 
       },
       { id: 10, type: 'divider' },
       {

@@ -41,7 +41,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 58,
+      "versionCode": 59,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "intentFilters": [

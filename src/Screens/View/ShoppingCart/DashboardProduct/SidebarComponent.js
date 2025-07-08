@@ -6,6 +6,7 @@ import {
   View,
   Image,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../../../../Redux/constants/theme';
 
 const SidebarComponent = ({
@@ -17,6 +18,25 @@ const SidebarComponent = ({
   sidebarScrollViewRef,
   styles,
 }) => {
+  const navigation = useNavigation();
+
+  const handleCategoryPress = (categoryName) => {
+    filterByCategory(categoryName);
+    
+    // Update the navigation title based on selection
+    if (categoryName === "All CATEGORIES") {
+      // When "All Categories" is selected, show the category type as the title
+      navigation.setOptions({
+        title: selectedCategoryType || "Rice Products"
+      });
+    } else {
+      // When a specific category is selected, show that category name as the title
+      navigation.setOptions({
+        title: categoryName
+      });
+    }
+  };
+
   return (
     <ScrollView
       style={styles.sidebar}
@@ -25,7 +45,7 @@ const SidebarComponent = ({
       showsVerticalScrollIndicator={false}
     >
       <TouchableOpacity
-        onPress={() => filterByCategory("All CATEGORIES")}
+        onPress={() => handleCategoryPress("All CATEGORIES")}
         style={[
           styles.sidebarItem,
           selectedCategory === "All CATEGORIES" && styles.selectedSidebarItem
@@ -48,7 +68,7 @@ const SidebarComponent = ({
       {arrangeCategories(categories, selectedCategoryType).map((category) => (
         <TouchableOpacity
           key={category.id}
-          onPress={() => filterByCategory(category.categoryName)}
+          onPress={() => handleCategoryPress(category.categoryName)}
           style={[
             styles.sidebarItem,
             selectedCategory === category.categoryName && styles.selectedSidebarItem

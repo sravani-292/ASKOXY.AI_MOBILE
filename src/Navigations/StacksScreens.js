@@ -20,11 +20,9 @@ import Activated from "../Authorization/Activated";
 import Support from "../Screens/View/ContactUs/Active_Support";
 import Tabs from "./BottomTabs";
 import RiceProductDetails from "../Screens/View/ShoppingCart/RiceProductDetails";
-import ProductView from "../Components/productsDesign/ProductView";
 import WalletPage from "../Screens/View/WalletSubscriptions/WalletScreen";
 import AddressBook from "../Screens/View/Address/AddressBook";
 import CheckOut from "../Screens/View/PurchaseFlow/CheckOut";
-import Rice from "../Screens/View/ShoppingCart/Rice";
 import MyLocationPage from "../Screens/View/Address/MyLocationPage";
 import SplashScreen from "../Authorization/SplashScreen";
 import OrderSummary from "../Screens/View/PurchaseFlow/OrderSummary";
@@ -87,7 +85,7 @@ import * as Linking from "expo-linking";
 // import ChatScreen from "../Dashboard/LegalChatbot";
 import AboutService from "../Dashboard/AboutUS";
 import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
-
+import SearchScreen from "../Screens/View/ShoppingCart/Search/SearchScreen";
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -136,6 +134,8 @@ export default function StacksScreens() {
     }
   }, [platform]);
 
+
+  
   const checkForUpdate = async () => {
     if (!platform) return;
     try {
@@ -196,16 +196,16 @@ export default function StacksScreens() {
     return <LoadingScreen />;
   }
 
-  const formatSentence = (text) => {
-  return text
-    .split(' ')
-    .map(formatWord)
-    .join(' ');
-}
+   const formatSentence = (text) => {
+    if (!text) return "";
+    return text
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+  
+   
 
-const formatWord = (word) => {
-  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-};
   return (
     <Stack.Navigator
       linking={linking}
@@ -261,7 +261,6 @@ const formatWord = (word) => {
         })}
       />
       {/* <Stack.Screen name="Services" component={Services}/> */}
-      <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
       <Stack.Screen name="Subscription" component={Main} />
 
@@ -278,14 +277,25 @@ const formatWord = (word) => {
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
       <Stack.Screen name="Item Details" component={ItemDetails} />
       <Stack.Screen name="Refund" component={Refund} />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="Rice Products"
         component={UserDashboard}
         options={({ route }) => ({
-          title: route?.params?.categoryType
-            ? `${formatSentence(route.params.categoryType)} Products`
+          title: route?.params?.category
+            ? `${formatSentence(route.params.category)}`
             : "Rice Products",
         })}
+      /> */}
+           <Stack.Screen
+          name="Rice Products"
+          component={UserDashboard}
+          options={({ route }) => ({
+            title: route?.params?.category
+              ? formatSentence(route.params.category)
+              : route?.params?.categoryType
+                ? formatSentence(route.params.categoryType)
+                : "Rice Products",
+          })}
         />
       <Stack.Screen name="Write To Us" component={WriteToUs} />
       <Stack.Screen name="ChatGpt" component={ChatGpt} />
@@ -485,7 +495,7 @@ const formatWord = (word) => {
       />
 
       {/* <Stack.Screen name="Notifications" component={Notifications} /> */}
-
+      <Stack.Screen name ="Search Screen" component={SearchScreen}  options={{ title: 'Browse Items' }} />
       <Stack.Screen name="New Address Book" component={NewAddressBook} />
       <Stack.Screen name="Oxy Coupons" component={OxyCoupens} />
     </Stack.Navigator>

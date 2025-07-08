@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import BASE_URL from "../../../../../Config";
 import LottieView from "lottie-react-native";
 import { COLORS } from "../../../../../Redux/constants/theme";
@@ -32,7 +32,10 @@ import {
 
 const { width } = Dimensions.get("window");
 
-const UserDashboard = ({ route }) => {
+const UserDashboard = () => {
+
+  const route = useRoute();
+  
   console.log("route params", route.params);
 
   const [loading, setLoading] = useState(false);
@@ -95,32 +98,37 @@ const UserDashboard = ({ route }) => {
     }, 3000);
   };
 
+   useEffect(() => {
+    if (selectedCategory === "All CATEGORIES") {
+      navigation.setOptions({
+        title: selectedCategoryType
+      });
+    } else {
+      navigation.setOptions({
+        title: selectedCategory
+      });
+    }
+    
+  }, [selectedCategory, selectedCategoryType, navigation]);
+
   useFocusEffect(
     useCallback(() => {
-      if (userData) {
-        fetchCartItems();
-      }
-      getAllCategories();
+      console.log("UserDashboard focused", selectedCategory, selectedCategoryType);
+     
     }, [userData])
   );
 
-  // useEffect(() => {
-  //   console.log(route.params.categoryName);
-
-  //   if (selectedCategory?.includes("Cashew nuts")) {
-  //     const timer = setTimeout(() => {
-  //       Alert.alert(
-  //         "🎉 Hurray!",
-  //         "Get upto ₹40 cashback on your first Cashew nuts purchase!",
-  //         [{ text: "Great!", style: "default" }]
-  //       );
-  //     }, 1300);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [selectedCategory]);
+  useEffect(() => {
+ if (userData) {
+        fetchCartItems();
+      }
+      getAllCategories();
+  }, [route.params,userData]);
+ 
 
   // Scroll to selected category in sidebar
   useEffect(() => {
+    console.log("Selected category changed:", selectedCategory);
     if (selectedCategory && sidebarScrollViewRef.current) {
       const currentCategories = arrangeCategories(
         categories,
@@ -506,15 +514,17 @@ const UserDashboard = ({ route }) => {
 
         setAllItems(items);
 
-        if (route.params.category) {
-          console.log("Function started.....");
+        if (route.params.category && route.params.category !== "All CATEGORIES") {
+          console.log("Function started.....", route.params.category);
 
           const weight = route.params.offerId;
           const finalWeightFilter =
             selectedWeightFilter === weight ? null : weight;
 
           setSelectedWeightFilter(finalWeightFilter);
-
+           
+          console.log("Selected weight filter:", finalWeightFilter);
+          
           let itemsToFilter = [];
 
           if (selectedCategory === "All CATEGORIES") {
@@ -531,7 +541,10 @@ const UserDashboard = ({ route }) => {
           }
 
           setFilteredItems(itemsToFilter);
-        } else {
+          console.log("Filtered items:route.params.category");
+          
+        } 
+        else {
           if (selectedCategory === "All CATEGORIES") {
             setFilteredItems(sortItems(items, "weightAsc"));
           } else {
@@ -544,9 +557,11 @@ const UserDashboard = ({ route }) => {
               .flatMap((cat) => cat.itemsResponseDtoList || []);
 
             setFilteredItems(sortItems(filtered, "weightAsc"));
+            console.log("Filtered items:", filtered);
           }
         }
-
+         console.log("Filtered items: at getAllCategories");
+         
         setTimeout(() => {
           setLoading(false);
         }, 1000);
@@ -744,6 +759,8 @@ const UserDashboard = ({ route }) => {
       handleGoldItemPress={handleGoldItemPress}
       isCategoryTypeGold={isCategoryTypeGold}
       imageErrors={imageErrors}
+      category={selectedCategory}
+      categoryType={selectedCategoryType}
     />
   );
 
@@ -765,7 +782,7 @@ const UserDashboard = ({ route }) => {
       {/* Category Types Header */}
      
 
-      <ProductHeader
+      {/* <ProductHeader
         searchText={searchText}
         setSearchText={(text) => {
           setSearchText(text);
@@ -780,6 +797,23 @@ const UserDashboard = ({ route }) => {
         filterByWeight={filterByWeight}
         isCategoryTypeRice={isCategoryTypeRice}
         arrangeCategories={arrangeCategories} // <-- Add this line
+      /> */}
+
+        <ProductHeader
+        searchText={searchText}
+        setSearchText={setSearchText}
+        handleClearText={handleClearText}
+        cartData={cartData}
+        cartCount={cartCount}
+        userData={userData} 
+        navigation={navigation}
+        selectedWeightFilter={selectedWeightFilter}
+        filterByWeight={filterByWeight}
+        isCategoryTypeRice={selectedCategoryType === "RICE"}
+        getAvailableCategoryTypes={getAvailableCategoryTypes}
+        selectedCategoryType={selectedCategoryType}
+        handleCategoryTypeChange={handleCategoryTypeChange}
+        categoryTypeScrollViewRef={categoryTypeScrollViewRef}
       />
       <FilterModal
         filterModalVisible={filterModalVisible}
@@ -789,7 +823,7 @@ const UserDashboard = ({ route }) => {
         resetFilters={resetFilters}
         applyFilters={applyFilters}
       />
- <View style={styles.categoryTypesContainer}>
+      {/* <View style={styles.categoryTypesContainer}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -818,7 +852,7 @@ const UserDashboard = ({ route }) => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
+      </View> */}
       <View style={styles.rowContainer}>
         <View style={{width:width*0.2,alignSelf:"flex-start"}}>
         <SidebarComponent
@@ -851,7 +885,7 @@ const UserDashboard = ({ route }) => {
         )}
         </View>
       </View>
-{/* 
+   {/* 
       <GoldDetailModal
         visible={modalVisible}
         itemId={selectedItemId}

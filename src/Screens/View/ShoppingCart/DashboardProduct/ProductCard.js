@@ -22,7 +22,9 @@ const ProductCard = ({
   handleDecrease,
   handleGoldItemPress,
   isCategoryTypeGold,
-  imageErrors
+  imageErrors,
+  category,
+  categoryType
 }) => {
   
   // Get appropriate icon for item
@@ -53,7 +55,7 @@ const ProductCard = ({
   return (
     <View style={styles.itemContainer}>
       <TouchableOpacity
-        onPress={() => navigation.navigate("Item Details", { item })}
+        onPress={() => navigation.navigate("Item Details", { item:item, category:category, categoryType:categoryType })}
       >
         <View style={styles.itemImageContainer}>
           {item.itemMrp > item.itemPrice && (

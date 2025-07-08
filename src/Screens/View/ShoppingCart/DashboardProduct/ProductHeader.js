@@ -25,9 +25,15 @@ const ProductHeader = ({
   filterByWeight,
   arrangeCategories = () => {}, // <-- Default empty function
   isCategoryTypeRice,
+  // Add these new props for category types
+  getAvailableCategoryTypes = () => [],
+  selectedCategoryType,
+  handleCategoryTypeChange,
+  categoryTypeScrollViewRef,
 }) => {
   return (
     <View style={styles.header}>
+      {/* Search Bar Section */}
       <View style={styles.searchFilterRow}>
         <View
           style={[
@@ -51,6 +57,7 @@ const ProductHeader = ({
               setSearchText(text);
               // filterItemsBySearch is called from parent
             }}
+            onFocus={() => navigation.navigate("Search Screen")}
             style={styles.input}
             returnKeyType="search"
             clearButtonMode="never"
@@ -80,6 +87,38 @@ const ProductHeader = ({
             )}
           </Pressable>
         )}
+      </View>
+
+      {/* Category Types Section */}
+      <View style={styles.categoryTypesContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          ref={categoryTypeScrollViewRef}
+          contentContainerStyle={styles.categoryTypesScrollContainer}
+        >
+          {getAvailableCategoryTypes().map((categoryType) => (
+            <TouchableOpacity
+              key={categoryType}
+              onPress={() => handleCategoryTypeChange(categoryType)}
+              style={[
+                styles.categoryTypeButton,
+                selectedCategoryType === categoryType &&
+                  styles.selectedCategoryTypeButton,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryTypeText,
+                  selectedCategoryType === categoryType &&
+                    styles.selectedCategoryTypeText,
+                ]}
+              >
+                {categoryType}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Weight Filter Buttons */}
@@ -163,8 +202,6 @@ const ProductHeader = ({
           </TouchableOpacity>
         </ScrollView>
       )}
-
-      {/* Categories section removed since it's now in the sidebar */}
     </View>
   );
 };
@@ -237,6 +274,46 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold",
   },
+  // Category Types styles
+  categoryTypesContainer: {
+    backgroundColor: "#f8f9fa",
+    paddingVertical: 10,
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
+  },
+  categoryTypesScrollContainer: {
+    paddingHorizontal: 5,
+  },
+  categoryTypeButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    marginRight: 10,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  selectedCategoryTypeButton: {
+    backgroundColor: "#6b21a8",
+    borderColor: "#6b21a8",
+  },
+  categoryTypeText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#495057",
+    textTransform: "capitalize",
+  },
+  selectedCategoryTypeText: {
+    color: "#ffffff",
+    fontWeight: "600",
+  },
+  // Weight Filter styles
   weightFilterContainer: {
     marginBottom: 10,
   },

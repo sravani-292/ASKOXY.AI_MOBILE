@@ -30,9 +30,11 @@ import {
   handleRemoveFreeItem,
 } from "../../../../src/ApiService";
 
-const ItemDetails = ({ route, navigation }) => {
+const ItemDetails = ({ route }) => {
   const { item } = route?.params;
   console.log("Item details page", item);
+
+  const navigation = useNavigation();
 
   const userData = useSelector((state) => state.counter);
   const token = userData?.accessToken;
@@ -68,7 +70,7 @@ const ItemDetails = ({ route, navigation }) => {
       if (item?.itemId) {
         getImages(item?.itemId);
       }
-      
+      console.log("ItemDetails useFocusEffect called for itemId:",route?.params);
       // Cleanup interval when screen loses focus
       return () => {
         if (autoScrollInterval.current) {
@@ -233,6 +235,24 @@ const ItemDetails = ({ route, navigation }) => {
     </View>
   );
 
+    const handleGoBack = () => {
+    
+  };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity onPress={()=>navigation.navigate("Rice Products", 
+        { screen:route.params?.category, 
+        categoryType:route.params?.categoryType,
+        category:route.params?.category
+         }
+         )} style={{ marginLeft: 10 }}>
+          <Icon name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
   // REMOVED THE DUPLICATE useEffect BLOCKS
 
   const fetchCartData = async () => {
@@ -316,7 +336,7 @@ const ItemDetails = ({ route, navigation }) => {
     };
     try {
       const response = await handleDecrementorRemovalCart(data);
-      Alert.alert("Success", response.data.errorMessage);
+      // Alert.alert("Success", response.data.errorMessage);
       fetchCartData();
     } catch (error) {
       console.log("Error decrementing cart item:", error);

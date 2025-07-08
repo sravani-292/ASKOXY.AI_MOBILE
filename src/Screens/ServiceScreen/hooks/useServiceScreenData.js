@@ -171,7 +171,7 @@ const getRiceCategories = async () => {
 
         filteredCategories[riceCategoryIndex] = riceCategory;
       }
-
+      // console.log("Filtered Rice Categories:", JSON.stringify(filteredCategories,null,2));
       setGetCategories(filteredCategories);
       if (filteredCategories[0]) setSelectedMainCategory(filteredCategories[0]);
     })
