@@ -1,9 +1,8 @@
 {
   "expo": {
     "name": "ASKOXY.AI",
-    "slug": "Oxyrice",
-    // "slug": "oxyrice_customer",
-    "version": "1.0.63",
+    "slug": "oxyrice_customer",
+    "version": "1.0.73",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -16,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "59",
+      "buildNumber": "69",
       "associatedDomains": [
         "applinks:www.askoxy.ai",
         "applinks:askoxy.app.link",
@@ -28,11 +27,10 @@
         "NSLocationWhenInUseUsageDescription": "We need your location to show available delivery options, calculate delivery times, and ensure your order reaches you accurately.",
         "NSLocationAlwaysUsageDescription": "We need your location to ensure timely delivery updates even when the app is in the background.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Your location will help us provide the best delivery experience, including background tracking if needed.",
-        "NSUserNotificationUsageDescription": "We’d like to send you updates about your orders and offers via push notifications.",
-        "ITSAppUsesNonExemptEncryption": false,
-        "UIRequiredDeviceCapabilities": [
-          "arm64"
-        ]
+        "NSUserNotificationUsageDescription": "We'd like to send you updates about your orders and offers via push notifications.",
+        "NSCameraUsageDescription": "The camera is used to scan QR codes or capture photos for certain features in the app.",
+        "NSPhotoLibraryUsageDescription": "Access is required to upload images like receipts or user profile photos.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -41,7 +39,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 58,
+      "versionCode": 64,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "intentFilters": [
@@ -79,11 +77,9 @@
     "plugins": [
       "expo-font",
       "expo-localization",
-      "react-native-video",
       [
         "expo-notifications",
         {
-          // "icon": "./assets/notification_icon.png",
           "icon": "./assets/AI.png",
           "color": "#ffffff",
           "defaultChannel": "default",
@@ -92,12 +88,20 @@
           ],
           "enableBackgroundRemoteNotifications": true
         }
-      ]
+      ],
+      [
+      "expo-build-properties",
+        {
+      "android": {
+        "compileSdkVersion": 35,
+        "targetSdkVersion": 35
+      }
+    }
+  ]
     ],
     "extra": {
       "eas": {
-        "projectId": "ce226648-f9fe-48e4-b9d1-02f76cf9fcee"
-        //  "projectId": "5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
+        "projectId": "5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
       }
     }
   }

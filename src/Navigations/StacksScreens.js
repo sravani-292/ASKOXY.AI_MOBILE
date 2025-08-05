@@ -15,7 +15,7 @@ import Login from "../Authorization/Login";
 import Register from "../Authorization/Register";
 import About from "../Screens/View/PurchaseFlow/About";
 import LoginWithPassword from "../Authorization/LoginWithPassword";
-import Refund from "../Screens/View/Payments/Refund";
+import Refund from "../Screens/View/Payments/PaymentDetails/Components/Refund";
 import Activated from "../Authorization/Activated";
 import Support from "../Screens/View/ContactUs/Active_Support";
 import Tabs from "./BottomTabs";
@@ -28,7 +28,8 @@ import Rice from "../Screens/View/ShoppingCart/Rice";
 import MyLocationPage from "../Screens/View/Address/MyLocationPage";
 import SplashScreen from "../Authorization/SplashScreen";
 import OrderSummary from "../Screens/View/PurchaseFlow/OrderSummary";
-import PaymentDetails from "../Screens/View/Payments/PaymentScreen";
+// import PaymentDetails from "../Screens/View/Payments/PaymentScreen";
+import PaymentDetails from "../Screens/View/Payments/PaymentDetails/PaymentScreen";
 import OrderDetails from "../Screens/View/Orders/OrderDetails";
 import TicketHistory from "../Screens/View/ContactUs/TicketHistory";
 import TicketHistoryComments from "../Screens/View/ContactUs/TicketHistoryComments";
@@ -49,6 +50,7 @@ import ProfileScreen from "../Screens/View/Profile/ProfileScreen";
 import NewAddressBook from "../Screens/View/Address/NewAddressBook";
 
 import OffersModel from "../Screens/View/Offers/OffersModal";
+import ComboItemsScreen from "../Screens/View/Offers/ComboOffer";
 
 import Rudraksha from "../Dashboard/Rudraksha";
 import FreeAIAndGenAI from "../Dashboard/FreeAIAndGenAI";
@@ -79,15 +81,20 @@ import OxyLoans from "../Dashboard/Oxyloans";
 import OfferLetters from "../Dashboard/offerletters";
 import StudyAbroad from "../StudyAbroad";
 import AllService from "../AllService";
+import CaServices from "../CaServices";
 import AccountDeletionScreen from "../Authorization/AccountDeletion";
 import Home from "../Home";
+import NewDashBoard from "../Screens/New_Dashbord/screen/NewDashBoard";
+
+import PaymentTest from "../PaymentTest";
+import Chats from "../Screens/Chats/Chat";
 // import Notifications from "../Notifications";
 
 import * as Linking from "expo-linking";
 // import ChatScreen from "../Dashboard/LegalChatbot";
 import AboutService from "../Dashboard/AboutUS";
 import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
-
+import SearchScreen from "../Screens/View/ShoppingCart/Search/SearchScreen"
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -209,8 +216,8 @@ const formatWord = (word) => {
   return (
     <Stack.Navigator
       linking={linking}
-      initialRouteName={needsUpdate ? "App Update" : "Service Screen"}
-      // initialRouteName={needsUpdate ? "App Update" : "Main Screen"}
+      // initialRouteName={needsUpdate ? "App Update" : "Payment Test"}
+      initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
       // initialRouteName="Notifications"
       screenOptions={{
         headerShown: true,
@@ -228,6 +235,18 @@ const formatWord = (word) => {
         name="Login"
         component={Login}
         options={{ headerShown: false }}
+      />
+
+      <Stack.Screen 
+         name="Payment Test"
+         component={PaymentTest}
+         options={{ headerShown: true }}
+      />
+
+      <Stack.Screen
+        name="Chats"
+        component={Chats}
+        options={{ headerShown: true }}
       />
 
       <Stack.Screen name="Active" component={Activated} />
@@ -253,6 +272,11 @@ const formatWord = (word) => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="New DashBoard"
+        component={NewDashBoard}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Rice Product Detail"
         component={RiceProductDetails}
         options={({ route }) => ({
@@ -264,6 +288,7 @@ const formatWord = (word) => {
       <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
       <Stack.Screen name="Subscription" component={Main} />
+      <Stack.Screen name ="Search Screen" component={SearchScreen}  options={{ title: 'Browse Items' }} />
 
       <Stack.Screen name="Terms and Conditions" component={About} />
       <Stack.Screen name="Account Deletion" component={AccountDeletionScreen} />
@@ -277,6 +302,7 @@ const formatWord = (word) => {
       <Stack.Screen name="Ticket History" component={TicketHistory} />
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
       <Stack.Screen name="Item Details" component={ItemDetails} />
+    
       <Stack.Screen name="Refund" component={Refund} />
       <Stack.Screen
         name="Rice Products"
@@ -289,6 +315,7 @@ const formatWord = (word) => {
         />
       <Stack.Screen name="Write To Us" component={WriteToUs} />
       <Stack.Screen name="ChatGpt" component={ChatGpt} />
+      <Stack.Screen name="Avaliable Offers" component={ComboItemsScreen} />
       <Stack.Screen name="Referral History" component={ReferralHistory} />
       {/* <Stack.Screen name="Legal GPT" component={ChatScreen} /> */}
       <Stack.Screen name="About Us" component={AboutService} />
@@ -392,6 +419,11 @@ const formatWord = (word) => {
         component={UniversityDetails}
         options={{ headerShown: false }}
       />
+      <Stack.Screen 
+      name="CA Services"
+      component={CaServices}
+      options={{ headerShown: true }}
+      />
       <Stack.Screen
         name="Profile Edit"
         component={ProfileScreen}
@@ -487,7 +519,7 @@ const formatWord = (word) => {
       {/* <Stack.Screen name="Notifications" component={Notifications} /> */}
 
       <Stack.Screen name="New Address Book" component={NewAddressBook} />
-      <Stack.Screen name="Oxy Coupons" component={OxyCoupens} />
+      <Stack.Screen name="Coupons" component={OxyCoupens} />
     </Stack.Navigator>
   );
 }

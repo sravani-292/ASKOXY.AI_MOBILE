@@ -15,9 +15,12 @@ import axios from "axios";
 import { useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL from "../../../../Config";
+import { useCart } from "../../../../until/CartCount";
+
 const {width, height} = Dimensions.get("window");
 const OrderSummaryScreen = ({ navigation, route }) => {
-  console.log("Order Summary",route)
+  // console.log("Order Summary",route)
+  const {setCartCount}=useCart()
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
@@ -51,10 +54,15 @@ const OrderSummaryScreen = ({ navigation, route }) => {
           },
         }
       );
-      console.log("cart response",response.data.customerCartResponseList);
+      // console.log("cart response",response.data.customerCartResponseList);
       
       const data = response.data.customerCartResponseList;
       setCartItems(data);
+      if(data.length>0){
+        setCartCount(data.length)
+      }else{
+        setCartCount(0)
+      }
       console.log("cartItems",data);
       
       setLoading(false)

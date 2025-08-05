@@ -48,6 +48,7 @@ import {
   handleUserAddorIncrementCart,
   handleDecrementorRemovalCart,
 } from "../../../../src/ApiService";
+import { useCart } from "../../../../until/CartCount";
 // import GoldDetailModal from "./GoldDetailedModal";
 const UserDashboard = ({ route }) => {
   // console.log("UserDashboard route params:", route.params.categoryType);
@@ -62,7 +63,7 @@ const UserDashboard = ({ route }) => {
   const [offerWeight, setOfferWeight] = useState(route?.params?.offerId || 1);
   const navigation = useNavigation();
   const [loadingItems, setLoadingItems] = useState({});
-  const [cartCount, setCartCount] = useState();
+  const { cartCount, setCartCount } = useCart();
   const [cartItems, setCartItems] = useState({});
   const [cartData, setCartData] = useState([]);
 

@@ -65,6 +65,7 @@ const AddressBook = ({ route }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   const handleSubmitAddress = () => {
     if (
       !newAddress.flatNo ||
@@ -78,7 +79,7 @@ const AddressBook = ({ route }) => {
     }
 
     const locationdata = { ...newAddress, type: selectedType };
-    navigation.navigate("Checkout", {
+    navigation.navigate("Payment Details", {
       locationdata,
     });
 
@@ -241,17 +242,15 @@ const AddressBook = ({ route }) => {
     );
     console.log({ status, isWithin, distanceInKm, coord1 });
     if (isWithin == true && coord1) {
-      console.log("Address saved as it is within the radius.");
-      navigation.navigate("Checkout", { locationdata });
+      console.log("Address saved as it is within the radiusssss.",locationdata);
+      navigation.navigate("Payment Details", { locationdata });
     } else {
       console.log("Address not saved as it is outside the radius.");
-      // Alert.alert("Sorry",`We cannot deliver to this address because your distance is ${distanceInKm} km, which is not within the 20 km radius.`);
       Alert.alert(
-        "Sorry!"`We’re unable to deliver to this address as it’s ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`
+        "Sorry!",
+        `We're unable to deliver to this address as it's ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`
       );
     }
-
-    // navigation.navigate("Checkout", { locationdata });
   };
 
   return (
@@ -260,147 +259,143 @@ const AddressBook = ({ route }) => {
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <>
-          <View>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="always"
+          {/* Fixed Header Section */}
+          <View style={styles.headerSection}>
+            <Text style={styles.noteText}>
+              <Text style={styles.noteLabel}>Note:</Text> Order will be
+              delivered within a 25 km radius only
+            </Text>
+            <Text style={styles.title}>Your Delivery Addresses</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => navigation.navigate("New Address Book")}
             >
-              <Text style={styles.noteText}>
-                <Text style={styles.noteLabel}>Note:</Text> Order will be
-                delivered within a 25 km radius only
-              </Text>
-              <Text style={styles.title}>Your Delivery Addresses</Text>
-              <View>
-                <TouchableOpacity
-                  style={styles.addButton}
-                  // onPress={() => handleAddAddress()}
-                  onPress={() => navigation.navigate("New Address Book")}
-                >
-                  <Text style={styles.addButtonText}>Add +</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* <ScrollView> */}
-              {addressList.length > 0 ? (
-                addressList
-                  .slice(-4)
-                  .reverse()
-                  .map((address, index) => {
-                    return (
-                      <View>
-                        <TouchableOpacity
-                          key={index}
-                          style={[
-                            styles.addressRow,
-                            selectedAddress &&
-                              selectedAddress.id === address.id &&
-                              styles.selectedAddress,
-                          ]}
-                          onPress={() => handleAddressSelect(address)}
-                        >
-                          <View style={styles.radioButtonContainer}>
-                            <TouchableOpacity
-                              style={[
-                                styles.radioButton,
-                                selectedAddress &&
-                                  selectedAddress.id === address.id &&
-                                  styles.radioButtonSelected,
-                              ]}
-                            />
-
-                            <Text style={styles.addressText}>
-                              <Text style={styles.label}>Address: </Text>
-                              <Text style={styles.value}>
-                                {address.address}
-                              </Text>
-                              {"\n"}
-                              {address.residenceName ? (
-                                <>
-                                  <Text style={styles.label}>
-                                    Residence Name: 
-                                  </Text>
-                                  <Text style={styles.value}>
-                                    {address.residenceName}
-                                  </Text>
-                                  {"\n"}
-                                </>
-                              ) : null}
-
-                              {address.houseType ? (
-                                <>
-                                  <Text style={styles.label}>
-                                    Residence Type: 
-                                  </Text>
-                                  <Text style={styles.value}>
-                                    {address.houseType}
-                                  </Text>
-                                  {"\n"}
-                                </>
-                              ) : null}
-
-                              {address.area ? (
-                                <>
-                                  <Text style={styles.label}>Area: </Text>
-                                  <Text style={styles.value}>
-                                    {address.area}
-                                  </Text>
-                                  {"\n"}
-                                </>
-                              ) : null}
-
-                              <Text style={styles.label}>Flat No: </Text>
-                              <Text style={styles.value}>{address.flatNo}</Text>
-                              {"\n"}
-
-                              <Text style={styles.label}>Landmark: </Text>
-                              <Text style={styles.value}>
-                                {address.landMark}
-                              </Text>
-                              {"\n"}
-
-                              <Text style={styles.label}>Address Type: </Text>
-                              <Text style={styles.value}>
-                                {address.addressType}
-                              </Text>
-                              {"\n"}
-
-                              <Text style={styles.label}>Pinode: </Text>
-                              <Text style={styles.value}>
-                                {address.pincode}
-                              </Text>
-                              {"\n"}
-                            </Text>
-                          </View>
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  })
-              ) : (
-                <View style={styles.noDeliveryRow}>
-                  <Text style={styles.noDeliveryText}>
-                    No address found. Add a new address above.
-                  </Text>
-                </View>
-              )}
-
-              {addressList.length != 0 ? (
-                <>
-                  <TouchableOpacity
-                    style={styles.button1}
-                    onPress={() => handleSendAddress(selectedAddress)}
-                  >
-                    <Text style={styles.addButtonText}>SUBMIT ADDRESS</Text>
-                  </TouchableOpacity>
-                </>
-              ) : null}
-            </ScrollView>
-            {/* </ScrollView> */}
+              <Text style={styles.addButtonText}>Add +</Text>
+            </TouchableOpacity>
           </View>
 
-        
+          {/* Scrollable Address List Section */}
+          <ScrollView
+            style={styles.addressListContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
+          >
+            {addressList.length > 0 ? (
+              addressList
+                .slice(-4)
+                .reverse()
+                .map((address, index) => {
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.addressRow,
+                        selectedAddress &&
+                          selectedAddress.id === address.id &&
+                          styles.selectedAddress,
+                      ]}
+                      onPress={() => handleAddressSelect(address)}
+                    >
+                      <View style={styles.radioButtonContainer}>
+                        <TouchableOpacity
+                          style={[
+                            styles.radioButton,
+                            selectedAddress &&
+                              selectedAddress.id === address.id &&
+                              styles.radioButtonSelected,
+                          ]}
+                        />
+
+                        <Text style={styles.addressText}>
+                          <Text style={styles.label}>Address: </Text>
+                          <Text style={styles.value}>
+                            {address.address}
+                          </Text>
+                          {"\n"}
+                          {address.residenceName ? (
+                            <>
+                              <Text style={styles.label}>
+                                Residence Name: 
+                              </Text>
+                              <Text style={styles.value}>
+                                {address.residenceName}
+                              </Text>
+                              {"\n"}
+                            </>
+                          ) : null}
+
+                          {address.houseType ? (
+                            <>
+                              <Text style={styles.label}>
+                                Residence Type: 
+                              </Text>
+                              <Text style={styles.value}>
+                                {address.houseType}
+                              </Text>
+                              {"\n"}
+                            </>
+                          ) : null}
+
+                          {address.area ? (
+                            <>
+                              <Text style={styles.label}>Area: </Text>
+                              <Text style={styles.value}>
+                                {address.area}
+                              </Text>
+                              {"\n"}
+                            </>
+                          ) : null}
+
+                          <Text style={styles.label}>Flat No: </Text>
+                          <Text style={styles.value}>{address.flatNo}</Text>
+                          {"\n"}
+
+                          <Text style={styles.label}>Landmark: </Text>
+                          <Text style={styles.value}>
+                            {address.landMark}
+                          </Text>
+                          {"\n"}
+
+                          <Text style={styles.label}>Address Type: </Text>
+                          <Text style={styles.value}>
+                            {address.addressType}
+                          </Text>
+                          {"\n"}
+
+                          <Text style={styles.label}>Pincode: </Text>
+                          <Text style={styles.value}>
+                            {address.pincode}
+                          </Text>
+                          {"\n"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+            ) : (
+              <View style={styles.noDeliveryRow}>
+                <Text style={styles.noDeliveryText}>
+                  No address found. Add a new address above.
+                </Text>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Fixed Submit Button */}
+          {addressList.length != 0 && (
+            <View style={styles.submitButtonContainer}>
+              <TouchableOpacity
+                style={styles.button1}
+                onPress={() => handleSendAddress(selectedAddress)}
+              >
+                <Text style={styles.addButtonText}>SUBMIT ADDRESS</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </>
       )}
 
+      {/* Modal remains the same */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -513,7 +508,6 @@ const AddressBook = ({ route }) => {
             {saveLoader == false ? (
               <TouchableOpacity
                 style={styles.submitButton}
-                // onPress={() => handleSendAddress()}
                 onPress={() => saveAddress()}
               >
                 <Text style={styles.submitButtonText}>Submit</Text>
@@ -533,15 +527,30 @@ const AddressBook = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 10,
     backgroundColor: "#f8f9fa",
-    width: "100%",
+  },
+  headerSection: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: "#f8f9fa",
+  },
+  addressListContainer: {
+    flex: 1,
+    paddingHorizontal: 10,
+    marginBottom: 5,
+  },
+  submitButtonContainer: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: "#f8f9fa",
+    borderTopWidth: 1,
+    borderTopColor: "#e9ecef",
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
     color: "#343a40",
-    marginBottom: 8,
+    marginBottom: 6,
     textAlign: "center",
   },
   addressRow: {
@@ -549,26 +558,24 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginTop: 10,
-    // marginBottom: 8,
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 1,
     elevation: 2,
-    // height:200
   },
   selectedAddress: {
     borderWidth: 2,
     borderColor: COLORS.services,
   },
   addressText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#495057",
+    fontSize: 16,
+    color: "#333",
+    lineHeight: 24,
   },
   radioButtonContainer: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   radioButton: {
     width: 20,
@@ -577,6 +584,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.services,
     marginRight: 10,
+    marginTop: 2,
   },
   radioButtonSelected: {
     backgroundColor: COLORS.title,
@@ -591,12 +599,12 @@ const styles = StyleSheet.create({
   },
   addButton: {
     backgroundColor: COLORS.services,
-    padding: 5,
-    // paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
     borderRadius: 5,
     alignSelf: "flex-end",
-    margin: 5,
-    marginRight: 10,
+    marginTop: 2,
+    marginRight: 5,
   },
   addButtonText: {
     color: "#fff",
@@ -653,8 +661,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 5,
     alignItems: "center",
-    // marginTop:20,
-    // marginBottom:50
   },
   submitButtonText: {
     color: "#fff",
@@ -662,26 +668,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   button1: {
-    padding: 10,
-    marginTop: 10,
-    marginBottom: 20,
-
+    paddingVertical: 10,
     backgroundColor: COLORS.title,
-    paddingVertical: 8,
-    // paddingHorizontal: 16,
     borderRadius: 5,
-    textAlign: "center",
-    alignSelf: "center",
+    alignItems: "center",
+    marginVertical: 2,
+    marginBottom:20
   },
   errorText: {
     color: "red",
     fontSize: 12,
     marginTop: 1,
-  },
-  addressText: {
-    fontSize: 16,
-    color: "#333",
-    lineHeight: 24,
   },
   label: {
     fontWeight: "bold",
@@ -690,26 +687,11 @@ const styles = StyleSheet.create({
   value: {
     color: "#000",
   },
-  footer: {
-    position: "absolute",
-    bottom: 10,
-    width: "100%",
-    backgroundColor: "#f8f8f8",
-    padding: 10,
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#ddd",
-  },
-  footerText: {
-    color: "#333",
-    fontSize: 14,
-  },
   noteText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#555",
-    // fontStyle: 'italic',
-    marginBottom: 10,
-    lineHeight: 20,
+    marginBottom: 6,
+    lineHeight: 18,
     alignSelf: "center",
     fontWeight: "bold",
   },

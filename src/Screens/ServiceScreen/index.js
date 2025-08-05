@@ -17,11 +17,13 @@ import LottieView from "lottie-react-native";
 import AskoxyOffers from "../View/Offers/AskoxyOffers";
 import useServiceScreenData from "./hooks/useServiceScreenData";
 import TopTapBar from "./components/TopTapBar";
+import ShowOfferModal from "../View/Offers/ShowOfferModal";
 
 const ServiceScreen = () => {
   const {
     userData,
     loginModal,
+    setLoginModal,
     loading,
     banners,
     bannersLoading,
@@ -36,6 +38,14 @@ const ServiceScreen = () => {
     getCategories,
     visibilityMap,
     bannerHeight,
+    addToCart,
+    removeFromCart, 
+    setCart,
+    cart, 
+    setSummary,
+    summary,
+    selectedCategoryType,
+    setSelectedCategoryType,
   } = useServiceScreenData();
 
   const tabItems = getCategories.map((cat) => ({
@@ -85,25 +95,35 @@ const ServiceScreen = () => {
               onBannerPress={handleBannerPress}
               bannerHeight={bannerHeight}
             />
-            <ServiceList services={data} onPress={handleServicePress} />
+
+            
+            
             {visibilityMap?.show_offer_modal && <AskoxyOffers />}
 
            <TopTapBar
-  tabs={tabItems} // [{ key: 'RICE', label: 'Rice', icon: 'shopping-bag' }, ...]
- selectedKey={selectedMainCategory?.categoryType}
-  onTabPress={(key) => {
-    const found = getCategories.find((cat) => cat.categoryType === key);
-    if (found) setSelectedMainCategory(found);
-  }}
-  indicatorColor="#4A148C"
-/>
-
-
-
+              tabs={tabItems} // [{ key: 'RICE', label: 'Rice', icon: 'shopping-bag' }, ...]
+            selectedKey={selectedMainCategory?.categoryType}
+              onTabPress={(key) => {
+                const found = getCategories.find((cat) => cat.categoryType === key);
+                console.log("Selected Category:", key);
+                setSelectedCategoryType(key);
+                if (found) setSelectedMainCategory(found);
+              }}
+              indicatorColor="#4A148C"
+            />
+         {selectedCategoryType === 'RICE' && (
+          <ShowOfferModal
+                cart={cart}
+                onAddToCart={addToCart}
+                onRemoveFromCart={removeFromCart}
+                onCartChange={(summary) => setSummary(summary)}
+              />
+          )}
             <SubCategoryList selectedCategory={selectedMainCategory} />
+            <ServiceList services={data} onPress={handleServicePress} />
           </ScrollView>
 
-          {!userData && <LoginModal visible={loginModal} onClose={() => {}} />}
+          {!userData && <LoginModal visible={loginModal} onClose={() => {setLoginModal(false)}} />}
         </>
       )}
     </SafeAreaView>

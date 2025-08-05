@@ -9,8 +9,11 @@ import {
   Animated,
   Dimensions
 } from 'react-native';
-import { MaterialIcons, FontAwesome } from "@expo/vector-icons";
+import { MaterialIcons, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
+import BVMCoins from '../../Profile/BVMCoins';
 const {width,height} = Dimensions.get('window');
+
 const ProductCard = ({ 
   item, 
   navigation, 
@@ -22,7 +25,10 @@ const ProductCard = ({
   handleDecrease,
   handleGoldItemPress,
   isCategoryTypeGold,
-  imageErrors
+  imageErrors,
+  category,
+  categoryType,
+  dynamicContent
 }) => {
   
   // Get appropriate icon for item
@@ -49,11 +55,13 @@ const ProductCard = ({
       return <MaterialIcons name="shopping-bag" size={18} color="#6b21a8" />;
     }
   };
+
+  const [modalVisible, setModalVisible] = React.useState(false);
   
   return (
     <View style={styles.itemContainer}>
       <TouchableOpacity
-        onPress={() => navigation.navigate("Item Details", { item })}
+        onPress={() => navigation.navigate("Item Details", { item:item, category:category, categoryType:categoryType,offerId: item.weight })}
       >
         <View style={styles.itemImageContainer}>
           {item.itemMrp > item.itemPrice && (
@@ -103,11 +111,29 @@ const ProductCard = ({
 
       {/* <View style={styles.itemDetailsContainer}> */}
         <View style={styles.itemInfoContainer}>
-            <Text style={styles.itemName} numberOfLines={3}>
+            <Text style={styles.itemName} numberOfLines={2}>
               {item.itemName}
             </Text>
-        {/* </View> */}
+        </View>
 
+        <View style={styles.bmvCoinsContainer}>
+              <LinearGradient
+                 colors={['#f3e8ff', '#e9d5ff']}
+                style={styles.bmvCoinsBadge}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.bmvCoinsText}>You will get  {item.bmvCoins} BMVCOINS</Text>
+              
+            <TouchableOpacity
+              style={styles.cartButton}
+              onPress={()=>setModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <FontAwesome6 name="circle-info" color="#6b21a8" size={20} containerStyle={styles.icon} />
+            </TouchableOpacity>
+            </LinearGradient>
+            </View>
         
 
         <View style={styles.buttonContainer}>
@@ -190,25 +216,18 @@ const ProductCard = ({
             </TouchableOpacity>
           )}
         </View>
+        <BVMCoins modalVisible={modalVisible} onCloseModal={()=>{setModalVisible(false)}} content={dynamicContent}/>
       </View>
-    </View>
+    // </View>
   );
 };
 
 const styles = StyleSheet.create({
   itemContainer: {
-    // flex: 1,
     width:width*0.31,
-    // margin: 8,
     backgroundColor: "#fff",
     borderRadius: 12,
-    // elevation: 2,
-    // shadowColor: "#000",
-    // shadowOffset: { width: 0, height: 1 },
-    // shadowOpacity: 0.22,
-    // shadowRadius: 2.22,
-    // overflow: "hidden",
-    height: 320,
+    height: 340,
     marginTop:8,
     marginBottom:8,
     marginRight:8,
@@ -267,7 +286,6 @@ const styles = StyleSheet.create({
   },
   itemInfoContainer: {
     flex:1,
-
   },
   itemName: {
     fontSize: 12,
@@ -289,6 +307,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
     height: 26,
+    width: "100%",
   },
   itemPrice: {
     fontSize: 16,
@@ -297,7 +316,7 @@ const styles = StyleSheet.create({
   },
   itemMRP: {
     fontSize: 14,
-    color: "#9ca3af",
+    color: "#bf4343ff",
     textDecorationLine: "line-through",
     marginLeft: 8,
   },
@@ -356,6 +375,28 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1f2937",
   },
+   bmvCoinsBadge:{
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    // zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:"space-between",
+    marginBottom:15
+  },
+  bmvCoinsText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6b21a8',
+    opacity: 0.9,
+  },
+  bmvCoinsContainer:{
+    position:"relative",
+    top:-40,
+    width:width*0.26,
+    marginBottom:10
+  }
 });
 
 export default ProductCard;

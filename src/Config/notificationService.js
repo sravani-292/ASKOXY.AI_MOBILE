@@ -27,12 +27,36 @@ export async function registerAndSaveTokenToSupabase(userId = null) {
   }
 
   if (finalStatus !== 'granted') {
-    alert('Push permission denied');
-    return;
+   Alert.alert(
+    "Enable Notifications",
+    "To get updates on offers and order status, please enable notifications from your app settings.",
+    [
+      {
+        text: "Not Now",
+        style: "cancel"
+      },
+      {
+        text: "Open Settings",
+        onPress: () => Linking.openSettings()
+      }
+    ]
+  );
+    return
   }
 
   // 3. Get push token
   const { data: pushToken } = await Notifications.getExpoPushTokenAsync();
+   // 4. Get FCM Token (only works with EAS Build + FCM setup)
+  let fcmToken = null;
+  if (Platform.OS === 'android') {
+    try {
+      const { data } = await Notifications.getDevicePushTokenAsync({ provider: 'fcm' });
+      fcmToken = data;
+      console.log('FCM Token:', fcmToken);
+    } catch (err) {
+      console.warn('⚠️ Could not get FCM token:', err.message);
+    }
+  }
   const lastToken = await AsyncStorage.getItem('lastSupabaseToken');
 
   if (pushToken === lastToken) {
@@ -50,6 +74,7 @@ export async function registerAndSaveTokenToSupabase(userId = null) {
             token: pushToken,
             is_anonymous: !userId,
             timestamp: new Date().toISOString(),
+            fcm_token: fcmToken,
           },
         ],
         {

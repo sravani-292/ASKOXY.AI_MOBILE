@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import styles from "./styles/HeaderStyles";
 
+
 const Header = ({ userData, handleLogout }) => {
   const navigation = useNavigation();
 

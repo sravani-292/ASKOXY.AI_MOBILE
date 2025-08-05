@@ -20,7 +20,6 @@ import {
   import * as DocumentPicker from "expo-document-picker";
   import { FormData } from "formdata-node";
   import Icon from "react-native-vector-icons/Ionicons"
-import { set } from "core-js/core/dict";
 import LottieView from "lottie-react-native";
   
   const{height,width}=Dimensions.get('window')

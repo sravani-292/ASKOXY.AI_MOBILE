@@ -17,14 +17,18 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/Ionicons";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useSelector } from "react-redux";
 import Checkbox from "expo-checkbox";
 import { COLORS } from "../../../../Redux/constants/theme";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import BASE_URL, { userStage } from "../../../../Config";
-
+import useReorder from "./Reorder";
 const { width, height } = Dimensions.get("window");
 const OrderDetails = () => {
+  const { handleReorder } = useReorder();
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
@@ -39,7 +43,7 @@ const OrderDetails = () => {
   const { order_id, status } = route.params;
   const [selectedItems, setSelectedItems] = useState({});
   const [selectedCancelItems, setSelectedCancelItems] = useState({});
- const [selectedExchangeItems,setSelectedExchangeItems]=useState({});
+  const [selectedExchangeItems, setSelectedExchangeItems] = useState({});
   const [hideCancelbtn, setHideCancelBtn] = useState(false);
   const [isExchangeComplete, setIsExchangeComplete] = useState(false);
   const [comments, setComments] = useState();
@@ -47,6 +51,9 @@ const OrderDetails = () => {
   const [deliveryBoyDetails, setDeliveryBoyDetails] = useState([]);
   const [canExchange, setCanExchange] = useState(false);
   const [exchangeInfo, setExchangeInfo] = useState(null);
+  const [invoice, setInvoice] = useState();
+  const [downloading, setDownloading] = useState(false);
+  const [downloadedUri, setDownloadedUri] = useState(null);
   // console.log("order id", order_id);
 
   const emojis = [
@@ -115,7 +122,7 @@ const OrderDetails = () => {
     };
     axios({
       method: "post",
-     
+
       url: BASE_URL + `order-service/deliveryBoyAssigneData`,
       data: data,
       headers: {
@@ -131,9 +138,20 @@ const OrderDetails = () => {
       });
   }
   useEffect(() => {
-    // handleSubmit()
+  getOrderDetails();
     feedbackGet();
     deliveryBoyDetailsfunc();
+     const checkIfDownloaded = async () => {
+    const storedUri = await AsyncStorage.getItem("downloadedInvoiceUri");
+    if (storedUri) {
+      const fileInfo = await FileSystem.getInfoAsync(storedUri);
+      if (fileInfo.exists) {
+        setDownloadedUri(storedUri);
+      }
+    }
+  };
+
+  checkIfDownloaded();
   }, []);
 
   const feedbackGet = async () => {
@@ -157,9 +175,7 @@ const OrderDetails = () => {
       });
   };
 
-  useEffect(() => {
-    getOrderDetails();
-  }, []);
+
 
   const getOrderDetails = async () => {
     console.log("getting order details");
@@ -180,7 +196,9 @@ const OrderDetails = () => {
 
       setOrderData(response.data);
       checkExchangeEligibility(response.data);
+      console.log("invoice url", response.data[0].invoiceUrl);
 
+      setInvoice(response.data[0].invoiceUrl);
       const orderStatus = response.data[0].orderStatus;
       setOrderStatus(orderStatus);
     } catch (error) {
@@ -188,68 +206,61 @@ const OrderDetails = () => {
     }
   };
 
- 
-
   function checkExchangeEligibility(orderData) {
     console.log("Starting exchange eligibility check");
-    
-   
+
     const order = Array.isArray(orderData) ? orderData[0] : orderData;
-    
+
     console.log("Processing order:", order.orderId);
-    
+
     // Check if orderHistory exists and is an array
     if (!order.orderHistory || !Array.isArray(order.orderHistory)) {
       console.log("Order history is missing or not an array");
       setCanExchange(false);
       return;
     }
-    
+
     console.log("Order history length:", order.orderHistory.length);
-    
-   
+
     let deliveredDateEntry = null;
-    
+
     //iterate through order history to find the delivered date----
     for (let i = 0; i < order.orderHistory.length; i++) {
       const entry = order.orderHistory[i];
       console.log(`Checking entry ${i}:`, entry);
-      
+
       if (entry && entry.deliveredDate) {
-        console.log(`Found delivered date entry at index ${i}:`, entry.deliveredDate);
+        console.log(
+          `Found delivered date entry at index ${i}:`,
+          entry.deliveredDate
+        );
         deliveredDateEntry = entry;
         break;
       }
     }
-    
+
     if (!deliveredDateEntry) {
       console.log("No delivered date entry found");
       setCanExchange(false);
       return;
     }
-    
+
     // Parse the delivery date
     const deliveredDate = new Date(deliveredDateEntry.deliveredDate);
     console.log("Delivered date:", deliveredDate);
-    
-    
+
     const exchangeEndDate = new Date(deliveredDate);
     exchangeEndDate.setDate(deliveredDate.getDate() + 10);
     console.log("Exchange end date:", exchangeEndDate);
-    
-   
+
     const currentDate = new Date();
     console.log("Current date:", currentDate);
-    
-   
-    const canExchange = currentDate >= deliveredDate && currentDate <= exchangeEndDate;
+
+    const canExchange =
+      currentDate >= deliveredDate && currentDate <= exchangeEndDate;
     console.log("Can exchange:", canExchange);
-    
-   
+
     setCanExchange(canExchange);
-    
-    
-    
   }
 
   const toggleExchangeItemSelection = (id, quantity) => {
@@ -275,14 +286,15 @@ const OrderDetails = () => {
         itemId: key,
         reason: value.reason,
       }));
-     
-      const checkbox = Object.entries(selectedExchangeItems)
-                      .filter(([_, value]) => value.checked);
-      
-     if(checkbox.length == 0){
+
+    const checkbox = Object.entries(selectedExchangeItems).filter(
+      ([_, value]) => value.checked
+    );
+
+    if (checkbox.length == 0) {
       Alert.alert("Error", "Please select at least one item for exchange.");
       return;
-      }
+    }
 
     const hasEmptyReasons = result.some((item) => !item.reason);
 
@@ -325,6 +337,38 @@ const OrderDetails = () => {
       });
   };
 
+  const handleDownload = async (invoice) => {
+    if (!invoice) {
+      Alert.alert("Invalid invoice link");
+      return;
+    }
+
+    try {
+      setDownloading(true);
+      const fileUri = FileSystem.documentDirectory + "invoice.pdf";
+
+      const downloadRes = await FileSystem.downloadAsync(invoice, fileUri);
+      console.log("Finished downloading to ", downloadRes.uri);
+
+      setDownloadedUri(downloadRes.uri);
+        await AsyncStorage.setItem("downloadedInvoiceUri", downloadRes.uri);
+      Alert.alert("Download completed");
+    } catch (error) {
+      console.error("Download error:", error);
+      Alert.alert("Error", "Failed to download invoice.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const openInvoice = async () => {
+    if (downloadedUri && (await Sharing.isAvailableAsync())) {
+      await Sharing.shareAsync(downloadedUri);
+    } else {
+      Alert.alert("No downloaded file found.");
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.centeredContainer}>
@@ -358,6 +402,7 @@ const OrderDetails = () => {
     gstAmount,
     discountAmount,
     orderHistory,
+    orderDate
   } = orderDetails;
   // console.log("Order details", orderDetails);
 
@@ -439,33 +484,31 @@ const OrderDetails = () => {
     });
   };
 
-
   const allItemsExchangeRequested = orderItems.every(
     (item) => item.status === "EXCHANGEREQUESTED"
   );
-  
+
+   const orderPlacedTime = new Date(orderDetails.orderDate);
+  const now = new Date();
+  const timeDifferenceMs = now - orderPlacedTime;
+  const hours24InMs = 24 * 60 * 60 * 1000;
+  const isWithin24Hours = timeDifferenceMs<hours24InMs;
 
   return (
     <>
-     
       <ScrollView style={styles.container}>
         <View style={styles.receiptHeader}>
-          <Text
-            style={{
-              fontWeight: "bold",
-              fontSize: 16,
-              marginBottom: 15,
-              color: "#626262",
-              alignSelf: "center",
-            }}
-          >
-            Order ID :{" "}
-            <Text style={{ fontWeight: "normal", color: "black" }}>
-              {route.params.new_Order_Id}
+          {/* Order ID Section */}
+          <View style={styles.orderIdContainer}>
+            <Text style={styles.orderIdLabel}>
+              Order ID:{" "}
+              <Text style={styles.orderIdValue}>
+                {route.params.new_Order_Id}
+              </Text>
             </Text>
-          </Text>
-        </View>
+          </View>
 
+        </View>
         {/* Order Items */}
         {orderItems.length > 0 ? (
           <Text style={styles.sectionTitle}>Order Items</Text>
@@ -480,36 +523,45 @@ const OrderDetails = () => {
                 <Text style={styles.headerText}>Total</Text>
               </View>
               <FlatList
-        data={orderItems}
-        keyExtractor={(item, index) => index.toString()}
-        renderItem={({ item }) => (
-          <View>
-             {item.status === "EXCHANGEREQUESTED" && (
-              <View style={styles.exchangeLabelContainer}>
-                <Text style={styles.exchangeLabel}>Exchange Requested</Text>
-              </View>
-            )}
-            <View style={[
-              styles.itemRow,
-              item.status === "EXCHANGEREQUESTED" && styles.exchangeRequestedItem
-            ]}>
-              
-              <Text style={styles.itemName}>{item.itemName}</Text>
-              <Text style={styles.itemDetail}>{item.quantity}</Text>
-              <Text style={styles.itemDetail}>
-                ₹{item.price / item.quantity}
-              </Text>
-              <Text style={styles.itemDetail}>₹{item.price}</Text>
-            </View>
-            
-           
-          </View>
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        contentContainerStyle={styles.listContent}
-      />
-
-
+                data={orderItems}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item }) => (
+                  <View>
+                    {item.status === "EXCHANGEREQUESTED" && (
+                      <View style={styles.exchangeLabelContainer}>
+                        <Text style={styles.exchangeLabel}>
+                          Exchange Requested
+                        </Text>
+                      </View>
+                    )}
+                    <View
+                      style={[
+                        styles.itemRow,
+                        item.status === "EXCHANGEREQUESTED" &&
+                          styles.exchangeRequestedItem,
+                      ]}
+                    >
+                      <Text style={styles.itemName}>{item.itemName}</Text>
+                      <Text style={styles.itemDetail}>{item.quantity}</Text>
+                      <Text style={styles.itemDetail}>
+                        ₹{item.price / item.quantity}
+                      </Text>
+                      <Text style={styles.itemDetail}>₹{item.price}</Text>
+                    </View>
+                  </View>
+                )}
+                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                contentContainerStyle={styles.listContent}
+              />
+              {orderstatus === "4" && (
+                <TouchableOpacity
+                  style={styles.reorderButton}
+                  onPress={() => handleReorder(orderItems)}
+                >
+                  <Text style={styles.reorderIcon}>🔄</Text>
+                  <Text style={styles.reorderButtonText}>Reorder Items</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         ) : null}
@@ -615,6 +667,34 @@ const OrderDetails = () => {
 
         {/* Address Details */}
         <Text style={styles.sectionTitle}>Address Details</Text>
+        {isWithin24Hours && (
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate("Update Order Address", {
+                  orderAddress,
+                  order_id,
+                })
+              }
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginRight: 20,
+              }}
+            >
+              <FontAwesome name="edit" size={20} color="#ecb01e" />
+
+              <Text
+                style={{
+                  color: "#4B0082",
+                  fontWeight: "600",
+                  fontSize: 16,
+                  marginBottom: 2,
+                }}
+              >
+                Update
+              </Text>
+            </TouchableOpacity>
+          )}
 
         <View style={styles.section}>
           <Text style={styles.detailText}>
@@ -762,6 +842,33 @@ const OrderDetails = () => {
             <Text style={styles.grandTotalValue}>₹{grandTotal.toFixed(2)}</Text>
           </View>
         </View>
+        {/* Invoice Download Section */}
+          <View style={styles.invoiceContainer}>
+            {invoice && typeof invoice === "string" && invoice.trim() !== "" ? (
+              downloading ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color="#4CAF50" />
+                  <Text style={styles.loadingText}>Downloading...</Text>
+                </View>
+              ) : downloadedUri ? (
+                <TouchableOpacity
+                  style={[styles.invoiceButton, styles.viewButton]}
+                  onPress={openInvoice}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>View Downloaded Invoice</Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.invoiceButton, styles.downloadButton]}
+                  onPress={() => handleDownload(invoice)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.buttonText}>Download Invoice</Text>
+                </TouchableOpacity>
+              )
+            ) : null}
+          </View>
       </ScrollView>
       {orderstatus === "6" ? (
         <View style={styles.footer}>
@@ -770,7 +877,7 @@ const OrderDetails = () => {
           </Text>
         </View>
       ) : null}
-    
+
       {/* <View
         style={{
           flexDirection: "row",
@@ -833,8 +940,7 @@ const OrderDetails = () => {
           <Text style={styles.cancelButtonText}>Write To Us</Text>
         </TouchableOpacity>
       </View> */}
-       <View style={styles.footer1}>
-      
+      <View style={styles.footer1}>
         {orderstatus == 4 && canExchange && allItemsExchangeRequested && (
           <View style={styles.exchangeMessageContainer}>
             <Text style={styles.exchangeMessage}>
@@ -842,35 +948,40 @@ const OrderDetails = () => {
             </Text>
           </View>
         )}
-        
-       
+
         <View style={styles.footerButtonsContainer}>
-         
-          {orderstatus !== "6" && orderItems.length !== 0 && 
-           orderstatus == 4 && canExchange && !allItemsExchangeRequested && (
-            <TouchableOpacity
-              style={styles.exchangeButton}
-              onPress={() => setIsExchangeVisible(true)}
-            >
-              <Text style={styles.buttonText}>Exchange Order</Text>
-            </TouchableOpacity>
-          )}
-          
-          
+          {orderstatus !== "6" &&
+            orderItems.length !== 0 &&
+            orderstatus == 4 &&
+            canExchange &&
+            !allItemsExchangeRequested && (
+              <TouchableOpacity
+                style={styles.exchangeButton}
+                onPress={() => setIsExchangeVisible(true)}
+              >
+                <Text style={styles.buttonText}>Exchange Order</Text>
+              </TouchableOpacity>
+            )}
+
           <TouchableOpacity
             style={[
               styles.writeToUsButton,
-             
-              (orderstatus == "6" || orderItems.length == 0 || 
-               orderstatus != 4 || !canExchange || allItemsExchangeRequested) && 
-               styles.fullWidthButton
+
+              (orderstatus == "6" ||
+                orderItems.length == 0 ||
+                orderstatus != 4 ||
+                !canExchange ||
+                allItemsExchangeRequested) &&
+                styles.fullWidthButton,
             ]}
-            onPress={() => navigation.navigate("Write To Us", { orderId: order_id })}
+            onPress={() =>
+              navigation.navigate("Write To Us", { orderId: order_id })
+            }
           >
             <Text style={styles.buttonText}>Write To Us</Text>
           </TouchableOpacity>
         </View>
-        </View>
+      </View>
       {isModalVisible && (
         <Modal visible={isModalVisible} transparent animationType="slide">
           <View style={styles.overlay}>
@@ -964,14 +1075,16 @@ const OrderDetails = () => {
             <View style={styles.modalContainer}>
               <Text style={styles.modalTitle}>Exchange Items</Text>
               <FlatList
-                data={orderItems.filter(item => item.status !== "EXCHANGEREQUESTED")}
+                data={orderItems.filter(
+                  (item) => item.status !== "EXCHANGEREQUESTED"
+                )}
                 keyExtractor={(item) => item.itemId}
                 renderItem={({ item }) => (
                   <View>
                     <View style={styles.itemRow}>
                       <Checkbox
                         value={
-                         selectedExchangeItems[item.itemId]?.checked || false
+                          selectedExchangeItems[item.itemId]?.checked || false
                         }
                         onValueChange={() =>
                           toggleExchangeItemSelection(
@@ -1051,15 +1164,89 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   receiptHeader: {
-    // backgroundColor: "#4CAF50",
-    // padding: 15,
+    backgroundColor: "#fff",
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  orderIdContainer: {
+    marginBottom: 20,
+    alignItems: "center",
   },
 
+  orderIdLabel: {
+    fontWeight: "bold",
+    fontSize: 20,
+    color: "#626262",
+    textAlign: "center",
+  },
   orderId: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: 20,
     marginTop: 5,
   },
+  orderIdValue: {
+    fontWeight: "normal",
+    color: "#000",
+  },
+
+  invoiceContainer: {
+    alignItems: "center",
+  },
+
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+
+  loadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: "#666",
+  },
+
+  invoiceButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width:width*0.8,
+    // minWidth: 200,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+    marginBottom:200
+  },
+
+  downloadButton: {
+    backgroundColor: "#fff",
+  },
+
+  viewButton: {
+    backgroundColor: "#fff",
+  },
+
+  buttonText: {
+    color: "#000",
+    fontWeight: "bold",
+    fontSize: 14,
+    textAlign: "center",
+  },
   section: {
     backgroundColor: "#dcdcdc",
     borderRadius: 8,
@@ -1101,11 +1288,11 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 12,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
 
   itemName: {
@@ -1329,13 +1516,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   footer: {
-  
     padding: 5,
     borderTopColor: "#ccc",
-   
   },
   footer1: {
-    marginTop:30,
+    marginTop: 30,
     padding: 10,
     borderTopWidth: 1,
     borderTopColor: "#ccc",
@@ -1354,7 +1539,6 @@ const styles = StyleSheet.create({
     height: "auto",
   },
   modal: {
-  
     padding: 30,
     borderRadius: 15,
     width: width * 0.85,
@@ -1503,31 +1687,31 @@ const styles = StyleSheet.create({
     color: "#555",
   },
   exchangeRequestedItem: {
-    backgroundColor: '#f8f9fa', 
+    backgroundColor: "#f8f9fa",
   },
   exchangeLabel: {
     // width: '100%',
     marginTop: 6,
     color: COLORS.services,
     fontSize: 16,
-    fontWeight: '500',
-    textAlign:"center",
-    alignSelf:"center",
-    fontWeight:"bold"
+    fontWeight: "500",
+    textAlign: "center",
+    alignSelf: "center",
+    fontWeight: "bold",
   },
   footer: {
-    marginBottom:100,
-    position: 'absolute',
+    marginBottom: 100,
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: "#eee",
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -1535,36 +1719,60 @@ const styles = StyleSheet.create({
   exchangeMessageContainer: {
     padding: 8,
     marginBottom: 10,
-    backgroundColor: '#fff3f3',
+    backgroundColor: "#fff3f3",
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#ffcccb',
+    borderColor: "#ffcccb",
   },
   exchangeMessage: {
     color: COLORS.services,
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   footerButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 10, 
-    marginBottom:10
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 10,
   },
   exchangeButton: {
-    backgroundColor:'#A6AEBF',
+    backgroundColor: "#A6AEBF",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
   },
   writeToUsButton: {
-    backgroundColor: '#A6AEBF',
+    backgroundColor: "#A6AEBF",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
+  },
+  reorderButton: {
+    backgroundColor: "#38a169",
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#38a169",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  reorderIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  reorderButtonText: {
+    color: "#ffffff",
+    fontWeight: "700",
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
 });
 

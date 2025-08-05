@@ -114,16 +114,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
   },
   indicator: {
     position: 'absolute',
-    height: 2,
+    height: 3,
     bottom: 0,
-    borderRadius: 1,
+    borderRadius: 2,
   },
   tabButton: {
-    paddingVertical: 15,
+    paddingVertical: 18,
     paddingHorizontal: 22,
   },
   tabContent: {
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 18,
     marginLeft: 6,
   },
 });

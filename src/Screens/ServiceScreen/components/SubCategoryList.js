@@ -50,7 +50,7 @@ const SubCategoryList = ({ selectedCategory }) => {
           </View>
 
           <View style={styles.content}>
-            <Text style={styles.title} numberOfLines={2}>
+            <Text style={styles.title} numberOfLines={1} allowFontScaling={false}>
               {item.categoryName}
             </Text>
             {/* <View style={styles.browseBtn}>

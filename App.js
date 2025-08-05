@@ -1,6 +1,6 @@
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, LogBox, Alert } from "react-native";
+import { StyleSheet, LogBox, Alert,Text,TextInput } from "react-native";
 import { createNavigationContainerRef, NavigationContainer,useNavigation  } from "@react-navigation/native";
 import { PaperProvider } from "react-native-paper";
 import { Provider } from 'react-redux';
@@ -12,6 +12,8 @@ import GoogleAnalyticsService from "./src/Components/GoogleAnalytic";
 import * as Linking from 'expo-linking';
 import * as Notifications from 'expo-notifications';
 import { registerAndSaveTokenToSupabase } from './src/Config/notificationService';
+import { CartProvider } from "./until/CartCount";
+
 // import { navigationRef, isNavigationReadyRef } from './src/NavigationService';
 
 LogBox.ignoreLogs([
@@ -82,6 +84,11 @@ export default function App() {
     };
 
     checkInitialNotification();
+    Text.defaultProps = Text.defaultProps || {};
+Text.defaultProps.allowFontScaling = false;
+
+TextInput.defaultProps = TextInput.defaultProps || {};
+TextInput.defaultProps.allowFontScaling = false;
 
     return () => {
       Notifications.removeNotificationSubscription(receivedListener);
@@ -249,6 +256,7 @@ export default function App() {
   return (
     <Provider store={store}>
       <PaperProvider>
+        <CartProvider>
         {/* <NavigationContainer
           ref={navigationRef}
           // linking={linking}
@@ -291,6 +299,7 @@ export default function App() {
           <StacksScreens />
           <StatusBar style="auto" />
         </NavigationContainer>
+        </CartProvider>
       </PaperProvider>
     </Provider>
   );

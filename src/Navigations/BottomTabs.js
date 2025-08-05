@@ -2,76 +2,28 @@ import React, { useEffect, useState, useCallback, use } from "react";
 import { Image, StyleSheet, View, Text, Dimensions,TouchableOpacity,Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useSelector } from "react-redux";
-import axios from "axios";
-import { useFocusEffect } from "@react-navigation/native";
 import CustomNavigationBar from "../Components/AppBar";
-import Rice from "../Screens/View/ShoppingCart/Rice";
-import ProfilePage from "../Screens/View/PurchaseFlow/Profile";
 import ProfileSettings from "../Screens/View/Profile/ProfileView";
-// import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import MainWallet from "../Screens/View/Wallet/Main";
 import OrderScreen from "../../src/Screens/View/Orders/OrderScreen";
-// import CartScreen from "../Screens/View/ShoppingCart/CartScreen";
 import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
-// import ServiceScreen from "../ServiceScreen";
-import ServiceScreen from "../Screens/ServiceScreen";
+import NewDashBoard from "../Screens/New_Dashbord/screen/NewDashBoard";
 import Home from "../Home";
 import { COLORS } from "../../Redux/constants/theme";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import BASE_URL, { userStage } from "../../Config";
-import UserDashboard from "../Screens/View/ShoppingCart/UserDashboard";
+import { useCart } from "../../until/CartCount";
+
 const { height, width } = Dimensions.get("window");
+
 const Tab = createBottomTabNavigator();
 
 const Tabs = () => {
-  const [cartCount, setCartCount] = useState(0);
+   const { cartCount } = useCart();
   const userData = useSelector((state) => state.counter);
-
  
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchCartCount();
-    }, [])
-  );
-
-  const fetchCartCount = () => {
-    const token = userData?.accessToken;
-    const customerId = userData?.userId;
-    axios
-      .get(
-        BASE_URL +
-              `cart-service/cart/customersCartItems?customerId=${customerId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-      .then((response) => {
-        // console.log("cart response in bottom tabs",response);
-        if (response.data && Array.isArray(response.data.customerCartResponseList)) {
-          const cartData = response?.data?.customerCartResponseList;
-          const totalCartCount = cartData.reduce((total, item) => total + item.cartQuantity, 0);
-          setCartCount(totalCartCount);
-        } else {
-          setCartCount(0); 
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to fetch cart count:", error);
-      });
-  };
-
-  const cartCountValue = (focused) => {
-    if (focused) {
-      fetchCartCount();
-    } else {
-      fetchCartCount();
-    }
-  };
-
+  console.log(cartCount, "cart count");
+  
   const getIconColor = (focused) => ({
     tintColor: focused ? COLORS.services : "#000",
   });
@@ -87,7 +39,7 @@ const Tabs = () => {
       }}
     >
 
-{/* <Tab.Screen
+<Tab.Screen
         name="Landing"
         component={Home}
         options={{
@@ -107,12 +59,12 @@ const Tabs = () => {
             </View>
           ),
         }}
-      /> */}
+      />
 
 
 <Tab.Screen
         name="Dashboard"
-        component={ServiceScreen}
+        component={NewDashBoard}
         options={{
           headerShown: false,
           tabBarShowLabel: false,
@@ -167,7 +119,6 @@ const Tabs = () => {
                 resizeMode="contain"
                 style={[styles.tabIcon, getIconColor(focused)]}
               />
-              {fetchCartCount()}
               {cartCount > 0 && (
                 <View style={styles.cartBadge}>
                   <Text style={styles.cartBadgeText}>{cartCount}</Text>

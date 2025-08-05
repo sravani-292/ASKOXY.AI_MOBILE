@@ -6,7 +6,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F5F7",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    marginBottom: 25,
+    marginBottom: 65,
   },
   loaderContainer: {
     flex: 1,

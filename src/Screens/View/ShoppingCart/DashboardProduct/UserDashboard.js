@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import BASE_URL from "../../../../../Config";
 import LottieView from "lottie-react-native";
 import { COLORS } from "../../../../../Redux/constants/theme";
@@ -29,11 +29,16 @@ import {
   handleUserAddorIncrementCart,
   handleDecrementorRemovalCart,
 } from "../../../../ApiService";
+import OfferModal from "./OfferModal";
+import { useCart } from "../../../../../until/CartCount";
 
 const { width } = Dimensions.get("window");
 
-const UserDashboard = ({ route }) => {
-  console.log("route params", route.params);
+const UserDashboard = () => {
+
+  const route = useRoute();
+  
+  // console.log("route params", route.params);
 
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
@@ -47,7 +52,7 @@ const UserDashboard = ({ route }) => {
   );
   const [offerWeight, setOfferWeight] = useState(route?.params?.offerId || 1);
   const [loadingItems, setLoadingItems] = useState({});
-  const [cartCount, setCartCount] = useState();
+  const { cartCount, setCartCount } = useCart();
   const [cartItems, setCartItems] = useState({});
   const [cartData, setCartData] = useState([]);
   const [isLimitedStock, setIsLimitedStock] = useState({});
@@ -62,6 +67,9 @@ const UserDashboard = ({ route }) => {
   const [imageErrors, setImageErrors] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
+const[offerShow,setOfferShow]=useState(false)
+  const [comboOffersData, setComboOffersData] = useState([]);
+  const [dynamicContent, setDynamicContent] = useState();
 
   const navigation = useNavigation();
   const sidebarScrollViewRef = useRef(null);
@@ -95,32 +103,57 @@ const UserDashboard = ({ route }) => {
     }, 3000);
   };
 
+   useEffect(() => {
+    if (selectedCategory === "All CATEGORIES") {
+      navigation.setOptions({
+        title: selectedCategoryType
+      });
+    } else {
+      navigation.setOptions({
+        title: selectedCategory
+      });
+    }
+    
+  }, [selectedCategory, selectedCategoryType, navigation]);
+
   useFocusEffect(
     useCallback(() => {
-      if (userData) {
-        fetchCartItems();
-      }
-      getAllCategories();
+      console.log("UserDashboard focused", selectedCategory, selectedCategoryType);
+     
     }, [userData])
   );
 
-  // useEffect(() => {
-  //   console.log(route.params.categoryName);
-
-  //   if (selectedCategory?.includes("Cashew nuts")) {
-  //     const timer = setTimeout(() => {
-  //       Alert.alert(
-  //         "🎉 Hurray!",
-  //         "Get upto ₹40 cashback on your first Cashew nuts purchase!",
-  //         [{ text: "Great!", style: "default" }]
-  //       );
-  //     }, 1300);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [selectedCategory]);
+  useEffect(() => {
+ if (userData) {
+        fetchCartItems();
+      }
+      getAllCategories();
+      handleDescripion();
+  }, [route.params,userData]);
+ 
+   const handleDescripion = useCallback(async() => {
+        try{
+            const response = await axios({
+            method: "get",
+            url: BASE_URL + `user-service/allBmvDiscriptionData`,
+          })
+          // console.log("response of description",response.data);
+          const data = response.data
+  
+         const targetId = `1ee1d800-45e2-4918-ac97-382a298dbf78`
+          const matched = data.find(item => item.id === targetId);
+          if (matched) {
+            setDynamicContent(matched.discription);
+          }
+        }
+        catch(error){
+          console.log(error);
+        }
+    }, []);
 
   // Scroll to selected category in sidebar
   useEffect(() => {
+    // console.log("Selected category changed:", selectedCategory);
     if (selectedCategory && sidebarScrollViewRef.current) {
       const currentCategories = arrangeCategories(
         categories,
@@ -192,38 +225,52 @@ const UserDashboard = ({ route }) => {
   };
 
   // Get available category types from data
-  const getAvailableCategoryTypes = () => {
-    const categoryTypes = categories
-      .map((group) => group.categoryType)
-      .filter(Boolean);
-    return [...new Set(categoryTypes)];
-  };
+const getAvailableCategoryTypes = () => {
+  const priority = ["Rice", "Grocery", "Gold"];
 
-  const arrangeCategories = (allCategoryGroups, categoryType) => {
-    if (!Array.isArray(allCategoryGroups) || allCategoryGroups.length === 0)
-      return [];
+  const categoryTypes = categories
+    .map((group) => group.categoryType?.trim())
+    .filter(Boolean);
 
-    const matchedGroup = allCategoryGroups.find(
-      (group) =>
-        group.categoryType?.trim().toLowerCase() ===
-        categoryType?.trim().toLowerCase()
-    );
+  const unique = [...new Set(categoryTypes)];
 
-    if (!matchedGroup || !Array.isArray(matchedGroup.categories)) return [];
+  // Sort by priority: move Rice, Grocery, Gold to top (if present)
+  const sorted = [
+    ...priority.filter((p) => unique.includes(p)),
+    ...unique.filter((t) => !priority.includes(t)),
+  ];
 
-    let categories = [...matchedGroup.categories];
+  return sorted;
+};
 
-    const sampleRiceIndex = categories.findIndex(
-      (cat) => cat.categoryName === "Sample Rice"
-    );
 
-    if (sampleRiceIndex !== -1) {
-      const sampleRice = categories.splice(sampleRiceIndex, 1)[0];
-      return [sampleRice, ...categories];
-    }
+ const arrangeCategories = (allCategoryGroups, categoryType) => {
+  if (!Array.isArray(allCategoryGroups) || allCategoryGroups.length === 0)
+    return [];
 
-    return categories;
-  };
+  const matchedGroup = allCategoryGroups.find(
+    (group) =>
+      group.categoryType?.trim().toLowerCase() ===
+      categoryType?.trim().toLowerCase()
+  );
+
+  if (!matchedGroup || !Array.isArray(matchedGroup.categories)) return [];
+
+  let categories = [...matchedGroup.categories];
+
+  // ✅ Search for "Combo Offer" instead of "Combo Rice"
+  const comboIndex = categories.findIndex((cat) =>
+  ["combo offers", "combo rice"].includes(cat.categoryName?.trim().toLowerCase())
+);
+
+  if (comboIndex !== -1) {
+    const comboItem = categories.splice(comboIndex, 1)[0];
+    return [comboItem, ...categories];
+  }
+
+  return categories;
+};
+
 
   // Parse weight from string
   const parseWeight = (weightStr) => {
@@ -233,8 +280,8 @@ const UserDashboard = ({ route }) => {
     if (numMatch) {
       return parseFloat(numMatch[0]);
     }
-    return 0;
-  };
+  return 0;
+};
 
   // Sort items
   const sortItems = (items, order) => {
@@ -263,35 +310,16 @@ const UserDashboard = ({ route }) => {
   };
 
   // Apply filters and sort
-  const applyFiltersAndSort = (
-    items,
-    currentWeightFilter = selectedWeightFilter
-  ) => {
-    let filteredByWeight = items;
-
-    // Apply weight filter if selected
-    if (currentWeightFilter !== null) {
-      filteredByWeight = items.filter((item) => {
-        const itemWeight = parseWeight(item.weight);
-        return Math.abs(itemWeight - currentWeightFilter) < 0.1;
-      });
-    }
-
-    // Filter by price and weight range
-    const filtered = filteredByWeight.filter((item) => {
-      const itemPrice = parseFloat(item.itemPrice);
-      const itemWeight = parseWeight(item.weight);
-      return (
-        itemPrice >= priceRange.min &&
-        itemPrice <= priceRange.max &&
-        itemWeight >= weightRange.min &&
-        itemWeight <= weightRange.max
-      );
+  const applyFiltersAndSort = (items, weightFilter) => {
+  let filtered = items;
+  
+  if (weightFilter) {
+    filtered = items.filter(item => {
+      return item.weight === weightFilter || item.weightKg === weightFilter;
     });
-
-    // Sort the filtered items
-    return sortItems(filtered, sortOrder);
-  };
+  }
+   return sortItems(filtered, sortOrder);
+};
 
   // Handle category type change
   const handleCategoryTypeChange = (categoryType) => {
@@ -332,12 +360,28 @@ const UserDashboard = ({ route }) => {
 
     try {
       // Add item to cart
-      const response = await handleUserAddorIncrementCart(data);
-      Alert.alert(
-        "Success",
-        response.data.errorMessage || "Item added to cart"
-      );
+      const response = await handleUserAddorIncrementCart(data,"ADD");
+       Alert.alert(
+    "Success",
+    response.cartResponse?.errorMessage || "Item added to cart",[
+      {
+        text:"ok",
+        onPress:()=>{
+          if (response.comboOffers) {
+    // Show combo modal or handle combo offers
+    console.log("Combo Offers:", response.comboOffers.items);
+    console.log("============")
+            setComboOffersData(response.comboOffers); // Save data
+    setOfferShow(true)
+        console.log("============")
+
+  }
+        }
+      }
+    ]
+  );
       fetchCartItems();
+      console.log("Sreeja",response)
 
       // Fetch active and eligible offers
       const [activeRes, eligibleRes] = await Promise.all([
@@ -347,8 +391,8 @@ const UserDashboard = ({ route }) => {
 
       const activeOffers = await activeRes.json();
       const userEligibleOffers = await eligibleRes.json();
-      console.log("active offers",activeOffers);
-      console.log("user eligible offers",userEligibleOffers);
+      // console.log("active offers",activeOffers);
+      // console.log("user eligible offers",userEligibleOffers);
       
       // Filter only active offers
       const validActiveOffers = activeOffers.filter((offer) => offer.active);
@@ -455,7 +499,7 @@ const UserDashboard = ({ route }) => {
       itemId: item.itemId,
     };
     try {
-      const response = await handleUserAddorIncrementCart(data);
+      const response = await handleUserAddorIncrementCart(data,"Increment");
       // Alert.alert("Success", response.data.errorMessage);
       await fetchCartItems();
     } catch (error) {
@@ -506,15 +550,17 @@ const UserDashboard = ({ route }) => {
 
         setAllItems(items);
 
-        if (route.params.category) {
-          console.log("Function started.....");
+        if (route.params.category && route.params.category !== "All CATEGORIES") {
+          console.log("Function started.....", route.params.category);
 
           const weight = route.params.offerId;
           const finalWeightFilter =
             selectedWeightFilter === weight ? null : weight;
 
           setSelectedWeightFilter(finalWeightFilter);
-
+           
+          console.log("Selected weight filter:", weight);
+          
           let itemsToFilter = [];
 
           if (selectedCategory === "All CATEGORIES") {
@@ -531,9 +577,20 @@ const UserDashboard = ({ route }) => {
           }
 
           setFilteredItems(itemsToFilter);
-        } else {
+          console.log("Filtered items:route.params.category");
+          
+        } 
+        else {
           if (selectedCategory === "All CATEGORIES") {
+            const weight = route.params.offerId;
+          const finalWeightFilter =
+            selectedWeightFilter === weight ? null : weight;
+          if( weight) {
+             setSelectedWeightFilter(finalWeightFilter);
+            setFilteredItems(applyFiltersAndSort(items, finalWeightFilter));
+          }else{
             setFilteredItems(sortItems(items, "weightAsc"));
+          }
           } else {
             const filtered = response.data
               .filter(
@@ -544,9 +601,11 @@ const UserDashboard = ({ route }) => {
               .flatMap((cat) => cat.itemsResponseDtoList || []);
 
             setFilteredItems(sortItems(filtered, "weightAsc"));
+            // console.log("Filtered items:", filtered);
           }
         }
-
+         console.log("Filtered items: at getAllCategories");
+         
         setTimeout(() => {
           setLoading(false);
         }, 1000);
@@ -559,40 +618,41 @@ const UserDashboard = ({ route }) => {
   };
 
   // Filter by category
-  const filterByCategory = (categoryName) => {
-    setSelectedCategory(categoryName || "All CATEGORIES");
+const filterByCategory = (categoryName) => {
+  setSelectedCategory(categoryName || "All CATEGORIES");
 
-    const currentCategoryGroup = categories.find(
-      (group) =>
-        group.categoryType?.toLowerCase() ===
-        selectedCategoryType?.toLowerCase()
+  const currentCategoryGroup = categories.find(
+    (group) =>
+      group.categoryType?.toLowerCase() ===
+      selectedCategoryType?.toLowerCase()
+  );
+
+  if (!currentCategoryGroup) {
+    setFilteredItems([]);
+    return;
+  }
+
+  let itemsToFilter = [];
+
+  if (categoryName === "All CATEGORIES") {
+    itemsToFilter = currentCategoryGroup.categories?.flatMap(
+      (cat) => cat.itemsResponseDtoList || []
+    ) || [];
+  } else {
+    const matchedCategory = currentCategoryGroup.categories?.find(
+      (cat) =>
+        cat?.categoryName.trim().toLowerCase() ===
+        categoryName?.trim().toLowerCase()
     );
+    itemsToFilter = matchedCategory?.itemsResponseDtoList || [];
+  }
 
-    if (!currentCategoryGroup) {
-      setFilteredItems([]);
-      return;
-    }
-
-    if (categoryName === "All CATEGORIES") {
-      const allItemsForType =
-        currentCategoryGroup.categories?.flatMap(
-          (cat) => cat.itemsResponseDtoList || []
-        ) || [];
-      setFilteredItems(sortItems(allItemsForType, sortOrder));
-    } else {
-      const matchedCategory = currentCategoryGroup.categories?.find(
-        (cat) =>
-          cat?.categoryName.trim().toLowerCase() ===
-          categoryName?.trim().toLowerCase()
-      );
-
-      const filtered = matchedCategory?.itemsResponseDtoList || [];
-      setFilteredItems(sortItems(filtered, sortOrder));
-    }
-  };
+  //  have to Apply both weight filter and sorting while category changes
+  setFilteredItems(applyFiltersAndSort(itemsToFilter, selectedWeightFilter));
+};
 
   // Filter by weight
-  const filterByWeight = (weight) => {
+ const filterByWeight = (weight) => {
     let finalWeightFilter = selectedWeightFilter === weight ? null : weight;
     setSelectedWeightFilter(finalWeightFilter);
 
@@ -616,10 +676,9 @@ const UserDashboard = ({ route }) => {
       itemsToFilter = matchedCategory?.itemsResponseDtoList || [];
     }
     setFilteredItems(applyFiltersAndSort(itemsToFilter, finalWeightFilter));
-  };
-
+  };
   // Apply filters
-  const applyFilters = () => {
+ const applyFilters = () => {
     let itemsToFilter = [];
 
     if (selectedCategory === "All CATEGORIES") {
@@ -642,7 +701,7 @@ const UserDashboard = ({ route }) => {
 
     setFilteredItems(applyFiltersAndSort(itemsToFilter));
     setFilterModalVisible(false);
-  };
+  };
 
   // Reset filters
   const resetFilters = () => {
@@ -744,6 +803,9 @@ const UserDashboard = ({ route }) => {
       handleGoldItemPress={handleGoldItemPress}
       isCategoryTypeGold={isCategoryTypeGold}
       imageErrors={imageErrors}
+      category={selectedCategory}
+      categoryType={selectedCategoryType}
+      dynamicContent={dynamicContent}
     />
   );
 
@@ -765,7 +827,7 @@ const UserDashboard = ({ route }) => {
       {/* Category Types Header */}
      
 
-      <ProductHeader
+      {/* <ProductHeader
         searchText={searchText}
         setSearchText={(text) => {
           setSearchText(text);
@@ -780,6 +842,23 @@ const UserDashboard = ({ route }) => {
         filterByWeight={filterByWeight}
         isCategoryTypeRice={isCategoryTypeRice}
         arrangeCategories={arrangeCategories} // <-- Add this line
+      /> */}
+
+        <ProductHeader
+        searchText={searchText}
+        setSearchText={setSearchText}
+        handleClearText={handleClearText}
+        cartData={cartData}
+        cartCount={cartCount}
+        userData={userData} 
+        navigation={navigation}
+        selectedWeightFilter={selectedWeightFilter}
+        filterByWeight={filterByWeight}
+        isCategoryTypeRice={selectedCategoryType === "RICE"}
+        getAvailableCategoryTypes={getAvailableCategoryTypes}
+        selectedCategoryType={selectedCategoryType}
+        handleCategoryTypeChange={handleCategoryTypeChange}
+        categoryTypeScrollViewRef={categoryTypeScrollViewRef}
       />
       <FilterModal
         filterModalVisible={filterModalVisible}
@@ -789,7 +868,7 @@ const UserDashboard = ({ route }) => {
         resetFilters={resetFilters}
         applyFilters={applyFilters}
       />
- <View style={styles.categoryTypesContainer}>
+      {/* <View style={styles.categoryTypesContainer}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -818,7 +897,7 @@ const UserDashboard = ({ route }) => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
+      </View> */}
       <View style={styles.rowContainer}>
         <View style={{width:width*0.2,alignSelf:"flex-start"}}>
         <SidebarComponent
@@ -851,7 +930,16 @@ const UserDashboard = ({ route }) => {
         )}
         </View>
       </View>
-{/* 
+
+  {offerShow && (
+        <OfferModal
+          visible={offerShow}
+          comboOffers={comboOffersData}
+          onClose={() => setOfferShow(false)}
+        />
+
+      )}
+   {/* 
       <GoldDetailModal
         visible={modalVisible}
         itemId={selectedItemId}
@@ -932,7 +1020,7 @@ const styles = StyleSheet.create({
   sidebarImage: {
     width: 55,
     height: 55,
-    borderRadius: 20,
+    // borderRadius: 20,
     marginBottom: 5,
   },
   sidebarImagePlaceholder: {

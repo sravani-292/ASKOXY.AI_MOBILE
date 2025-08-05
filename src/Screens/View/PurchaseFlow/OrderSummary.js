@@ -17,10 +17,11 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import BASE_URL,{userStage} from "../../../../Config";
 const {width, height} = Dimensions.get("window");
 import { COLORS } from "../../../../Redux/constants/theme"
+import { useCart } from "../../../../until/CartCount";
 
 const OrderSummaryScreen = ({ navigation, route }) => {
   console.log("Order Summary",route)
- 
+  const {setCartCount}=useCart()
 
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
@@ -56,7 +57,12 @@ const OrderSummaryScreen = ({ navigation, route }) => {
       );
       const data = await response.json();
       setCartItems(data.customerCartResponseList);
-      
+      if(data.customerCartResponseList.length>0){
+        setCartCount(data.customerCartResponseList.length)
+      }else{
+        setCartCount(0)
+      }
+      console.log("cartItems",data.customerCartResponseList);
       setLoading(false)
     } catch (error) {
       console.error("Error fetching cart items:", error);

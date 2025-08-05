@@ -61,7 +61,10 @@ export default function TransactionHistory({walletTxs}) {
           />
         </View>
         <View>
-          <Text style={styles.transactionTitle}>{item.walletTxType === 1 ? item.walletTxPurpose === 2 ? `Order ID : #${item.orderId}` : item.walletTxPurpose === 3? "Subscription" :`Refereed To : #${item.refereedTo}`:"Debit"}</Text>
+          {/* <Text style={styles.transactionTitle}>{item.walletTxType === 1 ? item.walletTxPurpose === 2 ? `Order ID : #${item.orderId || ""}` : item.walletTxPurpose === 3? "Subscription" :`Refereed To : #${item.refereedTo}`:"Debit"}</Text> */}
+          <Text style={styles.transactionTitle}>
+            {item.walletTxType === 1 ? "Credit" : "Debit"}
+          </Text>
           <Text style={styles.transactionCategory}>• {item.walletTxDesc}</Text>
           <Text style={styles.transactionDate}>{new Date(item.createdAt).toLocaleDateString()} </Text>
         </View>

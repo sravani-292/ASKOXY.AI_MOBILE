@@ -8,7 +8,7 @@ import {
   RefreshControl,
   Alert,
   StyleSheet,
-  Dimensions
+  Dimensions,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,7 +28,12 @@ import {
   handleRemoveFreeItem,
 } from "../../../../ApiService";
 const { width, height } = Dimensions.get("window");
+import EmptyCartComponent from "./EmptyCartComponent";
 
+   
+
+
+  
 const CartScreen = () => {
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
@@ -78,8 +83,7 @@ const CartScreen = () => {
     },
   };
 
-
- const locationdata = {
+  const locationdata = {
     flatNo: "",
     landMark: "",
     pincode: "",
@@ -95,7 +99,6 @@ const CartScreen = () => {
     hasId: false,
   };
 
-
   const handleIncrease = async (item) => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
     await increaseCartItem(item);
@@ -108,8 +111,7 @@ const CartScreen = () => {
     setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
   };
 
-
-   const handleYes = async () => {
+  const handleYes = async () => {
     setContainerDecision("yes");
 
     try {
@@ -214,7 +216,7 @@ const CartScreen = () => {
     try {
       // setLoading(true);
       const response = await handleCustomerCartData(customerId);
-      console.log("cart response", response.data);
+      // console.log("cart response", response.data);
       response.data.customerCartResponseList.map((item) => {
         if (
           (item.weight === 20 || item.weight === 35) &&
@@ -311,7 +313,7 @@ const CartScreen = () => {
     }
   };
 
-    const handleProfileCheck = async () => {
+  const handleProfileCheck = async () => {
     try {
       if (!customerId) {
         Alert.alert("Error", "Customer ID is not available.");
@@ -381,7 +383,7 @@ const CartScreen = () => {
         return false;
       }
 
-      navigation.navigate("Checkout", {
+      navigation.navigate("Payment Details", {
         subtotal: cartData.reduce(
           (acc, item) =>
             acc + item.priceMrp * (cartItems[item.itemId] || item.cartQuantity),
@@ -427,10 +429,9 @@ const CartScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      setLoading(true)
+      setLoading(true);
       fetchCartData();
       getProfile();
-      
     }, [])
   );
 
@@ -438,28 +439,7 @@ const CartScreen = () => {
     fetchCartData();
   };
 
-  // Empty cart component
-  const EmptyCartComponent = () => {
-    return (
-      <View style={styles.emptyCartContainer}>
-        <View style={styles.emptyCartView}>
-          <LottieView
-            source={require("../../../../../assets/emptyLoading.json")}
-            autoPlay
-            loop
-            style={styles.emptyCartImage}
-          />
-        </View>
-        <Text style={styles.emptyCartText}>Your cart is empty</Text>
-        <TouchableOpacity
-          style={styles.shopNowButton}
-          onPress={() => navigation.navigate("Dashboard")}
-        >
-          <Text style={styles.shopNowButtonText}>Shop Now</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
+
 
   return (
     <View style={styles.container}>
@@ -506,7 +486,8 @@ const CartScreen = () => {
               <View style={styles.grandTotalRow}>
                 <Text style={styles.grandTotalLabel}>Grand Total:</Text>
                 <Text style={styles.grandTotalValue}>
-           ₹{(Number(grandTotal) + Number(gstAmount)).toFixed(2)}                </Text>
+                  ₹{(Number(grandTotal) + Number(gstAmount)).toFixed(2)}{" "}
+                </Text>
               </View>
               <View
                 style={{ flexDirection: "row", justifyContent: "flex-end" }}
@@ -532,7 +513,19 @@ const CartScreen = () => {
             <View style={styles.actionButtonsContainer}>
               <TouchableOpacity
                 style={styles.addButton}
-                onPress={() => navigation.navigate("Dashboard")}
+                // onPress={() => navigation.navigate("Dashboard")}
+                // onPress={()=>navigation.goBack()}
+                onPress={() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [
+                      {
+                        name: "Rice Products",
+                        params: { categoryType: "RICE", category:"All CATEGORIES" },
+                      },
+                    ],
+                  });
+                }}
               >
                 <Text style={styles.actionButtonText}>Add More</Text>
               </TouchableOpacity>
@@ -665,43 +658,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     position: "relative",
   },
-
-  emptyCartContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  emptyCartView: {
-    width: width * 0.5,
-    height: width * 0.5,
-    marginBottom: 20,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: "#f0f0f0",
-  },
-  emptyCartImage: {
-    width: "100%",
-    height: "100%",
-  },
-  emptyCartText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#666",
-    marginBottom: 20,
-  },
-  shopNowButton: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  shopNowButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  priceBreakupButton: {
+ priceBreakupButton: {
     flexDirection: "row",
     justifyContent: "flex-end",
   },

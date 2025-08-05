@@ -8,13 +8,15 @@ import axios from 'axios';
 import * as Clipboard from "expo-clipboard";
 import BASE_URL from "../../../../Config";
 import { useSelector } from "react-redux";
-import CoinsTransferrModal from "../../View/MyCrypto/CoinsTransferrModal";                  
+import CoinsTransferrModal from "../../View/MyCrypto/CoinsTransferrModal";  
+import BVMCoins from './BVMCoins';                
 const jsonData = require('../../../../app.json');
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileSettings({ navigation }) {
     const [version, setVersion] = React.useState('');
+    const [dynamicContent,setDynamicContent] = React.useState();
 
   // App version info
  React.useEffect(() => {
@@ -146,6 +148,9 @@ export default function ProfileSettings({ navigation }) {
   const [infoModalVisible, setInfoModalVisible] = React.useState(false);
   const [user, setUser] = React.useState(null);
   const [bmvCoinModalVisible, setBmvCoinModalVisible] = React.useState(false);
+  const [coinValue, setCoinValue] = React.useState();
+  const [coinUsageDescription, setCoinUsageDescription] = React.useState("");
+  const [coinUsageShow, setCoinUsageShow] = React.useState(false);
 
   const getInitials = (name) => {
     return name?.charAt(0).toUpperCase();
@@ -161,8 +166,27 @@ export default function ProfileSettings({ navigation }) {
     useCallback(() => {
       getProfile();
     profile();
+    BVMCOinDescription();
+    setCoinUsageDescription(
+      `### ❓ Why are BMVCoins usable only on Non-GST Items?
+
+We allow BMVCoins to be redeemed only on *non-GST items* to keep everything *100% tax-compliant and legally clear*.
+
+Here's why:
+
+* 🎯 *No tax = No conflict: Non-GST items have **zero tax*, so using rewards here doesn’t cause any loss to the government.
+* 🔁 *It’s like cashback*: You're simply exchanging loyalty points for products that are already tax-free.
+* 📜 *Fully transparent*: This ensures our rewards system stays compliant with Indian tax laws.
+
+✅ Simple rule: BMVCoins = Rewards on tax-free items = Legally clean.`
+    )
     }, [])
   );
+
+  const handlingModal = () => {
+     setInfoModalVisible(true);
+     setCoinUsageShow(true);
+  }
 
    const handleLogout = () => {
       Alert.alert(
@@ -205,11 +229,56 @@ export default function ProfileSettings({ navigation }) {
           setChainId(response.data.multiChainId);
           console.log(response.data.coinAllocated);
           setCoin(response.data.coinAllocated);
+           CoinsValue(response.data.coinAllocated);
         } catch (error) {
           console.error("Error fetching profile:", error.response);
         }
       }
     };
+
+    const BVMCOinDescription = async() => {
+      try {
+        const response = await axios({
+          method: "get",
+          url: BASE_URL + `user-service/allBmvDiscriptionData`,
+          headers: {
+            Authorization: `Bearer ${userData.accessToken}`,
+            "Content-Type": "application/json",
+          }
+        })
+        console.log("response of description",response.data);
+        const data = response.data
+
+       const targetId = `1ee1d800-45e2-4918-ac97-382a298dbf78`
+        const matched = data.find(item => item.id === targetId);
+        if (matched) {
+          setDynamicContent(matched.discription);
+        }
+
+      } catch (error) {
+        console.error("Error fetching description :", error.response);
+      }
+      }
+
+    const CoinsValue = async(coin) => {
+      if(coin){
+        try {
+          const response = await axios({
+            method: "get",
+            url: BASE_URL + `user-service/coinsToAmt?coins=${coin}`,
+            headers: {
+              Authorization: `Bearer ${userData.accessToken}`,
+            },
+            }
+          )
+          console.log("response of coins",response.data);
+          setCoinValue(response.data)
+        }
+        catch (error) {
+          console.error("Error fetching profile:", error.response);
+        }
+      }
+    }
 
   const getProfile = async () => {
     console.log("profile get call response");
@@ -351,7 +420,7 @@ export default function ProfileSettings({ navigation }) {
                   
                   <View style={styles.coinContainer}>
                     <View style={{flexDirection:"row",alignItems:"center",width:width*0.4}}>
-                     <Text style={styles.infoLabel1}>BMV Coins:</Text>
+                     <Text style={styles.infoLabel1}>BMV COINS:</Text>
                     <View style={styles.coinBadge}>
                       <Text style={styles.coinValue}>{coin}</Text>
                     </View>
@@ -359,6 +428,20 @@ export default function ProfileSettings({ navigation }) {
                     <TouchableOpacity
                       style={styles.infoButton}
                       onPress={() => setInfoModalVisible(true)}
+                    >
+                      <MaterialIcons name="info-outline" size={24} color="#4A148C" />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.coinContainer}>
+                    <View style={{flexDirection:"row",alignItems:"center",width:width*0.4}}>
+                     <Text style={styles.infoLabel1}>BMV COINS Value:</Text>
+                    <View style={styles.coinBadge}>
+                      <Text style={styles.coinValue}>{coinValue?.toFixed(2) || "0.00"}</Text>
+                    </View>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.infoButton}
+                      onPress={() => handlingModal()}
                     >
                       <MaterialIcons name="info-outline" size={24} color="#4A148C" />
                     </TouchableOpacity>
@@ -408,65 +491,10 @@ export default function ProfileSettings({ navigation }) {
         </View>
       </ScrollView>
        {/* BMVCoins Info Modal */}
-                <Modal
-                  animationType="fade"
-                  transparent={true}
-                  visible={infoModalVisible}
-                  onRequestClose={() => setInfoModalVisible(false)}
-                >
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                      <View style={styles.modalHeader}>
-                        <View style={styles.modalTitleContainer}>
-                          <FontAwesome5 name="coins" size={20} color="#4A148C" />
-                          <Text style={styles.modalTitle}>About BMVCoins</Text>
-                        </View>
-                        <TouchableOpacity 
-                          style={styles.closeButton}
-                          onPress={() => setInfoModalVisible(false)}
-                        >
-                          <Ionicons name="close" size={22} color="#FFFFFF" />
-                        </TouchableOpacity>
-                      </View>
-      
-                      <Text style={styles.modalText}>
-                        Collect BMVCoins and redeem them for discounts on rice bags and other products across our platform.
-                      </Text>
-      
-                      <View style={styles.valueBox}>
-                        <Text style={styles.valueTitle}>Current Exchange Rate:</Text>
-                        <View style={styles.exchangeRate}>
-                          <FontAwesome5 name="coins" size={18} color="#F1C40F" />
-                          <Text style={styles.valueText}>1,000 BMVCoins = ₹10 discount</Text>
-                        </View>
-                      </View>
-      
-                      <Text style={styles.infoTitle}>Important information:</Text>
-                      <View style={styles.bulletList}>
-                        <View style={styles.bulletPoint}>
-                          <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.bulletIcon} />
-                          <Text style={styles.bulletText}>
-                            A minimum of 20,000 BMVCoins is required for redemption.
-                          </Text>
-                        </View>
-                        <View style={styles.bulletPoint}>
-                          <MaterialIcons name="check-circle" size={16} color="#4CAF50" style={styles.bulletIcon} />
-                          <Text style={styles.bulletText}>
-                            Exchange rates subject to change. Check app for latest values.
-                          </Text>
-                        </View>
-                      </View>
-      
-                      <TouchableOpacity
-                        style={styles.gotItButton}
-                        onPress={() => setInfoModalVisible(false)}
-                      >
-                        <Text style={styles.gotItText}>Got it</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </Modal>
-                <CoinsTransferrModal visible={bmvCoinModalVisible} onClose={()=>setBmvCoinModalVisible(false)}   availableCoins={coin} />
+               
+                <BVMCoins modalVisible={infoModalVisible} onCloseModal={()=>{setInfoModalVisible(false);setCoinUsageShow(false);}} content={coinUsageShow ? coinUsageDescription : dynamicContent}/>
+
+                <CoinsTransferrModal visible={bmvCoinModalVisible} onClose={()=>setBmvCoinModalVisible(false)}  availableCoins={coin} />
     </SafeAreaView>
   );
 }
@@ -670,7 +698,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#757575",
-    width: width*0.4,
+    width: width*0.6,
     justifyContent:"flex-start",
     alignItems:"flex-start",
   },

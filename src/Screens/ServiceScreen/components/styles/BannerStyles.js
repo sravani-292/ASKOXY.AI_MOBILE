@@ -4,9 +4,11 @@ import { StyleSheet } from "react-native";
 export default StyleSheet.create({
   bannerContainer: {
     position: "relative",
-    marginTop: 16,
+    marginTop:3,
     alignItems: "center",
     borderRadius: 16,
+    marginBottom: 16,
+    // marginHorizontal: 8,
   },
   bannerImageContainer: {
     justifyContent: "center",
@@ -14,7 +16,9 @@ export default StyleSheet.create({
     borderRadius: 16,
   },
   bannerImage: {
-    width: "94%",
+    width: "96%",
+    height: "100%",
+    resizeMode: "cover",
     borderRadius: 16,
   },
   paginationContainer: {
@@ -22,7 +26,7 @@ export default StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "absolute",
-    bottom: -15,
+    bottom: -4,
     left: 0,
     right: 0,
   },
@@ -34,7 +38,7 @@ export default StyleSheet.create({
   },
   activeDot: {
     backgroundColor: "#4A148C",
-    width: 20,
+    width: 25,
   },
   inactiveDot: {
     backgroundColor: "rgba(74, 20, 140, 0.3)",

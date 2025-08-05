@@ -180,7 +180,7 @@ const OrderScreen = () => {
           },
         }
       );
-     console.log("Order data", response);
+    //  console.log("Order data", response);
      
       if (response.data) {
         setOrders(response.data);

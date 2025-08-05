@@ -13,10 +13,13 @@ import { getActivePriorityRules } from "../constants/ActivePriorityRules";
 import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
 import defaultBanners from "../constants/defaultBanners";
 import { services as defaultServices } from "../constants/services";
+import { handleCustomerCartData,handleRemoveItem, handleUserAddorIncrementCart } from "../../../ApiService";
+import { useCart } from "../../../../until/CartCount";
 
 const useServiceScreenData = () => {
   const { width, height } = Dimensions.get("window");
-  const bannerHeight = height * 0.1;
+  const {setCartCount}=useCart()
+  const bannerHeight = height * 0.15;
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const userData = useSelector((state) => state.counter);
@@ -27,8 +30,16 @@ const useServiceScreenData = () => {
   const [bannersLoading, setBannersLoading] = useState(true);
   const [data, setData] = useState([]);
   const [getCategories, setGetCategories] = useState([]);
+  const [selectedCategoryType, setSelectedCategoryType] = useState("RICE");
   const [selectedMainCategory, setSelectedMainCategory] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [summary, setSummary] = useState({ totalItems: 0, totalPrice: 0 });
+  const [cart, setCart] = useState({});
+  const [formData, setFormData] = useState({});
+  const [comboItems, setComboItems] = useState([]);
+  const [offerShow, setOfferShow] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const currentScreen = useNavigationState((state) => state.routes[state.index]?.name);
 
@@ -70,7 +81,7 @@ const useServiceScreenData = () => {
   };
 
   const handleBannerPress = (banner) => {
-    console.log("Banner Pressed:", banner);
+    // console.log("Banner Pressed:", banner);
     if (banner.navigationTarget) {
       navigation.navigate(banner.navigationTarget, banner.params || {});
     }
@@ -115,6 +126,179 @@ const useServiceScreenData = () => {
       });
   };
 
+   const addToCart =async (itemId, comboId,type) => {
+    const key = `${comboId}-${itemId}`;
+    console.log("itemId", itemId,"comboId",comboId,"type",type);
+
+    let postData
+     if(itemId && itemId.status === "COMBO"){
+      postData = {
+        customerId: userData?.userId,
+        itemId: itemId.itemId,
+        status: itemId.status,
+        cartQuantity:itemId.quantity
+      }
+     }else{
+      postData = {
+        customerId: userData?.userId,
+        itemId: itemId.itemId,
+        cartQuantity:1
+      }
+     }
+    const response =await handleUserAddorIncrementCart(postData,itemId.status || comboId);
+console.log("response data", response.comboOffers);
+  if(response?.comboOffers){
+    console.log("comboItems.....", response?.comboOffers);
+    setComboItems(response?.comboOffers);
+    setOfferShow(true)
+  }
+    fetchCartItems();
+  };
+
+  const removeFromCart = (itemId) => {
+       handleRemoveItem(itemId)
+    fetchCartItems();
+  };
+
+
+// const getRiceCategories = async () => {
+//   setLoading(true);
+
+//   const priorityRules = await getActivePriorityRules("RICE");
+
+//   axios
+//     .get(BASE_URL + "product-service/showGroupItemsForCustomrs")
+//     .then((response) => {
+//       setLoading(false);
+
+//       const allCategories = response.data || [];
+//       const orderedCategories = ["RICE", "Grocery", "GOLD"];
+//       const filteredCategories = orderedCategories
+//         .map((type) => allCategories.find((cat) => cat.categoryType === type))
+//         .filter(Boolean);
+
+//       const riceCategoryIndex = filteredCategories.findIndex(
+//         (cat) => cat.categoryType === "RICE"
+//       );
+
+//       if (riceCategoryIndex !== -1) {
+//         const riceCategory = filteredCategories[riceCategoryIndex];
+
+//         // 🟡 1. Prioritize sub-categories like "Combo Offers"
+//         if (riceCategory.categories && Array.isArray(riceCategory.categories)) {
+//           riceCategory.categories.sort((a, b) => {
+//             const getPriority = (name) => {
+//               const rule = priorityRules.find(
+//                 (r) => r.match_scope === "category" &&
+//                        name?.toLowerCase().includes(r.match_text.toLowerCase())
+//               );
+//               return rule ? rule.priority_order : 999;
+//             };
+//             return getPriority(a.categoryName) - getPriority(b.categoryName);
+//           });
+//         }
+
+//         // 🟢 2. Prioritize items (inside each subcategory)
+//         riceCategory.categories.forEach((sub) => {
+//           if (Array.isArray(sub.itemsResponseDtoList)) {
+//             sub.itemsResponseDtoList.sort((a, b) => {
+//               const getPriority = (name) => {
+//                 const rule = priorityRules.find(
+//                   (r) => r.match_scope === "item" &&
+//                          name?.toLowerCase().includes(r.match_text.toLowerCase())
+//                 );
+//                 return rule ? rule.priority_order : 999;
+//               };
+//               return getPriority(a.name) - getPriority(b.name);
+//             });
+//           }
+//         });
+
+//         filteredCategories[riceCategoryIndex] = riceCategory;
+//       }
+
+//       setGetCategories(filteredCategories);
+//       if (filteredCategories[0]) setSelectedMainCategory(filteredCategories[0]);
+//     })
+//     .catch((error) => {
+//       setLoading(false);
+//       console.error("Error fetching rice categories:", error);
+//     });
+// };
+// const getRiceCategories = async () => {
+//   setLoading(true);
+
+//   const priorityRules = await getActivePriorityRules("RICE");
+
+//   axios
+//     .get(BASE_URL + "product-service/showGroupItemsForCustomrs")
+//     .then((response) => {
+//       setLoading(false);
+
+//       const allCategories = response.data || [];
+//       const orderedCategories = ["RICE", "Grocery", "GOLD"];
+//       const filteredCategories = orderedCategories
+//         .map((type) => allCategories.find((cat) => cat.categoryType === type))
+//         .filter(Boolean);
+
+//       const riceCategoryIndex = filteredCategories.findIndex(
+//         (cat) => cat.categoryType === "RICE"
+//       );
+
+//       if (riceCategoryIndex !== -1) {
+//         const riceCategory = filteredCategories[riceCategoryIndex];
+
+//         // ✅ Remove "Rice Container"
+//         console.log(visibilityMap.show_rice_container);
+        
+//         if(visibilityMap.show_rice_container === true){
+//         if (riceCategory.categories && Array.isArray(riceCategory.categories)) {
+//           riceCategory.categories = riceCategory.categories.filter(
+//             (cat) => cat.categoryName?.trim().toLowerCase() !== "rice container"
+//           );
+//         }
+//       }
+//           // 🟡 1. Prioritize sub-categories like "Combo Offers"
+//           riceCategory.categories.sort((a, b) => {
+//             const getPriority = (name) => {
+//               const rule = priorityRules.find(
+//                 (r) => r.match_scope === "category" &&
+//                        name?.toLowerCase().includes(r.match_text.toLowerCase())
+//               );
+//               return rule ? rule.priority_order : 999;
+//             };
+//             return getPriority(a.categoryName) - getPriority(b.categoryName);
+//           });
+
+//           // 🟢 2. Prioritize items (inside each subcategory)
+//           riceCategory.categories.forEach((sub) => {
+//             if (Array.isArray(sub.itemsResponseDtoList)) {
+//               sub.itemsResponseDtoList.sort((a, b) => {
+//                 const getPriority = (name) => {
+//                   const rule = priorityRules.find(
+//                     (r) => r.match_scope === "item" &&
+//                            name?.toLowerCase().includes(r.match_text.toLowerCase())
+//                   );
+//                   return rule ? rule.priority_order : 999;
+//                 };
+//                 return getPriority(a.name) - getPriority(b.name);
+//               });
+//             }
+//           });
+        
+
+//         filteredCategories[riceCategoryIndex] = riceCategory;
+//       }
+
+//       setGetCategories(filteredCategories);
+//       console.log("Filtered Categories:", filteredCategories);
+//       if (filteredCategories[0]) setSelectedMainCategory(filteredCategories[0]);
+//     })
+//     .catch((error) => {
+//       setLoading(false);
+//       console.error("Error fetching rice categories:", error);
+//     });
+// };
 
 const getRiceCategories = async () => {
   setLoading(true);
@@ -127,9 +311,28 @@ const getRiceCategories = async () => {
       setLoading(false);
 
       const allCategories = response.data || [];
-      const orderedCategories = ["RICE", "Grocery", "GOLD"];
-      const filteredCategories = orderedCategories
-        .map((type) => allCategories.find((cat) => cat.categoryType === type))
+
+      const priorityOrder = ["RICE", "Grocery", "GOLD"];
+      const sortedCategoryTypes = [
+        ...priorityOrder,
+        ...allCategories
+          .map((cat) => cat.categoryType)
+          .filter(
+            (type) =>
+              type &&
+              !priorityOrder.includes(type)
+          )
+          .sort((a, b) => a.localeCompare(b)), // alphabetical for the rest
+      ];
+
+      const filteredCategories = sortedCategoryTypes
+        .map((type) =>
+          allCategories.find(
+            (cat) =>
+              cat.categoryType?.trim().toLowerCase() ===
+              type.toLowerCase()
+          )
+        )
         .filter(Boolean);
 
       const riceCategoryIndex = filteredCategories.findIndex(
@@ -139,19 +342,32 @@ const getRiceCategories = async () => {
       if (riceCategoryIndex !== -1) {
         const riceCategory = filteredCategories[riceCategoryIndex];
 
-        // 🟡 1. Prioritize sub-categories like "Combo Offers"
-        if (riceCategory.categories && Array.isArray(riceCategory.categories)) {
-          riceCategory.categories.sort((a, b) => {
-            const getPriority = (name) => {
-              const rule = priorityRules.find(
-                (r) => r.match_scope === "category" &&
-                       name?.toLowerCase().includes(r.match_text.toLowerCase())
-              );
-              return rule ? rule.priority_order : 999;
-            };
-            return getPriority(a.categoryName) - getPriority(b.categoryName);
-          });
+        // ✅ Remove "Rice Container"
+        if (visibilityMap.show_rice_container === true) {
+          if (
+            riceCategory.categories &&
+            Array.isArray(riceCategory.categories)
+          ) {
+            riceCategory.categories = riceCategory.categories.filter(
+              (cat) =>
+                cat.categoryName?.trim().toLowerCase() !==
+                "rice container"
+            );
+          }
         }
+
+        // 🟡 1. Prioritize sub-categories like "Combo Offers"
+        riceCategory.categories.sort((a, b) => {
+          const getPriority = (name) => {
+            const rule = priorityRules.find(
+              (r) =>
+                r.match_scope === "category" &&
+                name?.toLowerCase().includes(r.match_text.toLowerCase())
+            );
+            return rule ? rule.priority_order : 999;
+          };
+          return getPriority(a.categoryName) - getPriority(b.categoryName);
+        });
 
         // 🟢 2. Prioritize items (inside each subcategory)
         riceCategory.categories.forEach((sub) => {
@@ -159,8 +375,9 @@ const getRiceCategories = async () => {
             sub.itemsResponseDtoList.sort((a, b) => {
               const getPriority = (name) => {
                 const rule = priorityRules.find(
-                  (r) => r.match_scope === "item" &&
-                         name?.toLowerCase().includes(r.match_text.toLowerCase())
+                  (r) =>
+                    r.match_scope === "item" &&
+                    name?.toLowerCase().includes(r.match_text.toLowerCase())
                 );
                 return rule ? rule.priority_order : 999;
               };
@@ -173,19 +390,24 @@ const getRiceCategories = async () => {
       }
 
       setGetCategories(filteredCategories);
-      if (filteredCategories[0]) setSelectedMainCategory(filteredCategories[0]);
+      // console.log("Filtered Categories:", filteredCategories);
+
+      if (filteredCategories[0]) {
+        setSelectedMainCategory(filteredCategories[0]);
+      }
     })
     .catch((error) => {
       setLoading(false);
-      console.error("Error fetching rice categories:", error);
+      console.error("Error fetching categories:", error);
     });
 };
+
 
   const fetchDynamicBanners = async () => {
   setBannersLoading(true);
   try {
     const response = await axios.get(`${BASE_URL}product-service/getOfferImages`);
-    console.log("Banners response:", response.data);
+    // console.log("Banners response:", response.data);
 
     if (Array.isArray(response.data)) {
       const activeBanners = response.data
@@ -212,6 +434,53 @@ const getRiceCategories = async () => {
   }
 };
 
+  const fetchCartItems = async () => {
+     try {
+       const response = await handleCustomerCartData(userData?.userId);
+ 
+       const cartData = response?.data?.customerCartResponseList;
+       const totalCartCount = cartData.reduce(
+         (total, item) => total + item.cartQuantity,
+         0
+       );
+ 
+       if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
+         setCart([]);
+         setCartCount(0);
+         return;
+       }
+ 
+       const cartItemsMap = cartData.reduce((acc, item) => {
+         if (
+           !item.itemId ||
+           item.cartQuantity === undefined ||
+           item.quantity === undefined ||
+           item.status != "ADD"
+         ) {
+           return acc;
+         }
+         acc[item.itemId] = item.cartQuantity;
+
+         return acc;
+       }, {});
+ 
+       const limitedStockMap = cartData.reduce((acc, item) => {
+         if (item.quantity === 0) {
+           acc[item.itemId] = "outOfStock";
+         } else if (item.quantity <= 5) {
+           acc[item.itemId] = "lowStock";
+         }
+         return acc;
+       }, {});
+
+       setCartCount(cartData?.length || 0)
+ 
+       setCart(cartData);
+     } catch (error) {
+       console.error("Error fetching cart items:", error);
+     }
+   };
+
 
   const checkLoginData = async () => {
     if (userData?.accessToken) {
@@ -228,7 +497,7 @@ const getRiceCategories = async () => {
             navigation.navigate("Home");
           }
         } else {
-          navigation.navigate("Service Screen");
+          navigation.navigate("New DashBoard");
         }
       } catch (error) {
         console.error("Error fetching login data", error);
@@ -236,6 +505,35 @@ const getRiceCategories = async () => {
     }
   };
 
+  const userProfile = async () => {
+     try {
+      const response = await axios({
+        method: "GET",
+        url:
+          BASE_URL +
+          `user-service/customerProfileDetails?customerId=${userData?.userId}`,
+        headers: {
+          Authorization: `Bearer ${userData?.accessToken}`,
+        }
+      });
+      if (response.status === 200) {
+        // setUser(response.data);
+        
+        setFormData({
+          firstName: response.data.firstName,
+          lastName: response.data.lastName,
+          email: response.data.email,
+          whatsappNumber: response.data.whatsappNumber,
+          backupPhone: response.data.alterMobileNumber.trim(" "),
+          phone: response.data.mobileNumber,
+          status: response.data.whatsappVerified,
+        });
+        // console.log("response", response.data);
+      }
+    } catch (error) {
+      console.error("ERROR", error.response);
+    } 
+  };
   useFocusEffect(
     useCallback(() => {
       const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -256,6 +554,12 @@ const getRiceCategories = async () => {
       getAllCampaign();
       getRiceCategories();
       fetchDynamicBanners();
+      if (userData?.userId) {
+        fetchCartItems();
+        userProfile();
+      } else {
+        setCart([]);
+      }
     }, [currentScreen])
   );
 
@@ -273,6 +577,7 @@ const getRiceCategories = async () => {
   return {
     userData,
     loginModal,
+    setLoginModal,
     loading,
     banners,
     bannersLoading,
@@ -287,6 +592,22 @@ const getRiceCategories = async () => {
     getCategories,
     visibilityMap,
     bannerHeight,
+    summary,
+    setSummary,
+    cart,
+    addToCart,
+    removeFromCart,
+    setCart,
+    setSelectedCategoryType,
+    selectedCategoryType, 
+    isLoading,
+    fetchCartItems,
+    setIsLoading,
+    formData,
+    comboItems,
+    setComboItems,
+    offerShow,
+    setOfferShow
   };
 };
 

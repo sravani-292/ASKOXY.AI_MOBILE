@@ -25,7 +25,7 @@ const { height, width } = Dimensions.get("window");
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../../../Config";
 import { useFocusEffect } from "@react-navigation/native";
-import { set } from "core-js/core/dict";
+import { useCart } from "../../../../until/CartCount";
 
 const RiceProductDetails = ({ route, navigation }) => {
   // WITHOUT ZAKYA RESPONSE
@@ -33,7 +33,7 @@ const RiceProductDetails = ({ route, navigation }) => {
 
   const [items, setItems] = useState([]);
   const [cartItems, setCartItems] = useState({});
-  const [cartCount, setCartCount] = useState(0);
+  const {cartCount, setCartCount} = useCart();
   const [categoryImage, setCategoryIamge] = useState();
   const [loadingItems, setLoadingItems] = useState({});
   const [cartData, setCartData] = useState([]);

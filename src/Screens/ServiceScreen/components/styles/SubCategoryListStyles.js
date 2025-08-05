@@ -1,18 +1,21 @@
 // components/styles/SubCategoryListStyles.js
-import { StyleSheet } from "react-native";
+import { StyleSheet,Platform } from "react-native";
 import { COLORS } from "../../../../../Redux/constants/theme";
 
 export default StyleSheet.create({
   container: {
-    marginVertical: 5,
+    marginVertical: 6,
     paddingHorizontal: 5,
-    gap: 12,
-    marginBottom: 40,
+    gap: 10,
+    marginTop: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingTop: 10,
   },
   card: {
     flex: 1,
-    marginHorizontal: 8,
-    marginBottom: 16,
+    marginHorizontal: 7,
+    marginBottom: 14,
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     overflow: "hidden",
@@ -26,7 +29,7 @@ export default StyleSheet.create({
   },
   imageWrapper: {
     width: "100%",
-    height: 120,
+    height: 110,
     backgroundColor: "#F8F9FA",
     alignItems: "center",
     justifyContent: "center",
@@ -36,21 +39,27 @@ export default StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: "80%",
+    height: "100%",
     resizeMode: "cover",
   },
   content: {
     padding: 16,
-    minHeight: 65,
+    minHeight: 25,
     justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    width: "100%",
   },
   title: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "800",
     color: "#1F2937",
-    marginBottom: 12,
-    lineHeight: 20,
+    marginBottom: 8,
+    lineHeight: 15,
     textAlign: "center",
+   fontFamily: Platform.OS === 'ios' ? 'Times New Roman' : 'Roboto'
   },
   browseBtn: {
     flexDirection: "row",

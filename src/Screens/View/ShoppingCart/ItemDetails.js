@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useLayoutEffect,useCallback,useRef} from "react";
+import React, { useEffect, useState, useLayoutEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -7,69 +7,119 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  Pressable,
-  Dimensions,
   ScrollView,
-  FlatList
+  FlatList,
+  Modal,
+  Dimensions
 } from "react-native";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { useNavigation,useFocusEffect } from "@react-navigation/native";
-const { width, height } = Dimensions.get("window");
-import { COLORS } from "../../../../Redux/constants/theme";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/Ionicons";
-import BASE_URL, { userStage } from "../../../../Config";
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import GoogleAnalyticsService from "../../../Components/GoogleAnalytic";
+import { COLORS } from "../../../../Redux/constants/theme";
+import {LinearGradient} from 'expo-linear-gradient';
+import {FontAwesome6} from '@expo/vector-icons';
+
+import BASE_URL from "../../../../Config";
 import {
   handleCustomerCartData,
-  handleGetProfileData,
   handleUserAddorIncrementCart,
   handleDecrementorRemovalCart,
-  handleRemoveItem,
-  handleRemoveFreeItem,
 } from "../../../../src/ApiService";
+import OfferModal from "./DashboardProduct/OfferModal";
 
-const ItemDetails = ({ route, navigation }) => {
+import { useCart } from "../../../../until/CartCount";
+import BVMCoins from "../Profile/BVMCoins";
+
+const { width, height } = Dimensions.get("window");
+
+const ItemDetails = ({ route }) => {
   const { item } = route?.params;
-  console.log("Item details page", item);
-
+  const {setCartCount} = useCart();
+  const navigation = useNavigation();
   const userData = useSelector((state) => state.counter);
   const token = userData?.accessToken;
   const customerId = userData?.userId;
-  const [user, setUser] = useState();
-  const [cartData, setCartData] = useState([]);
+  
+  // State declarations
   const [cartItems, setCartItems] = useState({});
-  const [cartCount, setCartCount] = useState(0);
   const [loadingItems, setLoadingItems] = useState({});
   const [isLimitedStock, setIsLimitedStock] = useState({});
   const [itemImages, setItemImages] = useState([]);
-  const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [offerShow, setOfferShow] = useState(false);
+  const [comboOffersData, setComboOffersData] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalShow, setModalShow] = useState(false);
+  const [dynamicContent, setDynamicContent] = useState();
+  const [selectedImage, setSelectedImage] = useState(null);
   
-  // ADD THIS LINE - Declare the autoScrollInterval ref
+  const flatListRef = useRef(null);
   const autoScrollInterval = useRef(null);
 
+  // Navigation setup
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <>
+        {          route.params?.categoryType?(
+        <TouchableOpacity 
+          onPress={() => navigation.navigate("Rice Products", { 
+            screen: route.params?.category, 
+            categoryType: route.params?.categoryType,
+            category: route.params?.category
+          })} 
+          style={{ marginLeft: 10 }}
+        >
+          <Icon name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            onPress={() => navigation.goBack()} 
+            style={{ marginLeft: 10 }}
+          >
+            <Icon name="arrow-back" size={24} color="white" />
+          </TouchableOpacity>
+        )}
+          
+        </>
+      ),
+    });
+  }, [navigation]);
+
+  // Initial data fetching
   useEffect(() => {
-    analytic();
     fetchCartData();
+    if (item?.itemId) {
+      getImages(item?.itemId);
+    }
+    handleDescripion()
   }, []);
 
-  const analytic = async () => {
-    await GoogleAnalyticsService.viewItem(
-      item.itemId,
-      item.itemName,
-      item.itemPrice,
-    )
-  }
+     const handleDescripion = useCallback(async() => {
+        try{
+            const response = await axios({
+            method: "get",
+            url: BASE_URL + `user-service/allBmvDiscriptionData`,
+          })
+          // console.log("response of description",response.data);
+          const data = response.data
+  
+         const targetId = `1ee1d800-45e2-4918-ac97-382a298dbf78`
+          const matched = data.find(item => item.id === targetId);
+          if (matched) {
+            setDynamicContent(matched.discription);
+          }
+        }
+        catch(error){
+          console.log(error);
+        }
+    }, []);
 
   useFocusEffect(
     useCallback(() => {
-      if (item?.itemId) {
-        getImages(item?.itemId);
-      }
-      
-      // Cleanup interval when screen loses focus
       return () => {
         if (autoScrollInterval.current) {
           clearInterval(autoScrollInterval.current);
@@ -78,194 +128,43 @@ const ItemDetails = ({ route, navigation }) => {
     }, [item])
   );
 
-  const getImages = async (itemId) => {
-    console.log("Fetching images for itemId:", itemId);
-    
-    try {
-      const response = await axios.get(`${BASE_URL}product-service/ImagesViewBasedOnItemId?itemId=${itemId}`);
-      const realImages = response?.data?.map(item => item.imageUrl).filter(Boolean);
-      
-      if (realImages.length > 0) {
-        setItemImages(realImages);
-        setCurrentIndex(0); // Reset to first image
-      } else {
-        setItemImages([]);
-      }
-    } catch (error) {
-      console.error("Error fetching images:", error);
-      setItemImages([]);
-    }
+  // Image handling functions
+ const getImages = async (itemId) => {
+  try {
+    const response = await axios.get(`${BASE_URL}product-service/ImagesViewBasedOnItemId?itemId=${itemId}`);
+    const imagesData = response?.data || [];
+    const realImages = Array.isArray(imagesData) 
+      ? imagesData.map(item => item.imageUrl).filter(Boolean) 
+      : [];
+    setItemImages(realImages.length > 0 ? realImages : []);
+  } catch (error) {
+    console.error("Error fetching images:", error);
+    setItemImages([]);
+  }
+};
+
+  const openModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setModalVisible(true);
   };
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      const index = viewableItems[0].index;
-      setCurrentIndex(index);
-    }
-  }).current;
-
-  const viewConfigRef = useRef({ 
-    viewAreaCoveragePercentThreshold: 50,
-    minimumViewTime: 100 
-  });
-
-  // REMOVE THE DUPLICATE useEffect - Keep only this one
-  useEffect(() => {
-    // Clear existing interval
-    if (autoScrollInterval.current) {
-      clearInterval(autoScrollInterval.current);
-    }
-
-    // Only start auto-scroll if we have multiple images
-    if (itemImages.length > 1) {
-      autoScrollInterval.current = setInterval(() => {
-        setCurrentIndex(prevIndex => {
-          const nextIndex = (prevIndex + 1) % itemImages.length;
-          
-          // Scroll to next image
-          if (flatListRef.current) {
-            flatListRef.current.scrollToIndex({
-              index: nextIndex,
-              animated: true,
-            });
-          }
-          
-          return nextIndex;
-        });
-      }, 3000);
-    }
-
-    // Cleanup interval on unmount or when itemImages change
-    return () => {
-      if (autoScrollInterval.current) {
-        clearInterval(autoScrollInterval.current);
-      }
-    };
-  }, [itemImages]);
-
-  // Handle scroll begin (pause auto-scroll when user interacts)
-  const onScrollBeginDrag = useCallback(() => {
-    if (autoScrollInterval.current) {
-      clearInterval(autoScrollInterval.current);
-    }
-  }, []);
-
-  // Resume auto-scroll after user stops interacting
-  const onScrollEndDrag = useCallback(() => {
-    if (itemImages.length > 1) {
-      autoScrollInterval.current = setInterval(() => {
-        setCurrentIndex(prevIndex => {
-          const nextIndex = (prevIndex + 1) % itemImages.length;
-          
-          if (flatListRef.current) {
-            flatListRef.current.scrollToIndex({
-              index: nextIndex,
-              animated: true,
-            });
-          }
-          
-          return nextIndex;
-        });
-      }, 3000);
-    }
-  }, [itemImages]);
-
-
-  // Don't render carousel if no images - MOVE THIS CHECK TO RENDER
-  const renderImageCarousel = () => {
-    if (itemImages.length === 0) {
-      return (
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: item.itemImage }} style={styles.detailImage} />
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.carouselContainer}>
-        <FlatList
-          ref={flatListRef}
-          data={itemImages}
-          keyExtractor={(item, index) => `${index}-${item}`}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          snapToAlignment="center"
-          decelerationRate="fast"
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewConfigRef.current}
-          onScrollBeginDrag={onScrollBeginDrag}
-          onScrollEndDrag={onScrollEndDrag}
-          getItemLayout={(data, index) => ({
-            length: width,
-            offset: width * index,
-            index,
-          })}
-          renderItem={renderImage}
-        />
-        
-        {/* Dots indicator - only show if more than 1 image */}
-        {itemImages.length > 1 && (
-          <View style={styles.dotsContainer}>
-            {itemImages.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  index === currentIndex ? styles.activeDot : styles.inactiveDot,
-                ]}
-              />
-            ))}
-          </View>
-        )}
-      </View>
-    );
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedImage(null);
   };
 
-  const renderImage = ({ item: imageUrl, index }) => (
-    <View style={styles.imageContainer}>
-      <Image 
-        source={{ uri: imageUrl }} 
-        style={styles.image} 
-        resizeMode="contain"
-        onError={(error) => console.log('Image load error:', error)}
-      />
-    </View>
-  );
-
-  // REMOVED THE DUPLICATE useEffect BLOCKS
-
+  // Cart functions
   const fetchCartData = async () => {
-    console.log("fetching cart data");
     try {
-      const response = await handleCustomerCartData(customerId)
-      console.log("API Response from cart", response);
-      const cartData = response?.data?.customerCartResponseList;
-      if (!cartData || !Array.isArray(cartData) || cartData.length === 0) {
-        setCartData([]);
-        setCartItems({});
-        setIsLimitedStock({});
-        setCartCount(0);
-        return;
-      }
-
-      console.log("cartData:", cartData);
-
-      // Mapping items to their quantities
+      const response = await handleCustomerCartData(customerId);
+      const cartData = response?.data?.customerCartResponseList || [];
+      
       const cartItemsMap = cartData.reduce((acc, item) => {
-        if (
-          !item.itemId ||
-          item.cartQuantity === undefined ||
-          item.quantity === undefined ||
-          item.status != "ADD"
-        ) {
-          return acc;
+        if (item.itemId && item.cartQuantity !== undefined && item.status === "ADD") {
+          acc[item.itemId] = item.cartQuantity;
         }
-        acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
-
-      console.log("Cart Items Map:", cartItemsMap);
 
       const limitedStockMap = cartData.reduce((acc, item) => {
         if (item.quantity === 0) {
@@ -275,77 +174,13 @@ const ItemDetails = ({ route, navigation }) => {
         }
         return acc;
       }, {});
-      console.log("Limited Stock Map:", limitedStockMap);
 
-      // Updating state
-      setCartData(cartData);
+      setCartCount(cartData?.length || 0);
+
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
-      setCartCount(cartData.length);
     } catch (error) {
-      console.log(error);
-      console.error("Error fetching cart items:", error.response.status);
-    }
-  };
-
-  const handleAdd = async (item) => {
-    console.log("handle add", { item });
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await handleAddToCart(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-  };
-
- 
-
-  const handleIncrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await increaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-  };
-
-  const handleDecrease = async (item) => {
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: true }));
-    await decreaseCartItem(item);
-    setLoadingItems((prevState) => ({ ...prevState, [item.itemId]: false }));
-  };
-
-  const decreaseCartItem = async (item) => {
-    const data = {
-      customerId: customerId,
-      itemId: item.itemId,
-    };
-    try {
-      const response = await handleDecrementorRemovalCart(data);
-      Alert.alert("Success", response.data.errorMessage);
-      fetchCartData();
-    } catch (error) {
-      console.log("Error decrementing cart item:", error);
-    }
-  };
-
-  const increaseCartItem = async (item) => {
-    const data = {
-      customerId: customerId,
-      itemId: item.itemId,
-    };
-    try {
-      const response = await handleUserAddorIncrementCart(data);
-      fetchCartData();
-    } catch (error) {
-      console.error("Error incrementing cart item:", error.response);
-    }
-  };
-
-  const getCartItemById = (targetCartId) => {
-    const filteredCart = cartData.filter(
-      (item) => item.itemId === targetCartId
-    );
-
-    if (filteredCart.length > 0) {
-      return filteredCart[0];
-    } else {
-      console.log("No item found with cartId:", targetCartId);
-      return null;
+      console.error("", error);
     }
   };
 
@@ -358,286 +193,278 @@ const ItemDetails = ({ route, navigation }) => {
       return;
     }
 
-    const data = {
-      customerId: customerId,
-      itemId: item.itemId,
-    };
-
+    setLoadingItems(prev => ({ ...prev, [item.itemId]: true }));
+    
     try {
-      // Add item to cart
-      const response = await handleUserAddorIncrementCart(data);
+      const data = { customerId, itemId: item.itemId };
+      const response = await handleUserAddorIncrementCart(data, "ADD");
       
       Alert.alert(
         "Success",
-        response.data.errorMessage || "Item added to cart"
-      );
-      fetchCartData();
-
-      // Fetch active and eligible offers
-      const [activeRes, eligibleRes] = await Promise.all([
-        fetch(`${BASE_URL}cart-service/cart/activeOffers`),
-        fetch(`${BASE_URL}cart-service/cart/userEligibleOffer/${customerId}`),
-      ]);
-
-      const activeOffers = await activeRes.json();
-      const userEligibleOffers = await eligibleRes.json();
-
-      // Filter only active offers
-      const validActiveOffers = activeOffers.filter((offer) => offer.active);
-      if (!validActiveOffers.length) return;
-
-      // Extract used offer weights and names
-      const usedOfferWeights = userEligibleOffers
-        .filter((o) => o.eligible)
-        .map((o) => o.weight);
-      const usedOfferNames = userEligibleOffers
-        .filter((o) => o.eligible)
-        .map((o) => o.offerName);
-
-      const itemWeight = item.weight;
-      let alertShown = false;
-
-      // Check if user has already used an offer for this weight
-      const hasUsedOfferForWeight = usedOfferWeights.includes(itemWeight);
-
-      // 1️⃣ Check for already used offer for the same weight (non-container offers)
-      if (hasUsedOfferForWeight && itemWeight !== 10 && itemWeight !== 26) {
-        const usedOffer = userEligibleOffers.find(
-          (o) => o.eligible && o.weight === itemWeight
-        );
-        if (usedOffer) {
-          // setTimeout(() => {
-          //   Alert.alert(
-          //     "Offer Already Availed",
-          //     `You have already availed the ${usedOffer.offerName} for ${itemWeight}kg.`
-          //   );
-          // }, 1000);
-          alertShown = true;
-        }
-      }
-
-      // 2️⃣ Container Offer (10kg or 26kg, only one per user)
-      if (!alertShown && (itemWeight === 10 || itemWeight === 26)) {
-        // Check if user has already used a container offer (10kg or 26kg)
-        const hasUsedContainer = userEligibleOffers.some(
-          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26)
-        );
-
-        if (hasUsedContainer) {
-          // setTimeout(() => {
-          //   Alert.alert(
-          //     "Container Offer Already Availed",
-          //     "You have already availed a container offer. Only one container offer (10kg or 26kg) can be used."
-          //   );
-          // }, 1000);
-          alertShown = true;
-        } else {
-          const matchedContainerOffer = validActiveOffers.find(
-            (offer) =>
-              offer.minQtyKg === itemWeight &&
-              (offer.minQtyKg === 10 || offer.minQtyKg === 26) &&
-              !usedOfferNames.includes(offer.offerName)
-          );
-
-          if (matchedContainerOffer) {
-            setTimeout(() => {
-              Alert.alert(
-                "Container Offer",
-                `${matchedContainerOffer.offerName} FREE! `
-              );
-            }, 1000);
-            alertShown = true;
+        response.cartResponse?.errorMessage || "Item added to cart",
+        [{
+          text: "ok",
+          onPress: () => {
+            if (response.comboOffers) {
+              setComboOffersData(response.comboOffers);
+              setOfferShow(true);
+            }
           }
-        }
-      }
-
-      // 3️⃣ Special Offer (2+1 for 1kg or 5+2 for 5kg)
-      if (!alertShown && (itemWeight === 1 || itemWeight === 5)) {
-        const matchedSpecialOffer = validActiveOffers.find(
-          (offer) =>
-            offer.minQtyKg === itemWeight &&
-            (offer.minQtyKg === 1 || offer.minQtyKg === 5) &&
-            !usedOfferNames.includes(offer.offerName) &&
-            offer.freeItemName.toLowerCase() === item.itemName.toLowerCase()
-        );
-
-        if (matchedSpecialOffer) {
-          console.log("Matched Special Offer:", matchedSpecialOffer);
-          setTimeout(() => {
-            Alert.alert(
-              "Special Offer",
-             `${matchedSpecialOffer.offerName} is active!` 
-            );
-          }, 1000);
-          alertShown = true;
-        }
-      }
+        }]
+      );
+      
+      fetchCartData();
     } catch (error) {
       console.error("Add to cart error", error);
       Alert.alert("Error", "Failed to add item to cart. Please try again.");
+    } finally {
+      setLoadingItems(prev => ({ ...prev, [item.itemId]: false }));
     }
   };
 
-  
+  const handleIncrease = async (item) => {
+    setLoadingItems(prev => ({ ...prev, [item.itemId]: true }));
+    try {
+      await handleUserAddorIncrementCart({ customerId, itemId: item.itemId }, "Increment");
+      fetchCartData();
+    } catch (error) {
+      console.error("Error incrementing cart item:", error);
+    } finally {
+      setLoadingItems(prev => ({ ...prev, [item.itemId]: false }));
+    }
+  };
 
-  return (
-    <View style={styles.detailsContainer}>
-      <View style={styles.imageContainer}>
-        {/* Discount Badge */}
-        {item.itemMrp > item.itemPrice && (
+  const handleDecrease = async (item) => {
+    setLoadingItems(prev => ({ ...prev, [item.itemId]: true }));
+    try {
+      await handleDecrementorRemovalCart({ customerId, itemId: item.itemId });
+      fetchCartData();
+    } catch (error) {
+      console.error("Error decrementing cart item:", error);
+    } finally {
+      setLoadingItems(prev => ({ ...prev, [item.itemId]: false }));
+    }
+  };
+
+  // Render functions
+  const renderImageCarousel = () => {
+    const imageUrl = item?.itemImage;
+    
+    if (!imageUrl) return null;
+
+    return (
+      <TouchableOpacity
+        style={styles.imageContainer}
+        onPress={() => openModal(imageUrl)}
+      >
+        <Image
+          source={{ uri: imageUrl }}
+          style={styles.detailImage}
+          resizeMode="contain"
+        />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderPriceSection = () => (
+    <>
+    <View >
+      {item.itemMrp > item.itemPrice && (
+        <>        
+        <View style={{flexDirection:"row"}}>
+          <Text style={styles.originalPrice}>₹{item.itemMrp}</Text>
           <View style={styles.discountBadge}>
             <Text style={styles.discountText}>
-              {Math.round(
-                ((item.itemMrp - item.itemPrice) / item.itemMrp) * 100
-              )}
-              % OFF
+              {Math.round(((item.itemMrp - item.itemPrice) / item.itemMrp) * 100)}% OFF
             </Text>
+          </View>
+        </View>
+        <Text style={styles.currentPrice}>₹{item.itemPrice}</Text>
+        
+
+        </>
+      )}
+
+    </View>
+    
+    </>
+  );
+
+  const renderRatingSection = () => (
+    <View style={styles.ratingContainer}>
+      <View style={styles.starContainer}>
+        {[1, 2, 3, 4].map((i) => (
+          <FontAwesome key={i} name="star" size={16} color="#FFD700" />
+        ))}
+        <FontAwesome name="star-half-full" size={16} color="#FFD700" />
+      </View>
+      <Text style={styles.ratingText}>4.1 (1.3k)</Text>
+    </View>
+  );
+
+const renderQuantityControls = () => {
+  if (cartItems[item.itemId] > 0 || loadingItems[item.itemId]) {
+    return (
+      <View style={styles.quantityControls}>
+        <TouchableOpacity
+          style={styles.quantityButton}
+          onPress={() => handleDecrease(item)}
+          disabled={loadingItems[item.itemId]}
+        >
+          <LinearGradient
+            colors={['#ff6b6b', '#ff8e53']}
+            style={styles.gradientButton}
+          >
+            <Text style={styles.quantityButtonText}>-</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        {loadingItems[item.itemId] ? (
+          <ActivityIndicator size="small" color="#6200ea" />
+        ) : (
+          <View style={styles.quantityContainer}>
+            <Text style={styles.quantityText}>{cartItems[item.itemId]}</Text>
           </View>
         )}
-        
-        {/* Render Image Carousel */}
-        {renderImageCarousel()}
-        
-        {/* Star Ratings */}
-        <View style={styles.ratingContainer}>
-          {[...Array(4)].map((_, index) => (
-            <FontAwesome key={index} name="star" size={20} color="gold" />
-          ))}
-          {/* Half Star */}
-          <FontAwesome name="star-half-full" size={20} color="gold" />
-          {/* Static Rating Text */}
-          <Text style={styles.ratingText}>4.8/5</Text>
-        </View>
-        <Text style={styles.itemName}>{item.itemName.toUpperCase()}</Text>
+
+        <TouchableOpacity
+          style={[
+            styles.quantityButton,
+            cartItems[item.itemId] === item.quantity && styles.disabledButton
+          ]}
+          onPress={() => handleIncrease(item)}
+          disabled={loadingItems[item.itemId] || cartItems[item.itemId] === item.quantity}
+        >
+          <LinearGradient
+             colors={['#f44336', '#ff7961']}
+            style={styles.gradientButton}
+          >
+            <Text style={styles.quantityButtonText}>+</Text>
+          </LinearGradient>
+        </TouchableOpacity>
       </View>
-      
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1, padding: 5 }}
-        showsVerticalScrollIndicator={false} 
-        keyboardShouldPersistTaps="always"
+    );
+  } else {
+    return (
+      <TouchableOpacity
+        style={[
+          styles.addButton,
+          item.quantity === 0 && styles.disabledButton
+        ]}
+        onPress={() => handleAddToCart(item)}
+        disabled={item.quantity === 0}
       >
+        <LinearGradient
+          colors={item.quantity === 0 ? ['#d3d3d3', '#a9a9a9'] : ['#6200ea', '#8b00ff']}
+          style={styles.gradientAddButton}
+        >
+          <Text style={styles.addButtonText}>
+            {item.quantity === 0 ? "Out of Stock" : "Add"}
+          </Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  }
+};
+
+  const renderDeliveryInfo = () => (
+    <View style={styles.deliveryInfo}>
+      <View style={styles.deliveryRow}>
+        <Icon name="time-outline" size={16} color="#555" />
+        <Text style={styles.deliveryText}>Estimated Delivery: 6 mins</Text>
+      </View>
+      <View style={styles.deliveryRow}>
+        <MaterialIcons name="no-returns" size={16} color="#555" />
+        <Text style={styles.deliveryText}>No Return Or Exchange</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Product Image */}
+        {renderImageCarousel()}
+
+        {/* Product Info */}
         <View style={styles.infoContainer}>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Mrp:</Text>
-            <Text style={styles.mrpvalue}>₹ {item.itemMrp}/-</Text>
+          <Text style={styles.itemName}>{item.itemName}</Text>
+         
+          {/* Rating */}
+          {renderRatingSection()}
+          
+
+           <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Weight : {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
+</Text>
+            {/* <Text style={styles.infoValue}>
+              {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
+            </Text> */}
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Price:</Text>
-            <Text style={styles.value}>₹ {item.itemPrice}/-</Text>
+          {/* Price */}
+          <View style={{flexDirection:"row",justifyContent:"space-between"}}>
+                      {renderPriceSection()}
+
+             {renderQuantityControls()}
+
           </View>
 
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Weight:</Text>
-            <Text style={styles.itemWeight}>
-              {item.weight} {item.weight === 1 ? item.units.replace(/s$/, '') : item.units}
-            </Text>
-          </View>
+           <View style={styles.bmvCoinsContainer}>
+              <LinearGradient
+                colors={['#8B5CF6', '#7C3AED']}
+                style={styles.bmvCoinsBadge}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.bmvCoinsText}>You will get {item.bmvCoins} BMVCOINS</Text>
+              
+            <TouchableOpacity
+              style={styles.cartButton}
+              onPress={()=>setModalShow(true)}
+              activeOpacity={0.7}
+            >
+              <FontAwesome6 name="circle-info" color="#fff" size={24} containerStyle={styles.icon} />
+            </TouchableOpacity>
+            </LinearGradient>
+            </View>
           
+          {/* Weight */}
+         
+          
+          {/* Description */}
           {item.itemDescription && (
-            <View style={styles.descriptionCard}>
-              <Text style={styles.descriptionLabel}>Description:</Text>
+            <View style={styles.descriptionContainer}>
+              <Text style={styles.sectionTitle}>Description</Text>
               <Text style={styles.descriptionText}>{item.itemDescription}</Text>
             </View>
           )}
           
-          <View style={styles.infoRow1}>
-            <Text style={{ alignSelf: "center", alignItems: "center" }}>
-              {item.itemQuantity1}
-            </Text>
-            {isLimitedStock[item.itemId] == "lowStock" && (
-              <View style={styles.limitedStockBadge}>
-                <Text style={styles.limitedStockText}>
-                  {item.quantity > 1
-                    ? `${item.quantity} items left`
-                    : `${item.quantity} item left`}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.actionRow}>
-            {cartItems[item.itemId] > 0 || loadingItems[item.itemId] ? (
-              <View style={styles.quantityContainer}>
-                <TouchableOpacity
-                  style={styles.quantityButton}
-                  onPress={() => decreaseCartItem(item)}
-                  disabled={loadingItems[item.itemId]}
-                >
-                  <Text style={styles.quantityButtonText}>-</Text>
-                </TouchableOpacity>
-
-                {loadingItems[item.itemId] ? (
-                  <ActivityIndicator
-                    size="small"
-                    color="#000"
-                    style={styles.loader}
-                  />
-                ) : (
-                  <Text style={styles.quantityText}>
-                    {cartItems[item.itemId]}
-                  </Text>
-                )}
-
-                {/* Increase Button */}
-                {item.itemPrice == 1 ? (
-                  <View
-                    style={styles.quantityButton1}
-                    onPress={() => handleIncrease(item)}
-                    disabled={loadingItems[item.itemId]}
-                  >
-                    <Text style={styles.quantityButtonText}>+</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={[
-                      cartItems[item.itemId] === item.quantity
-                        ? styles.disabledButton
-                        : styles.quantityButton,
-                    ]}
-                    onPress={() => handleIncrease(item)}
-                    disabled={
-                      loadingItems[item.itemId] ||
-                      cartItems[item.itemId] === item.quantity
-                    }
-                  >
-                    <Text style={styles.buttonText}>+</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={[
-                    styles.addButton,
-                    item.quantity === 0 ? styles.disabledButton : {},
-                  ]}
-                  onPress={() => handleAdd(item)}
-                  disabled={item.quantity === 0}
-                >
-                  <Text style={styles.addbuttontext}>
-                    {item.quantity === 0
-                      ? "Out of Stock"
-                      : loadingItems[item.itemId]
-                      ? "Adding..."
-                      : "Add to Cart"}
-                  </Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
+          
+          {/* Stock Status */}
+          {isLimitedStock[item.itemId] === "lowStock" && (
+            <View style={styles.stockBadge}>
+              <Text style={styles.stockText}>
+                {item.quantity > 1 ? `${item.quantity} items left` : "Last item!"}
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
-      
+
+      {/* Footer with action buttons */}
       <View style={styles.footer}>
-        <View style={styles.rowContainer}>
-          <TouchableOpacity
+       
+        
+        <View style={styles.footerButtons}>
+          <TouchableOpacity 
+            style={styles.secondaryButton}
             onPress={() => navigation.goBack()}
-            style={styles.smallButton}
           >
-            <Text style={styles.buttonText}>Add More</Text>
+            <Text style={styles.secondaryButtonText}>Add More</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          
+          <TouchableOpacity 
+            style={styles.primaryButton}
             onPress={() => {
               if (userData) {
                 navigation.navigate("Home", { screen: "My Cart" });
@@ -648,310 +475,340 @@ const ItemDetails = ({ route, navigation }) => {
                 ]);
               }
             }}
-            style={styles.smallButton}
           >
-            <Text style={styles.buttonText}>View Cart</Text>
+            <Text style={styles.primaryButtonText}>View Cart</Text>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Modals */}
+      <OfferModal
+        visible={offerShow}
+        comboOffers={comboOffersData}
+        onClose={() => setOfferShow(false)}
+      />
+
+      <Modal visible={modalVisible} transparent={true} animationType="fade">
+        <View style={styles.modalBackground}>
+          <TouchableOpacity onPress={closeModal} style={styles.closeButton}>
+            <MaterialIcons name="close" size={30} color="white" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.fullImage}
+            resizeMode="contain"
+          />
+        </View>
+      </Modal>
+      <BVMCoins modalVisible={modalShow} onCloseModal={()=>{setModalShow(false)}} content={dynamicContent}/>
     </View>
   );
 };
 
-export default ItemDetails;
-
 const styles = StyleSheet.create({
-  detailsContainer: {
+  container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
-    padding: 10,
+    backgroundColor: '#FFF',
   },
-  actionRow: {
-    height: height / 3,
-   
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
+  scrollContent: {
+    paddingBottom: 100,
   },
   imageContainer: {
-    alignItems: "center",
-    marginBottom: 15,
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
   },
   detailImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 10,
-    resizeMode: "cover",
-    backgroundColor: "#eaeaea",
-    alignItems:"center",
-    alignSelf:"center"
+    width: width * 0.7,
+    height: width * 0.7,
+    resizeMode: 'contain',
+  },
+  infoContainer: {
+    padding: 20,
   },
   itemName: {
-  marginTop: 10,
-  fontSize: 15,
-  fontWeight: "bold",
-  color: "#333",
-  textAlign: "center",
-  padding: 10,
-  flexWrap: "wrap",       // Add this (optional but helpful inside row layout)
-},
-
-  infoContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
   },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 4,
-  },
-  infoRow1: {
-    alignSelf: "center",
-    justifyContent: "center",
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  netQty: {
+    fontSize: 14,
+    color: '#666',
     marginBottom: 10,
   },
-  label: {
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  starContainer: {
+    flexDirection: 'row',
+    marginRight: 8,
+  },
+  ratingText: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#555",
+    color: '#666',
   },
-  value: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#222",
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
   },
-  descriptionContainer: {
-    marginTop: 15,
+  currentPrice: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginRight: 10,
   },
-  description: {
-    fontSize: 16,
-    color: "#444",
-    lineHeight: 22,
-  },
-  quantityContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  quantityButton: {
-    backgroundColor: COLORS.services,
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: "center",
-    alignItems: "center",
-  },
-  quantityButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000",
-    color: "#fff",
-    alignItems: "center",
-    alignSelf: "center",
-  },
-  quantityText: {
+  originalPrice: {
     fontSize: 18,
-    marginHorizontal: 10,
-    color: "#000",
+    color: '#999',
+    textDecorationLine: 'line-through',
+    marginRight: 10,
   },
-  loader: {
-    marginHorizontal: 10,
-  },
-  addButton: {
-    backgroundColor: COLORS.services,
-    width: 100,
-    paddingVertical: 8,
+  discountBadge: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 4,
-    marginTop: 10,
-    alignItems: "center",
-    alignSelf: "center",
   },
-  addbuttontext: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#fff",
+  discountText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
-  ViewButton: {
-    backgroundColor: COLORS.services,
-    paddingVertical: 10,
-    borderRadius: 5,
-    marginTop: 70,
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    // borderBottomWidth: 1,
+    // borderBottomColor: '#EEE',
   },
-  viewButtonText: {
-    fontSize: 18,
-    color: "#fff",
-    textAlign: "center",
-  },
-  buttonContainer: {
-    marginTop: 70,
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 20,
-  },
-  rowContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  smallButton: {
-    flex: 1,
-    marginHorizontal: 10,
-    backgroundColor: COLORS.services,
-    paddingVertical: 12,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  largeButton: {
-    width: "60%",
-    backgroundColor: "#4CAF50",
-    paddingVertical: 14,
-    borderRadius: 5,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff", // Text color
+  infoLabel: {
     fontSize: 16,
-    fontWeight: "bold",
+    color: '#666',
   },
-  descriptionCard: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 8,
-    // borderWidth: 1,
-    // borderColor: "#ddd",
+  infoValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
   },
-  descriptionLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 6,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
   },
   descriptionText: {
     fontSize: 14,
-    color: "#555",
+    color: '#666',
     lineHeight: 20,
   },
+  highlightsContainer: {
+    marginTop: 15,
+  },
+  highlightText: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  highlightBold: {
+    fontWeight: 'bold',
+  },
+  deliveryInfo: {
+    marginTop: 20,
+    backgroundColor: '#F8F8F8',
+    padding: 15,
+    borderRadius: 8,
+  },
+  deliveryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  deliveryText: {
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 8,
+  },
+  stockBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FF6B6B',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 4,
+    marginTop: 15,
+  },
+  stockText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   footer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "#fff",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    backgroundColor: '#FFF',
+    padding: 15,
     borderTopWidth: 1,
-    borderTopColor: "#ddd",
-    elevation: 4, // Adds a shadow effect
+    borderTopColor: '#EEE',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  mrpvalue: {
-    textDecorationLine: "line-through",
-    color: "#D32F2F",
+  quantityControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 15,
+    padding: 5,
+    elevation: 5, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    marginRight:15
   },
-  limitedStockBadge: {
-    // position: "absolute",
-    top: 10,
-    // left: 20,
-    alignSelf: "center",
-    alignItems: "center",
-    backgroundColor: "red",
+  quantityButton: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginHorizontal: 5,
+    padding:5
+  },
+  gradientButton: {
     paddingVertical: 5,
     paddingHorizontal: 10,
-    borderRadius: 5,
-    zIndex: 10,
-    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
   },
-  limitedStockText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
+  quantityButtonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  quantityContainer: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  quantityText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  addButton: {
+    borderRadius: 15,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+  },
+  gradientAddButton: {
+    padding:10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15,
+  },
+ 
+  disabledButton: {
+    opacity: 0.6,
+  },
+  addButtonText: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   disabledButton: {
-    backgroundColor: "gray",
-    opacity: 0.5,
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: "center",
-    alignItems: "center",
+    backgroundColor: '#CCC',
   },
-  discountBadge: {
-    position: "absolute",
-    top: 1,
-    // bottom:1,
-    left: width * 0.2,
-    // right:width*0.2,
-    backgroundColor: "#ffa600",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2,
-  },
-
-  discountText: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 12,
-    textAlign: "center",
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 5,
-    justifyContent:"center"
-  },
-  ratingText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "black",
-    marginLeft: 5,
-  },
-  quantityButton1: {
-    backgroundColor: "#c0c0c0",
-    padding: 10,
-    borderRadius: 5,
-    alignSelf: "center",
-    alignItems: "center",
-  },
-   carouselContainer: {
-    // Add your container styles here
-  },
-  imageContainer: {
-    width: width,
-    // Add your image container styles here
-  },
-  image: {
-    width: '100%',
-    height: 300, // Adjust as needed
-    // Add your image styles here
-  },
-  dotsContainer: {
+  footerButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: COLORS.services,
+    padding: 15,
+    borderRadius: 8,
+    marginLeft: 10,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  secondaryButton: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    padding: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.services,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    color: COLORS.services,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 10,
-    // Add your dots container styles here
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
-    // Add your dot styles here
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 1,
   },
-  activeDot: {
-    backgroundColor: '#007AFF',
-    // Add your active dot styles here
+  fullImage: {
+    width: width,
+    height: width,
   },
-  inactiveDot: {
-    backgroundColor: '#C7C7CC',
-    // Add your inactive dot styles here
+   bmvCoinsBadge:{
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    borderRadius: 12,
+    // zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent:"space-between",
+    marginBottom:15
   },
+  bmvCoinsText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fff',
+    opacity: 0.9,
+  },
+  bmvCoinsContainer:{
+    marginTop:10,
+    // position:"relative",
+    // top:-40,
+    width:width*0.9,
+    // marginBottom:10
+  }
 });
+
+export default ItemDetails;
