@@ -1,4 +1,4 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert,
   Platform,
@@ -701,7 +701,7 @@ useEffect(() => {
 
     if (total === 0) {
       console.log("Get all Values",{total});
-      setSelectedPaymentMode('COD');
+      // setSelectedPaymentMode('COD');
     }
 
     // console.log("Used Wallet:", usedWallet);
@@ -739,7 +739,7 @@ useEffect(() => {
 
     // const avail = offeravailable === "YES" ? "YES" : null;
 
-   const  postData = {
+   postData = {
       address: addressDetails?.address,
       amount: grandTotalAmount,
       // amount:"1",
@@ -931,7 +931,7 @@ useEffect(() => {
             bankId: "",
             txnType: "single",
             productType: "IPG",
-            txnNote: "Rice Order In Live",
+            txnNote: "Rice Order In Live Mobile App",
             vpa: "Getepay.merchant129014@icici",
           };
           // console.log({ data });
@@ -968,6 +968,8 @@ useEffect(() => {
     } else {
     }
   }, [paymentStatus, paymentId]);
+
+  var postData ;
 
   const getepayPortal = async (data) => {
     console.log("getepayPortal", data);
@@ -1039,14 +1041,14 @@ useEffect(() => {
       });
   };
 
-    function Requery(paymentId) {
+  async function Requery(paymentId) {
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
       paymentStatus === null ||
       paymentStatus === "INITIATED"
     ) {
-      // console.log("Before.....",paymentId)
+      console.log("Before.....",paymentId)  
 
       const Config = {
         "Getepay Mid": 1152305,
@@ -1100,38 +1102,21 @@ useEffect(() => {
         .then((result) => {
           var resultobj = JSON.parse(result);
           if (resultobj.response != null) {
-            // console.log("Requery ID result", paymentId);
+            console.error("Requery ID result", paymentId);
             var responseurl = resultobj.response;
-            // console.log({ responseurl });
+            // console.error({ responseurl });
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
-            console.log("Payment Result", data);
+            // console.error("Payment Result", data);
             setPaymentStatus(data.paymentStatus);
-            console.log(data.paymentStatus);
+            // console.error(data.paymentStatus);
             if (
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILED"
             ) {
               // clearInterval(intervalId); 294182409
-              if (data.paymentStatus === "SUCCESS") {
-                axios({
-                  method: "get",
-                  url:
-                    BASE_URL +
-                    `/order-service/api/download/invoice?paymentId=${transactionId}&&userId=${customerId}`,
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                })
-                  .then((response) => {
-                    console.log(response.data);
-                  })
-                  .catch((error) => {
-                    console.error("Error in payment confirmation:", error);
-                  });
-              }
-              axios({
+              
+             axios({
                 method: "POST",
                 url: BASE_URL + "order-service/orderPlacedPaymet",
                 data: {
@@ -1145,6 +1130,13 @@ useEffect(() => {
                 },
               })
                 .then((secondResponse) => {
+                  alert(
+                    "Order Confirmed!",
+                    "Your order has been placed successfully. Thank you for shopping with us!"
+                  );
+                  console.error("Payment Status", data.paymentStatus);
+                  console.error("Transaction ID", transactionId);
+                  setWaitingLoader(false);
                   console.log(
                     "Order Placed with Payment API:",
                     secondResponse.data
@@ -1183,16 +1175,20 @@ useEffect(() => {
                           text: "OK",
                           onPress: () => {
                             setLoading(false);
+                            setModalVissible(false);
+                            setWaitingLoader(false);
                             navigation.navigate("My Orders");
                           },
                         },
                       ];
-
+                  
                   Alert.alert("Order Confirmed!", message, buttons);
                 })
                 .catch((error) => {
                   console.error("Error in payment confirmation:", error);
                   setLoading(false);
+                  setWaitingLoader(false);
+                  // Alert.alert("Error", "Payment confirmation failed.");
                 });
             } else {
               setLoading(false);
@@ -1411,50 +1407,47 @@ const fetchTimeSlots = async (eligibleTime) => {
     setDays(transformedDays);
 
     // Handle auto-selection for iOS
-    if (Platform.OS === "ios") {
-      if (transformedDays.length === 0) return; // No available days
+  if (Platform.OS === "ios") {
+  if (transformedDays.length === 0 || !Array.isArray(slotsData)) return;
 
-      if (eligibleTime) {
-        // Auto select today if eligibleTime = true
-        setSelectedDay(transformedDays[0]?.value);
-      } else {
-        // Auto select tomorrow (second day in list)
-        setSelectedDay(transformedDays[1]?.value || transformedDays[0]?.value);
-      }
+  const autoSelectedDay = eligibleTime
+    ? transformedDays[0]?.value
+    : transformedDays[1]?.value || transformedDays[0]?.value;
 
-      const selectedDayData = transformedDays.find(
-        (d) => d.value.trim().toUpperCase() === selectedDay?.trim()?.toUpperCase()
-      );
+  setSelectedDay(autoSelectedDay);
 
-      if (selectedDayData) {
-        const fullDayData = slotsData.find(
-          (d) => d.dayOfWeek.trim().toUpperCase() === selectedDayData.value.trim().toUpperCase()
-        );
+  const selectedDayData = transformedDays.find(
+    (d) => d.value.trim().toUpperCase() === autoSelectedDay.trim().toUpperCase()
+  );
 
-        if (fullDayData) {
-          setSelectedDate(selectedDayData.formattedDate);
-          setUpdatedate(selectedDayData.formattedDate);
+  if (!selectedDayData) return;
 
-          const timeSlots = [
-            { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
-            { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
-            { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
-            { time: fullDayData.timeSlot4, status: fullDayData.slot4Status },
-          ];
+  const fullDayData = slotsData.find(
+    (d) => d.dayOfWeek.trim().toUpperCase() === selectedDayData.value.trim().toUpperCase()
+  );
 
-          const availableTimeStrings = timeSlots
-            .filter((slot) => slot.time && !slot.status) // false = available
-            .map((slot) => slot.time);
+  if (!fullDayData) return;
 
-          const uniqueAvailableTimes = [...new Set(availableTimeStrings)];
+  setSelectedDate(selectedDayData.formattedDate);
+  setUpdatedate(selectedDayData.formattedDate);
 
-          console.log("Available Times:", uniqueAvailableTimes);
+  const timeSlots = [
+    { time: fullDayData.timeSlot1, status: fullDayData.slot1Status },
+    { time: fullDayData.timeSlot2, status: fullDayData.slot2Status },
+    { time: fullDayData.timeSlot3, status: fullDayData.slot3Status },
+    { time: fullDayData.timeSlot4, status: fullDayData.slot4Status },
+  ];
 
-          setTimeSlots(uniqueAvailableTimes);
-          setSelectedTimeSlot(uniqueAvailableTimes[0]);
-        }
-      }
-    }
+  const uniqueAvailableTimes = [...new Set(
+    timeSlots
+      .filter((slot) => slot.time && !slot.status)
+      .map((slot) => slot.time)
+  )];
+
+  setTimeSlots(uniqueAvailableTimes);
+  setSelectedTimeSlot(uniqueAvailableTimes[0] || null);
+}
+
 
   } catch (error) {
     console.error("Error fetching time slots:", error);
@@ -1593,7 +1586,7 @@ const fetchTimeSlots = async (eligibleTime) => {
     locationData,
     addressDetails,
     // ==================== PAYMENT SETTERS ====================
-    setTransactionId,
+    setTransactionId, 
     setPaymentId,
     setPaymentStatus,
     setSelectedPaymentMode,

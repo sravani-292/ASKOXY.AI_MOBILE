@@ -85,6 +85,7 @@ import CaServices from "../CaServices";
 import AccountDeletionScreen from "../Authorization/AccountDeletion";
 import Home from "../Home";
 import NewDashBoard from "../Screens/New_Dashbord/screen/NewDashBoard";
+import WishlistScreen from "../Screens/New_Dashbord/components/Wishlist";
 
 import PaymentTest from "../PaymentTest";
 import Chats from "../Screens/Chats/Chat";
@@ -520,6 +521,11 @@ const formatWord = (word) => {
 
       <Stack.Screen name="New Address Book" component={NewAddressBook} />
       <Stack.Screen name="Coupons" component={OxyCoupens} />
+      <Stack.Screen
+        name="Wishlist"
+        component={WishlistScreen}
+        options={{ headerShown: true, title: "My Wishlist" }}
+      />
     </Stack.Navigator>
   );
 }

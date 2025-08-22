@@ -472,8 +472,8 @@ const getRiceCategories = async () => {
          }
          return acc;
        }, {});
-
-       setCartCount(cartData?.length || 0)
+      
+       setCartCount(totalCartCount || 0)
  
        setCart(cartData);
      } catch (error) {

@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 import ProductCard from './ProductCard';
 import { handleDecrementorRemovalCart } from '../../../ApiService';
 import { supabase } from '../../../Config/supabaseClient'; // Adjust path as needed
@@ -31,6 +32,8 @@ const CategorySection = ({
   const [selectedWeightFilter, setSelectedWeightFilter] = useState(weightFilter);
   const [priorityItemsByName, setPriorityItemsByName] = useState([]);
   const [loadingPriorityItems, setLoadingPriorityItems] = useState(true);
+
+  const navigation = useNavigation();
 
   // Fallback priority items (used if Supabase fails)
   const fallbackPriorityItems = [

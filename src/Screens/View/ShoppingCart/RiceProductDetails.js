@@ -131,13 +131,19 @@ const RiceProductDetails = ({ route, navigation }) => {
         return acc;
       }, {});
 
+       const totalCartCount = cartData.reduce(
+         (total, item) => total + item.cartQuantity,
+         0
+       );
+      
+
       console.log("Limited Stock Map:", limitedStockMap);
 
       // Updating state
       setCartData(cartData);
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);
-      setCartCount(cartData.length);
+      setCartCount(totalCartCount || 0); // Ensure cartCount is set to 0 if totalCartCount is undefined or null
     } catch (error) {
       console.error("Error fetching cart items:", error.response.status);
     }

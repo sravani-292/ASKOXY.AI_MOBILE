@@ -20,22 +20,24 @@ export default function DateTimeSelector({
   onDayChange,
   onTimeSlotChange,
 }) {
-  if (Platform.OS === "ios") {
-    return (
-      <View style={styles.iosBox}>
-        <Text style={styles.label}>
-          {selectedDay
-            ? "Your order will be delivered on:"
-            : "Select Date & Time"}
-        </Text>
-        {selectedDay ? (
-          <Text
-            style={styles.value}
-          >{`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}</Text>
-        ) : null}
-      </View>
-    );
-  }
+  // if (Platform.OS === "ios") {
+  //   console.log("Your order will be delivered on:", updatedDate, "(", selectedDay, "),", selectedTimeSlot);
+    
+  //   return (
+  //     <View style={styles.iosBox}>
+  //       <Text style={styles.label}>
+  //         {selectedDay
+  //           ? "Your order will be delivered on:"
+  //           : "Select Date & Time"}
+  //       </Text>
+  //       {selectedDay ? (  
+  //         <Text
+  //           style={styles.value}
+  //         >{`${updatedDate} (${selectedDay}), ${selectedTimeSlot}`}</Text>
+  //       ) : null}
+  //     </View>
+  //   );
+  // }
 
   return (
     <>

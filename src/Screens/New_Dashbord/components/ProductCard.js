@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons,FontAwesome6 } from '@expo/vector-icons';
 import formatUnit from '../../../../until/unitsChange';
 import BVMCoins from '../../View/Profile/BVMCoins';
+import WishlistButton from './WishlistButton';
 
 const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, customerId, dynamicContent }) => {
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,7 @@ const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, custo
   }, [cartItem, customerId, onDecrement, handleAction]);
 
   const handleAddToCart = useCallback(() => {
+    console.log("Adding to cart:", item);
     handleAction(() => onAddToCart(item,'ADD'), 'ADD');
   }, [item, onAddToCart, handleAction]);
 
@@ -115,7 +117,7 @@ const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, custo
           />
           
           {/* Wishlist/Favorite Button */}
-          <TouchableOpacity 
+          {/* <TouchableOpacity 
             style={styles.favoriteButton}
             activeOpacity={0.7}
           >
@@ -127,7 +129,8 @@ const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, custo
             >
               <Ionicons name="heart-outline" size={16} color="#8B5CF6" />
             </LinearGradient>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
+          <WishlistButton product={item} />
         </LinearGradient>
 
         <View style={styles.info}>
@@ -175,7 +178,7 @@ const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, custo
             )}
             <View style={styles.bmvCoinsContainer}>
               <LinearGradient
-                colors={['#8B5CF6', '#7C3AED']}
+                colors={['#f3e8ff', '#e9d5ff']}
                 style={styles.bmvCoinsBadge}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -187,7 +190,7 @@ const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, custo
               onPress={()=>setModalVisible(true)}
               activeOpacity={0.7}
             >
-              <FontAwesome6 name="circle-info" color="#fff" size={20} containerStyle={styles.icon} />
+               <FontAwesome6 name="circle-info" color="#6b21a8" size={20} containerStyle={styles.icon} />
             </TouchableOpacity>
             </LinearGradient>
             </View>
@@ -501,23 +504,28 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
-  bmvCoinsBadge:{
-    paddingHorizontal: 8,
+  bmvCoinsContainer: {
+    marginBottom: 8, 
+    width: "100%", 
+    marginTop:10
+  },
+  bmvCoinsBadge: {
+    paddingHorizontal: 6,
     paddingVertical: 4,
-    borderRadius: 12,
-    // zIndex: 10,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:"space-between"
+    justifyContent: "space-between",
   },
   bmvCoinsText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#6b21a8',
     opacity: 0.9,
-  },
-  bmvCoinsContainer:{
-    marginBottom: 12,
+    flex: 1, 
+    marginRight: 4,
+    lineHeight: 12,
+    width: '60%',
   },
   cartButton:{}
 });

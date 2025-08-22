@@ -11,6 +11,7 @@ export const handleCustomerCartData = async (customerId) => {
     const response = axios.get(
       `${BASE_URL}cart-service/cart/userCartInfo?customerId=${customerId}`
     );
+    
     return response;
   } catch (error) {
     console.error("Error fetching customer cart data:", error);

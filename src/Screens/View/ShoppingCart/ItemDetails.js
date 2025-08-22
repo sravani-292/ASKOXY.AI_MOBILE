@@ -175,7 +175,12 @@ const ItemDetails = ({ route }) => {
         return acc;
       }, {});
 
-      setCartCount(cartData?.length || 0);
+      const totalCartCount = cartData.reduce(
+         (total, item) => total + item.cartQuantity,
+         0
+       );
+
+      setCartCount(totalCartCount || 0);
 
       setCartItems(cartItemsMap);
       setIsLimitedStock(limitedStockMap);

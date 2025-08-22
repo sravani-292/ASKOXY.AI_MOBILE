@@ -39,18 +39,25 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
     return () => subscription?.remove();
   }, []);
 
-  // Calculate responsive dimensions
+  // Calculate responsive dimensions - Fixed to prevent overlapping
   const responsiveDimensions = useMemo(() => {
     const { width } = screenDimensions;
-    const padding = 32; // 16px on each side
-    const itemWidth = width - padding;
-    const itemSeparatorWidth = 16;
+    const containerPadding = Math.max(16, width * 0.04); // 4% of screen width, minimum 16px
+    const itemSeparatorWidth = Math.max(8, width * 0.02); // 2% of screen width, minimum 8px
+    const itemWidth = width - (containerPadding * 2);
+    
+    // Calculate banner height based on screen size
+    const bannerHeight = Math.max(140, Math.min(180, width * 0.4)); // Between 140-180px based on screen width
     
     return {
       itemWidth,
       itemSeparatorWidth,
-      containerPadding: 16,
+      containerPadding,
       snapToInterval: itemWidth + itemSeparatorWidth,
+      bannerHeight,
+      isSmallScreen: width < 360,
+      isMediumScreen: width >= 360 && width < 400,
+      isLargeScreen: width >= 400,
     };
   }, [screenDimensions]);
 
@@ -113,8 +120,10 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
     const priceMatch = itemName.match(/₹(\d+)!/);
     const weightMatch = itemName.match(/(\d+)kg/i);
     
-    const shortDescription = itemDescription && itemDescription.length > 60 
-      ? `${itemDescription.substring(0, 60)}...`
+    // Responsive text truncation based on screen size
+    const maxLength = responsiveDimensions.isSmallScreen ? 45 : responsiveDimensions.isMediumScreen ? 55 : 65;
+    const shortDescription = itemDescription && itemDescription.length > maxLength 
+      ? `${itemDescription.substring(0, maxLength)}...`
       : itemDescription;
     
     return {
@@ -124,7 +133,7 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
       fullItemName: itemName,
       shortDescription: shortDescription
     };
-  }, []);
+  }, [responsiveDimensions]);
 
   // Memoize gradient colors
   const gradientColors = useMemo(() => [
@@ -144,112 +153,245 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
     navigation.navigate('Rice Products', { offerId: weight.weight });
   };
 
-  // Memoize render item to prevent unnecessary re-renders
+  // Memoize render item to prevent unnecessary re-renders - Fixed for responsive design
   const renderPromoBanner = useCallback(({ item, index }) => {
     const colors = getGradientColors(index);
     const isDefault = !item.imageUrl;
     const offerDetails = extractOfferDetails(item.itemName, item.itemDescription);
+    const { bannerHeight, isSmallScreen, isMediumScreen } = responsiveDimensions;
+    
+    // Calculate responsive padding and sizes
+    const bannerPadding = isSmallScreen ? 12 : isMediumScreen ? 16 : 20;
+    const visualSectionWidth = isSmallScreen ? 70 : isMediumScreen ? 85 : 100;
     
     return (
       <LinearGradient
         colors={colors}
-        style={[styles.promoBanner, { width: responsiveDimensions.itemWidth }]}
+        style={[
+          styles.promoBanner, 
+          { 
+            width: responsiveDimensions.itemWidth, 
+            height: bannerHeight,
+            padding: bannerPadding
+          }
+        ]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        {/* Background Pattern */}
-        <View style={styles.backgroundPattern} />
+        {/* Background Pattern - Responsive */}
+        <View style={[
+          styles.backgroundPattern,
+          {
+            width: bannerHeight * 0.4,
+            height: bannerHeight * 0.4,
+            borderRadius: bannerHeight * 0.2,
+          }
+        ]} />
         
         <View style={styles.promoLayout}>
           {/* Left Section - Offer Details */}
-          <View style={styles.offerSection}>
+          <View style={[styles.offerSection, { paddingRight: isSmallScreen ? 8 : 12 }]}>
             {isDefault ? (
               <View style={styles.defaultContent}>
-                <Text style={styles.brandText}>Fresh</Text>
-                <Text style={styles.taglineText}>Grocery Delivered</Text>
-                <View style={styles.badgeContainer}>
-                  <Text style={styles.badgeText}>Premium Quality</Text>
+                <Text style={[
+                  styles.brandText,
+                  { 
+                    fontSize: isSmallScreen ? 24 : isMediumScreen ? 28 : 32,
+                    lineHeight: isSmallScreen ? 28 : isMediumScreen ? 32 : 36
+                  }
+                ]}>Fresh</Text>
+                <Text style={[
+                  styles.taglineText,
+                  { fontSize: isSmallScreen ? 12 : isMediumScreen ? 14 : 16 }
+                ]}>Grocery Delivered</Text>
+                <View style={[
+                  styles.badgeContainer,
+                  { 
+                    paddingHorizontal: isSmallScreen ? 8 : 12,
+                    paddingVertical: isSmallScreen ? 4 : 6,
+                    marginTop: isSmallScreen ? 8 : 12
+                  }
+                ]}>
+                  <Text style={[
+                    styles.badgeText,
+                    { fontSize: isSmallScreen ? 8 : 10 }
+                  ]}>Premium Quality</Text>
                 </View>
               </View>
             ) : (
               <View style={styles.offerContent}>
                 {/* Savings Badge */}
                 {offerDetails.savings && (
-                  <View style={styles.savingsBadge}>
-                    <Text style={styles.savingsText}>SAVE {offerDetails.savings}</Text>
+                  <View style={[
+                    styles.savingsBadge,
+                    {
+                      paddingHorizontal: isSmallScreen ? 6 : 8,
+                      paddingVertical: isSmallScreen ? 2 : 4,
+                      marginBottom: isSmallScreen ? 4 : 8
+                    }
+                  ]}>
+                    <Text style={[
+                      styles.savingsText,
+                      { fontSize: isSmallScreen ? 8 : 10 }
+                    ]}>SAVE {offerDetails.savings}</Text>
                   </View>
                 )}
                 
-                {/* Main Offer - Full ItemName */}
-                <Text style={styles.offerTitle} numberOfLines={3}>
+                {/* Main Offer - Responsive font size */}
+                <Text 
+                  style={[
+                    styles.offerTitle,
+                    { 
+                      fontSize: isSmallScreen ? 11 : isMediumScreen ? 12 : 14,
+                      lineHeight: isSmallScreen ? 14 : isMediumScreen ? 16 : 18,
+                      marginBottom: isSmallScreen ? 4 : 6
+                    }
+                  ]} 
+                  numberOfLines={isSmallScreen ? 2 : 3}
+                >
                   {offerDetails.fullItemName}
                 </Text>
                 
-                {/* Description - Truncated */}
+                {/* Description - Responsive */}
                 {offerDetails.shortDescription && (
-                  <Text style={styles.offerDescription} numberOfLines={2}>
+                  <Text 
+                    style={[
+                      styles.offerDescription,
+                      { 
+                        fontSize: isSmallScreen ? 9 : 11,
+                        lineHeight: isSmallScreen ? 12 : 14,
+                        marginBottom: isSmallScreen ? 4 : 8
+                      }
+                    ]} 
+                    numberOfLines={isSmallScreen ? 1 : 2}
+                  >
                     {offerDetails.shortDescription}
                   </Text>
                 )}
                 
-                {/* Price & Weight */}
+                {/* Price & Weight - Responsive */}
                 <View style={styles.detailsRow}>
                   {offerDetails.price && (
-                    <View style={styles.priceTag}>
-                      <Text style={styles.priceText}>{offerDetails.price}</Text>
+                    <View style={[
+                      styles.priceTag,
+                      {
+                        paddingHorizontal: isSmallScreen ? 6 : 8,
+                        paddingVertical: isSmallScreen ? 2 : 4,
+                        marginRight: isSmallScreen ? 4 : 8
+                      }
+                    ]}>
+                      <Text style={[
+                        styles.priceText,
+                        { fontSize: isSmallScreen ? 10 : 12 }
+                      ]}>{offerDetails.price}</Text>
                     </View>
                   )}
                   {offerDetails.weight && (
-                    <View style={styles.weightTag}>
-                      <Text style={styles.weightText}>{offerDetails.weight}</Text>
+                    <View style={[
+                      styles.weightTag,
+                      {
+                        paddingHorizontal: isSmallScreen ? 6 : 8,
+                        paddingVertical: isSmallScreen ? 2 : 4
+                      }
+                    ]}>
+                      <Text style={[
+                        styles.weightText,
+                        { fontSize: isSmallScreen ? 8 : 10 }
+                      ]}>{offerDetails.weight}</Text>
                     </View>
                   )}
                 </View>
               </View>
             )}
             
-            {/* Action Button */}
+            {/* Action Button - Responsive */}
             <TouchableOpacity 
-              style={styles.actionButton}
+              style={[
+                styles.actionButton,
+                {
+                  paddingHorizontal: isSmallScreen ? 8 : 12,
+                  paddingVertical: isSmallScreen ? 4 : 6,
+                  marginTop: isSmallScreen ? 8 : 15,
+                  alignSelf: isSmallScreen ? 'flex-start' : 'flex-end'
+                }
+              ]}
               onPress={() => navigateToRice?.(item)}
               activeOpacity={0.8}
             >
-              <Text style={styles.actionButtonText}>
+              <Text style={[
+                styles.actionButtonText,
+                { fontSize: isSmallScreen ? 10 : 12 }
+              ]}>
                 {isDefault ? 'SHOP NOW' : 'GRAB DEAL'}
               </Text>
-              <Text style={styles.actionButtonIcon}>→</Text>
+              <Text style={[
+                styles.actionButtonIcon,
+                { fontSize: isSmallScreen ? 12 : 14 }
+              ]}>→</Text>
             </TouchableOpacity>
           </View>
           
-          {/* Right Section - Visual */}
-          <View style={styles.visualSection}>
+          {/* Right Section - Visual - Responsive */}
+          <View style={[styles.visualSection, { width: visualSectionWidth }]}>
             {item.imageUrl ? (
-              <View style={styles.imageContainer}>
+              <View style={[
+                styles.imageContainer,
+                {
+                  width: visualSectionWidth - 10,
+                  height: visualSectionWidth - 10,
+                  borderRadius: isSmallScreen ? 8 : 12
+                }
+              ]}>
                 <Image 
                   source={{ uri: item.imageUrl }}
                   style={styles.promoImage}
                   resizeMode="cover"
-                  // Add caching and loading optimizations
                   cache="force-cache"
                 />
-                <View style={styles.imageOverlay} />
+                <View style={[
+                  styles.imageOverlay,
+                  { borderRadius: isSmallScreen ? 8 : 12 }
+                ]} />
               </View>
             ) : (
-              <View style={styles.iconContainer}>
-                <Text style={styles.mainIcon}>🛒</Text>
-                <View style={styles.decorativeCircle} />
+              <View style={[
+                styles.iconContainer,
+                {
+                  width: visualSectionWidth - 10,
+                  height: visualSectionWidth - 10
+                }
+              ]}>
+                <Text style={[
+                  styles.mainIcon,
+                  { fontSize: isSmallScreen ? 24 : isMediumScreen ? 30 : 36 }
+                ]}>🛒</Text>
+                <View style={[
+                  styles.decorativeCircle,
+                  {
+                    width: visualSectionWidth - 20,
+                    height: visualSectionWidth - 20,
+                    borderRadius: (visualSectionWidth - 20) / 2
+                  }
+                ]} />
               </View>
             )}
           </View>
         </View>
         
-        {/* Corner Decoration */}
-        <View style={styles.cornerDecoration} />
+        {/* Corner Decoration - Responsive */}
+        <View style={[
+          styles.cornerDecoration,
+          {
+            width: bannerHeight * 0.25,
+            height: bannerHeight * 0.25,
+            borderRadius: bannerHeight * 0.125
+          }
+        ]} />
       </LinearGradient>
     );
-  }, [getGradientColors, extractOfferDetails, responsiveDimensions.itemWidth]);
+  }, [getGradientColors, extractOfferDetails, responsiveDimensions]);
 
-  // Memoize dots rendering
+  // Memoize dots rendering with responsive sizing
   const renderDots = useCallback(() => (
     <View style={styles.dotsContainer}>
       {promoData.map((_, index) => (
@@ -259,25 +401,27 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
             styles.dot,
             { 
               backgroundColor: index === currentIndex ? '#FF6B35' : '#E0E0E0',
-              width: index === currentIndex ? 20 : 8,
+              width: index === currentIndex ? (responsiveDimensions.isSmallScreen ? 16 : 20) : 8,
+              height: responsiveDimensions.isSmallScreen ? 6 : 8,
+              borderRadius: responsiveDimensions.isSmallScreen ? 3 : 4,
+              marginHorizontal: responsiveDimensions.isSmallScreen ? 2 : 4
             }
           ]}
         />
       ))}
     </View>
-  ), [promoData.length, currentIndex]);
+  ), [promoData.length, currentIndex, responsiveDimensions]);
 
   // Updated scroll handler with responsive dimensions
   const handleScroll = useCallback((event) => {
-    const slideWidth = responsiveDimensions.itemWidth;
+    const slideWidth = responsiveDimensions.itemWidth + responsiveDimensions.itemSeparatorWidth;
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const newIndex = Math.round(contentOffsetX / slideWidth);
     
-    // Only update if index actually changed to prevent unnecessary re-renders
     if (newIndex !== currentIndex && newIndex >= 0 && newIndex < promoData.length) {
       setCurrentIndex(newIndex);
     }
-  }, [currentIndex, promoData.length, responsiveDimensions.itemWidth]);
+  }, [currentIndex, promoData.length, responsiveDimensions]);
 
   // Handle scroll begin - stop auto scroll when user starts scrolling
   const handleScrollBeginDrag = useCallback(() => {
@@ -287,27 +431,25 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
 
   // Handle scroll end - resume auto scroll after user stops scrolling
   const handleScrollEndDrag = useCallback(() => {
-    // Clear any existing timeout
     if (scrollTimeout.current) {
       clearTimeout(scrollTimeout.current);
     }
     
-    // Resume auto scroll after a delay
     scrollTimeout.current = setTimeout(() => {
       setIsUserScrolling(false);
-    }, 2000); // Resume auto scroll after 2 seconds of inactivity
+    }, 2000);
   }, []);
 
   // Handle momentum scroll end with responsive dimensions
   const handleMomentumScrollEnd = useCallback((event) => {
-    const slideWidth = responsiveDimensions.itemWidth;
+    const slideWidth = responsiveDimensions.itemWidth + responsiveDimensions.itemSeparatorWidth;
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const newIndex = Math.round(contentOffsetX / slideWidth);
     
     if (newIndex !== currentIndex && newIndex >= 0 && newIndex < promoData.length) {
       setCurrentIndex(newIndex);
     }
-  }, [currentIndex, promoData.length, responsiveDimensions.itemWidth]);
+  }, [currentIndex, promoData.length, responsiveDimensions]);
 
   // Memoize key extractor
   const keyExtractor = useCallback((item, index) => {
@@ -332,12 +474,18 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
     });
   }, []);
 
-  // Updated getItemLayout with responsive dimensions
-  const getItemLayout = useCallback((data, index) => ({
-    length: responsiveDimensions.itemWidth,
-    offset: (responsiveDimensions.itemWidth + responsiveDimensions.itemSeparatorWidth) * index,
-    index,
-  }), [responsiveDimensions]);
+  // Updated getItemLayout with responsive dimensions - Fixed for proper spacing
+  const getItemLayout = useCallback((data, index) => {
+    const itemLength = responsiveDimensions.itemWidth;
+    const separatorLength = index < data.length - 1 ? responsiveDimensions.itemSeparatorWidth : 0;
+    const offset = index * (itemLength + responsiveDimensions.itemSeparatorWidth);
+    
+    return {
+      length: itemLength,
+      offset: offset,
+      index,
+    };
+  }, [responsiveDimensions]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -351,15 +499,35 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <View style={styles.loadingSpinner} />
-        <Text style={styles.loadingText}>Loading amazing deals...</Text>
+      <View style={[
+        styles.loadingContainer,
+        { 
+          height: responsiveDimensions.bannerHeight,
+          margin: responsiveDimensions.containerPadding,
+          borderRadius: responsiveDimensions.isSmallScreen ? 16 : 20
+        }
+      ]}>
+        <View style={[
+          styles.loadingSpinner,
+          {
+            width: responsiveDimensions.isSmallScreen ? 20 : 24,
+            height: responsiveDimensions.isSmallScreen ? 20 : 24,
+            borderRadius: responsiveDimensions.isSmallScreen ? 10 : 12
+          }
+        ]} />
+        <Text style={[
+          styles.loadingText,
+          { fontSize: responsiveDimensions.isSmallScreen ? 12 : 14 }
+        ]}>Loading amazing deals...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.carouselContainer}>
+    <View style={[
+      styles.carouselContainer,
+      { marginVertical: responsiveDimensions.containerPadding }
+    ]}>
       <FlatList
         ref={flatListRef}
         data={promoData}
@@ -367,8 +535,8 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
         keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
-        pagingEnabled
-        snapToInterval={responsiveDimensions.itemWidth}
+        pagingEnabled={false}
+        snapToInterval={responsiveDimensions.itemWidth + responsiveDimensions.itemSeparatorWidth}
         snapToAlignment="start"
         decelerationRate="fast"
         onScroll={handleScroll}
@@ -377,9 +545,11 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
         onMomentumScrollEnd={handleMomentumScrollEnd}
         onScrollToIndexFailed={handleScrollToIndexFailed}
         scrollEventThrottle={16}
-        contentContainerStyle={[styles.carouselContent, { paddingHorizontal: responsiveDimensions.containerPadding }]}
+        contentContainerStyle={[
+          styles.carouselContent, 
+          { paddingHorizontal: responsiveDimensions.containerPadding }
+        ]}
         ItemSeparatorComponent={ItemSeparator}
-        // Performance optimizations with responsive dimensions
         getItemLayout={getItemLayout}
         maxToRenderPerBatch={3}
         windowSize={5}
@@ -394,16 +564,12 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
 // Convert to StyleSheet for better performance
 const styles = StyleSheet.create({
   carouselContainer: {
-    marginVertical: 16,
   },
   carouselContent: {
-    // paddingHorizontal is now dynamic
   },
   itemSeparator: {
-    // width is now dynamic
   },
   promoBanner: {
-    height: 160,
     borderRadius: 20,
     overflow: 'hidden',
     shadowColor: '#000',
@@ -417,35 +583,26 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -20,
     right: -20,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   cornerDecoration: {
     position: 'absolute',
     bottom: -10,
     left: -10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   promoLayout: {
     flex: 1,
     flexDirection: 'row',
-    padding: 20,
   },
   offerSection: {
     flex: 1,
     justifyContent: 'space-between',
-    paddingRight: 16,
   },
   defaultContent: {
     flex: 1,
   },
   brandText: {
-    fontSize: 32,
     fontWeight: '900',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -454,7 +611,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   taglineText: {
-    fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.9,
@@ -462,14 +618,10 @@ const styles = StyleSheet.create({
   },
   badgeContainer: {
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 12,
     alignSelf: 'flex-start',
-    marginTop: 12,
   },
   badgeText: {
-    fontSize: 10,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.5,
@@ -479,101 +631,75 @@ const styles = StyleSheet.create({
   },
   savingsBadge: {
     backgroundColor: '#FF4444',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 8,
     alignSelf: 'flex-start',
-    marginBottom: 8,
   },
   savingsText: {
-    fontSize: 10,
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   offerTitle: {
-    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
-    lineHeight: 18,
-    marginBottom: 6,
   },
   offerDescription: {
-    fontSize: 11,
     fontWeight: '400',
     color: '#FFFFFF',
     opacity: 0.85,
-    lineHeight: 14,
-    marginBottom: 8,
   },
   detailsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap', // Allow wrapping on small screens
   },
   priceTag: {
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 8,
-    marginRight: 8,
   },
   priceText: {
-    fontSize: 12,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   weightTag: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   weightText: {
-    fontSize: 10,
     fontWeight: '600',
     color: '#FFFFFF',
     opacity: 0.9,
   },
   actionButton: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 25,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'flex-end',
-    marginTop: 15,
-    top: 15,
   },
   actionButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
   actionButtonIcon: {
     color: '#FFFFFF',
-    fontSize: 14,
     marginLeft: 6,
     fontWeight: '600',
   },
   visualSection: {
-    width: 100,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0, // Prevent shrinking
   },
   imageContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
   },
@@ -588,24 +714,17 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
   },
   iconContainer: {
-    width: 80,
-    height: 80,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
   mainIcon: {
-    fontSize: 36,
     zIndex: 2,
   },
   decorativeCircle: {
     position: 'absolute',
-    width: 70,
-    height: 70,
-    borderRadius: 35,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     zIndex: 1,
   },
@@ -616,22 +735,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   dot: {
-    height: 8,
-    borderRadius: 4,
-    marginHorizontal: 4,
   },
   loadingContainer: {
-    height: 160,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    borderRadius: 20,
-    margin: 16,
   },
   loadingSpinner: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
     borderWidth: 2,
     borderColor: '#E0E0E0',
     borderTopColor: '#FF6B35',
@@ -639,7 +749,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     color: '#666',
-    fontSize: 14,
     fontWeight: '500',
   },
 });

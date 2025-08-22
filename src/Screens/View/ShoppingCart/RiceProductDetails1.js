@@ -109,12 +109,16 @@ const RiceProductDetails = ({ route, navigation }) => {
         acc[item.itemId] = item.cartQuantity;
         return acc;
       }, {});
+       const totalCartCount = cartData.reduce(
+         (total, item) => total + item.cartQuantity,
+         0
+       );
 
       console.log({cartItemsMap});
       
 
       setCartItems(cartItemsMap);
-      setCartCount(cartData.length);
+      setCartCount(totalCartCount || 0); // Ensure cartCount is set to 0 if totalCartCount is undefined or null
       setCartData(response.data.customerCartResponseList);
     }else{
       setCartItems({})

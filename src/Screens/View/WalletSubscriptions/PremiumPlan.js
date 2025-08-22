@@ -1,5 +1,5 @@
 // PremiumPlanModal.js
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Modal, Dimensions,Platform } from 'react-native';
 import React, { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -46,6 +46,13 @@ const PremiumPlan = ({ visible, onClose }) => {
                                     {openIndex === index && <Text style={styles.answer}>{faq.answer}</Text>}
                                 </View>
                             ))}
+                           <Text style={styles.text}>
+Note: When you add ₹99,000 to the subscription, your wallet balance becomes ₹1,01,000.{'\n'}
+This means you immediately get ₹2,000 advance interest per month (more than 2%).{'\n'}
+You can use the ₹2,000 from the wallet while keeping the ₹99,000 locked. At the end of each month (around the 32nd day), the advance is added again. In this way, you can continue to block ₹99,000 for 30 days and keep receiving advance interest.{'\n'}
+If you don't want to continue, you can withdraw your ₹99,000 anytime.{'\n'}
+👉 In short: By retaining ₹99,000 for every 30 days, you earn ₹2,000 advance interest each cycle.
+</Text>
                         </ScrollView>
                     </LinearGradient>
                 </View>
@@ -135,7 +142,27 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
         lineHeight: 20,
-    }
+    },
+    text: {
+        fontSize: 16,
+        color: '#1e293b',
+        lineHeight: 26,
+        padding: 24,
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: {
+        width: 0,
+        height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+        letterSpacing: 0.3,
+    },
 });
 
 export default PremiumPlan;

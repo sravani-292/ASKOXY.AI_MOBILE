@@ -27,6 +27,7 @@ import {
   handleRemoveItem,
   handleRemoveFreeItem,
 } from "../../../../ApiService";
+import { useCart } from "../../../../../until/CartCount";
 const { width, height } = Dimensions.get("window");
 import EmptyCartComponent from "./EmptyCartComponent";
 
@@ -39,7 +40,7 @@ const CartScreen = () => {
   const token = userData.accessToken;
   const customerId = userData.userId;
   const navigation = useNavigation();
-
+  const {setCartCount } = useCart();
   // State variables (keeping all your existing state)
   const [cartData, setCartData] = useState([]);
   const [error, setError] = useState(null);
@@ -296,6 +297,12 @@ const CartScreen = () => {
         }
         return acc;
       }, {});
+      const totalCartCount = cartData.reduce(
+         (total, item) => total + item.cartQuantity,
+         0
+       );
+
+      setCartCount(totalCartCount || 0);
       setError(null);
       setCartData(cartData);
       setCartItems(cartItemsMap);

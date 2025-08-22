@@ -41,7 +41,7 @@ export default function OfferModal({ visible, onClose, comboOffers }) {
   }, [visible]);
 
   const handleAddItem = async(item) => {
-    console.log('Item added to cart:', item);
+    // console.log('Item added to cart:', item);
     // Add your logic to add item to cart here
     const data = {
       customerId: customerId,
