@@ -296,7 +296,7 @@ export default function NewDashBoard() {
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: userData ? 20 : Platform.OS === "android" ? StatusBar.currentHeight : 0}]}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+      <StatusBar backgroundColor="transparent" translucent  barStyle="light-content" animated />
       
       {/* Animated Gradient Background */}
       <Animated.View style={[styles.gradientContainer, { opacity: fadeAnim }]}>

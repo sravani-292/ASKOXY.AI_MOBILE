@@ -45,6 +45,15 @@ export default function ProfileSettings({ navigation }) {
       },
       { 
         id: 2, 
+        icon: 'list', 
+        type: 'Ionicons', 
+        label: 'My Orders', 
+        showArrow: true,
+        navigation: "My Orders",
+         gradient: ['#F7971E', '#FFD200'] 
+      },
+      { 
+        id: 3, 
         icon: 'map-pin', 
         type: 'Feather', 
         label: 'Address', 
@@ -53,7 +62,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#36D1DC', '#5B86E5'] // teal to blue, location-friendly
       },
       { 
-        id: 3, 
+        id: 4, 
         icon: 'user-plus', 
         type: 'Feather', 
         label: 'Invite', 
@@ -62,7 +71,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
       },
       { 
-        id: 4, 
+        id: 5, 
         icon: 'refresh-cw', 
         type: 'Feather', 
         label: 'Referral History',
@@ -71,7 +80,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#00C9FF', '#92FE9D'] 
       },
       { 
-        id: 5, 
+        id: 6, 
         icon: 'hand-coin', 
         type: 'MaterialCommunityIcons', 
         label: 'My Crypto', 
@@ -80,7 +89,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#00B4DB', '#0083B0'] 
       },
       { 
-        id: 6, 
+        id: 7, 
         icon: 'user-plus', 
         type: 'Feather', 
         label: 'Coupons', 
@@ -89,9 +98,9 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
       },
 
-      { id: 7, type: 'divider' },
+      { id: 8, type: 'divider' },
       { 
-        id: 8, 
+        id: 9, 
         icon: 'credit-card', 
         type: 'Feather', 
         label: 'Subscription',
@@ -100,7 +109,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#F7971E', '#FFD200'] // gold/yellow hues, finance-friendly
       },
       { 
-        id: 9, 
+        id: 10, 
         icon: 'help-circle', 
         type: 'Feather', 
         label: 'FAQ\'s', 
@@ -109,7 +118,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#36D1DC', '#5B86E5'] // consistent with helpful/support tone
       },
       { 
-        id: 10, 
+        id: 11, 
         icon: 'phone', 
         type: 'Feather', 
         label: 'Contact Us', 
@@ -117,9 +126,9 @@ export default function ProfileSettings({ navigation }) {
         navigation: 'Write To Us',
         gradient: ['#00B4DB', '#0083B0'] // professional blue gradient
       },
-      { id: 11, type: 'divider' },
+      { id: 12, type: 'divider' },
       {
-        id: 12, 
+        id: 13, 
         icon: 'user-x', 
         type: 'Feather', 
         label: 'DeActivate Account', 
@@ -128,7 +137,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#FF4B2B', '#FF416C'] // serious red-pink for account closure
       },
       {
-        id: 13,
+        id: 14,
         icon: 'user-minus',
         type: 'Feather',
         label: 'Delete Account',

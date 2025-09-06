@@ -1,4 +1,5 @@
 import { createStackNavigator } from "@react-navigation/stack";
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -9,6 +10,8 @@ import {
 } from "react-native";
 import axios from "axios";
 import BASE_URL from "../../Config";
+import { Ionicons } from '@expo/vector-icons';
+
 // Screens imports
 import Services from "../Dashboard/Services";
 import Login from "../Authorization/Login";
@@ -96,6 +99,26 @@ import * as Linking from "expo-linking";
 import AboutService from "../Dashboard/AboutUS";
 import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
 import SearchScreen from "../Screens/View/ShoppingCart/Search/SearchScreen"
+import Genoxy from "../Screens/Genoxy/Genoxy";
+import GenOxyOnboardingScreen from '../../src/Screens/Genoxy/GenOxyOnboardingScreen';
+import InsuranceLLM from "../Screens/Genoxy/InsuranceLLM";
+import GeneralLifeInsurance from "../Screens/Genoxy/GeneralLifeInsurance";
+import GenOxyChatScreen from "../Screens/Genoxy/GenOxyChatScreen";
+import TiEGPT from "../Screens/Genoxy/TIEGPT";
+import KLMFashionsLLM from "../Screens/Genoxy/KLMFashionsLLM";
+import AiVideosGeneratedMobile from "../Screens/Genoxy/AI_Videos/AIVideos";
+import OurAIVideosMobile from "../Screens/Genoxy/AI_Videos/AIVideos";
+import BharathAgentstore from "../Screens/Genoxy/BharathAgentstore";
+import FaqLLMMobile from "../Screens/Genoxy/FAQ/FAQ_LLM";
+import FaqLLMSlidesMobile from "../Screens/Genoxy/FAQ/FAQ_Sildes";
+import BeforeLogin from "../Screens/FreeAIBook/BeforeLogin";
+import AfterLogin from "../Screens/FreeAIBook/AfterLogin";
+import AgentVisionScreen from "../Screens/AIAgent/CreateAgent/create";
+import AgentSkillsScreen from "../Screens/AIAgent/CreateAgent/Capabilities";
+import AgentPricingScreen from "../Screens/AIAgent/CreateAgent/RevenueSplit";
+import AgentCreationProcess from "../Screens/AIAgent/CreateAgent/AgentCreationProcess";
+import AgentReviewScreen from "../Screens/AIAgent/CreateAgent/AgentReviewScreen";
+import OrderScreen from "../Screens/View/Orders/OrderScreen";
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -119,6 +142,7 @@ const linking = {
 
 export default function StacksScreens() {
   const Stack = createStackNavigator();
+   const Drawer = createDrawerNavigator();
   const [platform, setPlatform] = useState("");
   const [updateStatus, setUpdateStatus] = useState(null);
   const [currentVersion, setCurrentVersion] = useState("");
@@ -204,6 +228,109 @@ export default function StacksScreens() {
     return <LoadingScreen />;
   }
 
+  function DrawerScreens() {
+  return (
+    <Drawer.Navigator
+      screenOptions={{
+        headerShown: false,
+        drawerStyle: {
+          backgroundColor: '#f8fafc', 
+          width: 300, 
+          borderTopRightRadius: 20,
+          borderBottomRightRadius: 20,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 2,
+            height: 0,
+          },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 5,
+        },
+        drawerActiveTintColor: '#8b5cf6', 
+        drawerInactiveTintColor: '#64748b', 
+        drawerActiveBackgroundColor: '#f3f4f6', 
+        drawerInactiveBackgroundColor: 'transparent',
+        drawerItemStyle: {
+          marginHorizontal: 12,
+          marginVertical: 4,
+          borderRadius: 12,
+          paddingVertical: 4,
+        },
+        drawerLabelStyle: {
+          fontSize: 16,
+          fontWeight: '500',
+          marginLeft: -16, 
+        },
+        drawerContentContainerStyle: {
+          paddingTop: 20,
+        },
+        // Custom drawer content options
+        drawerType: 'slide', 
+        overlayColor: 'rgba(0, 0, 0, 0.3)', 
+      }}
+    >
+      {/* Add GenOxyOnboardingScreen as the first drawer screen */}
+      <Drawer.Screen
+        name="GenOxyOnboardingScreen"
+        component={GenOxyOnboardingScreen}
+        options={{
+          title: "Chat",
+          drawerIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "chatbubble" : "chatbubble-outline"} 
+              size={24} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="InsuranceLLM"
+        component={InsuranceLLM}
+        options={{
+          title: "Insurance LLM",
+          drawerIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "shield" : "shield-outline"} 
+              size={24} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="TiEGPT"
+        component={TiEGPT}
+        options={{
+          title: "TiE GPT",
+          drawerIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "cube" : "cube-outline"} 
+              size={24} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="KLMFashionsLLM"
+        component={KLMFashionsLLM}
+        options={{
+          title: "KLM Fashions LLM",
+          drawerIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "shirt" : "shirt-outline"} 
+              size={24} 
+              color={color} 
+            />
+          ),
+        }}
+      />
+    </Drawer.Navigator>
+  );
+}
+
   const formatSentence = (text) => {
   return text
     .split(' ')
@@ -219,7 +346,7 @@ const formatWord = (word) => {
       linking={linking}
       // initialRouteName={needsUpdate ? "App Update" : "Payment Test"}
       initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
-      // initialRouteName="Notifications"
+      // initialRouteName="Bharat Agent Store"
       screenOptions={{
         headerShown: true,
         presentation: "card",
@@ -303,6 +430,8 @@ const formatWord = (word) => {
       <Stack.Screen name="Ticket History" component={TicketHistory} />
       <Stack.Screen name="View Comments" component={TicketHistoryComments} />
       <Stack.Screen name="Item Details" component={ItemDetails} />
+
+      <Stack.Screen name="My Orders" component={OrderScreen} />
     
       <Stack.Screen name="Refund" component={Refund} />
       <Stack.Screen
@@ -526,6 +655,40 @@ const formatWord = (word) => {
         component={WishlistScreen}
         options={{ headerShown: true, title: "My Wishlist" }}
       />
+      <Stack.Screen 
+         name="GENOXY"
+         component={Genoxy}
+          options={{ headerShown: true, title: "GENOXY" }}
+      />
+        <Stack.Screen
+        name="GeneralLifeInsurance"
+        component={GeneralLifeInsurance}
+       
+      />
+    <Stack.Screen name="GenOxyOnboardingScreen" component={GenOxyOnboardingScreen} options={{ headerShown: true, title: "WELCOME GENOXY" }} />
+    <Stack.Screen
+      name="GenOxyChatScreen"
+      component={GenOxyChatScreen}
+       options={({ route }) => ({
+          title: route.params?.categoryType || 'GENOXY',})}/>
+    <Stack.Screen name="DrawerScreens" component={DrawerScreens} options={{ headerShown: false, title: "AI LLMs" }} />
+    {/* <Stack.Screen name="Bharat Agent Store" component={BharathAgentstore} options={{ headerShown: true, title: "Bharat Agent Store" }} /> */}
+    <Stack.Screen name="AI Videos" component={AiVideosGeneratedMobile} options={{ headerShown: true, title: "AI Videos" }} />
+    <Stack.Screen name="Our AI Videos" component={OurAIVideosMobile} options={{ headerShown: true, title: "Our AI Videos" }} />
+    <Stack.Screen name="FAQ on LLM" component={FaqLLMMobile} options={{ headerShown: true, title: "FAQ on LLM" }} />
+    <Stack.Screen name="FAQ on LLM Images" component={FaqLLMSlidesMobile} options={{ headerShown: true, title: "FAQ on LLM Images" }} />
+    <Stack.Screen name="Before Login" component={BeforeLogin} options={{ headerShown: true, title: "Get Free AI Book" }} />
+    <Stack.Screen name="After Login" component={AfterLogin} options={{ headerShown: true, title: "Free AI Book" }} />
+     
+     {/* <Stack.Screen name="Store Tabs" component={StoreTabs} options={{ headerShown: false, title: "AI Store" }} /> */}
+
+    {/* <Stack.Screen name="Agent Category" component={AgentVisionScreen} options={{ headerShown: true, title: "Create AI Agent" }} /> */}
+    <Stack.Screen name="Agent Skills Screen" component={AgentSkillsScreen} options={{ headerShown: true, title: "Agent Capabilities" }} />
+    <Stack.Screen name="Agent Pricing" component={AgentPricingScreen} options={{ headerShown: true, title: "Agent Pricing" }} />
+<Stack.Screen name="Agent Creation" component={AgentCreationProcess} options={{ headerShown: true, title: "Create Your Agent" }} />
+<Stack.Screen name="Agent Review" component={AgentReviewScreen} options={{ headerShown: true, title: "Review & Create" }} />
+
+
     </Stack.Navigator>
   );
 }

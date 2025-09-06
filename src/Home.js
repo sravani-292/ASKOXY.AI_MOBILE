@@ -9,17 +9,20 @@ import {
   StatusBar,
   Dimensions,
   Platform,
+  FlatList,
+  Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
+import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import BASE_URL from '../Config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import { AccessToken } from '../Redux/action/index';
 import Logout from './Authorization/Logout';
+import DashboardHeader from './DashboardHeader';
 
 const { width, height } = Dimensions.get('window');
 
@@ -39,6 +42,14 @@ const HomeScreen = ({ navigation }) => {
     },
     {
       id: 2,
+      title: 'RICE 2 ROBO',
+      subtitle: 'ECommerce',
+      icon: 'storefront-outline',
+      gradientColors: ['#EC407A', '#E91E63'],
+      screenName: 'Rice Products',
+    },
+    {
+      id: 3,
       title: 'CA | CS',
       subtitle: 'SERVICES',
       icon: 'calculator-outline',
@@ -46,7 +57,7 @@ const HomeScreen = ({ navigation }) => {
       screenName: 'CA SERVICES',
     },
     {
-      id: 3,
+      id: 4,
       title: 'GOLD | SILVER',
       subtitle: 'DIAMONDS',
       icon: 'diamond-outline',
@@ -54,7 +65,7 @@ const HomeScreen = ({ navigation }) => {
       screenName: 'GOLD, SILVER & DIAMONDS',
     },
     {
-      id: 4,
+      id: 5,
       title: 'Loans &',
       subtitle: 'Investments',
       icon: 'card-outline',
@@ -62,7 +73,7 @@ const HomeScreen = ({ navigation }) => {
       screenName: 'OxyLoans',
     },
     {
-      id: 5,
+      id: 6,
       title: 'NYAYA GPT',
       subtitle: 'Legal AI',
       icon: 'scale-outline',
@@ -70,20 +81,12 @@ const HomeScreen = ({ navigation }) => {
       screenName: 'NyayaGPTScreen',
     },
     {
-      id: 6,
+      id: 7,
       title: 'FRACTIONAL',
       subtitle: 'OWNERSHIP',
       icon: 'business-outline',
       gradientColors: ['#A8E6CF', '#56C596'],
       screenName: 'FractionalScreen',
-    },
-    {
-      id: 7,
-      title: 'RICE 2 ROBO',
-      subtitle: 'ECommerce',
-      icon: 'storefront-outline',
-      gradientColors: ['#EC407A', '#E91E63'],
-      screenName: 'Rice Products',
     },
     {
       id: 8,
@@ -102,6 +105,23 @@ const HomeScreen = ({ navigation }) => {
       screenName: 'Study',
     },
   ];
+
+  const featureGradients = {
+  "Genoxy": ['#6a0dad', '#6a0dad'],
+  "Voice AI": ["#7957c8ff", "#6a0dad"],
+  "Explore AI LLMs": ["#8B5CF6", "#6a0dad"],
+  "Blockchain": ['#FFB74D', '#be8024ff'],
+  "Crypto": ["#F59E0B", "#B45309"],
+  "Loans & Investments": ["#10B981", "#047857"],
+  "NyayaGPT": ["#FACC15", "#EAB308"],
+  "Real Estate": ["#3B82F6", "#1D4ED8"],
+  "Rice2Robo Ecommerce": ["#EC4899", "#DB2777"],
+  "Gold, Silver & Diamonds": ["#FCD34D", "#FBBF24"],
+  "IT Services": ["#64748B", "#334155"],
+  "Study Abroad": ["#38BDF8", "#0EA5E9"],
+  "Jobs, Blogs & Training": ["#34D399", "#059669"],
+};
+
 
   const dispatch = useDispatch();
   const [loginModal, setLoginModal] = React.useState(false);
@@ -160,6 +180,31 @@ const HomeScreen = ({ navigation }) => {
       console.log('Service pressed:', screenName);
     }
   };
+
+ const featuresTop = [
+  { label: "Genoxy", icon: require("../assets/chat.png"), color: "#FFD700",radius:"left",screen:"GENOXY" },
+  { label:"Voice AI", icon: require("../assets/mic.png"), color: "#34D399", screen:"Genoxy" },
+  { label: "Explore AI LLMs", icon: require("../assets/brain.png"), color: "#A78BFA", screen:"DrawerScreens" },
+  { label: "Blockchain", icon: require("../assets/blockchain.png"), color: "#FACC15",radius:"right", screen:"AI BLOCKCHAIN & IT SERVICES" },
+];
+
+
+
+const renderIcon = (item, size = 125) => {
+  return (
+    <View style={{alignItems: "center", justifyContent: "center"}}>
+    <Image
+      source={item.icon}
+      style={{
+        width: size,
+        height: size,
+        resizeMode: "contain",
+        alignSelf: "center",
+      }}
+    />
+    </View>
+  );
+};
 
   const userDetails = useSelector((state) => state.counter);
 
@@ -240,12 +285,23 @@ const HomeScreen = ({ navigation }) => {
     return rows;
   };
 
+  const onPressNavigation = (screen) => {
+    if(screen !== "AI BLOCKCHAIN & IT SERVICES") {
+    navigation.navigate(screen);
+  }
+  else{
+   navigation.navigate("Campaign", {
+        campaignType: "AI BLOCKCHAIN & IT SERVICES",
+      })
+  }
+}
+
   return (
     <View style={styles.container}>
       <StatusBar 
         barStyle="light-content" 
         backgroundColor="#360256" 
-        translucent={false}
+        translucent={true}
       />
       
       <LinearGradient
@@ -258,12 +314,11 @@ const HomeScreen = ({ navigation }) => {
                   <Logout/>
          </View>
         {/* Header */}
-        <SafeAreaView style={styles.headerContainer}>
+        <DashboardHeader userData={userData} />
+        {/* <SafeAreaView style={styles.headerContainer}>
           <View style={styles.headerContent}>
             <Text style={styles.appTitle}>ASKOXY.AI</Text>
             <Text style={styles.appSubtitle}>AI-Z Marketplace</Text>
-
-            {/* Uncomment if you want to display the Super App text */}
            <View>
               <Text style={styles.welcomeText}>
                 Welcome, {userData?.firstName
@@ -274,12 +329,66 @@ const HomeScreen = ({ navigation }) => {
                 Explore our services below
               </Text>
             </View>
-            
-            <TouchableOpacity style={styles.servicesButton} onPress={() => navigation.navigate('Services')}>
-              <Text style={styles.servicesButtonText}>OUR SERVICES</Text>
-            </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </SafeAreaView> */}
+
+        {/* Services */}
+        <View style={{alignItems: 'center',flexDirection: 'row', justifyContent: 'space-evenly', marginBottom: 10,width:width*0.9, alignSelf: 'center',}}>
+          <View style={styles.topRow}>
+            {featuresTop.map((item, index) => (
+              <LinearGradient
+                colors={featureGradients[item.label] || ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.05)"]} 
+                 style={item.radius == "right" ? styles.cardRightRadius : item.radius == "left" ? styles.cardLeftRadius : styles.topCard}> 
+                <TouchableOpacity onPress={() => onPressNavigation(item.screen)}>
+                  {renderIcon(item, 45)}
+                  <View style={{alignItems: "center", justifyContent: "center"}}>
+                  <Text style={styles.topCardText}>{item.label}</Text>
+                  </View>
+                </TouchableOpacity>
+              </LinearGradient>
+            ))}
+          </View> 
+          <View style={styles.topleft}>
+               <LinearGradient colors={['#FFB74D', '#be8024ff']} style={styles.topLeftCard}> 
+                <TouchableOpacity onPress={() => {
+                  if(userDetails?.userId) {
+                  onPressNavigation('Profile')}
+                  else {
+                    navigation.navigate("Login")
+                  }}}>
+                  <Image 
+                    source={require("../assets/rupee.png")}
+                    style={{
+                      width: 45,
+                      height: 45,
+                      resizeMode: "contain",
+                      alignSelf: "center",
+                    }}
+                  />
+                  <Text style={styles.topCardText}>Crypto</Text>
+                </TouchableOpacity>
+              </LinearGradient>
+          </View> 
+        </View>
+
+
+        {/* <View style={{alignItems: 'center',flexDirection: 'row', justifyContent: 'space-evenly', marginBottom: 10,width:width*0.9, alignSelf: 'center',}}>
+          <View style={styles.topRow}>
+            {featuresTop.map((item, index) => (
+              <LinearGradient
+                colors={featureGradients[item.label] || ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.05)"]} 
+                 style={item.radius == "right" ? styles.cardRightRadius : item.radius == "left" ? styles.cardLeftRadius : styles.topCard}> 
+                <TouchableOpacity onPress={() => onPressNavigation(item.screen)}>
+                  {renderIcon(item, 45)}
+                  <View style={{alignItems: "center", justifyContent: "center"}}>
+                  <Text style={styles.topCardText}>{item.label}</Text>
+                  </View>
+                </TouchableOpacity>
+              </LinearGradient>
+            ))}
+          </View> 
+        </View>
+         */}
 
         {/* Services Container */}
         <View style={styles.servicesOuterContainer}>
@@ -572,6 +681,77 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: '400',
   },
+  suggestionButton: {
+    backgroundColor: '#6a0dad',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    marginHorizontal: 5,
+    marginTop: 10,
+  },
+  suggestionText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  topLeftCard:{
+    flex: 1,
+    // backgroundColor: "#FACC15",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    width:'100%',
+    borderRadius:25
+  },
+   topCard: {
+    // flex: 1,
+    // backgroundColor: "#FACC15",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    width:width*0.14,
+  },
+  cardRightRadius:{
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderTopRightRadius:25,
+    borderBottomRightRadius:25,
+    width:width*0.14,
+  },
+  cardLeftRadius:{
+    // flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 10,
+    borderTopLeftRadius:25,
+    borderBottomLeftRadius:25,
+    width:width*0.14,
+  },
+  topCardText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+    marginTop: 6,
+    textAlign: "center",
+  },
+   topRow: {
+    flexDirection: "row",
+    width: '70%',
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#D4AF37',
+    borderRadius: 25,
+  },
+  topleft:{
+    alignSelf:"flex-end",
+    width:'20%',
+    marginBottom:20,
+    borderWidth:2,
+    borderColor:'#D4AF37',
+    borderRadius:25,
+  }
 });
 
 export default HomeScreen;
