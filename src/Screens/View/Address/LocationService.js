@@ -83,8 +83,11 @@ export const getCoordinates = async (address) => {
   )}&key=${API_KEY}`;
 var results;
   try {
+
+    console.log("Making API call to:", url);
+    
     const response = await axios.get(url);
-    // console.log("Coordinates response:", response.data);
+    console.log("Coordinates response:", response.data);
 
     if (response.data.status === "OK") {
       const location = response.data.results[0].geometry.location;

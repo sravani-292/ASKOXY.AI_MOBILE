@@ -1081,7 +1081,7 @@ useEffect(() => {
 
           {userData && cartCount > 0 && (
             <Pressable
-              onPress={() => navigation.navigate("Home", { screen: "My Cart" })}
+              onPress={() => navigation.navigate("My Cart")}
               style={styles.cartIconContainer}
             >
               <Icon name="cart-outline" size={32} color="#000" />

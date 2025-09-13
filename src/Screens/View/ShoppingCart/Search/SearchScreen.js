@@ -308,7 +308,7 @@ const SearchScreen = ({ route }) => {
   };
 
   const navigateToCart = () => {
-    navigation.navigate("Home", { screen: "My Cart" });
+    navigation.navigate( "My Cart" );
   };
 
   const handleAdd = async (item) => {
@@ -332,7 +332,7 @@ const SearchScreen = ({ route }) => {
          const response = await handleUserAddorIncrementCart(data);
          Alert.alert(
            "Success",
-           response.data.errorMessage || "Item added to cart"
+           response.cartResponse.errorMessage || "Item added to cart"
          );
          fetchCartItems();
    

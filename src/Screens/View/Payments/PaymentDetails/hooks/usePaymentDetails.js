@@ -175,7 +175,7 @@ useEffect(() => {
 
 useEffect(() => {
   fetchCartData();
-}, [grandTotal]); 
+}, [grandTotal,addressDetails]); 
 
 useEffect(() => {
   fetchTimeSlots();
@@ -641,6 +641,8 @@ useEffect(() => {
       setAddressStatus(response.data.length == 0 ? false : true)
       setAddressList(response.data);
       setAddressDetails(response.data[response.data.length - 1]);
+      console.log("address details", response.data[response.data.length - 1]);
+      
     } catch (error) {
       console.error("Error fetching order address data:", error.response);
       setError("Failed to fetch order address data");
@@ -779,7 +781,7 @@ useEffect(() => {
     console.log({ postData });
     // console.log("postdata", postData);
 
-    // console.log({ postData });
+    console.log({ postData });
     setWaitingLoader(true)
 
     axios({
@@ -816,7 +818,8 @@ useEffect(() => {
               {
                 text: "OK",
                 onPress: () =>
-                  navigation.navigate("Home", { screen: "My Cart" }),
+                  // navigation.navigate("Home", { screen: "My Cart" }),
+                navigation.navigate("My Cart"),
               },
             ]);
           } else if (
@@ -1493,7 +1496,7 @@ const fetchTimeSlots = async (eligibleTime) => {
         `We noticed that the following items in your cart have zero quantity: ${itemNames}. 
         
          Please update or remove them before proceeding with your order.`,
-        [{ onPress: () => navigation.navigate("Home", { screen: "My Cart" }) }]
+        [{ onPress: () => navigation.navigate("My Cart") }]
       );
       return;
     } else if (!validateCartBeforeCheckout(cartData)) {

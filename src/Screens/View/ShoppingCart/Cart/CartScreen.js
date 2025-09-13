@@ -30,7 +30,7 @@ import {
 import { useCart } from "../../../../../until/CartCount";
 const { width, height } = Dimensions.get("window");
 import EmptyCartComponent from "./EmptyCartComponent";
-
+import MyTabBar from "../../../../Navigations/MyTabBar";
    
 
 
@@ -570,6 +570,13 @@ const CartScreen = () => {
         cartData={cartData}
         itemToRemove={itemToRemove}
         removeItem={handleRemove}
+      />
+        <MyTabBar
+        activeTab="My Cart" // must match route name in TabArr
+        onTabPress={(routeName) => {
+          if (routeName === 'My Cart') return; // already here
+          navigation.navigate('Home', { screen: routeName }); // assuming MainTabs wraps your Tabs
+        }}
       />
     </View>
   );

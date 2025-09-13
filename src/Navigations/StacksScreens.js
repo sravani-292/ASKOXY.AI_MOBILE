@@ -120,6 +120,7 @@ import ActiveAgents from "../Screens/AIAgent/UserFlow/ActiveAgents";
 import AgentScreen from "../Screens/AIAgent/UserFlow/AgentScreen";
 import StoreTabs from "./StoreTabs";
 import ChatScreen from "../Components/ChatPopup";
+import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -656,6 +657,8 @@ const formatWord = (word) => {
         component={WishlistScreen}
         options={{ headerShown: true, title: "My Wishlist" }}
       />
+   <Stack.Screen name="My Cart" component={CartScreen} />
+
       <Stack.Screen 
          name="GENOXY"
          component={Genoxy}

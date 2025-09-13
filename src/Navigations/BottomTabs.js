@@ -33,7 +33,7 @@ const TabArr = [
   { route: 'Dashboard', label: 'Dashboard', icon: require('../../assets/BottomTabImages/Home.png'), gradient: ['#f093fb', '#f5576c'], component: NewDashBoard },
   // { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: StoreTabs },
   { route: 'Wallet', label: 'Wallet', icon: require('../../assets/BottomTabImages/wallet.png'), gradient: ['#4facfe', '#00f2fe'], component: MainWallet },
-  { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ['#7957c8ff', '#6a0dad'], component: CartScreen },
+  // { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ['#7957c8ff', '#6a0dad'], component: CartScreen },
   { route: 'Profile', label: 'Profile', icon: require('../../assets/BottomTabImages/profile.png'), gradient: ['#6a11cb', '#2575fc'], component: ProfileSettings },
 ];
 

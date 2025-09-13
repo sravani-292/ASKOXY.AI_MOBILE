@@ -472,7 +472,7 @@ const renderQuantityControls = () => {
             style={styles.primaryButton}
             onPress={() => {
               if (userData) {
-                navigation.navigate("Home", { screen: "My Cart" });
+                navigation.navigate("My Cart");
               } else {
                 Alert.alert("Alert", "Please login to continue", [
                   { text: "OK", onPress: () => navigation.navigate("Login") },
