@@ -18,12 +18,13 @@ const ConfirmationModal = ({
   deliveryAddress,
   paymentMethod,
   loading,
-  setLaoding,
+  setLoading,
   walletBalance,
   walletAmountUsed,
   isWalletEnabled,
   onWalletToggle,
   couponApplied,
+  setPaymentStatus
 }) => {
   // console.log("delivery address",deliveryAddress);
   
@@ -68,11 +69,15 @@ const ConfirmationModal = ({
           </Text>
 
           <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={onClose}
-              // disabled={loading}
-            >
+             <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => {
+                  console.log("Cancel Pressed for payment status");
+                  setLoading(false);
+                  onClose();
+                }}
+                // disabled={loading}
+              >
               <Text style={styles.buttonText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity

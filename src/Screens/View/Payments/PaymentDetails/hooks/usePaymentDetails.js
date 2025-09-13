@@ -98,6 +98,7 @@ export const usePaymentDetails = (navigation, route) => {
   const [eligibleTimeSlot, setEligibleTimeSlot] = useState("");
   const [cartToPlace, setCartToPlace] = useState(false);
   const [minOrderToPlace, setMinOrderToPlace] = useState(0);
+  const [addressStatus, setAddressStatus] = useState(true);
 
   // ==================== CART & ITEMS STATE ====================
   const [cartData, setCartData] = useState([]);
@@ -183,6 +184,10 @@ useEffect(() => {
 useEffect(() => {
   grandTotalfunc();
 }, [grandTotal, deliveryBoyFee, handlingFees, useWallet, walletAmount, coupenApplied, coupenDetails]); 
+
+useEffect(() => {
+  fetchOrderAddress();
+}, []);
 
 
   // ==================== CART HANDLERS ====================
@@ -387,17 +392,7 @@ useEffect(() => {
   // ==================== PAYMENT HANDLERS ====================
 
   const confirmPayment = () => {
-    if(!cartToPlace){
-      openModal(
-        "Oops!",
-        `Minimum cart value to place an order is ₹${minOrderToPlace}`,
-        "OK",
-        "Cancel",
-        "error"
-      );
-      return;
-    }
-    if(!status && !addressDetails){
+    if(!status && !addressDetails && !addressStatus){
         openModal(
         "Oops! Something went wrong",
         "Please select Address to proceed",
@@ -434,7 +429,16 @@ useEffect(() => {
         "info"
       );
       return;
-    } else {
+    }else if(!cartToPlace){
+      openModal(
+        "Oops!",
+        `Minimum cart value to place an order is ₹${minOrderToPlace}`,
+        "OK",
+        "Cancel",
+        "error"
+      );
+      return;
+    }else {
       setShowConfirmModal(true);
     }
   };
@@ -571,7 +575,9 @@ useEffect(() => {
 
       let latitude = 0;
       let longitude = 0;
-      if((addressDetails?.latitude === 0 && addressDetails?.longitude === 0) || (addressDetails?.latitude===null && addressDetails?.longitude === null)){
+      console.log("addressDetails", addressDetails);
+      
+      if((addressDetails?.latitude === 0 && addressDetails?.longitude === 0) || (addressDetails?.latitude===null && addressDetails?.longitude === null) || (addressDetails?.latitude===undefined && addressDetails?.longitude === undefined) || (addressDetails?.latitude === "0" && addressDetails?.longitude === "0") ){
         console.log("Getting the coordinates.......");
          const address = addressDetails?.address + "," + addressDetails?.landMark + ","+addressDetails?.area+"," + addressDetails?.pincode;
          const { coord1 } = await getCoordinates(address);
@@ -584,7 +590,7 @@ useEffect(() => {
         latitude = addressDetails?.latitude;
         longitude = addressDetails?.longitude;
       }
-      const { fee, distance, note,handlingFee, grandTotal,walletApplicable,minOrderForWallet,canPlaceOrder,minOrderToPlace } = await getFinalDeliveryFee(latitude,longitude, cartAmount);
+      const { fee, distance, note,handlingFee, grandTotal,walletApplicable,minOrderForWallet,canPlaceOrder,minOrderToPlace,addressStatus } = await getFinalDeliveryFee(latitude,longitude, cartAmount);
             setDeliveryBoyFee(fee || 0);
             setHandlingFees(handlingFee || 0);
             setDistance(distance || 0); 
@@ -592,6 +598,7 @@ useEffect(() => {
             setMinOrderValue(minOrderForWallet || 0);
             setMinOrderToPlace(minOrderToPlace || 0);
             setCartToPlace(canPlaceOrder || false);
+            setAddressStatus(addressStatus);
             console.log("Delivery Fee:", fee, "Distance:", distance, "Note:", note, "Handling Fees:", handlingFee, "Grand Total:", grandTotal, "Wallet Applicable:", walletApplicable, "Min Order Value for Wallet:", minOrderForWallet, "Can Place Order:", canPlaceOrder, "Min Order to Place:", minOrderToPlace);
             if(!walletApplicable && minOrderForWallet > cartAmount){
               setUseWallet(false);
@@ -630,7 +637,8 @@ useEffect(() => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("api response....", response.data[0]);
+      console.log("api response....", response.data[response.data.length - 1]);
+      setAddressStatus(response.data.length == 0 ? false : true)
       setAddressList(response.data);
       setAddressDetails(response.data[response.data.length - 1]);
     } catch (error) {
@@ -954,20 +962,26 @@ useEffect(() => {
   };
 
 
-    useEffect(() => {
-    if (
-      paymentStatus == "PENDING" ||
-      paymentStatus == "" ||
-      paymentStatus == null ||
-      paymentStatus == "INITIATED"
-    ) {
-      const data = setInterval(() => {
-        Requery(paymentId);
-      }, 4000);
-      return () => clearInterval(data);
-    } else {
-    }
-  }, [paymentStatus, paymentId]);
+useEffect(() => {
+  if (
+    paymentStatus === "PENDING" ||
+    paymentStatus === "" ||
+    paymentStatus === null ||
+    paymentStatus === "INITIATED"
+  ) {
+    const intervalId = setInterval(() => {
+      Requery(paymentId);
+    }, 4000);
+
+    return () => clearInterval(intervalId);
+  }
+
+  // 🚨 Important: clear interval if CANCELLED
+  if (paymentStatus === "CANCELLED") {
+    return; // nothing runs, interval is stopped
+  }
+}, [paymentStatus, paymentId]);
+
 
   var postData ;
 
@@ -1042,6 +1056,7 @@ useEffect(() => {
   };
 
   async function Requery(paymentId) {
+    console.log("Current Payment Status:", paymentStatus);
     if (
       paymentStatus === "PENDING" ||
       paymentStatus === "" ||
@@ -1049,7 +1064,6 @@ useEffect(() => {
       paymentStatus === "INITIATED"
     ) {
       console.log("Before.....",paymentId)  
-
       const Config = {
         "Getepay Mid": 1152305,
         "Getepay Terminal Id": "getepay.merchant128638@icici",
@@ -1108,14 +1122,14 @@ useEffect(() => {
             var data = decryptEas(responseurl);
             data = JSON.parse(data);
             // console.error("Payment Result", data);
+            if(data.paymentStatus === "PENDING" || data.paymentStatus === "INITIATED"){
             setPaymentStatus(data.paymentStatus);
+            }
             // console.error(data.paymentStatus);
             if (
               data.paymentStatus == "SUCCESS" ||
               data.paymentStatus == "FAILED"
             ) {
-              // clearInterval(intervalId); 294182409
-              
              axios({
                 method: "POST",
                 url: BASE_URL + "order-service/orderPlacedPaymet",
@@ -1192,12 +1206,14 @@ useEffect(() => {
                 });
             } else {
               setLoading(false);
+              // setWaitingLoader(false);
             }
           }
         })
         .catch((error) => {
           console.log("Payment Status", error);
           setLoading(false);
+          setWaitingLoader(false);
         });
     }
   }

@@ -136,13 +136,16 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
   }, [responsiveDimensions]);
 
   // Memoize gradient colors
-  const gradientColors = useMemo(() => [
-    ['#667eea', '#764ba2'],
-    ['#FF6B35', '#FF8E53'],
-    ['#f093fb', '#f5576c'],
-    ['#4facfe', '#00f2fe'],
-    ['#43e97b', '#38f9d7'],
-  ], []);
+ const gradientColors = useMemo(() => [
+  ['#667eea', '#764ba2'], // Purple
+  ['#FF6B35', '#FF8E53'], // Orange
+  ['#f093fb', '#f5576c'], // Pink
+  ['#4facfe', '#00f2fe'], // Blue
+  ['#ff9a9e', '#fad0c4'], // Soft pink → peach
+  ['#a18cd1', '#fbc2eb'], // Lavender → pink
+  ['#ff6a00', '#ee0979'], // Orange → magenta
+], []);
+
 
   const getGradientColors = useCallback((index) => {
     return gradientColors[index % gradientColors.length];
@@ -303,32 +306,6 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
                 </View>
               </View>
             )}
-            
-            {/* Action Button - Responsive */}
-            <TouchableOpacity 
-              style={[
-                styles.actionButton,
-                {
-                  paddingHorizontal: isSmallScreen ? 8 : 12,
-                  paddingVertical: isSmallScreen ? 4 : 6,
-                  marginTop: isSmallScreen ? 8 : 15,
-                  alignSelf: isSmallScreen ? 'flex-start' : 'flex-end'
-                }
-              ]}
-              onPress={() => navigateToRice?.(item)}
-              activeOpacity={0.8}
-            >
-              <Text style={[
-                styles.actionButtonText,
-                { fontSize: isSmallScreen ? 10 : 12 }
-              ]}>
-                {isDefault ? 'SHOP NOW' : 'GRAB DEAL'}
-              </Text>
-              <Text style={[
-                styles.actionButtonIcon,
-                { fontSize: isSmallScreen ? 12 : 14 }
-              ]}>→</Text>
-            </TouchableOpacity>
           </View>
           
           {/* Right Section - Visual - Responsive */}
@@ -376,6 +353,7 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
               </View>
             )}
           </View>
+          
         </View>
         
         {/* Corner Decoration - Responsive */}
@@ -387,6 +365,31 @@ const PromoCarousel = ({ onExplore, autoScrollInterval = 3000, enableAutoScroll 
             borderRadius: bannerHeight * 0.125
           }
         ]} />
+         {/* Action Button - Responsive */}
+            <TouchableOpacity 
+              style={[
+                styles.actionButton,
+                {
+                  paddingHorizontal: isSmallScreen ? 8 : 12,
+                  paddingVertical: isSmallScreen ? 4 : 6,
+                  marginTop: isSmallScreen ? 8 : 15,
+                  alignSelf: isSmallScreen ? 'flex-start' : 'flex-end'
+                }
+              ]}
+              onPress={() => navigateToRice?.(item)}
+              activeOpacity={0.8}
+            >
+              <Text style={[
+                styles.actionButtonText,
+                { fontSize: isSmallScreen ? 10 : 12 }
+              ]}>
+                {isDefault ? 'SHOP NOW' : 'GRAB DEAL'}
+              </Text>
+              <Text style={[
+                styles.actionButtonIcon,
+                { fontSize: isSmallScreen ? 12 : 14 }
+              ]}>→</Text>
+            </TouchableOpacity>
       </LinearGradient>
     );
   }, [getGradientColors, extractOfferDetails, responsiveDimensions]);

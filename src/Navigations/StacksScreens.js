@@ -113,12 +113,13 @@ import FaqLLMMobile from "../Screens/Genoxy/FAQ/FAQ_LLM";
 import FaqLLMSlidesMobile from "../Screens/Genoxy/FAQ/FAQ_Sildes";
 import BeforeLogin from "../Screens/FreeAIBook/BeforeLogin";
 import AfterLogin from "../Screens/FreeAIBook/AfterLogin";
-import AgentVisionScreen from "../Screens/AIAgent/CreateAgent/create";
-import AgentSkillsScreen from "../Screens/AIAgent/CreateAgent/Capabilities";
-import AgentPricingScreen from "../Screens/AIAgent/CreateAgent/RevenueSplit";
-import AgentCreationProcess from "../Screens/AIAgent/CreateAgent/AgentCreationProcess";
-import AgentReviewScreen from "../Screens/AIAgent/CreateAgent/AgentReviewScreen";
 import OrderScreen from "../Screens/View/Orders/OrderScreen";
+import AgentCreationFlow from "../Screens/AIAgent/CreateAgent/AgentCreationFlow";
+import AgentCreationScreen from "../Screens/AIAgent/AgentCreationScreen";
+import ActiveAgents from "../Screens/AIAgent/UserFlow/ActiveAgents";
+import AgentScreen from "../Screens/AIAgent/UserFlow/AgentScreen";
+import StoreTabs from "./StoreTabs";
+import ChatScreen from "../Components/ChatPopup";
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -346,7 +347,7 @@ const formatWord = (word) => {
       linking={linking}
       // initialRouteName={needsUpdate ? "App Update" : "Payment Test"}
       initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
-      // initialRouteName="Bharat Agent Store"
+      // initialRouteName="Agent Creation Screen"
       screenOptions={{
         headerShown: true,
         presentation: "card",
@@ -678,16 +679,17 @@ const formatWord = (word) => {
     <Stack.Screen name="FAQ on LLM" component={FaqLLMMobile} options={{ headerShown: true, title: "FAQ on LLM" }} />
     <Stack.Screen name="FAQ on LLM Images" component={FaqLLMSlidesMobile} options={{ headerShown: true, title: "FAQ on LLM Images" }} />
     <Stack.Screen name="Before Login" component={BeforeLogin} options={{ headerShown: true, title: "Get Free AI Book" }} />
-    <Stack.Screen name="After Login" component={AfterLogin} options={{ headerShown: true, title: "Free AI Book" }} />
+    <Stack.Screen name="After Login" component={AfterLogin} options={{ headerShown: true, title: "Free AI Book"}}/>
      
-     {/* <Stack.Screen name="Store Tabs" component={StoreTabs} options={{ headerShown: false, title: "AI Store" }} /> */}
+    <Stack.Screen name="Agent Creation Flow" component={AgentCreationFlow} options={{ headerShown: true, title: "Create Your AI Agent" }} />
+    <Stack.Screen name="Agent Creation Screen" component={AgentCreationScreen} options={{ headerShown: true, title: "Create Your AI Agent" }} />
+   
+    <Stack.Screen name="Active Agents" component={ActiveAgents} options={{ headerShown: true, title: "Active Agents" }} />
+    <Stack.Screen name="Agent Screen" component={AgentScreen} options={{ headerShown: true, title: "Agent Details" }} />
 
-    {/* <Stack.Screen name="Agent Category" component={AgentVisionScreen} options={{ headerShown: true, title: "Create AI Agent" }} /> */}
-    <Stack.Screen name="Agent Skills Screen" component={AgentSkillsScreen} options={{ headerShown: true, title: "Agent Capabilities" }} />
-    <Stack.Screen name="Agent Pricing" component={AgentPricingScreen} options={{ headerShown: true, title: "Agent Pricing" }} />
-<Stack.Screen name="Agent Creation" component={AgentCreationProcess} options={{ headerShown: true, title: "Create Your Agent" }} />
-<Stack.Screen name="Agent Review" component={AgentReviewScreen} options={{ headerShown: true, title: "Review & Create" }} />
+    <Stack.Screen name= "Agent Store" component={StoreTabs} options={{ headerShown: false }} />
 
+    <Stack.Screen name="Chat With AI" component={ChatScreen} options={{ headerShown: false }} />
 
     </Stack.Navigator>
   );

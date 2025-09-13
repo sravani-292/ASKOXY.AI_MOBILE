@@ -12,7 +12,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
-const AgentSkillsScreen = () => {
+const AgentSkillsScreen = ({ agentData, updateAgentData }) => {
+
+  const toggleCapability = (capability) => {
+    updateAgentData({
+      [capability]: !agentData[capability],
+    });
+  };
   const [instructions, setInstructions] = useState(
     "You are a helpful assistant specialized in providing accurate, timely information. Always be professional, concise, and provide sources when possible. If you're unsure about something, acknowledge the uncertainty and suggest how the user might get more information."
   );
@@ -25,13 +31,6 @@ const AgentSkillsScreen = () => {
   });
 
   const navigation = useNavigation();
-
-  const toggleCapability = (capability) => {
-    setCapabilities(prev => ({
-      ...prev,
-      [capability]: !prev[capability]
-    }));
-  };
 
   const handleNext = () => {
     if (!instructions.trim()) {
@@ -116,15 +115,12 @@ const AgentSkillsScreen = () => {
               Agent Instructions <Text style={styles.required}>*</Text>
             </Text>
           </View>
-          <TextInput
-            style={styles.textArea}
-            value={instructions}
-            onChangeText={setInstructions}
-            multiline={true}
-            numberOfLines={6}
-            textAlignVertical="top"
-            placeholder="Enter agent instructions..."
-          />
+           <TextInput
+        style={styles.textArea}
+        value={agentData.instructions}
+        onChangeText={(text) => updateAgentData({ instructions: text })}
+        multiline
+      />
           <Text style={styles.helper}>
             Be specific about your agent's behavior, tone, and how it should handle different scenarios. 
             These instructions will guide all of your agent's interactions.
@@ -139,13 +135,13 @@ const AgentSkillsScreen = () => {
           </View>
 
           <CapabilityCard
-            icon="🔍"
-            title="Web Search"
-            subtitle="Allow agent to search the internet for real-time information"
-            description="Enables access to current web data, news, and real-time information to provide up-to-date responses."
-            capability="webSearch"
-            enabled={capabilities.webSearch}
-          />
+        icon="🔍"
+        title="Web Search"
+        subtitle="Allow agent to search..."
+        description="Enables access to current web data"
+        capability="webSearch"
+        enabled={agentData.webSearch}
+      />
 
           <CapabilityCard
             icon="📁"
@@ -153,7 +149,7 @@ const AgentSkillsScreen = () => {
             subtitle="Search and analyze uploaded documents and files"
             description="Process PDFs, documents, spreadsheets, and other file formats to extract and analyze information."
             capability="fileSearch"
-            enabled={capabilities.fileSearch}
+            enabled={agentData.fileSearch}
           />
 
           <CapabilityCard
@@ -162,7 +158,7 @@ const AgentSkillsScreen = () => {
             subtitle="Execute code and perform data analysis tasks"
             description="Run Python code, create visualizations, analyze data, and perform complex calculations in real-time."
             capability="codeInterpreter"
-            enabled={capabilities.codeInterpreter}
+            enabled={agentData.codeInterpreter}
           />
 
           <CapabilityCard
@@ -171,7 +167,7 @@ const AgentSkillsScreen = () => {
             subtitle="Connect to external APIs and custom tools"
             description="Integrate with third-party services, databases, and custom APIs to extend functionality."
             capability="customFunctions"
-            enabled={capabilities.customFunctions}
+            enabled={agentData.customFunctions}
           />
         </View>
       </ScrollView>

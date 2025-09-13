@@ -13,7 +13,7 @@ import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import Slider from '@react-native-community/slider';
 
-const AgentPricingScreen = () => {
+const AgentPricingScreen = ({ agentData, updateAgentData }) => {
   const [selectedModel, setSelectedModel] = useState('hybrid');
   const [amount, setAmount] = useState('0.00');
   const [currency, setCurrency] = useState('USD');
@@ -114,32 +114,32 @@ const AgentPricingScreen = () => {
           </View>
 
           <ModelCard
-            model="free"
-            title="Free"
-            description="Users can access your agent at no cost. Great for building an audience and getting feedback."
-            isSelected={selectedModel === 'free'}
-            onSelect={handleModelSelect}
-          />
+        model="free"
+        title="Free"
+        description="Users can access your agent..."
+        isSelected={agentData.usageModel === "free"}
+        onSelect={(val) => updateAgentData({ usageModel: val })}
+      />
 
           <ModelCard
             model="paid"
             title="Paid"
             description="Users pay a fixed fee to access your agent. Ideal for premium, specialized services."
-            isSelected={selectedModel === 'paid'}
-            onSelect={handleModelSelect}
+            isSelected={agentData.usageModel === 'paid'}
+            onSelect={(val) => updateAgentData({ usageModel: val })}
           />
 
           <ModelCard
             model="hybrid"
             title="Hybrid (Freemium)"
             description="Offer basic features for free with premium features behind a paywall."
-            isSelected={selectedModel === 'hybrid'}
-            onSelect={handleModelSelect}
+            isSelected={agentData.usageModel === 'hybrid'}
+            onSelect={(val) => updateAgentData({ usageModel: val })}
           />
         </View>
 
         {/* Pricing Section - Only show for paid/hybrid */}
-        {(selectedModel === 'paid' || selectedModel === 'hybrid') && (
+        {(agentData.usageModel === "paid" || agentData.usageModel === "hybrid") && (
           <View style={styles.section}>
             <View style={styles.labelContainer}>
               <Text style={styles.icon}>💳</Text>
@@ -151,8 +151,8 @@ const AgentPricingScreen = () => {
                 <Text style={styles.pricingLabel}>Amount</Text>
                 <TextInput
                   style={styles.amountInput}
-                  value={amount}
-                  onChangeText={setAmount}
+                  value={agentData.amount}
+                  onChangeText={(val) => updateAgentData({ amount: val })}
                   placeholder="0.00"
                   keyboardType="decimal-pad"
                 />
@@ -161,8 +161,8 @@ const AgentPricingScreen = () => {
                 <Text style={styles.pricingLabel}>Currency</Text>
                 <View style={styles.pickerContainer}>
                   <Picker
-                    selectedValue={currency}
-                    onValueChange={setCurrency}
+                    selectedValue={agentData.currency}
+                    onValueChange={(val) => updateAgentData({ currency: val })}
                     style={styles.picker}
                   >
                     {currencies.map((curr) => (
@@ -191,8 +191,8 @@ const AgentPricingScreen = () => {
               style={styles.slider}
               minimumValue={0}
               maximumValue={1}
-              value={revenueShare}
-              onValueChange={setRevenueShare}
+              value={agentData.revenueShare}
+              onValueChange={(val) => updateAgentData({ revenueShare: val })}
               minimumTrackTintColor="#8b5cf6"
               maximumTrackTintColor="#e9ecef"
               thumbStyle={styles.sliderThumb}

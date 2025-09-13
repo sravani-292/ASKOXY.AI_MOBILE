@@ -16,11 +16,10 @@ import { useCart } from '../../until/CartCount';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomNavigationBar from '../Components/AppBar';
-import MainWallet from '../Screens/View/Wallet/Main';
+import Home from '../Home';
 import { COLORS } from '../../Redux/constants/theme';
 import BharathAgentstore from '../Screens/Genoxy/BharathAgentstore';
-import AgentVisionScreen from '../Screens/AIAgent/CreateAgent/create';
-import Tabs from './BottomTabs';
+import AgentCreationScreen from '../Screens/AIAgent/AgentCreationScreen';
 import MyAgents from '../Screens/AIAgent/UserFlow/MyAgent';
 
 const Tab = createBottomTabNavigator();
@@ -28,17 +27,16 @@ const Tab = createBottomTabNavigator();
 const TabArr = [
   {
     route: 'Landing',
-    label: 'Home',
+    label: 'Back to Home',
     icon: require('../../assets/BottomTabImages/landing.png'),
     activeIcon: require('../../assets/BottomTabImages/landing.png'),
     gradient: ['#667eea', '#764ba2'],
-    component: LandingScreen,
   },
   {
     route: 'My Agents',
     label: 'Agents',
-    icon: require('../../assets/BottomTabImages/Home.png'),
-    activeIcon: require('../../assets/BottomTabImages/Home.png'),
+    icon: require('../../assets/BottomTabImages/MyAgent.png'),
+    activeIcon: require('../../assets/BottomTabImages/MyAgent.png'),
     gradient: ['#f093fb', '#f5576c'],
     component: MyAgents,
   },
@@ -51,20 +49,12 @@ const TabArr = [
     component: BharathAgentstore,
   },
   {
-    route: 'Wallet',
-    label: 'Wallet',
-    icon: require('../../assets/BottomTabImages/wallet.png'),
-    activeIcon: require('../../assets/BottomTabImages/wallet.png'),
-    gradient: ['#4facfe', '#00f2fe'],
-    component: MainWallet,
-  },
-  {
     route: 'Create Agent',
     label: 'Create Agent',
-    icon: require('../../assets/BottomTabImages/cart.png'),
-    activeIcon: require('../../assets/BottomTabImages/cart.png'),
+    icon: require('../../assets/BottomTabImages/createAgent.png'),
+    activeIcon: require('../../assets/BottomTabImages/createAgent.png'),
     gradient: ['#7957c8ff', '#6a0dad'],
-    component: AgentVisionScreen,
+    component: AgentCreationScreen,
   },
 ];
 
@@ -91,7 +81,7 @@ const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => 
   useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: focused ? 1 : 0,
-      duration: 150,
+      duration: 100, // Reduced from 150ms for snappier feel
       useNativeDriver: true,
     }).start();
   }, [focused, animatedValue]);
@@ -137,10 +127,6 @@ const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => 
   );
 });
 
-const LandingScreen = () => {
-  return <Tabs />;   // 👈 This renders your nested navigator
-};
-
 const CustomTabBar = React.memo(({ state, navigation }) => {
   const tabData = useMemo(
     () =>
@@ -161,6 +147,13 @@ const CustomTabBar = React.memo(({ state, navigation }) => {
 
   const handlePress = useCallback(
     (routeName, routeKey, isFocused) => {
+      console.log({ routeName, isFocused }," Handling tab press");
+      if (routeName === 'Landing') {
+        // Always navigate to main 'Landing' for single-tap responsiveness
+        navigation.getParent()?.navigate('Landing');
+        return;
+      }
+
       const event = navigation.emit({
         type: 'tabPress',
         target: routeKey,
@@ -170,7 +163,7 @@ const CustomTabBar = React.memo(({ state, navigation }) => {
       if (!isFocused && !event.defaultPrevented) {
         navigation.navigate(routeName);
       } else if (isFocused && routeName === 'Store') {
-        // Reset Home stack like modal root
+        // Keep existing reset logic for Store
         navigation.reset({
           index: 0,
           routes: [{ name: 'Store' }],
@@ -185,12 +178,14 @@ const CustomTabBar = React.memo(({ state, navigation }) => {
       <View style={styles.tabBarContainer}>
         <View style={styles.tabButtonsContainer}>
           {tabData.map(({ route, item, isFocused, key }) => (
-            <AnimatedTabButton
-              key={key}
-              item={item}
-              onPress={() => handlePress(route.name, key, isFocused)}
-              accessibilityState={{ selected: isFocused }}
-            />
+            item ? (
+              <AnimatedTabButton
+                key={key}
+                item={item}
+                onPress={() => handlePress(route.name, key, isFocused)}
+                accessibilityState={{ selected: isFocused }}
+              />
+            ) : null
           ))}
         </View>
       </View>
@@ -198,19 +193,34 @@ const CustomTabBar = React.memo(({ state, navigation }) => {
   );
 });
 
+const LandingRedirect = ({ navigation }) => {
+  useEffect(() => {
+    // Navigate immediately without setTimeout
+    navigation.getParent()?.navigate('Landing');
+  }, [navigation]);
+
+  return null;
+};
+
 const StoreTabs = ({ navigation }) => {
   const userData = useSelector((state) => state.counter);
 
+  // NEW: Ensure Store is the initial route on mount
+  useEffect(() => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Store' }],
+    });
+  }, [navigation]);
+
   const handleLogout = useCallback(() => {
     AsyncStorage.removeItem('userData');
-    navigation.navigate('Login');
+    navigation.getParent()?.navigate('Login');
   }, [navigation]);
 
   const getScreenOptions = useCallback(
     (item) => ({
-      headerShown: ['Profile', 'Wallet', 'Store', 'Create Agent'].includes(
-        item.route
-      ),
+      headerShown: ['Profile', 'Wallet', 'Store', 'Create Agent','My Agents'].includes(item.route),
       headerRight:
         item.route === 'Profile' || item.route === 'Wallet' || item.route === 'Store' || item.route === 'Create Agent'
           ? () => (
@@ -227,6 +237,7 @@ const StoreTabs = ({ navigation }) => {
       headerTitleStyle: {
         color: ['Profile', 'Wallet', 'Store', 'Create Agent'].includes(item.route) ? '#000' : undefined,
       },
+      ...(item.route === 'Landing' && { headerShown: false }),
     }),
     [handleLogout]
   );
@@ -247,6 +258,7 @@ const StoreTabs = ({ navigation }) => {
           name={item.route}
           component={item.component}
           options={getScreenOptions(item)}
+          children={item.route === 'Landing' ? (props) => <LandingRedirect {...props} /> : undefined}
         />
       ))}
     </Tab.Navigator>

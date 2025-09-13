@@ -1,26 +1,26 @@
 const getCategoryDetails = (categoryType) => {
-  // Predefined category mappings
+  // Predefined category mappings (greens replaced with lavender/purple shades)
   const categoryMappings = {
     'RICE': { icon: '🍚', color: '#FF6B35' },
-    'Grocery': { icon: '🛒', color: '#4CAF50' },
+    'Grocery': { icon: '🛒', color: '#9370DB' },   // Lavender
     'GOLD': { icon: '🪙', color: '#FFD700' },
     'FESTIVAL': { icon: '🎉', color: '#9C27B0' },
     'ELECTRONICS': { icon: '📱', color: '#2196F3' },
     'CLOTHING': { icon: '👕', color: '#E91E63' },
     'BOOKS': { icon: '📚', color: '#795548' },
-    'HEALTH': { icon: '🏥', color: '#4CAF50' },
+    'HEALTH': { icon: '🏥', color: '#BA55D3' },    // Medium Orchid
     'BEAUTY': { icon: '💄', color: '#FF69B4' },
     'SPORTS': { icon: '⚽', color: '#FF5722' },
     'TOYS': { icon: '🧸', color: '#FFC107' },
     'AUTOMOTIVE': { icon: '🚗', color: '#607D8B' },
-    'HOME': { icon: '🏠', color: '#8BC34A' },
+    'HOME': { icon: '🏠', color: '#D8BFD8' },      // Thistle (soft lavender)
     'FURNITURE': { icon: '🪑', color: '#A0522D' },
     'TOOLS': { icon: '🔧', color: '#9E9E9E' },
-    'GARDEN': { icon: '🌱', color: '#4CAF50' },
+    'GARDEN': { icon: '🌱', color: '#DA70D6' },    // Orchid
     'PET': { icon: '🐕', color: '#FF9800' },
     'FOOD': { icon: '🍕', color: '#FF5722' },
     'DRINKS': { icon: '🥤', color: '#03A9F4' },
-    'PHARMACY': { icon: '💊', color: '#009688' },
+    'PHARMACY': { icon: '💊', color: '#9932CC' },  // Dark Orchid
   };
 
   // Check if we have a predefined mapping
@@ -31,6 +31,7 @@ const getCategoryDetails = (categoryType) => {
   // Auto-generate for unknown categories
   return generateCategoryDetails(categoryType);
 };
+
 
 // Auto-generate icon and color for unknown categories
 const generateCategoryDetails = (categoryType) => {

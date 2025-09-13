@@ -518,7 +518,7 @@ const CategorySection = ({
 
 const styles = StyleSheet.create({
   section: { 
-    marginBottom: 10,
+    marginBottom: 20,
     marginTop: 10 
   },
   filterSection: {
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
     borderRadius: 12,
     marginHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   filterTitle: {
     fontSize: 16,

@@ -11,7 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
-const AgentReviewScreen = () => {
+const AgentReviewScreen = ({ agentData, handleSubmit }) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -51,10 +51,9 @@ const AgentReviewScreen = () => {
                 <Text style={styles.agentIconText}>AI</Text>
               </View>
               <View style={styles.agentInfo}>
-                <Text style={styles.agentName}>Customer Support Assistant</Text>
+                <Text style={styles.agentName}>{agentData.agentName}</Text>
                 <Text style={styles.agentDescription}>
-                  A helpful AI assistant that provides customer support with natural language 
-                  understanding and seamless escalation capabilities.
+                 {agentData.description}
                 </Text>
               </View>
               <View style={styles.draftBadge}>
@@ -178,7 +177,7 @@ const AgentReviewScreen = () => {
               <Text style={styles.saveButtonText}>Save as Draft</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.submitButton}>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
               <LinearGradient
                 colors={['#6B73FF', '#9644FF']}
                 style={styles.submitButtonGradient}

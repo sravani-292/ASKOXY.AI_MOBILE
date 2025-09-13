@@ -20,9 +20,9 @@ const categoryGradientThemes = {
     inactiveColor: '#FFE5E5',
   },
   'Grocery': {
-    containerGradient: ['#A8E6CF', '#DCEDC8'],
-    activeGradient: ['#4CAF50', '#66BB6A'],
-    inactiveColor: '#E8F5E8',
+    containerGradient: ['#E6E6FA', '#D8BFD8'], // Lavender → Thistle
+    activeGradient: ['#9370DB', '#BA55D3'],    // Medium Purple → Orchid
+    inactiveColor: '#F3E5F5',                  // Light lavender-pink
   },
   'GOLD': {
     containerGradient: ['#FFB74D', '#FFF3E0'],
@@ -50,6 +50,7 @@ const categoryGradientThemes = {
     inactiveColor: '#f8f8f8',
   }
 };
+
 
 const CategoryTabs = ({ 
   categories = [], 

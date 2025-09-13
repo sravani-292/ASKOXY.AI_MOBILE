@@ -1,79 +1,85 @@
-import { openai } from '../../../Config/openai';
-import * as api from '../api/apiFunctions';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { tools } from './assistantTools';
+import axios from 'axios';
 
-export const sendMessageToAssistant = async (chatHistory, onUpdateResponse) => {
+export const sendMessageToAssistant = async (messages, token) => {
   try {
-    const userId = (await AsyncStorage.getItem('userId')) || '14996e93-46c9-46cb-a5fb-8050b8af17ab';
-
-    const systemMessage = {
-      role: 'system',
-      content: userId
-        ? `The user's ID is ${userId}. Use this for authenticated API calls.`
-        : `The user is not logged in. Only show general help or trending offers.`,
-    };
-
-    const validMessages = [systemMessage, ...chatHistory.filter(m => typeof m === 'object')];
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4-1106-preview',
-      messages: validMessages,
-      tools,
-      tool_choice: 'auto',
+    const response = await axios({
+      url: 'https://meta.oxyloans.com/api/student-service/user/question',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      data: messages,
     });
 
-    const assistantMessage = response.choices[0].message;
-    const toolCalls = assistantMessage.tool_calls;
+    console.log('API Response:', response.data);
 
-    if (toolCalls?.length) {
-      onUpdateResponse?.('⏳ Fetching results...');
+    const data = response.data;
 
-      const toolMessages = [];
+    // Split by lines
+const lines = data.split("\n");
 
-      for (const toolCall of toolCalls) {
-        let args = {};
-        try {
-          args = JSON.parse(toolCall.function.arguments);
-        } catch (e) {
-          console.error('Invalid tool arguments:', toolCall.function.arguments);
-          return '❌ Invalid tool arguments received.';
-        }
+// Extract values
+let description = "";
+let keywords = "";
 
-        let result;
-        try {
-          result = await api[toolCall.function.name](args);
-        } catch (e) {
-          console.error('Tool call failed:', e);
-          result = { error: e.message || '❌ Tool call failed.' };
-        }
-
-        toolMessages.push({
-          role: 'tool',
-          tool_call_id: toolCall.id,
-          content: JSON.stringify(result),
-        });
-      }
-
-      const followUpMessages = [...validMessages, assistantMessage, ...toolMessages];
-
-      const followUp = await openai.chat.completions.create({
-        model: 'gpt-4-1106-preview',
-        messages: followUpMessages,
-      });
-
-      const finalMessage = followUp.choices[0].message || '✅ Done.';
-      onUpdateResponse?.(finalMessage);
-      return finalMessage;
-    }
-       
-    const finalMessage = assistantMessage || '✅ Done.';
-    onUpdateResponse?.(finalMessage);
-    console.log(finalMessage);
-    
-    return finalMessage;
-  } catch (err) {
-    console.error('Assistant error:', err);
-    return '❌ Something went wrong while processing your request. Please try again.';
+lines.forEach(line => {
+  if (line.startsWith("Description:")) {
+    description = line.replace(/^Description:\s*/, '').trim() ;
+    console.log({description});
+  }else{
+    description = data || 'Sorry, I could not process your request.';
   }
+  if (line.startsWith("Keywords:")) {
+    keywords = line.replace(/^Keywords:\s*/, "").trim().split(', ').map(k => k.trim()).filter(k => k) || '';
+  }
+});
+
+const parsedResponse = { Description: description, Keywords: keywords };
+
+console.log({parsedResponse});
+
+    // Parse the API response, assuming it has Description and Keywords fields
+    // const description = data.Description || data.replace(/^Description:\s*/, '') ||'Sorry, I could not process your request.';
+    // const keywords = data.Keywords ? data.Keywords.split(', ').map(k => k.trim()).filter(k => k) : [];
+
+    return {
+      role: 'assistant',
+      content: description.replace(/^Description:\s*/, ''),
+      // type: keywords.length > 0 ? 'product' : 'text',
+      // products: keywords.length > 0 ? keywords : null,
+    };
+  } catch (error) {
+    console.error('API Error:', error.response || error);
+    throw error;
+  }
+};
+
+// Dynamically map keywords to product data (mock implementation)
+const mapKeywordsToProducts = (keywords) => {
+  return keywords.map(keyword => {
+    // Capitalize the keyword for display as title
+    const title = keyword.charAt(0).toUpperCase() + keyword.slice(1);
+    
+    // Generate a random price between 100 and 50000 based on keyword type
+    let price;
+    if (keyword.toLowerCase() === 'gold') {
+      price = Math.floor(Math.random() * (50000 - 10000 + 1)) + 10000; // Gold: 10,000–50,000
+    } else if (keyword.toLowerCase() === 'offers' || keyword.toLowerCase().includes('combo')) {
+      price = Math.floor(Math.random() * (2000 - 500 + 1)) + 500; // Offers/Combos: 500–2,000
+    } else if (keyword.toLowerCase() === 'rakhi' || keyword.toLowerCase().includes('festival')) {
+      price = Math.floor(Math.random() * (500 - 50 + 1)) + 50; // Festival items: 50–500
+    } else {
+      price = Math.floor(Math.random() * (1000 - 100 + 1)) + 100; // General items: 100–1,000
+    }
+
+    // Use a placeholder image (replace with real image URLs if available)
+    const image = `https://via.placeholder.com/150?text=${encodeURIComponent(title)}`;
+
+    return {
+      title,
+      price,
+      image,
+    };
+  });
 };

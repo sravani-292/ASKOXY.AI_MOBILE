@@ -131,6 +131,7 @@ const HomeScreen = ({ navigation }) => {
   const checkLoginData = async () => {
       if (userData && userData.accessToken) {
         setLoginModal(false);
+        console.log('User already logged in, navigating to Home');
         navigation.navigate("Home");
       } else {
         try {
@@ -138,9 +139,10 @@ const HomeScreen = ({ navigation }) => {
           if (loginData) {
             const user = JSON.parse(loginData);
             if (user.accessToken) {
-              setLoginModal(false);
-              dispatch(AccessToken(user));
-              navigation.navigate("Home");
+                console.log('User already logged in, navigating to Home store');
+                setLoginModal(false);
+                dispatch(AccessToken(user));
+                navigation.navigate("Home");
             }
           } else {
             navigation.navigate("Main Screen");
@@ -183,9 +185,9 @@ const HomeScreen = ({ navigation }) => {
 
  const featuresTop = [
   { label: "Genoxy", icon: require("../assets/chat.png"), color: "#FFD700",radius:"left",screen:"GENOXY" },
-  { label:"Voice AI", icon: require("../assets/mic.png"), color: "#34D399", screen:"Genoxy" },
-  { label: "Explore AI LLMs", icon: require("../assets/brain.png"), color: "#A78BFA", screen:"DrawerScreens" },
-  { label: "Blockchain", icon: require("../assets/blockchain.png"), color: "#FACC15",radius:"right", screen:"AI BLOCKCHAIN & IT SERVICES" },
+  // { label:"AI Agents 2 Earn Money", icon: require("../assets/AgentEarn2.png"), color: "#34D399", screen:"Agent Store",radius:"right", },
+  // { label: "Explore AI LLMs", icon: require("../assets/brain.png"), color: "#A78BFA", screen:"DrawerScreens" },
+  // { label: "Blockchain", icon: require("../assets/blockchain.png"), color: "#FACC15",radius:"right", screen:"AI BLOCKCHAIN & IT SERVICES" },
 ];
 
 
@@ -297,7 +299,7 @@ const renderIcon = (item, size = 125) => {
 }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar 
         barStyle="light-content" 
         backgroundColor="#360256" 
@@ -310,7 +312,7 @@ const renderIcon = (item, size = 125) => {
         end={{ x: 1, y: 1 }}
         style={styles.mainContainer}
       >
-         <View>
+         <View style={{position: 'absolute', top: Platform.OS === 'android' ? StatusBar.currentHeight + 10 : 40, right: 20, zIndex: 10,justifyContent:'flex-end'}}>
                   <Logout/>
          </View>
         {/* Header */}
@@ -340,7 +342,7 @@ const renderIcon = (item, size = 125) => {
                 colors={featureGradients[item.label] || ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.05)"]} 
                  style={item.radius == "right" ? styles.cardRightRadius : item.radius == "left" ? styles.cardLeftRadius : styles.topCard}> 
                 <TouchableOpacity onPress={() => onPressNavigation(item.screen)}>
-                  {renderIcon(item, 45)}
+                  {renderIcon(item, 48)}
                   <View style={{alignItems: "center", justifyContent: "center"}}>
                   <Text style={styles.topCardText}>{item.label}</Text>
                   </View>
@@ -443,7 +445,7 @@ const renderIcon = (item, size = 125) => {
                 </Text> 
               </View>
       </LinearGradient>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -721,7 +723,7 @@ const styles = StyleSheet.create({
     width:width*0.14,
   },
   cardLeftRadius:{
-    // flex: 1,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 10,

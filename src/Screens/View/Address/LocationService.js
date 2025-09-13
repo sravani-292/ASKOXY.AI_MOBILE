@@ -95,7 +95,7 @@ var results;
       
     } else {
       console.error("Error fetching coordinates:", response.data.status);
-      Alert.alert("Error", "Could not fetch coordinates for the given address.");
+      // Alert.alert("Error", "Could not fetch coordinates for the given address.");
       return { status: "error", distance: 0, isWithin: false };
     }
   } catch (error) {

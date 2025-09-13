@@ -1,11 +1,13 @@
 // src/components/ChatFAB.js
 import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { MessageCircle,BotMessageSquare,UserMessageSquare } from 'lucide-react-native';
 
 export default function ChatFAB({ onPress }) {
+  const navigation = useNavigation();
   return (
-    <TouchableOpacity style={styles.fab} onPress={onPress}>
+    <TouchableOpacity style={styles.fab} onPress={()=> navigation.navigate('Chat With AI')}>
       <BotMessageSquare color="#fff" size={28} />
     </TouchableOpacity>
   );
@@ -14,7 +16,7 @@ export default function ChatFAB({ onPress }) {
 const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
-    bottom: 125,
+    bottom: 145,
     right: 20,
     backgroundColor: '#4F46E5',
     padding: 16,

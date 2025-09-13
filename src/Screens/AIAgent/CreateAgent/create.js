@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Picker } from '@react-native-picker/picker';
 
-const AgentVisionScreen = () => {
+const AgentVisionScreen = ({ agentData, updateAgentData }) => {
   const [agentName, setAgentName] = useState('');
   const [visionDescription, setVisionDescription] = useState('');
   const [selectedSector, setSelectedSector] = useState('');
@@ -85,11 +85,11 @@ const AgentVisionScreen = () => {
             <Text style={styles.label}>Agent Name <Text style={styles.required}>*</Text></Text>
           </View>
           <TextInput
-            style={styles.input}
-            placeholder="Enter a descriptive name for your agent"
-            value={agentName}
-            onChangeText={setAgentName}
-          />
+        style={styles.input}
+        placeholder="Enter a descriptive name for your agent"
+        value={agentData.agentName}
+        onChangeText={(text) => updateAgentData({ agentName: text })}
+      />
           <Text style={styles.helper}>Choose a clear, memorable name that reflects your agent's purpose</Text>
         </View>
 
@@ -102,14 +102,12 @@ const AgentVisionScreen = () => {
             <Text style={styles.label}>Vision & Unique Selling Proposition <Text style={styles.required}>*</Text></Text>
           </View>
           <TextInput
-            style={styles.textArea}
-            placeholder="Describe your agent's core mission, value proposition, and what makes it unique..."
-            value={visionDescription}
-            onChangeText={setVisionDescription}
-            multiline={true}
-            numberOfLines={6}
-            textAlignVertical="top"
-          />
+        style={styles.textArea}
+        placeholder="Describe your agent's core mission..."
+        value={agentData.uniqueSolution}
+        onChangeText={(text) => updateAgentData({ uniqueSolution: text })}
+        multiline
+      />
           <Text style={styles.helper}>Explain what problem your agent solves and what sets it apart from existing solutions</Text>
         </View>
 
@@ -123,15 +121,14 @@ const AgentVisionScreen = () => {
           </View>
           <View style={styles.pickerContainer}>
             <Picker
-              selectedValue={selectedSector}
-              onValueChange={(itemValue) => setSelectedSector(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select a sector..." value="" />
-              {sectors.map((sector, index) => (
-                <Picker.Item key={index} label={sector} value={sector} />
-              ))}
-            </Picker>
+        selectedValue={agentData.business}
+        onValueChange={(val) => updateAgentData({ business: val })}
+      >
+        <Picker.Item label="Select a sector..." value="" />
+        {sectors.map((sector, index) => (
+          <Picker.Item key={index} label={sector} value={sector} />
+        ))}
+      </Picker>
           </View>
           <Text style={styles.helper}>Choose the primary industry your agent will serve</Text>
         </View>
@@ -145,16 +142,15 @@ const AgentVisionScreen = () => {
             <Text style={styles.label}>Subdomain</Text>
           </View>
           <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedSubdomain}
-              onValueChange={(itemValue) => setSelectedSubdomain(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select a subdomain..." value="" />
-              {subdomains.map((subdomain, index) => (
-                <Picker.Item key={index} label={subdomain} value={subdomain} />
-              ))}
-            </Picker>
+             <Picker
+        selectedValue={agentData.subDomain}
+        onValueChange={(val) => updateAgentData({ subDomain: val })}
+      >
+        <Picker.Item label="Select a subdomain..." value="" />
+        {subdomains.map((sub, index) => (
+          <Picker.Item key={index} label={sub} value={sub} />
+        ))}
+      </Picker>
           </View>
           <Text style={styles.helper}>Specify the particular area within your sector (optional but recommended)</Text>
         </View>

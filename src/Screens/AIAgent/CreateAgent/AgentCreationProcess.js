@@ -71,7 +71,7 @@ const DownloadIcon = () => (
   </View>
 );
 
-const AgentCreationProcess = () => {
+const AgentCreationProcess = ({ agentData, updateAgentData }) => {
   const [blogDescription, setBlogDescription] = useState(
     'Discover how EduAssist Pro is revolutionizing education with AI-powered personalized tutoring. Learn about our adaptive learning technology that helps K-12 students excel in mathematics, science, and reading comprehension through intelligent, responsive teaching methods.'
   );
@@ -183,8 +183,8 @@ const AgentCreationProcess = () => {
         <Text style={styles.fieldLabel}>Blog Description</Text>
         <TextInput
           style={styles.descriptionInput}
-          value={blogDescription}
-          onChangeText={setBlogDescription}
+          value={agentData.description}
+          onChangeText={(text) => updateAgentData({ description: text })}
           multiline
           textAlignVertical="top"
         />

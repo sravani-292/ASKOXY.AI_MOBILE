@@ -40,6 +40,7 @@ const getFeeFromSlab = (value, slabs, valueKeys, distance = null) => {
 };
 
 export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
+  console.log('Calculating delivery fee for:', { userLat, userLng, cartAmount });
   if (!userLat || !userLng) {
     return {
       fee: null,
@@ -113,8 +114,10 @@ export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
 
   const maxDistance = globalMap.max_distance_km ?? 25;
   const minOrderForWallet = globalMap.min_order_for_wallet_use ?? 0;
+  
 
   if (nearestStore.distance > maxDistance) {
+    const addressStatus = false;
     return {
       fee: null,
       distance: roundedDistance,
@@ -124,7 +127,8 @@ export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
       walletApplicable: false,
       canPlaceOrder: false,
       minOrderForWallet,
-      minOrderToPlace: 0
+      minOrderToPlace: 0,
+      addressStatus: addressStatus
     };
   }
 

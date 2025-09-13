@@ -1,4 +1,3 @@
-// Tabs.js
 import React, { useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
@@ -19,74 +18,82 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomNavigationBar from '../Components/AppBar';
 import ProfileSettings from '../Screens/View/Profile/ProfileView';
 import MainWallet from '../Screens/View/Wallet/Main';
-import OrderScreen from '../../src/Screens/View/Orders/OrderScreen';
 import CartScreen from '../Screens/View/ShoppingCart/Cart/CartScreen';
 import NewDashBoard from '../Screens/New_Dashbord/screen/NewDashBoard';
 import Home from '../Home';
-import BharathAgentstore from '../Screens/Genoxy/BharathAgentstore';
 import { COLORS } from '../../Redux/constants/theme';
-
-// IMPORTANT: now using StoreTabs (a nested tab navigator)
 import StoreTabs from './StoreTabs';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { scale, verticalScale, scaleFont } from '../utils/scale.js';
 
-const { height, width } = Dimensions.get('window');
 const Tab = createBottomTabNavigator();
 
 const TabArr = [
   { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
   { route: 'Dashboard', label: 'Dashboard', icon: require('../../assets/BottomTabImages/Home.png'), gradient: ['#f093fb', '#f5576c'], component: NewDashBoard },
-  // AI Store now points to StoreTabs (nested tab navigator)
-  { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
+  // { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: StoreTabs },
   { route: 'Wallet', label: 'Wallet', icon: require('../../assets/BottomTabImages/wallet.png'), gradient: ['#4facfe', '#00f2fe'], component: MainWallet },
-  { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ["#7957c8ff", "#6a0dad"], component: CartScreen },
+  { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ['#7957c8ff', '#6a0dad'], component: CartScreen },
   { route: 'Profile', label: 'Profile', icon: require('../../assets/BottomTabImages/profile.png'), gradient: ['#6a11cb', '#2575fc'], component: ProfileSettings },
 ];
 
-// AnimatedTabButton: guarded for safety (won't crash if item is undefined)
 const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => {
-  if (!item) return null; // safety guard
+  if (!item) return null;
 
   const focused = accessibilityState.selected;
   const { cartCount } = useCart();
   const animatedValue = useRef(new Animated.Value(focused ? 1 : 0)).current;
 
   const animatedStyles = useMemo(() => ({
-    scale: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }),
-    opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+    scale: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }), // Reduced scale for subtler effect
+    opacity: animatedValue.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }), // Fully hide gradient when inactive
   }), [animatedValue]);
 
   useEffect(() => {
-    Animated.timing(animatedValue, { toValue: focused ? 1 : 0, duration: 150, useNativeDriver: true }).start();
+    Animated.timing(animatedValue, {
+      toValue: focused ? 1 : 0,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
   }, [focused, animatedValue]);
 
-  const iconStyle = useMemo(() => [styles.tabIcon, { tintColor: focused ? COLORS.white : COLORS.services }], [focused]);
+  const iconStyle = useMemo(() => [
+    styles.tabIcon,
+    { tintColor: focused ? COLORS.white : COLORS.services },
+  ], [focused]);
+
+  const labelStyle = useMemo(() => [
+    styles.tabLabel,
+    { color: focused ? COLORS.white : COLORS.services, fontWeight: focused ? '600' : '500' },
+  ], [focused]);
 
   return (
-    <TouchableOpacity onPress={onPress} style={styles.tabButton} activeOpacity={0.8}>
+    <TouchableOpacity onPress={onPress} style={styles.tabButton} activeOpacity={0.7}>
       <View style={styles.tabContainer}>
+        {/* Show gradient background only for active tab */}
         <Animated.View style={[styles.background, { transform: [{ scale: animatedStyles.scale }], opacity: animatedStyles.opacity }]}>
           <LinearGradient colors={item.gradient} style={styles.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} />
         </Animated.View>
-
         <View style={styles.tabIconContainer}>
           {item.icon ? (
             <Image source={item.icon} resizeMode="contain" style={iconStyle} />
           ) : (
-            <Ionicons name="ellipse-outline" size={24} />
+            <Ionicons name="ellipse-outline" size={scale(22)} />
           )}
-
           {item.route === 'My Cart' && cartCount > 0 && (
             <View style={styles.cartBadge}>
               <Text style={styles.cartBadgeText}>{cartCount}</Text>
             </View>
           )}
+          <Text style={labelStyle} numberOfLines={1} adjustsFontSizeToFit>
+            {item.label}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 });
 
-// CustomTabBar: skip routes we don't have metadata for and allow hiding in tabBar prop
 const CustomTabBar = React.memo(({ state, descriptors, navigation }) => {
   const tabData = useMemo(() => state.routes.map((route, index) => {
     const item = TabArr.find((tab) => tab.route === route.name);
@@ -100,11 +107,10 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }) => {
   }, [navigation]);
 
   return (
-    <View style={styles.tabBarWrapper}>
+    <SafeAreaView edges={['bottom']} style={styles.tabBarWrapper}>
       <View style={styles.tabBarContainer}>
         <View style={styles.tabButtonsContainer}>
           {tabData.map(({ route, item, isFocused, key }) => (
-            // if item missing (shouldn't happen if TabArr matches your Tab.Screen), skip it gracefully
             item ? (
               <AnimatedTabButton
                 key={key}
@@ -116,7 +122,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }) => {
           ))}
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 });
 
@@ -129,27 +135,25 @@ const Tabs = ({ navigation }) => {
   }, [navigation]);
 
   const getScreenOptions = useCallback((item) => ({
-    headerShown: ['Profile', 'Wallet', 'My Cart', 'My Orders','AI Store'].includes(item.route),
+    headerShown: ['Profile', 'Wallet', 'My Cart', 'My Orders'].includes(item.route),
     headerRight: item.route === 'Profile' ? () => (
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={25} color="#000" />
+        <Ionicons name="log-out-outline" size={scale(22)} color="#000" />
       </TouchableOpacity>
     ) : undefined,
     headerStyle: { backgroundColor: ['Profile', 'Wallet'].includes(item.route) ? '#fff' : undefined },
     headerTitleStyle: { color: ['Profile', 'Wallet'].includes(item.route) ? '#000' : undefined },
   }), [handleLogout]);
 
-  // IMPORTANT: hide main custom tab bar when AI Store is focused so StoreTabs' own tab bar can show
   const tabNavigatorProps = useMemo(() => ({
     initialRouteName: "Landing",
     tabBar: (props) => {
       const focusedRoute = props.state.routes[props.state.index].name;
-      // if (focusedRoute === 'AI Store') return null; // hide parent custom tab for AI Store
+      if (focusedRoute === 'AI Store') return null;
       return <CustomTabBar {...props} />;
     },
     screenOptions: {
       headerShown: true,
-      tabBarShowLabel: false,
       header: (props) => <CustomNavigationBar {...props} />,
     },
   }), []);
@@ -169,18 +173,92 @@ const Tabs = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  tabBarWrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingBottom: Platform.OS === 'ios' ? 20 : 10, paddingHorizontal: 20 },
-  tabBarContainer: { height: 65, borderRadius: 25, overflow: 'hidden', backgroundColor: COLORS.white, borderWidth: 2, borderColor: '#dcdcdc', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 8 },
-  tabButtonsContainer: { flexDirection: 'row', flex: 1 },
-  tabButton: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 8 },
-  tabContainer: { alignItems: 'center', justifyContent: 'center', width: '80%', height: '100%', position: 'relative' },
-  background: { ...StyleSheet.absoluteFillObject, borderRadius: 14, overflow: 'hidden' },
-  gradient: { flex: 1 },
-  tabIconContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 4 },
-  tabIcon: { width: 28, height: 28, resizeMode: 'contain' },
-  cartBadge: { position: 'absolute', top: -5, right: -10, backgroundColor: 'red', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1, minWidth: 16, alignItems: 'center' },
-  cartBadgeText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
-  logoutButton: { marginRight: 20, padding: 4 },
+  tabBarWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: scale(6), // Reduced padding for smaller size
+    paddingBottom: Platform.OS === 'ios' ? 0 : verticalScale(4),
+  },
+  tabBarContainer: {
+    height: verticalScale(60), // Reduced height for compact look
+    borderRadius: scale(18), // Smaller border radius
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: verticalScale(2) },
+    shadowOpacity: 0.12, // Subtler shadow
+    shadowRadius: scale(5),
+    elevation: 5,
+  },
+  tabButtonsContainer: {
+    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'space-evenly',
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(5), // Reduced padding
+  },
+  tabContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '90%', // Slightly reduced for compact layout
+    height: '100%',
+    position: 'relative',
+  },
+  background: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: scale(10), // Smaller border radius
+    overflow: 'hidden',
+  },
+  gradient: {
+    flex: 1,
+  },
+  tabIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(3), // Reduced padding
+  },
+  tabIcon: {
+    width: scale(22), // Smaller icon size
+    height: scale(22),
+    resizeMode: 'contain',
+  },
+  tabLabel: {
+    fontSize: scaleFont(10), // Smaller font size
+    marginTop: verticalScale(2), // Tighter spacing
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+  },
+  cartBadge: {
+    position: 'absolute',
+    top: verticalScale(-5), // Adjusted for smaller size
+    right: scale(-7),
+    backgroundColor: '#ff3d00',
+    borderRadius: scale(8), // Smaller badge
+    paddingHorizontal: scale(3),
+    paddingVertical: verticalScale(1),
+    minWidth: scale(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.white,
+  },
+  cartBadgeText: {
+    color: COLORS.white,
+    fontSize: scaleFont(8), // Smaller badge text
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  logoutButton: {
+    marginRight: scale(14), // Reduced margin
+    padding: scale(4),
+  },
 });
 
-export default Tabs
+export default Tabs;

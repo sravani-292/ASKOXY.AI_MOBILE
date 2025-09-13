@@ -46,7 +46,7 @@ const gradientThemes = {
     end: { x: 1, y: 1 }
   },
   'Grocery': {
-    colors: ['#A8E6CF', '#DCEDC8', '#F1F8E9'],
+    colors: ['#E6E6FA', '#D8BFD8', '#9370DB'], // Lavender shades
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 }
   },
@@ -80,7 +80,7 @@ const gradientThemes = {
 const getHeaderGradient = (activeCategory) => {
   const themes = {
     'RICE': ['#FF9A9E', '#FECFEF'],
-    'Grocery': ['#A8E6CF', '#DCEDC8'],
+    'Grocery': ['#E6E6FA', '#9370DB'], // Lavender gradient
     'GOLD': ['#FFB74D', '#FFF3E0'],
     'FESTIVAL': ['#E1F5FE', '#F0F8FF'],
     'Meat': ['#FFCDD2', '#F8BBD9'],
@@ -89,6 +89,7 @@ const getHeaderGradient = (activeCategory) => {
   };
   return themes[activeCategory] || themes['default'];
 };
+
 
 export default function NewDashBoard() {
 
@@ -147,7 +148,7 @@ export default function NewDashBoard() {
   // Get current gradient theme based on selected category
   const getCurrentGradientTheme = useCallback(() => {
     const categoryName = selectedCategoryType || 'default';
-    console.log("categoryName",categoryName);
+    // console.log("categoryName",categoryName);
     return gradientThemes[categoryName] || gradientThemes['default'];
   }, [selectedCategoryType]);
 
@@ -428,7 +429,7 @@ const styles = StyleSheet.create({
   },
   scrollToTopButton: {
     position: 'absolute',
-    bottom: 70,
+    bottom: 90,
     right: 20,
     zIndex: 1000,
   },
