@@ -1,9 +1,13 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
-import React, { useState } from 'react'
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Dimensions } from 'react-native'
+import React, { use, useEffect, useState } from 'react'
 import * as DocumentPicker from 'expo-document-picker';
 import axios from 'axios';
 import { MaterialIcons } from '@expo/vector-icons';
 import BASE_URL from "../../../../Config";
+import { useSelector } from 'react-redux';
+import { FlatList } from 'react-native-gesture-handler';
+
+const {width,height} = Dimensions.get("window");
 
 const FileUpload = ({ assistantId }) => {
   const [uploading, setUploading] = useState(false);
@@ -11,14 +15,18 @@ const FileUpload = ({ assistantId }) => {
   const [uploadedFile, setUploadedFile] = useState(null); 
   const [uploadStatus, setUploadStatus] = useState('idle'); 
 
+
+  const user = useSelector((state) => state.counter);
+  const token = user.accessToken;
+
   const pickDocument = async () => {
     console.log("Opening document picker...");
 
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
+          type: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf', 'text/csv', 'text/plain'],
+          copyToCacheDirectory: true,
+        });
       
       console.log("Document Picker Result:", result);
       
@@ -54,34 +62,34 @@ const FileUpload = ({ assistantId }) => {
       name: selectedFile.name,
       type: selectedFile.mimeType || selectedFile.type || 'application/octet-stream',
     });
-    formData.append('assistantId', assistantId);
+    // formData.append('files', assistantId);
     
     console.log("Form Data Prepared for file:", selectedFile.name);
     setUploading(true);
     setUploadStatus('uploading');
 
     try {
-      const response = await axios.post(
-        `${BASE_URL}ai-service/agent/${assistantId}/upload`,
-        formData,
+      const response = await axios(
+        `${BASE_URL}ai-service/agent/${encodeURIComponent(assistantId)}/addfiles`,
         {
+          method: "POST",
+          data : formData,
           headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          timeout: 60000, 
-        }
-      );
-
+            "Content-Type": "multipart/form-data",
+             Authorization: `Bearer ${token}`,
+          }
+        }
+      );
       console.log("Upload Response:", response);
       setUploadedFile({
         ...selectedFile,
         uploadResponse: response.data
       });
-      setUploadStatus('uploaded');
+      setUploadStatus('uploaded');``
       Alert.alert('Success', 'File uploaded successfully!');
       
     } catch (error) {
-      console.error("Upload Error:", error);
+      console.error("Upload Error:", error.response);
       setUploadStatus('selected'); 
       Alert.alert(
         'Upload Failed',
@@ -91,6 +99,8 @@ const FileUpload = ({ assistantId }) => {
       setUploading(false);
     }
   };
+
+
 
   const removeFile = () => {
     Alert.alert(
@@ -185,8 +195,8 @@ const FileUpload = ({ assistantId }) => {
               style={[styles.button, styles.secondaryButton]} 
               onPress={pickDocument}
             >
-              <MaterialIcons name="swap-horiz" size={20} color="#007bff" style={styles.buttonIcon} />
-              <Text style={[styles.buttonText, styles.secondaryButtonText]}>Change File</Text>
+              <MaterialIcons name="swap-horiz" size={20} color="#fff" style={styles.buttonIcon} />
+              <Text style={[styles.buttonText]}>Change File</Text>
             </TouchableOpacity>
           </View>
         );
@@ -201,22 +211,36 @@ const FileUpload = ({ assistantId }) => {
 
       case 'uploaded':
         return (
-          <View style={styles.actionButtonsContainer}>
+          <View style={styles.actionButtonsContainers}>
             <TouchableOpacity 
-              style={[styles.button, styles.successButton]} 
+              style={[styles.buttons, styles.successButton]} 
               disabled
             >
-              <MaterialIcons name="check-circle" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Upload Complete</Text>
+              <MaterialIcons name="check-circle" size={20} color="#fff" style={styles.buttonIcons} />
+              <Text style={styles.buttonTexts}>Upload Complete</Text>
+            </TouchableOpacity>
+
+             <TouchableOpacity 
+              style={[styles.buttons, styles.secondaryButton]} 
+              onPress={()=>{
+                 setSelectedFile(null);
+                  setUploadedFile(null);
+                  setUploadStatus('idle');
+                  console.log("File removed");
+                pickDocument();
+              }}
+            >
+              <MaterialIcons name="file-upload" size={20} color="#fff" style={styles.buttonIcons} />
+              <Text style={styles.buttonTexts}>Add another File</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={[styles.button, styles.removeButton]} 
+            {/* <TouchableOpacity 
+              style={[styles.buttons, styles.removeButton]} 
               onPress={removeFile}
             >
-              <MaterialIcons name="delete" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.buttonText}>Remove File</Text>
-            </TouchableOpacity>
+              <MaterialIcons name="delete" size={20} color="#fff" style={styles.buttonIcons} />
+              <Text style={styles.buttonTexts}>Remove File</Text>
+            </TouchableOpacity> */}
           </View>
         );
 
@@ -276,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#28a745',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    // backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: '#007bff',
   },
@@ -368,5 +392,33 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  actionButtonsContainers:{
+    flexDirection:"row",
+    justifyContent:"space-evenly",
+  },
+    buttons: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginVertical: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: width * 0.25,
+    marginRight:10
+  },
+  buttonIcons: {
+    marginLeft: 3,
+    marginRight: 3
+  },
+  buttonTexts: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    // marginLeft: -3,
+    width: width * 0.15
+    // marginRight: 3
   },
 });

@@ -14,13 +14,12 @@ import {
   Image,
   Dimensions,
   Platform,
-  TouchableWithoutFeedback,
 } from "react-native";
 import BASE_URL from "../../../Config";
-import { useNavigation } from "@react-navigation/native";
-import axios from "axios";
-
-const { width } = Dimensions.get('window');
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import AIRoleImage from "../AIAgent/CreateAgent/AIRoleImage";
+import CustomFAB from "./CustomFAB"; // Import the new component
+const { width } = Dimensions.get("window");
 
 const BharathAgentstore = () => {
   const [agents, setAgents] = useState([]);
@@ -32,13 +31,14 @@ const BharathAgentstore = () => {
   const [search, setSearch] = useState("");
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [viewMode, setViewMode] = useState('grid'); // Default to grid
-  const [showData, setShowData] = useState(false); // New state to control data visibility
+  const [viewMode, setViewMode] = useState("list");
 
   const navigation = useNavigation();
 
   // Fetch agents
   const getAgents = async (afterId = null, append = false) => {
+    console.log("Fetching agents, afterId:", afterId, "append:", append);
+
     try {
       if (!append) {
         setLoading(true);
@@ -46,7 +46,9 @@ const BharathAgentstore = () => {
         setLoadingMore(true);
       }
 
-      let url = `${BASE_URL}student-service/user/getAllAssistants?limit=10`;
+      let url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=40`;
+      console.log("Fetch URL:", url);
+
       if (afterId) {
         url += `&after=${afterId}`;
       }
@@ -65,18 +67,32 @@ const BharathAgentstore = () => {
       const result = await response.json();
 
       if (result?.data && Array.isArray(result.data)) {
-        const newAgents = result.data;
-        const nextCursor = result.last_id || null;
+        const approvedAgents = result.data.filter(
+          (agent) => agent.status === "APPROVED"
+        );
+     let agentsWithCustom;
+        // ✅ Always prepend custom agents
+        if(!lastId){
+            agentsWithCustom = [...CUSTOM_AGENTS, ...approvedAgents];
+        }
+        else{
+            agentsWithCustom = [ ...approvedAgents];
+        }
+
+        const nextCursor = result.lastId || null;
 
         if (append) {
-          setAgents((prev) => [...prev, ...newAgents]);
+          setAgents((prev) => [...prev, ...agentsWithCustom]);
         } else {
-          setAgents(newAgents);
+          setAgents(agentsWithCustom);
         }
 
         setLastId(nextCursor);
         if (result.totalCount !== undefined) setTotalCount(result.totalCount);
+
+        console.log("Approved agents + custom loaded:", agentsWithCustom.length);
       } else {
+        console.log("No data received or invalid format");
         if (!append) setAgents([]);
       }
     } catch (error) {
@@ -90,11 +106,74 @@ const BharathAgentstore = () => {
     }
   };
 
-  useEffect(() => {
-    getAgents(null, false);
-  }, []);
+  // 🔹 Put these at the top of your file (outside the component)
+  const IMAGE_MAP = {
+    code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
+    finance:
+      "https://media.licdn.com/dms/image/v2/D4D12AQH9ZTLfemnJgA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1730530043865?e=2147483647&v=beta&t=3GgdQbowwhu3jbuft6-XG2_jPZUSLa0XiCRgSz6AqBg",
+    business:
+      "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
+    technology: "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+    og: "https://i.ibb.co/gZjkJyQ8/1a.png",
+    irdai:
+      "https://www.livemint.com/lm-img/img/2024/05/30/600x338/Irdai_health_insurance_1717036677791_1717036677946.png",
+    gst: "https://zetran.com/wp-content/uploads/2025/02/GST-Compliance-and-Fraud-Detection-using-AI.jpg",
+    law: "https://royalsociety.org/-/media/events/2025/9/ai-and-the-law/ai-and-the-law-image.jpg",
+  };
 
+  const DEFAULT_IMAGE = [
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFQjSgjdQbvnhDH7go4ETwAOEu05VpFIAOVg&s",
+    "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+  ];
+
+  // 🔹 Helper function
+  const getAgentImage = (name) => {
+    if (!name) {
+      return DEFAULT_IMAGE[Math.floor(Math.random() * DEFAULT_IMAGE.length)];
+    }
+
+    const lowerName = name.toLowerCase();
+
+    // Special case: OG Fan Story Predictor
+    if (lowerName.includes("og")) {
+      return IMAGE_MAP.og;
+    }
+
+    // Check for keywords in name
+    for (const key in IMAGE_MAP) {
+      if (lowerName.includes(key)) {
+        return IMAGE_MAP[key];
+      }
+    }
+
+    // Fallback random image
+    return DEFAULT_IMAGE[Math.floor(Math.random() * DEFAULT_IMAGE.length)];
+  };
+
+  const CUSTOM_AGENTS = [
+    {
+      id: "custom-1",
+      name: "THE FAN OF OG",
+      description: "Create Your OG IMAGE. Just Upload Your Photo",
+      instructions: "Create Your OG IMAGE. Just Upload Your Photo",
+      status: "APPROVED",
+      price: "Free",
+      rating: 5,
+      image: "https://i.ibb.co/h1fpCXzw/fanofog.png", // optional
+    },
+  ];
+
+  // Fixed: Use useFocusEffect properly
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log("Screen focused, loading agents...");
+      getAgents(null, false);
+    }, [])
+  );
+
+  // Fixed: Ensure filtered agents update correctly
   useEffect(() => {
+    console.log("Filtering agents, total:", agents.length);
     const filtered = agents.filter((agent) => {
       const a = agent.assistant || agent;
       const text =
@@ -102,6 +181,7 @@ const BharathAgentstore = () => {
       return text.includes(search.toLowerCase());
     });
     setFilteredAgents(filtered);
+    console.log("Filtered agents:", filtered.length);
   }, [agents, search]);
 
   const onRefresh = () => {
@@ -112,10 +192,8 @@ const BharathAgentstore = () => {
   };
 
   const loadMore = () => {
-    if (lastId) {
+    if (lastId && !loadingMore) {
       getAgents(lastId, true);
-    } else {
-      Alert.alert("No More Data", "All assistants have been loaded.");
     }
   };
 
@@ -128,13 +206,26 @@ const BharathAgentstore = () => {
       return;
     }
 
+    if(assistant.name === "THE FAN OF OG"){
+      navigation.navigate("Image Creator", {
+        assistantId,
+        query: "",
+        category: "Fan of OG",
+        agentName: "Fan of OG",
+        fd: null,
+        agentId: assistant.agentId
+      });
+      return;
+    }else{
     navigation.navigate("GenOxyChatScreen", {
       assistantId,
       query: "",
       category: "Assistant",
-      categoryType: assistant.name || "Assistant",
+      agentName: assistant.name || "Assistant",
       fd: null,
+      agentId: assistant.agentId
     });
+  }
   };
 
   // Truncate description
@@ -147,49 +238,45 @@ const BharathAgentstore = () => {
     return clean.length > 120 ? clean.substring(0, 117) + "..." : clean;
   };
 
-  const renderAgentCard = ({ item, index }) => {
+  const renderAgentCard = ({ item }) => {
     const agent = item.assistant || item;
     const price = agent.price || "Free";
     const rating = agent.rating || 5;
-    const isGridMode = viewMode === 'grid';
-    const hasImage = agent.imageUrl; // Assuming imageUrl exists in agent data, adjust key as needed
-    const initial = agent.name?.charAt(0).toUpperCase() || "A";
+    const isGridMode = viewMode === "grid";
+
+    const agentImage = agent.imageUrl || getAgentImage(agent.name);
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[
           styles.agentCard,
           isGridMode ? styles.gridCard : styles.listCard,
-          { opacity: showData ? 1 : 0 }
         ]}
         onPress={() => goToChat(agent)}
         activeOpacity={0.8}
       >
-        {/* Agent Image or Initial */}
+        {/* 🔹 Agent Image */}
         <View style={styles.imageContainer}>
-          {hasImage ? (
-            <Image
-              source={{ uri: agent.imageUrl }}
-              style={styles.agentImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.initialContainer, { backgroundColor: getAvatarColor(agent.name) }]}>
-              <Text style={styles.initialText}>{initial}</Text>
-            </View>
-          )}
+          <Image
+            source={{ uri: agentImage }}
+            style={[isGridMode ? styles.agentImage : styles.listImage]}
+            resizeMode="cover"
+          />
         </View>
 
-        {/* Enhanced Card Header */}
+        {/* Card Header */}
         <View style={styles.cardHeader}>
           <View style={styles.headerInfo}>
-            <Text style={styles.agentName} numberOfLines={1}>
+            <Text style={styles.agentName} numberOfLines={2}>
               {agent.name || "Unnamed Assistant"}
             </Text>
             <View style={styles.metaRow}>
-              <View style={[styles.statusBadge, { 
-                backgroundColor: getStatusColor('active') 
-              }]}>
+              <View
+                style={[
+                  styles.statusBadge,
+                  { backgroundColor: getStatusColor("active") },
+                ]}
+              >
                 <View style={styles.statusDot} />
                 <Text style={styles.statusText}>Active</Text>
               </View>
@@ -200,24 +287,27 @@ const BharathAgentstore = () => {
           </View>
         </View>
 
-        {/* Enhanced Description */}
+        {/* Description */}
         <Text style={styles.agentPreview} numberOfLines={isGridMode ? 2 : 3}>
           {getPreview(agent.instructions || agent.description)}
         </Text>
 
-        {/* Enhanced Rating & Actions */}
+        {/* Rating & Button */}
         <View style={styles.cardFooter}>
           <View style={styles.ratingContainer}>
             {[...Array(5)].map((_, i) => (
-              <Text key={i} style={[styles.star, i < rating ? styles.filledStar : {}]}>
+              <Text
+                key={i}
+                style={[styles.star, i < rating ? styles.filledStar : {}]}
+              >
                 ★
               </Text>
             ))}
             <Text style={styles.ratingText}>({rating}.0)</Text>
           </View>
 
-          <TouchableOpacity 
-            style={styles.useButton} 
+          <TouchableOpacity
+            style={styles.useButton}
             onPress={() => goToChat(agent)}
           >
             <Text style={styles.useButtonText}>Use Agent</Text>
@@ -225,7 +315,7 @@ const BharathAgentstore = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Floating corner accent */}
+        {/* Corner Accent */}
         <View style={styles.cornerAccent} />
       </TouchableOpacity>
     );
@@ -233,13 +323,21 @@ const BharathAgentstore = () => {
 
   // Helper functions for dynamic styling
   const getAvatarColor = (name) => {
-    const colors = ['#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5A2B'];
+    const colors = [
+      "#8B5CF6",
+      "#EC4899",
+      "#10B981",
+      "#F59E0B",
+      "#3B82F6",
+      "#EF4444",
+      "#8B5A2B",
+    ];
     const index = name?.charCodeAt(0) % colors.length || 0;
     return colors[index];
   };
 
   const getStatusColor = (status) => {
-    return status === 'active' ? '#10B981' : '#64748B';
+    return status === "active" ? "#10B981" : "#64748B";
   };
 
   const shouldShowLoadMore = lastId && agents.length > 0;
@@ -253,10 +351,9 @@ const BharathAgentstore = () => {
         {search ? "No matches found" : "No assistants available"}
       </Text>
       <Text style={styles.emptySubtitle}>
-        {search 
-          ? "Try adjusting your search terms" 
-          : "Check back later for new assistants"
-        }
+        {search
+          ? "Try adjusting your search terms"
+          : "Check back later for new assistants"}
       </Text>
       {!loading && !search && (
         <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
@@ -287,32 +384,59 @@ const BharathAgentstore = () => {
           )}
         </View>
       </View>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("AI Role Selection")}
+      >
+        <AIRoleImage />
+      </TouchableOpacity>
 
       {/* Stats & View Toggle */}
       <View style={styles.statsContainer}>
         <Text style={styles.statsText}>
-          {filteredAgents.length} assistant{filteredAgents.length !== 1 ? 's' : ''} available
+          {filteredAgents.length} assistant
+          {filteredAgents.length !== 1 ? "s" : ""} available
         </Text>
-        
+
         <View style={styles.viewToggle}>
-          <TouchableOpacity 
-            style={[styles.toggleButton, viewMode === 'list' && styles.toggleButtonActive]}
-            onPress={() => setViewMode('list')}
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === "list" && styles.toggleButtonActive,
+            ]}
+            onPress={() => setViewMode("list")}
           >
-            <Text style={[styles.toggleIcon, viewMode === 'list' && styles.toggleIconActive]}>☰</Text>
+            <Text
+              style={[
+                styles.toggleIcon,
+                viewMode === "list" && styles.toggleIconActive,
+              ]}
+            >
+              ☰
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.toggleButton, viewMode === 'grid' && styles.toggleButtonActive]}
-            onPress={() => setViewMode('grid')}
+          <TouchableOpacity
+            style={[
+              styles.toggleButton,
+              viewMode === "grid" && styles.toggleButtonActive,
+            ]}
+            onPress={() => setViewMode("grid")}
           >
-            <Text style={[styles.toggleIcon, viewMode === 'grid' && styles.toggleIconActive]}>⊞</Text>
+            <Text
+              style={[
+                styles.toggleIcon,
+                viewMode === "grid" && styles.toggleIconActive,
+              ]}
+            >
+              ⊞
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
     </View>
   );
 
-  if (loading && !refreshing) {
+  // Improved loading screen
+  if (loading && !refreshing && agents.length === 0) {
     return (
       <View style={styles.loadingContainer}>
         <View style={styles.loadingSpinner}>
@@ -325,78 +449,82 @@ const BharathAgentstore = () => {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => setShowData(true)}>
-      <View style={styles.container}>
-        {/* Enhanced Header */}
-        {renderHeader()}
-        
-        {/* Enhanced Grid/List */}
-        <View style={styles.contentContainer}>
-          <FlatList
-            data={showData ? filteredAgents : []}
-            renderItem={renderAgentCard}
-            keyExtractor={(item) =>
-              item.id || item.assistantId || "key-" + Math.random()
-            }
-            numColumns={viewMode === 'grid' ? 2 : 1}
-            key={`${viewMode}-${viewMode === 'grid' ? 2 : 1}`}
-            contentContainerStyle={[
-              styles.listContainer,
-              viewMode === 'grid' && styles.gridContainer
-            ]}
-            columnWrapperStyle={viewMode === 'grid' && styles.gridWrapper}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor="#8B5CF6"
-                colors={['#8B5CF6']}
-              />
-            }
-            ListEmptyComponent={showData ? renderEmpty : null}
-            initialNumToRender={10}
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.1}
-          />
-        </View>
+    <View style={styles.container}>
+      {/* Enhanced Header */}
+      {renderHeader()}
 
-        {/* Enhanced Load More Button */}
-        {shouldShowLoadMore && showData && (
-          <View style={styles.loadMoreContainer}>
-            <TouchableOpacity
-              style={[styles.loadMoreButton, loadingMore && styles.loadMoreButtonDisabled]}
-              onPress={loadMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? (
-                <ActivityIndicator size="small" color="#FFF" />
-              ) : (
-                <>
-                  <Text style={styles.loadMoreButtonText}>Load More Assistants</Text>
-                  <Text style={styles.loadMoreIcon}>↓</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
+      {/* Enhanced Grid/List */}
+      <View style={styles.contentContainer}>
+        <FlatList
+          data={filteredAgents}
+          renderItem={renderAgentCard}
+          keyExtractor={(item) =>
+            item.id || item.assistantId || "key-" + Math.random()
+          }
+          numColumns={viewMode === "grid" ? 2 : 1}
+          key={`${viewMode}-${viewMode === "grid" ? 2 : 1}`}
+          contentContainerStyle={[
+            styles.listContainer,
+            viewMode === "grid" && styles.gridContainer,
+          ]}
+          columnWrapperStyle={viewMode === "grid" && styles.gridWrapper}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#8B5CF6"
+              colors={["#8B5CF6"]}
+            />
+          }
+          ListEmptyComponent={renderEmpty}
+          initialNumToRender={10}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.1}
+        />
       </View>
-    </TouchableWithoutFeedback>
+
+      {/* Enhanced Load More Button */}
+      {shouldShowLoadMore && (
+        <View style={styles.loadMoreContainer}>
+          <TouchableOpacity
+            style={[
+              styles.loadMoreButton,
+              loadingMore && styles.loadMoreButtonDisabled,
+            ]}
+            onPress={loadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <>
+                <Text style={styles.loadMoreButtonText}>
+                  Load More Assistants
+                </Text>
+                <Text style={styles.loadMoreIcon}>↓</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Reusable FAB Component */}
+      <CustomFAB navigation={navigation} />
+    </View>
   );
 };
 
 export default BharathAgentstore;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#F8FAFC" 
+  container: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
   },
-  
-  // Enhanced Header Styles
   headerContainer: {
     backgroundColor: "#FFFFFF",
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingTop: Platform.OS === "ios" ? 50 : 20,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
@@ -407,11 +535,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
-  
   searchContainer: {
     marginBottom: 16,
   },
-  
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -422,51 +548,43 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     height: 50,
   },
-  
   searchIcon: {
     fontSize: 16,
     marginRight: 12,
     opacity: 0.6,
   },
-  
   searchInput: {
     flex: 1,
     fontSize: 16,
     color: "#1E293B",
     height: "100%",
   },
-  
   clearIcon: {
     fontSize: 14,
     color: "#64748B",
     padding: 4,
   },
-  
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  
   statsText: {
     fontSize: 14,
     color: "#64748B",
     fontWeight: "500",
   },
-  
   viewToggle: {
     flexDirection: "row",
     backgroundColor: "#F1F5F9",
     borderRadius: 8,
     padding: 2,
   },
-  
   toggleButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
-  
   toggleButtonActive: {
     backgroundColor: "#FFFFFF",
     shadowColor: "#000",
@@ -475,36 +593,27 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  
   toggleIcon: {
     fontSize: 16,
     color: "#64748B",
   },
-  
   toggleIconActive: {
     color: "#8B5CF6",
   },
-
-  // Enhanced Content Styles
-  contentContainer: { 
+  contentContainer: {
     flex: 1,
   },
-  
   listContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 100,
   },
-  
   gridContainer: {
     paddingHorizontal: 8,
   },
-  
   gridWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
-
-  // Enhanced Card Styles
   agentCard: {
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -519,73 +628,65 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
     position: "relative",
     overflow: "hidden",
-    width: '48%', // Adjusted for better spacing in grid
+    width: "48%",
   },
-  
   listCard: {
     marginHorizontal: 4,
-    width: '100%',
+    width: "100%",
   },
-  
   gridCard: {
     flex: 0,
     marginHorizontal: 4,
-    maxWidth: (width - 32) / 2 - 8, // Adjusted for padding and margins
+    maxWidth: (width - 32) / 2 - 8,
   },
-  
   imageContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 10,
   },
-  
   agentImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: "100%",
+    height: 120,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
   },
-  
+  listImage: {
+    width: "100%",
+    height: 240,
+  },
   initialContainer: {
     width: 60,
     height: 60,
     borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: "#E5E7EB",
   },
-  
   initialText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
   },
-  
   headerInfo: {
     flex: 1,
     minWidth: 0,
   },
-  
   agentName: {
     fontSize: 16,
     fontWeight: "600",
     color: "#1E293B",
     marginBottom: 4,
   },
-  
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  
   statusBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -593,7 +694,6 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 10,
   },
-  
   statusDot: {
     width: 4,
     height: 4,
@@ -601,54 +701,45 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     marginRight: 4,
   },
-  
   statusText: {
     color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "500",
     textTransform: "uppercase",
   },
-  
   price: {
     fontSize: 12,
     color: "#8B5CF6",
     fontWeight: "500",
   },
-  
   agentPreview: {
     fontSize: 12,
     color: "#4B5563",
     lineHeight: 16,
     marginBottom: 10,
   },
-  
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
-  
   star: {
     fontSize: 12,
     color: "#D1D5DB",
     marginRight: 2,
   },
-  
   filledStar: {
     color: "#FBBF24",
   },
-  
   ratingText: {
     fontSize: 10,
     color: "#6B7280",
     marginLeft: 4,
   },
-  
   useButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -658,19 +749,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 1,
   },
-  
   useButtonText: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "500",
     marginRight: 4,
   },
-  
   arrowIcon: {
     color: "#FFFFFF",
     fontSize: 12,
   },
-  
   cornerAccent: {
     position: "absolute",
     top: 0,
@@ -681,8 +769,6 @@ const styles = StyleSheet.create({
     opacity: 0.1,
     borderBottomLeftRadius: 30,
   },
-
-  // Enhanced Loading Styles
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
@@ -690,7 +776,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8FAFC",
     paddingHorizontal: 40,
   },
-  
   loadingSpinner: {
     padding: 15,
     backgroundColor: "#FFFFFF",
@@ -702,20 +787,16 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     marginBottom: 15,
   },
-  
   loadingText: {
     fontSize: 16,
     color: "#1E293B",
     fontWeight: "500",
     marginBottom: 6,
   },
-  
   loadingSubtext: {
     fontSize: 12,
     color: "#6B7280",
   },
-
-  // Enhanced Empty State
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
@@ -723,7 +804,6 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     paddingHorizontal: 20,
   },
-  
   emptyIcon: {
     width: 60,
     height: 60,
@@ -733,18 +813,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 15,
   },
-  
   emptyIconText: {
     fontSize: 28,
   },
-  
   emptyTitle: {
     fontSize: 18,
     fontWeight: "500",
     color: "#1E293B",
     marginBottom: 6,
   },
-  
   emptySubtitle: {
     fontSize: 12,
     color: "#6B7280",
@@ -752,7 +829,6 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 18,
   },
-  
   retryButton: {
     backgroundColor: "#8B5CF6",
     paddingHorizontal: 18,
@@ -760,21 +836,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 1,
   },
-  
   retryButtonText: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "500",
   },
-
-  // Enhanced Load More
   loadMoreContainer: {
     position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
   },
-  
   loadMoreButton: {
     flexDirection: "row",
     justifyContent: "center",
@@ -787,18 +859,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
   },
-  
   loadMoreButtonDisabled: {
     opacity: 0.6,
   },
-  
   loadMoreButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "500",
     marginRight: 6,
   },
-  
   loadMoreIcon: {
     color: "#FFFFFF",
     fontSize: 14,

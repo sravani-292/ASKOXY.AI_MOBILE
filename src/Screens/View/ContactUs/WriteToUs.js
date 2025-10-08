@@ -129,10 +129,10 @@ const WriteToUs = ({ navigation, route }) => {
       return;
     }
 
-    if (!/^\S+@\S+\.\S+$/.test(email)) {
-      Alert.alert("Error", "Invalid email format!");
-      return;
-    }
+    // if (!/^\S+@\S+\.\S+$/.test(email)) {
+    //   Alert.alert("Error", "Invalid email format!");
+    //   return;
+    // }
 
     // Construct final query
     let finalQuery;

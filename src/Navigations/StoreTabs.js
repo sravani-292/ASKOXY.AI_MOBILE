@@ -32,14 +32,14 @@ const TabArr = [
     activeIcon: require('../../assets/BottomTabImages/landing.png'),
     gradient: ['#667eea', '#764ba2'],
   },
-  {
-    route: 'My Agents',
-    label: 'Agents',
-    icon: require('../../assets/BottomTabImages/MyAgent.png'),
-    activeIcon: require('../../assets/BottomTabImages/MyAgent.png'),
-    gradient: ['#f093fb', '#f5576c'],
-    component: MyAgents,
-  },
+  // {
+  //   route: 'My Agents',
+  //   label: 'Agents',
+  //   icon: require('../../assets/BottomTabImages/MyAgent.png'),
+  //   activeIcon: require('../../assets/BottomTabImages/MyAgent.png'),
+  //   gradient: ['#f093fb', '#f5576c'],
+  //   component: MyAgents,
+  // },
   {
     route: 'Store',
     label: 'Store',
@@ -48,14 +48,14 @@ const TabArr = [
     gradient: ['#ff7e5f', '#feb47b'],
     component: BharathAgentstore,
   },
-  {
-    route: 'Create Agent',
-    label: 'Create Agent',
-    icon: require('../../assets/BottomTabImages/createAgent.png'),
-    activeIcon: require('../../assets/BottomTabImages/createAgent.png'),
-    gradient: ['#7957c8ff', '#6a0dad'],
-    component: AgentCreationScreen,
-  },
+  // {
+  //   route: 'Create Agent',
+  //   label: 'Create Agent',
+  //   icon: require('../../assets/BottomTabImages/createAgent.png'),
+  //   activeIcon: require('../../assets/BottomTabImages/createAgent.png'),
+  //   gradient: ['#7957c8ff', '#6a0dad'],
+  //   component: AgentCreationScreen,
+  // },
 ];
 
 const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => {

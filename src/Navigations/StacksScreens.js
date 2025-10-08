@@ -114,13 +114,31 @@ import FaqLLMSlidesMobile from "../Screens/Genoxy/FAQ/FAQ_Sildes";
 import BeforeLogin from "../Screens/FreeAIBook/BeforeLogin";
 import AfterLogin from "../Screens/FreeAIBook/AfterLogin";
 import OrderScreen from "../Screens/View/Orders/OrderScreen";
-import AgentCreationFlow from "../Screens/AIAgent/CreateAgent/AgentCreationFlow";
-import AgentCreationScreen from "../Screens/AIAgent/AgentCreationScreen";
 import ActiveAgents from "../Screens/AIAgent/UserFlow/ActiveAgents";
 import AgentScreen from "../Screens/AIAgent/UserFlow/AgentScreen";
 import StoreTabs from "./StoreTabs";
 import ChatScreen from "../Components/ChatPopup";
 import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
+
+import RealtimeMainScreen from "../Screens/AIAgent/VoiceAssistant/screens/RealTimeMainScreen";
+import AIRoleSelection from "../Screens/AIAgent/CreateAgent/AIRoleSelection";
+import OGImageGenerator from "../Screens/AIAgent/UserFlow/OGImageGenerator";
+import MyAgents from "../Screens/AIAgent/UserFlow/MyAgent";
+import AgentCreationScreen from '../Screens/AIAgent/AgentCreationScreen';
+import RealTimeMainScreenForCall from "../Screens/AIAgent/EcommerceVoiceAssistant/screens/RealTimeMainScreenForCall";
+
+
+import GlmsHome from "../Screens/GLMS/GlmsHome";
+import GlmsVideos from "../Screens/GLMS/GlmsVideos";
+import DisplayJobsForUser from "../Screens/GLMS/Jobs/DisplayJobsForUser";
+import JobDescription from "../Screens/GLMS/Jobs/JobDescription";
+import AllAgentCreations from "../Screens/AIAgent/AgentCreationScreen/AllAgentCreations";
+import BlogsList from "../Screens/GLMS/Blogs/BlogsList";
+import SingleBlogDisplay from "../Screens/GLMS/Blogs/SingleBlogDisplay";
+import AddBlog from "../Screens/GLMS/Blogs/AddBlog";
+import UseCasesStackScreen from "./LOSUseCasesStackScreen";
+
+
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -348,7 +366,7 @@ const formatWord = (word) => {
       linking={linking}
       // initialRouteName={needsUpdate ? "App Update" : "Payment Test"}
       initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
-      // initialRouteName="Agent Creation Screen"
+      // initialRouteName="Call Assistant"
       screenOptions={{
         headerShown: true,
         presentation: "card",
@@ -674,7 +692,7 @@ const formatWord = (word) => {
       name="GenOxyChatScreen"
       component={GenOxyChatScreen}
        options={({ route }) => ({
-          title: route.params?.categoryType || 'GENOXY',})}/>
+          title: route.params?.agentName || 'GENOXY',})}/>
     <Stack.Screen name="DrawerScreens" component={DrawerScreens} options={{ headerShown: false, title: "AI LLMs" }} />
     {/* <Stack.Screen name="Bharat Agent Store" component={BharathAgentstore} options={{ headerShown: true, title: "Bharat Agent Store" }} /> */}
     <Stack.Screen name="AI Videos" component={AiVideosGeneratedMobile} options={{ headerShown: true, title: "AI Videos" }} />
@@ -683,16 +701,48 @@ const formatWord = (word) => {
     <Stack.Screen name="FAQ on LLM Images" component={FaqLLMSlidesMobile} options={{ headerShown: true, title: "FAQ on LLM Images" }} />
     <Stack.Screen name="Before Login" component={BeforeLogin} options={{ headerShown: true, title: "Get Free AI Book" }} />
     <Stack.Screen name="After Login" component={AfterLogin} options={{ headerShown: true, title: "Free AI Book"}}/>
-     
-    <Stack.Screen name="Agent Creation Flow" component={AgentCreationFlow} options={{ headerShown: true, title: "Create Your AI Agent" }} />
-    <Stack.Screen name="Agent Creation Screen" component={AgentCreationScreen} options={{ headerShown: true, title: "Create Your AI Agent" }} />
    
     <Stack.Screen name="Active Agents" component={ActiveAgents} options={{ headerShown: true, title: "Active Agents" }} />
     <Stack.Screen name="Agent Screen" component={AgentScreen} options={{ headerShown: true, title: "Agent Details" }} />
 
+    <Stack.Screen name="Agent Creation" component={AgentCreationScreen} options={{ headerShown: true, title: "Agent Creation" }} />
+
     <Stack.Screen name= "Agent Store" component={StoreTabs} options={{ headerShown: false }} />
 
     <Stack.Screen name="Chat With AI" component={ChatScreen} options={{ headerShown: false }} />
+
+    <Stack.Screen name="Voice Assistant" component={RealtimeMainScreen} options={{ headerShown: true, title: "Voice Assistant" }} />
+
+    <Stack.Screen name="Call Assistant" component={RealTimeMainScreenForCall} options={{ headerShown: true, title: "Call Assistant" }} />
+
+    <Stack.Screen name="AI Role Selection" component={AIRoleSelection} options={{ headerShown: true, title: "Choose Your AI Role" }} />
+
+    <Stack.Screen name="Image Creator" component={OGImageGenerator} options={{ headerShown: true, title: "Image Creator" }} />
+    
+    <Stack.Screen name="My Agents" component={MyAgents} options={{ headerShown: true, title: "My Agents" }} />
+
+
+<Stack.Screen name="GLMS Home" component={GlmsHome} />
+      <Stack.Screen name="Videos" component={GlmsVideos} />
+      <Stack.Screen name="Find Jobs" component={DisplayJobsForUser} />
+      <Stack.Screen name="Job Details" component={JobDescription} />
+
+      <Stack.Screen name="My Blogs" component={BlogsList} />
+      <Stack.Screen
+        name="Blog Details"
+        component={SingleBlogDisplay}
+        options={({ route }) => ({
+          title: route.params.blogData.campaignType || "Blog Details",
+          headerShown: true,
+        })}
+      />
+      <Stack.Screen name="Add Blog" component={AddBlog} />
+      <Stack.Screen name="The Fan of OG" component={OGImageGenerator} />
+      <Stack.Screen name="Agent Assistance" component={AllAgentCreations} />
+      <Stack.Screen name="UseCases" component={UseCasesStackScreen} options={{ headerShown: false }}/>
+
+
+
 
     </Stack.Navigator>
   );

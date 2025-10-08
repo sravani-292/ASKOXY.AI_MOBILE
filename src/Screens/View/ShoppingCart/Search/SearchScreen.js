@@ -557,6 +557,7 @@ const SearchScreen = ({ route }) => {
 
             <TextInput
               placeholder="Search for products..."
+              placeholderTextColor="#757575"
               value={searchText}
               onChangeText={setSearchText}
               style={styles.input}

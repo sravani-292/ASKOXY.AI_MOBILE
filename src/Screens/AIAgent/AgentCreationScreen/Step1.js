@@ -1,138 +1,216 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import { View, Text, TextInput, StyleSheet, Switch } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
-
+import axios from "axios";
+import BASE_URL from "../../../../Config"
+import { useSelector } from "react-redux";
 const Step1 = ({ formData, handleChange }) => {
-  const domains = [
-    { label: "Education", value: "Education" },
-    { label: "Finance", value: "Finance" },
-    { label: "Banking", value: "Banking" },
+  const [userTypes,setUserTypes] =useState( [
+  { label: "Advocate", value: "Advocate" },
+    { label: "Chartered Accountant (CA)", value: "CA" },
+    { label: "Company Secretary (CS)", value: "CS" },
+    { label: "Consultant", value: "Consultant" },
+    { label: "Teacher", value: "Teacher" },
+    { label: "Doctor", value: "Doctor" },
+    { label: "Engineer", value: "Engineer" },
+    { label: "Lawyer", value: "Lawyer" },
+    { label: "Startup Founder", value: "Startup Founder" },
+    { label: "Entrepreneur", value: "Entrepreneur" },
+    { label: "Investor", value: "Investor" },
+    { label: "Banker", value: "Banker" },
+    { label: "Software Developer", value: "Software Developer" },
+    { label: "Data Scientist", value: "Data Scientist" },
+    { label: "AI / ML Expert", value: "AI/ML Expert" },
+    { label: "Researcher", value: "Researcher" },
+    { label: "Designer", value: "Designer" },
+    { label: "Marketing Specialist", value: "Marketing Specialist" },
+    { label: "HR Professional", value: "HR Professional" },
+    { label: "Operations Manager", value: "Operations Manager" },
+    { label: "Sales Executive", value: "Sales Executive" },
+    { label: "Product Manager", value: "Product Manager" },
+    { label: "CXO (CEO / CTO / CFO etc.)", value: "CXO" },
+    { label: "Freelancer", value: "Freelancer" },
+    { label: "Business Consultant", value: "Consultant" },
     { label: "Other", value: "Other" },
+  ])
+
+  const user = useSelector((state) => state.counter);
+  const userId = user?.userId;
+
+  const languages = [
+    { label: "English", value: "English" },
+    { label: "తెలుగు", value: "తెలుగు" },
+    { label: "हिंदी", value: "हिंदी" },
   ];
-  const genders = [
-    { label: "Male", value: "Male" },
-    { label: "Female", value: "Female" },
-    { label: "Neutral", value: "Neutral" },
-    { label: "Prefer not to say", value: "Prefer not to say" },
-  ];
+// const[personalDetails,setPersonalDetails]=useState();
+
+
+
+
+useEffect(()=>{
+  getProfile();
+  
+   if (
+      formData.userRole &&
+      formData.userRole !== "Other" &&
+      !userTypes.some((userTypes) => userTypes.value === formData.userRole)
+    ) {
+      setUserTypes((prev) => [
+        ...prev.filter((userTypes) => userTypes.value !== formData.userRole), // Avoid duplicates
+        { label: formData.userRole, value: formData.userRole },
+      ]);
+    }
+},[])
+
+const getProfile=()=>{
+  axios.get(`${BASE_URL}user-service/getProfile/${userId}`)
+  .then((response)=>{
+    console.log("Profile data",response.data);
+    // setPersonalDetails(response.data);
+     if (response.data?.userName) {
+          handleChange("creatorName", response.data.userName);
+        }
+  })
+  .catch((error)=>{
+    console.log("Profile error",error); 
+  })
+}
+
+
+
 
   // Clear customDomain if domain is not "Other"
   const handleDomainChange = (item) => {
-    // console.log("Selected domain:", item);
-    handleChange("domain", item.value);
+    console.log("Selected domain:", item);
+    handleChange("userRole", item.value);
     if (item.value === "Other") {
-      handleChange("customDomain", "");
+       console.log("Selected :", item);
+      // handleChange("customDomain", "");
     }
+  };
+
+   const handleLanguage = (item) => {
+    // console.log("Selected domain:", item);
+    handleChange("language", item.value);
+    // if (item.value === "Other") {
+    //   handleChange("customDomain", "");
+    // }
   };
 
   return (
     <View style={styles.stepContainer}>
-      <Text style={styles.title}>Step 1 - Basic Info</Text>
+      <Text style={styles.title}>Agent Creator Profile</Text>
 
-      <Text style={styles.label}>Agent Name *</Text>
+      <Text style={styles.label}>AI Agent Name *</Text>
       <TextInput
         style={styles.input}
         placeholder="Enter agent name"
+        placeholderTextColor={"#94A3B8"}
         value={formData.agentName}
         onChangeText={(v) => handleChange("agentName", v)}
         accessible={true}
         accessibilityLabel="Agent Name"
       />
 
-      <Text style={styles.label}>Domain *</Text>
+       <Text style={styles.label}>Creator Name *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Enter Creator Name"
+        placeholderTextColor={"#94A3B8"}
+        value={formData.creatorName}
+        onChangeText={(v) => handleChange("creatorName", v)}
+        accessible={true}
+        accessibilityLabel="Sub Domain"
+      />
+
+      <Text style={styles.label}>Professional Identity of the Creator *</Text>
       <Dropdown
         style={styles.dropdown}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
-        data={domains}
+        data={userTypes}
         labelField="label"
         valueField="value"
-        placeholder="Select a domain"
-        value={formData.domain}
+        placeholder="Select a role"
+        value={formData.userRole}
         onChange={handleDomainChange}
         containerStyle={styles.dropdownContainer}
         itemTextStyle={styles.itemTextStyle}
         activeColor="#F1F5F9"
         accessible={true}
-        accessibilityLabel="Domain"
+        accessibilityLabel="User Role"
       />
-      {formData.domain === "Other" && (
+      {formData.userRole === "Other" && (
         <>
-          <Text style={styles.label}>Custom Domain *</Text>
+          {/* <Text style={styles.label}>Custom Domain *</Text> */}
           <TextInput
             style={styles.input}
-            placeholder="Enter custom domain"
-            value={formData.domain || ""}
-            onChangeText={(v) => handleChange("domain", v)}
+            placeholder="Enter your profession"
+            placeholderTextColor={"#94A3B8"}
+            value={formData.userRole || ""}
+            onChangeText={(v) => handleChange("userRole", v)}
             accessible={true}
-            accessibilityLabel="Custom Domain"
+            accessibilityLabel="customDomain"
           />
         </>
       )}
 
-      <Text style={styles.label}>Sub Domain *</Text>
+     
+
+      <Text style={styles.label}>Creator Experience Overview(optional)</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g., Mental Health"
-        value={formData.subDomain}
-        onChangeText={(v) => handleChange("subDomain", v)}
+        placeholder="Creator Experience Overview"
+        placeholderTextColor={"#94A3B8"}
+        value={formData.userExperienceSummary}
+        onChangeText={(v) => handleChange("userExperienceSummary", v)}
         accessible={true}
-        accessibilityLabel="Sub Domain"
+        accessibilityLabel="creator Experience Overview"
+        multiline={true}
       />
 
-      <Text style={styles.label}>Gender</Text>
-      <Dropdown
+      <Text style={styles.label}>Problems Solved in the Past (Description) *</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Description"
+        placeholderTextColor={"#94A3B8"}
+        value={formData.description}
+        onChangeText={(v) => handleChange("description", v)}
+        accessible={true}
+        accessibilityLabel="Description"
+        multiline={true}
+      />
+
+       <Text style={styles.label}>Your Strengths in the Field(optional)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Strengths"
+        placeholderTextColor={"#94A3B8"}
+        value={formData.strengths}
+        onChangeText={(v) => handleChange("strengths", v)}
+        accessible={true}
+        accessibilityLabel="Strengths"
+        multiline={true}
+      />
+
+      <Text style={styles.label}>Preferred Language</Text>
+       <Dropdown
         style={styles.dropdown}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
-        data={genders}
+        data={languages}
         labelField="label"
         valueField="value"
-        placeholder="Select gender"
-        value={formData.gender}
-        onChange={(item) => handleChange("gender", item.value)}
+        placeholder="Select a language"
+        value={formData.language}
+        onChange={handleLanguage}
         containerStyle={styles.dropdownContainer}
         itemTextStyle={styles.itemTextStyle}
         activeColor="#F1F5F9"
         accessible={true}
-        accessibilityLabel="Gender"
-      />
-
-      <Text style={styles.label}>Age Limit</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g., 18+"
-        value={formData.ageLimit}
-        onChangeText={(v) => handleChange("ageLimit", v)}
-        accessible={true}
-        accessibilityLabel="Age Limit"
-      />
-
-      <Text style={styles.label}>Language</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g., English"
-        value={formData.language}
-        onChangeText={(v) => handleChange("language", v)}
-        accessible={true}
         accessibilityLabel="Language"
       />
       
-      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-      <Text style={styles.label}>Voice Status</Text>
-      <View style={styles.switchContainer}>
-        <Text style={styles.switchLabel}>{formData.voiceStatus ? "Enabled" : "Disabled"}</Text>
-        <Switch
-          value={formData.voiceStatus}
-          onValueChange={(v) => handleChange("voiceStatus", v)}
-          trackColor={{ false: "#E5E7EB", true: "#6366F1" }}
-          thumbColor={formData.voiceStatus ? "#fff" : "#f4f3f4"}
-          ios_backgroundColor="#E5E7EB"
-          accessible={true}
-          accessibilityLabel="Voice Status Toggle"
-        />
-      </View>
-      </View>
     </View>
   );
 };

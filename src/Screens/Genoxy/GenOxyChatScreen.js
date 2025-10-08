@@ -14,28 +14,98 @@ import {
   Linking,
   Platform,
   TouchableOpacity,
+  Animated,
+  KeyboardAvoidingView,
 } from "react-native";
 import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
-import Markdown from 'react-native-markdown-display';
+import Markdown from "react-native-markdown-display";
 import ChatInput from "./ChatInput";
+import { useSelector } from "react-redux";
+import { header } from "framer-motion/m";
 
 const { height: screenHeight } = Dimensions.get("window");
 
 const GenOxyChatScreen = ({ route, navigation }) => {
-  const { query, category, assistantId, categoryType, fd } = route.params;
+  const { query, category, assistantId, agentName, fd, agentId } = route.params;
   const flatListRef = useRef(null);
-
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  const [helperQuestions, setHelperQuestions] = useState([]);
+  const [loadingHelperQuestions, setLoadingHelperQuestions] = useState(true);
+  const fadeAnims = useRef(new Map()).current;
+  const user = useSelector((state) => state.counter);
 
   const API_URL = `https://meta.oxyloans.com/api/student-service/user/askquestion?assistantId=${assistantId}`;
+  const HELPER_QUESTIONS_URL = `https://meta.oxyloans.com/api/ai-service/agent/getConversation/${agentId}`;
 
-  // Send initial message once
+  // Fetch helper questions
+  useEffect(() => {
+    const fetchHelperQuestions = async () => {
+      try {
+        setLoadingHelperQuestions(true);
+        const response = await axios.get(HELPER_QUESTIONS_URL, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.accessToken}`,
+          },
+          timeout: 10000,
+        });
+
+        // console.log("Helper questions response:", response.data[0]);
+
+        // Extract conversation starters from response
+        const data = response.data[0] || {};
+        const questions = [
+          data.conStarter1,
+          data.conStarter2,
+          data.conStarter3,
+          data.conStarter4,
+        ].filter((q) => q && typeof q === "string" && q.trim().length > 0);
+
+        setHelperQuestions(questions);
+      } catch (error) {
+        console.error("Failed to fetch helper questions:", error.response?.data || error.message);
+        // Fallback to default questions
+        setHelperQuestions([
+          "What are my loan eligibility criteria?",
+          "How do I apply for an education loan?",
+          "What documents are required?",
+          "What are the interest rates?",
+        ]);
+      } finally {
+        setLoadingHelperQuestions(false);
+      }
+    };
+    fetchHelperQuestions();
+  }, [agentId, user.accessToken]);
+
+  // Initialize fade animation for each message
+  useEffect(() => {
+    messages.forEach((msg) => {
+      if (!fadeAnims.has(msg.id)) {
+        fadeAnims.set(msg.id, new Animated.Value(0));
+      }
+    });
+  }, [messages]);
+
+  // Fade-in animation for new messages
+  useEffect(() => {
+    messages.forEach((msg) => {
+      if (fadeAnims.get(msg.id)?.toValue !== 1) {
+        Animated.timing(fadeAnims.get(msg.id), {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    });
+  }, [messages]);
+
+  // Send initial message
   useEffect(() => {
     if (query && messages.length === 0) {
       sendMessage(query, true);
@@ -47,14 +117,12 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
-    const showListener = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
+    const showListener = Keyboard.addListener(showEvent, () => {
       setIsKeyboardVisible(true);
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     });
 
     const hideListener = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
       setIsKeyboardVisible(false);
     });
 
@@ -64,7 +132,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     };
   }, []);
 
-  // Scroll to bottom when messages update
+  // Scroll to bottom
   useEffect(() => {
     const timer = setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -80,7 +148,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
     try {
       const response = await axios.post(
-        "https://meta.oxyloans.com/api/student-service/user/chat-with-file", 
+        "https://meta.oxyloans.com/api/student-service/user/chat-with-file",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -100,11 +168,11 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     }
   };
 
-  // Main send function
+  // Send message
   const sendMessage = async (text, isInitial = false) => {
     if (!text || !text.trim()) return;
-     console.log("Sending message:", text);
-     
+    console.log("Sending message:", text);
+
     const userMessage = {
       role: "user",
       content: text.trim(),
@@ -112,21 +180,18 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       id: Date.now(),
     };
 
-    // Add user message
-    setMessages((prev) => {
-      const updated = [...prev, userMessage];
-      return updated;
-    });
+    setMessages((prev) => [...prev, userMessage]);
+    fadeAnims.set(userMessage.id, new Animated.Value(0));
 
-    // Add thinking message
     const thinkingMessage = {
       role: "assistant",
-      content: `${categoryType} is thinking...`,
+      content: `${agentName} is thinking...`,
       temp: true,
       id: Date.now() + 1000,
     };
 
     setMessages((prev) => [...prev, thinkingMessage]);
+    fadeAnims.set(thinkingMessage.id, new Animated.Value(0));
     setLoading(true);
 
     try {
@@ -135,7 +200,6 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       if (fd && isInitial) {
         assistantReply = await handleFileUpload(fd, text);
       } else {
-        // ✅ Safely use current messages
         const validMessages = Array.isArray(messages) ? messages : [];
         const conversationHistory = [...validMessages, userMessage]
           .filter((msg) => !msg.temp)
@@ -151,8 +215,6 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           timeout: 30000,
         });
 
-        // console.log("✅ API Response:", response);
-
         if (typeof response.data === "string") {
           assistantReply = response.data;
         } else if (response.data?.content) {
@@ -164,12 +226,10 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         }
       }
 
-      // Fallback
       if (!assistantReply || typeof assistantReply !== "string" || !assistantReply.trim()) {
         assistantReply = "Sorry, I couldn't generate a response.";
       }
 
-      // Remove thinking message and add assistant reply
       setMessages((prev) => {
         const filtered = prev.filter((msg) => !msg.temp);
         const updated = [
@@ -180,6 +240,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
             id: Date.now() + 2000,
           },
         ];
+        fadeAnims.set(Date.now() + 2000, new Animated.Value(0));
         setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         return updated;
       });
@@ -195,6 +256,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
             id: Date.now() + 3000,
           },
         ];
+        fadeAnims.set(Date.now() + 3000, new Animated.Value(0));
         setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         return updated;
       });
@@ -217,8 +279,8 @@ const GenOxyChatScreen = ({ route, navigation }) => {
   const shareMessage = async (message) => {
     try {
       await Share.share({
-        message: `${categoryType}:\n\n${message.content}`,
-        title: categoryType,
+        message: `${agentName}:\n\n${message.content}`,
+        title: agentName,
       });
     } catch {
       Alert.alert("Error", "Share failed");
@@ -256,67 +318,13 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     }
   };
 
-  // Render formatted text
-  const renderFormattedText = (text) => {
-    if (!text) return null;
-
-    let cleanedText = text
-      .replace(/【.*?†source】/g, "")
-      .replace(/\s*LOG\s*/g, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .replace(/\s{2,}/g, " ")
-      .trim();
-
-    const parts = cleanedText.split(
-      /(\*\*.*?\*\*|\*.*?\*|`.*?`|\n|https?:\/\/[^\s]+|[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}])/gu
-    );
-
-    return (
-      <Text style={styles.messageText}>
-        {parts.map((part, index) => {
-          if (part.startsWith("**") && part.endsWith("**")) {
-            return (
-              <Text key={index} style={styles.boldText}>
-                {part.slice(2, -2)}
-              </Text>
-            );
-          } else if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
-            return (
-              <Text key={index} style={styles.italicText}>
-                {part.slice(1, -1)}
-              </Text>
-            );
-          } else if (part.startsWith("`") && part.endsWith("`")) {
-            return (
-              <Text key={index} style={styles.codeText}>
-                {part.slice(1, -1)}
-              </Text>
-            );
-          } else if (part === "\n") {
-            return <Text key={index}>{"\n"}</Text>;
-          } else if (/^https?:\/\//.test(part)) {
-            return (
-              <Text key={index} style={styles.linkText} onPress={() => Linking.openURL(part)}>
-                🔗 {part.length > 50 ? part.substring(0, 47) + "..." : part}
-              </Text>
-            );
-          } else if (
-            /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(part)
-          ) {
-            return <Text key={index} style={styles.emojiText}>{part}</Text>;
-          } else {
-            return <Text key={index}>{part}</Text>;
-          }
-        })}
-      </Text>
-    );
-  };
-
+  // Render message
   const renderMessage = ({ item }) => (
-    <View
+    <Animated.View
       style={[
         styles.messageContainer,
         item.role === "user" ? styles.userMessageContainer : styles.botMessageContainer,
+        { opacity: fadeAnims.get(item.id) || 1 },
       ]}
     >
       <View
@@ -331,21 +339,20 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           </Text>
         ) : item.temp ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#007AFF" />
+            <ActivityIndicator size="small" color="#2563eb" />
             <Text style={styles.thinkingText}> {item.content}</Text>
           </View>
         ) : (
-          // renderFormattedText(item.content)
           <Markdown style={markdownStyles}>{item.content}</Markdown>
         )}
 
         {item.role === "assistant" && !item.temp && (
           <View style={styles.messageActions}>
             <TouchableOpacity onPress={() => copyMessage(item)} style={styles.actionButton}>
-              <Ionicons name="copy-outline" size={18} color="#6c757d" />
+              <Ionicons name="copy-outline" size={16} color="#64748b" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => shareMessage(item)} style={styles.actionButton}>
-              <Ionicons name="share-outline" size={18} color="#6c757d" />
+              <Ionicons name="share-outline" size={16} color="#64748b" />
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => speakMessage(item)}
@@ -356,128 +363,270 @@ const GenOxyChatScreen = ({ route, navigation }) => {
             >
               <Ionicons
                 name={speakingMessageId === item.id ? "stop-outline" : "volume-high-outline"}
-                size={18}
-                color={speakingMessageId === item.id ? "#007AFF" : "#6c757d"}
+                size={16}
+                color={speakingMessageId === item.id ? "#2563eb" : "#64748b"}
               />
             </TouchableOpacity>
           </View>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 
+  // Render helper questions
+  const renderHelperQuestions = () => {
+    if (messages.length > 0 || loadingHelperQuestions || helperQuestions.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.helperContainer}>
+        <Text style={styles.helperTitle}>Welcome to {agentName}!</Text>
+        <Text style={styles.headerSubtitle}>Start chatting to explore how this assistant can help you.</Text>
+        {helperQuestions.map((question, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.helperChip}
+            onPress={() => sendMessage(question)}
+          >
+            <Text style={styles.helperText}>{question}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  // Main render
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+    >
+      <StatusBar barStyle="dark-content" backgroundColor="#f4f4f5" />
 
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#2d3748" />
-        </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>{categoryType}</Text>
-          <Text style={styles.headerSubtitle}>{category}</Text>
-        </View>
-      </View> */}
+      {/* Chat and Helper Questions */}
+      <View style={styles.chatContainer}>
+        {loadingHelperQuestions && messages.length === 0 ? (
+          <View style={styles.loadingContainerCentered}>
+            <ActivityIndicator size="large" color="#2563eb" />
+            <Text style={styles.loadingText}>Loading suggestions...</Text>
+          </View>
+        ) : (
+          <>
+            {renderHelperQuestions()}
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={renderMessage}
+              contentContainerStyle={styles.messagesContainer}
+              showsVerticalScrollIndicator={false}
+            />
+          </>
+        )}
+      </View>
 
-      {/* Chat */}
-      <View
-        style={[
-          styles.chatContainer,
-          isKeyboardVisible && Platform.OS === "android" && {
-            maxHeight: screenHeight - keyboardHeight - 200,
-          },
-        ]}
-      >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderMessage}
-          contentContainerStyle={styles.messagesContainer}
-          showsVerticalScrollIndicator={false}
+      {/* Chat Input */}
+      <View style={styles.inputWrapper}>
+        <ChatInput
+          placeholder="Type a message..."
+          onSendMessage={(text) => {
+            console.log("📤 Sending:", text);
+            sendMessage(text, false);
+          }}
+          enableVoice={true}
+          showAttachment={true}
+          containerStyle={styles.inputContainer}
+          theme="light"
+          navigation={navigation}
+          disabled={loading}
         />
       </View>
- 
-      {/* Chat Input */}
-      <ChatInput
-        placeholder="Type a message..."
-        onSendMessage={(text) => {
-          console.log("📤 Sending:", text);
-          sendMessage(text, false);
-        }}
-        enableVoice={true}
-        showAttachment={true}
-        containerStyle={styles.inputContainer}
-        theme="light"
-        navigation={navigation}
-        disabled={loading}
-      />
-
-      {isKeyboardVisible && Platform.OS === "android" && (
-        <View style={{ height: keyboardHeight }} />
-      )}
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 // Styles
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: "#f4f4f5",
+  },
+  chatContainer: {
+    flex: 1,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
+  messagesContainer: {
+    paddingBottom: 80, // Space for input
+  },
+  messageContainer: {
+    marginBottom: 12,
+  },
+  userMessageContainer: {
+    alignItems: "flex-end",
+  },
+  botMessageContainer: {
+    alignItems: "flex-start",
+  },
+  message: {
+    maxWidth: "80%",
+    padding: 12,
+    borderRadius: 12,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  userMessage: {
+    backgroundColor: "#2563eb",
+    borderTopRightRadius: 4,
+  },
+  botMessage: {
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: "#1f2937",
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  loadingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    paddingTop: Platform.OS === "ios" ? 50 : 16,
   },
-  backButton: { marginRight: 12 },
-  headerContent: { flex: 1 },
-  headerTitle: { fontSize: 20, fontWeight: "600", color: "#2d3748" },
-  headerSubtitle: { fontSize: 14, color: "#6c757d", marginTop: 2 },
-  chatContainer: { flex: 1, padding: 16 },
-  messagesContainer: { paddingBottom: 10 },
-  messageContainer: { marginBottom: 12 },
-  userMessageContainer: { alignItems: "flex-end" },
-  botMessageContainer: { alignItems: "flex-start" },
-  message: { maxWidth: "85%", padding: 12, borderRadius: 18 },
-  userMessage: { backgroundColor: "#007AFF", alignSelf: "flex-end", borderTopRightRadius: 4 },
-  botMessage: { backgroundColor: "#e9ecef", alignSelf: "flex-start", borderTopLeftRadius: 4 },
-  messageText: { fontSize: 16, lineHeight: 22, color: "#2d3748" },
-  boldText: { fontWeight: "600" },
-  italicText: { fontStyle: "italic" },
-  codeText: {
+  loadingContainerCentered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    fontSize: 16,
+    color: "#6b7280",
+    marginTop: 12,
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  thinkingText: {
+    fontSize: 14,
+    color: "#6b7280",
+    marginLeft: 8,
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  messageActions: {
+    flexDirection: "row",
+    marginTop: 8,
+    gap: 12,
+    justifyContent: "flex-end",
+  },
+  actionButton: {
+    padding: 6,
+    borderRadius: 6,
+  },
+  activeActionButton: {
+    backgroundColor: "#2563eb20",
+  },
+  helperContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    gap: 12,
+  },
+  helperTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#1f2937",
+    marginBottom: 8,
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#666",
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  helperChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    marginVertical: 4,
+    width: "90%",
+    maxWidth: 400,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  helperText: {
+    fontSize: 14,
+    color: "#1f2937",
+    textAlign: "center",
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  inputWrapper: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#ffffff",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  inputContainer: {
+    paddingVertical: 8,
+    backgroundColor: "#f4f4f5",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+  },
+});
+
+// Markdown styles
+const markdownStyles = {
+  body: {
+    color: "#1f2937",
+    fontSize: 16,
+    lineHeight: 24,
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  strong: {
+    fontWeight: "600",
+  },
+  em: {
+    fontStyle: "italic",
+  },
+  code_inline: {
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
-    backgroundColor: "#dee2e6",
+    backgroundColor: "#f4f4f5",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  linkText: { color: "#007AFF", textDecorationLine: "underline" },
-  emojiText: { fontSize: 18 },
-  loadingContainer: { flexDirection: "row", alignItems: "center" },
-  thinkingText: { fontSize: 14, color: "#6c757d", marginLeft: 8 },
-  messageActions: { flexDirection: "row", marginTop: 8, gap: 12 },
-  actionButton: { padding: 6, borderRadius: 6 },
-  activeActionButton: { backgroundColor: "#007AFF20" },
-  inputContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: Platform.OS === "ios" ? 34 : 20,
-    backgroundColor: "#f8f9fa",
-    borderTopWidth: 1,
-    borderColor: "#e9ecef",
+  link: {
+    color: "#2563eb",
+    textDecorationLine: "underline",
   },
-});
+  paragraph: {
+    marginVertical: 6,
+  },
+  list_item: {
+    marginVertical: 4,
+  },
+  bullet_list: {
+    marginVertical: 8,
+  },
+  ordered_list: {
+    marginVertical: 8,
+  },
+};
 
 export default GenOxyChatScreen;
-
-const markdownStyles = {
-  body: { color: '#333', fontSize: 14 },
-  image: { width: 200, height: 150, borderRadius: 10, marginTop: 8 },
-  strong: { fontWeight: 'bold' },
-  paragraph: { marginBottom: 10 },
-};

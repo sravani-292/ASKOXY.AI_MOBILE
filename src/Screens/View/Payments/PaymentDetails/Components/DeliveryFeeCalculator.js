@@ -51,7 +51,8 @@ export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
       walletApplicable: false,
       canPlaceOrder: false,
       minOrderForWallet: 0,
-      minOrderToPlace: 0
+      minOrderToPlace: 0,
+      addressStatus: false
     };
   }
 
@@ -71,7 +72,8 @@ export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
       walletApplicable: false,
       canPlaceOrder: false,
       minOrderForWallet: 0,
-      minOrderToPlace: 0
+      minOrderToPlace: 0,
+      addressStatus: false
     };
   }
 
@@ -101,7 +103,8 @@ export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
       walletApplicable: false,
       canPlaceOrder: false,
       minOrderForWallet: 0,
-      minOrderToPlace: 0
+      minOrderToPlace: 0,
+      addressStatus: false
     };
   }
 
@@ -164,6 +167,7 @@ export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
       name: nearestStore.name,
       lat: nearestStore.lat,
       lng: nearestStore.lng
-    }
+    },
+    addressStatus: true
   };
 };

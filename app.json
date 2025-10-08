@@ -2,7 +2,7 @@
   "expo": {
     "name": "ASKOXY.AI",
     "slug": "oxyrice_customer",
-    "version": "1.0.79",
+    "version": "1.0.81",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "75",
+      "buildNumber": "77",
       "associatedDomains": [
         "applinks:www.askoxy.ai",
         "applinks:askoxy.app.link",
@@ -39,26 +39,26 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 68,
+      "versionCode": 70,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "autoVerify": true,
-          "data": [
-            {
-              "scheme": "https",
-              "host": "www.askoxy.ai",
-              "pathPrefix": "/"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
-        }
-      ],
+      // "intentFilters": [
+      //   {
+      //     "action": "VIEW",
+      //     "autoVerify": true,
+      //     "data": [
+      //       {
+      //         "scheme": "https",
+      //         "host": "www.askoxy.ai",
+      //         "pathPrefix": "/"
+      //       }
+      //     ],
+      //     "category": [
+      //       "BROWSABLE",
+      //       "DEFAULT"
+      //     ]
+      //   }
+      // ],
       "config": {
         "branch": {
           "apiKey": "key_test_bEzlort5V0pqEdfqpZNxrcmaFsi34wUH"

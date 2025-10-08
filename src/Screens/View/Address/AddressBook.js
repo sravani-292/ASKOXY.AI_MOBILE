@@ -17,6 +17,7 @@ import { Ionicons } from "react-native-vector-icons";
 import BASE_URL, { userStage } from "../../../../Config";
 import { isWithinRadius, getCoordinates } from "./LocationService";
 import { COLORS } from "../../../../Redux/constants/theme";
+import { supabase } from "../../../Config/supabaseClient";
 
 import { getDistance } from "geolib";
 
@@ -48,9 +49,22 @@ const AddressBook = ({ route }) => {
   useFocusEffect(
     useCallback(() => {
       fetchOrderAddress();
+      globalDistance();
       // getCoordinates();
     }, [])
   );
+let maxDistance = 0;
+  const globalDistance = async ()=>{
+    const [globalRes] = await Promise.all([
+    supabase.from('global_config').select('*')
+  ]);
+  console.log("globalRes", globalRes);
+  const globalMap = {};
+  globalRes.data.forEach(({ key, value }) => globalMap[key] = parseFloat(value));
+   maxDistance = globalMap.max_distance_km ?? 25;
+   console.log("maxDistance", maxDistance);
+   setDistance(globalMap.max_distance_km ?? 25);
+  }
 
   const validateFields = () => {
     const newErrors = {};
@@ -248,7 +262,7 @@ const AddressBook = ({ route }) => {
       console.log("Address not saved as it is outside the radius.");
       Alert.alert(
         "Sorry!",
-        `We're unable to deliver to this address as it's ${distanceInKm} km away, beyond our 20 km radius. We appreciate your understanding and hope to serve you in the future!`
+        `We're unable to deliver to this address as it's ${distanceInKm} km away, beyond our ${distance} km radius. We appreciate your understanding and hope to serve you in the future!`
       );
     }
   };
@@ -263,7 +277,7 @@ const AddressBook = ({ route }) => {
           <View style={styles.headerSection}>
             <Text style={styles.noteText}>
               <Text style={styles.noteLabel}>Note:</Text> Order will be
-              delivered within a 25 km radius only
+              delivered within a {distance} km radius only
             </Text>
             <Text style={styles.title}>Your Delivery Addresses</Text>
             <TouchableOpacity

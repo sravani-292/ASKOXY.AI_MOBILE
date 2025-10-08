@@ -392,7 +392,9 @@ useEffect(() => {
   // ==================== PAYMENT HANDLERS ====================
 
   const confirmPayment = () => {
-    if(!status && !addressDetails && !addressStatus){
+    console.log({status,addressDetails,addressStatus,selectedTimeSlot,selectedPaymentMode,isChecked,cartToPlace},"....................confirmPayment");
+    
+    if(!addressDetails){
         openModal(
         "Oops! Something went wrong",
         "Please select Address to proceed",
@@ -402,6 +404,18 @@ useEffect(() => {
       );
       return;
     }
+    
+    if(!addressStatus){
+        openModal(
+        "Oops! Something went wrong",
+        "Selected address is not serviceable. Please select another address or update the current address.",
+        "OK",
+        "Cancel",
+        "error"
+      );
+      return;
+    }
+
     if (selectedTimeSlot == null || selectedTimeSlot == "") {
       openModal(
         "Oops! Something went wrong",

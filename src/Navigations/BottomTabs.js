@@ -22,6 +22,7 @@ import CartScreen from '../Screens/View/ShoppingCart/Cart/CartScreen';
 import NewDashBoard from '../Screens/New_Dashbord/screen/NewDashBoard';
 import Home from '../Home';
 import { COLORS } from '../../Redux/constants/theme';
+import BharathAgentstore from '../Screens/Genoxy/BharathAgentstore';
 import StoreTabs from './StoreTabs';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { scale, verticalScale, scaleFont } from '../utils/scale.js';
@@ -30,10 +31,10 @@ const Tab = createBottomTabNavigator();
 
 const TabArr = [
   { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
-  { route: 'Dashboard', label: 'Dashboard', icon: require('../../assets/BottomTabImages/Home.png'), gradient: ['#f093fb', '#f5576c'], component: NewDashBoard },
-  // { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: StoreTabs },
+  { route: 'Dashboard', label: 'Shop', icon: require('../../assets/BottomTabImages/store.png'), gradient: ['#f093fb', '#f5576c'], component: NewDashBoard },
+  { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
   { route: 'Wallet', label: 'Wallet', icon: require('../../assets/BottomTabImages/wallet.png'), gradient: ['#4facfe', '#00f2fe'], component: MainWallet },
-  // { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ['#7957c8ff', '#6a0dad'], component: CartScreen },
+  { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ['#7957c8ff', '#6a0dad'], component: CartScreen },
   { route: 'Profile', label: 'Profile', icon: require('../../assets/BottomTabImages/profile.png'), gradient: ['#6a11cb', '#2575fc'], component: ProfileSettings },
 ];
 
@@ -135,7 +136,7 @@ const Tabs = ({ navigation }) => {
   }, [navigation]);
 
   const getScreenOptions = useCallback((item) => ({
-    headerShown: ['Profile', 'Wallet', 'My Cart', 'My Orders'].includes(item.route),
+    headerShown: ['Profile', 'Wallet', 'My Cart', 'My Orders','AI Store'].includes(item.route),
     headerRight: item.route === 'Profile' ? () => (
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={scale(22)} color="#000" />
@@ -149,7 +150,7 @@ const Tabs = ({ navigation }) => {
     initialRouteName: "Landing",
     tabBar: (props) => {
       const focusedRoute = props.state.routes[props.state.index].name;
-      if (focusedRoute === 'AI Store') return null;
+      // if (focusedRoute === 'AI Store') return null;
       return <CustomTabBar {...props} />;
     },
     screenOptions: {

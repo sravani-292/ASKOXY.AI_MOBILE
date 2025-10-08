@@ -1,16 +1,24 @@
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Image } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert, Image,FlatList } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import FileUpload from './FileUpload';
 import ImageUpload from './ImageUpload';
 import { MessageCircle,BotMessageSquare } from 'lucide-react-native';
+import axios from 'axios';
 const ActiveAgents = ({ route }) => {
   const { activeAgents } = route.params;
   const navigation = useNavigation();
   const [assistantId, setAssistantId] = useState(null);
   const [showFileUpload, setShowFileUpload] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
+    const [agentFile, setAgentFile] = useState([]);
+  const [showAgentFile, setShowAgentFile] = useState(false);
+
+   useEffect(() => {
+    getAgentFile();
+  }, []);
+  
 
   useEffect(() => {
     if (activeAgents && Array.isArray(activeAgents) && activeAgents.length > 0) {
@@ -60,7 +68,29 @@ const ActiveAgents = ({ route }) => {
     setShowImageUpload(!showImageUpload);
   };
 
+      const getAgentFile = ()=>{
+        console.log('getting agent file');
+        
+       axios.get(`http://65.0.147.157:9040/api/ai-service/agent/getUploaded?assistantId=asst_HEkg0JOQwm2KJ2wmLJYxaNgM`)
+        .then(response => {
+          console.log(response.data);
+          if(response.data.length === 0){
+            setShowAgentFile(false);
+          }else{
+            setShowAgentFile(true);
+            setAgentFile(response.data);
+          }
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    }
+
+
   const handleChatNavigation = (agent) => {
+
+    console.log("Agent:", agent.assistantId);
+    
     navigation.navigate("GenOxyChatScreen", {
       query: agent.query || "",
       category: agent.category || "tie",
@@ -70,6 +100,33 @@ const ActiveAgents = ({ route }) => {
       agentName: agent.agentName || "GENOXY",
       userRole: agent.userRole || "",
     });
+  };
+      const renderAgentFileInfo = ({item}) => {
+
+    return (
+      <View style={[
+        styles.fileInfo, 
+        showAgentFile === true && styles.uploadedFileInfo
+      ]}>
+        <View style={styles.fileInfoHeader}>
+          <MaterialIcons 
+            name={showAgentFile === true ? "check-circle" : "description"} 
+            size={20} 
+            color={showAgentFile === true ? "#28a745" : "#007bff"} 
+          />
+          <Text style={[
+            styles.fileName,
+            showAgentFile === true && styles.uploadedFileName
+          ]} numberOfLines={2}>
+            {item.fileName}
+          </Text>
+        </View>
+        
+        <Text style={styles.fileInfoText}>
+          Size: {item.fileSize}
+        </Text>
+      </View>
+    );
   };
 
 
@@ -142,6 +199,15 @@ const ActiveAgents = ({ route }) => {
           </View>
         </View>
 
+        {showAgentFile && (
+               <FlatList 
+               data={agentFile}
+               renderItem={renderAgentFileInfo}
+               keyExtractor={(item) => item.id}
+               numColumns={3}
+               />
+               )}
+
         <View style={styles.uploadButtons}>
           <TouchableOpacity style={styles.uploadButton} onPress={toggleFileUpload}>
             <MaterialIcons name="attach-file" size={18} color="#3b82f6" />
@@ -168,6 +234,8 @@ const ActiveAgents = ({ route }) => {
      
     </View>
   );
+
+  
 
   const DetailRow = ({ label, value, icon }) => (
     <View style={styles.detailRow}>
@@ -698,5 +766,40 @@ chatButton: {
     color: 'white',
     fontSize: 16,
     fontWeight: '700',
+  },
+   fileInfo: {
+    backgroundColor: '#e9ecef',
+    padding: 10,
+    borderRadius: 12,
+    marginVertical: 15,
+    width: '45%',
+    height: 85,
+    maxWidth: 320,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007bff',
+  },
+   fileInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+    fileName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#495057',
+    marginLeft: 8,
+    flex: 1,
+  },
+    uploadedFileName: {
+    color: '#155724',
+  },
+    uploadedFileInfo: {
+    backgroundColor: '#d4edda',
+    borderLeftColor: '#28a745',
+  },
+    fileInfoText: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginVertical: 2,
   },
 });

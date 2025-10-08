@@ -86,15 +86,15 @@ const HomeScreen = ({ navigation }) => {
       subtitle: 'OWNERSHIP',
       icon: 'business-outline',
       gradientColors: ['#A8E6CF', '#56C596'],
-      screenName: 'FractionalScreen',
+      screenName: 'Real Estate',
     },
     {
       id: 8,
-      title: 'SOFTWARE',
-      subtitle: 'TRAINING',
+      title: 'GLMS,BLOGS',
+      subtitle: 'jon street',
       icon: 'school-outline',
       gradientColors: ['#FF7043', '#FF5722'],
-      screenName: 'GLMS OPEN SOURCE HUB & JOB STREET',
+      screenName: 'GLMS',
     },
     {
       id: 9,
@@ -174,7 +174,11 @@ const HomeScreen = ({ navigation }) => {
                     }) 
     }else if(screenName === 'FractionalScreen') {
       navigation.navigate('Fractional Ownership');  
-    }else if (screenName && navigation) {
+    }else if(screenName=== 'GLMS') {
+      navigation.navigate('GLMS Home');
+    }
+    
+    else if (screenName && navigation) {
       navigation.navigate("Campaign", {
         campaignType: screenName,
       });
@@ -185,7 +189,7 @@ const HomeScreen = ({ navigation }) => {
 
  const featuresTop = [
   { label: "Genoxy", icon: require("../assets/chat.png"), color: "#FFD700",radius:"left",screen:"GENOXY" },
-  // { label:"AI Agents 2 Earn Money", icon: require("../assets/AgentEarn2.png"), color: "#34D399", screen:"Agent Store",radius:"right", },
+  { label:"AI Agents 2 Earn Money", icon: require("../assets/AgentEarn2.png"), color: "#34D399", screen:"AI Store",radius:"right", },
   // { label: "Explore AI LLMs", icon: require("../assets/brain.png"), color: "#A78BFA", screen:"DrawerScreens" },
   // { label: "Blockchain", icon: require("../assets/blockchain.png"), color: "#FACC15",radius:"right", screen:"AI BLOCKCHAIN & IT SERVICES" },
 ];

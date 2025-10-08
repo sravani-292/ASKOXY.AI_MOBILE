@@ -35,6 +35,7 @@ import ChatFAB from '../../../Components/ChatFAB';
 import ChatPopup from '../../../Components/ChatPopup';
 import useChat from '../../../hooks/useChat';
 import { handleTranslateProduct } from '../../../hooks/translateProduct';
+import { useCart } from '../../../../until/CartCount';
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -126,7 +127,8 @@ export default function NewDashBoard() {
     comboItems,
     setComboItems,
     offerShow,
-    setOfferShow
+    setOfferShow,
+    count
   } = useServiceScreenData();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -142,6 +144,9 @@ export default function NewDashBoard() {
   const [language, setLanguage] = useState('en-US');
   const [botName, setBotName] = useState('ASKOXY_Bot');
   const [dynamicContent, setDynamicContent] = useState();
+  const [modalVisible, setModalVisible] = useState(false);
+
+  let countValue = count
 
   const { messages, handleUserMessage, isChatLoading } = useChat({ language, botName });
 
@@ -151,6 +156,12 @@ export default function NewDashBoard() {
     // console.log("categoryName",categoryName);
     return gradientThemes[categoryName] || gradientThemes['default'];
   }, [selectedCategoryType]);
+
+  useEffect(() => {
+
+        console.log("cart items in dashboard",cart);
+        
+  }, [customerId]);
 
   // Animate background change when category changes
   useEffect(() => {
@@ -166,7 +177,10 @@ export default function NewDashBoard() {
         useNativeDriver: false,
       }),
     ]).start();
+    
+    
   }, [selectedCategoryType, fadeAnim]);
+  // console.log("cart count in dashboard",cartCount);
 
   // Enhanced refresh handler with error handling
   const onRefresh = useCallback(async () => {
@@ -228,18 +242,13 @@ export default function NewDashBoard() {
   // Memoize static components
   const memoizedHeader = useMemo(() => (
     <Animated.View style={[styles.headerContainer, { opacity: headerOpacity }]}>
-      <Header navigation={navigation} userData={userData} profileData={formData} headerGradientColors={getHeaderGradient(selectedCategoryType)}/>
+      <Header navigation={navigation} userData={userData} profileData={formData} headerGradientColors={getHeaderGradient(selectedCategoryType)} modalVisible={modalVisible} setModalVisible={setModalVisible}/>
     </Animated.View>
   ), [headerOpacity]);
 
-  const memoizedSearchBar = useMemo(() => (
-    <SearchBar 
-      searchQuery={searchQuery} 
-      setSearchQuery={setSearchQuery}
-      navigation={navigation}
-      onFocus={() => {navigation.navigate("Search Screen")}}
-    />
-  ), [searchQuery]);
+  // const memoizedSearchBar = useMemo(() => (
+    
+  // ), [searchQuery]);
 
   // Focus effect for screen activation
   useFocusEffect(
@@ -330,7 +339,13 @@ export default function NewDashBoard() {
         maxToRenderPerBatch={10}
         windowSize={10}
       >
-        {memoizedSearchBar}
+        <SearchBar 
+      searchQuery={searchQuery} 
+      setSearchQuery={setSearchQuery}
+      navigation={navigation}
+      onFocus={() => {navigation.navigate("Search Screen")}}
+      countValue = {countValue}
+    />
         <PromoBanner />
         <CategoryTabs 
           categories={transformedCategories} 

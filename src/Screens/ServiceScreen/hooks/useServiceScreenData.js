@@ -38,6 +38,7 @@ const useServiceScreenData = () => {
   const [formData, setFormData] = useState({});
   const [comboItems, setComboItems] = useState([]);
   const [offerShow, setOfferShow] = useState(false);
+  const [count, setcourt] = useState(0);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -434,6 +435,8 @@ const getRiceCategories = async () => {
   }
 };
 
+
+
   const fetchCartItems = async () => {
      try {
        const response = await handleCustomerCartData(userData?.userId);
@@ -472,8 +475,12 @@ const getRiceCategories = async () => {
          }
          return acc;
        }, {});
+
+       console.log("from api cart count",totalCartCount);
+       
       
        setCartCount(totalCartCount || 0)
+       setcourt(totalCartCount || 0)
  
        setCart(cartData);
      } catch (error) {
@@ -607,7 +614,8 @@ const getRiceCategories = async () => {
     comboItems,
     setComboItems,
     offerShow,
-    setOfferShow
+    setOfferShow,
+    count
   };
 };
 

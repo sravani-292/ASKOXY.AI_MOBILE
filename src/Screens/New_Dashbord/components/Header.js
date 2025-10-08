@@ -4,11 +4,13 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import LocationAddress from './LocationAndAddress';
+import CallButton from './Call';
+import VoiceCallModal from '../../AIAgent/EcommerceVoiceAssistant/screens/VoiceCallModal';
 
 // Default gradient colors if none are provided
 const defaultGradientColors = ['#F5F5F5', '#FFFFFF'];
 
-const Header = ({navigation, userData, profileData, headerGradientColors = defaultGradientColors}) => (
+const Header = ({navigation, userData, profileData, headerGradientColors = defaultGradientColors, modalVisible, setModalVisible}) => (
   <LinearGradient
     colors={headerGradientColors}
     style={styles.headerGradient}
@@ -26,9 +28,21 @@ const Header = ({navigation, userData, profileData, headerGradientColors = defau
         </View>
       </View>
       {userData ? (
-        <TouchableOpacity style={styles.profileButton} onPress={()=>{navigation.navigate('Profile')}}>
-          <Ionicons name="person" size={24} color="#666" />
-        </TouchableOpacity>
+        // <TouchableOpacity style={styles.profileButton} onPress={()=>{navigation.navigate('Profile')}}>
+        //   <Ionicons name="call" size={24} color="#666" />
+        // </TouchableOpacity>
+       <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setModalVisible(true)}
+      >
+         <Ionicons name="call" size={24} color="#fff" />
+      </TouchableOpacity>
+      <VoiceCallModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </View>
       ) : (
         <TouchableOpacity style={styles.profileButton} onPress={()=>{navigation.navigate('Login')}}>
           <Ionicons name="person" size={24} color="#666" />
@@ -89,6 +103,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
+  button: { backgroundColor: "#00bcd4", paddingVertical: 14, paddingHorizontal: 15, borderRadius: 28 },
+  buttonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
 });
 
 export default Header;

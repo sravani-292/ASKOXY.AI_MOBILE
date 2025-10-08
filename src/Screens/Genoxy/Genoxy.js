@@ -52,7 +52,7 @@ const [copyMessage,setCopyMessage]=useState(false);
       { id: 3, title: "Free AI Book", icon: "book", color: "#34d399" ,navigation:"Before Login" },
       { id: 4, title: "AI Videos", icon: "videocam", color: "#f472b6",navigation:"AI Videos"  },
       { id: 5, title: "AI Masterclasses", icon: "school", color: "#fbbf24" ,navigation:"Our AI Videos" },
-      { id: 6, title: "GenOxy Voice Assistant", icon: "mic", color: "#f87171" ,navigation:"Genoxy" },
+      { id: 6, title: "GenOxy Voice Assistant", icon: "mic", color: "#f87171" ,navigation:"Voice Assistant" },
     ];
 
     // Prompt suggestions
