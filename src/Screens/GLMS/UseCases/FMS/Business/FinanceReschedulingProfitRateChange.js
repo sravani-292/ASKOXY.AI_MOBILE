@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal"
 const FinanceReschedulingProfitRateChange = () => {
   return (
     <ScrollView style={styles.container}>
@@ -250,6 +250,7 @@ const FinanceReschedulingProfitRateChange = () => {
             <Text style={styles.flowchartText}>
               8. System: Generates New Repayment Schedule, notifies customer.
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/zVk0PwQB/Finance-Rescheduling-rate-of-intrest.png'}/>
           </View>
         </View>
       </View>

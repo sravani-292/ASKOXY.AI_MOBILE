@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import ImageModal from '../../ImageModal';
 
 const NetWorthAnalysis = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -303,6 +304,8 @@ End
             </Text>
           </View>
         )}
+                  <ImageModal imageSource={'https://i.ibb.co/nsdtW1xZ/work-flow-for-evaluating-the-networth.png'}/>
+
       </View>
     </ScrollView>
   );

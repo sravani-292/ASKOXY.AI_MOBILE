@@ -13,6 +13,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_FloatingReviewProcess = () => {
   return (
@@ -240,6 +241,7 @@ const System_FloatingReviewProcess = () => {
             JIRA: WF-FLOAT-REVIEW-01{"\n"}
             Git Repo: /fms/floating-review
           </Text>
+          <ImageModal source={'https://i.ibb.co/4RG7VkKk/floating-review-process.jpg'}/>
         </View>
       </View>
     </ScrollView>

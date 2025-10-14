@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Activity 
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const QueueCuring = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -107,12 +108,12 @@ const QueueCuring = () => {
                   <Text style={styles.bulletItem}>• Strategy</Text>
                   <Text style={styles.bulletItem}>• Financier</Text>
                   <Text style={styles.bulletItem}>• Financier Type (Line of Business)</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Queue Code</Text>
+                   <Text style={styles.bulletItem}>• Queue Code</Text>
                   <Text style={styles.bulletItem}>• Making Date</Text>
                   <Text style={styles.bulletItem}>• Curing Action (Letter generation, SMS sending, Stat card, Telecalling, Email)</Text>
+                
                 </View>
+            
               </View>
 
               <Text style={styles.numberedItem}>4. Curing actions are applied for follow-up on queue-associated cases.</Text>
@@ -152,6 +153,8 @@ const QueueCuring = () => {
                 End: Curing Actions Defined
               </Text>
             </View>
+                        <ImageModal imageSource={'https://i.ibb.co/k2Jf7N5R/queue.jpg'}/>
+
           </Section>
         </View>
       </View>

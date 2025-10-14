@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 const DocumentMasterDisplay = () => {
   const data = {
     overview: 'System provides provision of maintaining a master set-up of documents that can be tracked across various contract stages such as at contract discounting, post contract purchase, rescheduling etc. A master list of documents is maintained in the system through the document master. User can select the relevant documents from this list and master maintains a separate document checklist based on finance type, customer constitution, customer segment, product or plan. At each stage user may include a master document directly at the transactional stage if it is not part of the master checklist. At each stage the documents can be marked as pending, waived, completed or incomplete.',
@@ -100,6 +100,7 @@ const DocumentMasterDisplay = () => {
             {data.workflow.documentDetails.map((detail, index) => (
               <DetailCard key={index} item={detail} />
             ))}
+            <ImageModal imageSource={'https://i.ibb.co/jk8ywqYL/document-master.png'}/>
           </View>
         </View>
       </View>

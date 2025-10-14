@@ -15,7 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-
+import ImageModal from '../../ImageModal';
 const { width } = Dimensions.get('window');
 
 const Terms_Conditions_Approvals = () => {
@@ -282,6 +282,8 @@ Proceed to recommendation
   v
 End`}
                 </Text>
+                              <ImageModal imageSource={'https://i.ibb.co/wnVWrMG/terms-conditions.png'}/>
+
               </View>
             </View>
           )}

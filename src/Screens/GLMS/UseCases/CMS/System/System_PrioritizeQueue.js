@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-
+import ImageModal from "../../ImageModal";
 const PrioritizeQueueUseCase = ({ navigation }) => {
   const [expandedSections, setExpandedSections] = useState({
     useCaseName: true,
@@ -160,6 +160,8 @@ End
               `}
             </Text>
           </View>
+                      <ImageModal imageSource={'https://i.ibb.co/mFzB0c2X/prioritizing-a-queue.png'}/>
+
         </SectionCard>
       </View>
     </ScrollView>

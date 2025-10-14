@@ -11,7 +11,8 @@ import {
   TestTube,
   Server,
   User,
-} from "lucide-react-native";
+} from "lucide-react-native"; 
+import ImageModal from "../../ImageModal"; 
 
 const System_PostDisbursalEdit = () => {
   const Section = ({ title, icon: Icon, iconColor, children }) => (
@@ -209,6 +210,7 @@ const System_PostDisbursalEdit = () => {
               <Text style={styles.teamValue}>git.company.com/FMS/post-disbursal</Text>
             </View>
           </View>
+          <ImageModal imageSource={'https://i.ibb.co/wrhVtZcm/post-disbursal-edit.jpg'}/>
         </Section>
       </View>
     </ScrollView>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const TerminationForeclosureClosure = () => {
   return (
@@ -113,6 +113,7 @@ const TerminationForeclosureClosure = () => {
             <Text style={styles.flowchartItem}>5. User: Reviews Dues (e.g., Principal Amount, Total Dues) and Refunds (e.g., Excess Amount, Rebate).</Text>
             <Text style={styles.flowchartItem}>6. User: Processes payment to clear the outstanding balance and levies fees for foreclosure if applicable.</Text>
             <Text style={styles.flowchartItem}>7. System: Termination or foreclosure is completed successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/GjWcDnY/termination-foreclosure.png'}/>
           </View>
         </View>
       </View>

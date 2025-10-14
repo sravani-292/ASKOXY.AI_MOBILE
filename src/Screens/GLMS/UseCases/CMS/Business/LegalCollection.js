@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Scale 
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const LegalCollection = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -160,6 +161,9 @@ const LegalCollection = () => {
                 End: Details Updated in System
               </Text>
             </View>
+
+            <ImageModal imageSource={'https://i.ibb.co/knpXx2S/legal-collection-workflow.png'}/>
+
           </Section>
         </View>
       </View>

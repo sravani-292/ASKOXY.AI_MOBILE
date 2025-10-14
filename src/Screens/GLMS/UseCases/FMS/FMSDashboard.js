@@ -5,6 +5,11 @@ import { useNavigation } from '@react-navigation/native';
 import * as Icon from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './styles';
+import InterestedModal from '../InterestedModal';
+import { useSelector } from 'react-redux';
+import { useFocusEffect } from '@react-navigation/native';
+import axios from 'axios'; 
+import BASE_URL from "../../../../Config"
 
 const useCases = [
   {
@@ -21,7 +26,7 @@ const useCases = [
   },
   {
     path: 'Installment_Prepayment',
-    syetm_path:"System_InstallPrepayment",
+    system_path:"System_InstallmentPrepayment",
     title: 'WF_ Installment Prepayment',
     description: 'Handle early repayments and installment adjustments.',
   },
@@ -186,6 +191,50 @@ const FMSDashboard = () => {
   const navigation = useNavigation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [alreadyParticipated, setAlreadyParticipated] = useState(false);
+      const [modalVisible, setModalVisible] = useState(false);
+    
+  const userData = useSelector((state) => state.counter);
+
+  const token = userData?.accessToken;
+  const customerId = userData?.userId;
+
+  // Function to check participation
+  useFocusEffect(
+    useCallback(()=>{
+      AlreadyParticipatedfunc()
+    },[])
+  )
+  const AlreadyParticipatedfunc = () => {
+    axios({
+      method: 'post',
+      url: `${BASE_URL}marketing-service/campgin/allOfferesDetailsForAUser`,
+      data: {
+        userId: customerId,
+      },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        const participated = response?.data?.some(
+          (item) =>
+            item?.askOxyOfers?.trim().toUpperCase() ===
+            'GLMS OPEN SOURCE HUB & JOB STREET'
+        );
+        setAlreadyParticipated(participated);
+      })
+      .catch((error) => {
+        console.log('Error checking participation:', error?.response || error);
+      });
+  }
+
+  useEffect(() => {
+    if (customerId && token) {
+      AlreadyParticipatedfunc();
+    }
+  }, [customerId, token, AlreadyParticipatedfunc]);
 
   const handleInterest = useCallback(async () => {
     const userId = await AsyncStorage.getItem('userId');
@@ -228,6 +277,27 @@ const FMSDashboard = () => {
       {/* Main Section */}
       <ScrollView style={styles.main}>
         <View style={styles.section}>
+             {/* Conditionally Render Button */}
+        {alreadyParticipated ? (
+          <View style={[styles.openButton, { backgroundColor: '#ddd' }]}>
+            <Text style={[styles.openButtonText, { color: '#555' }]}>
+              Already Participated
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.openButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.openButtonText}>I'm Interested</Text>
+          </TouchableOpacity>
+        )}
+
+        <InterestedModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          func={()=>AlreadyParticipatedfunc()}
+        />
           <Text style={styles.h1}>Financial Management System (FMS)</Text>
           <Text style={styles.description}>
             The <Text style={styles.bold}>Financial Management System (FMS)</Text> is a comprehensive solution that helps organizations manage financial operations with precision. From planning, budgeting, and accounting to real-time financial reporting, FMS offers streamlined workflows and data-driven insights that support strategic decisions, enhance compliance, and foster long-term growth.

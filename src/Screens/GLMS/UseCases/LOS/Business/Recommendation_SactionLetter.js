@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const { width } = Dimensions.get('window');
 
@@ -301,6 +302,7 @@ Forward Appraisal/Process note to Sanctioning Authorities
   v
 End`}
                 </Text>
+                <ImageModal imageSource={'https://i.ibb.co/MxRvdwK2/work-flow-for-recommendations.png'}/>
               </View>
             </View>
           )}

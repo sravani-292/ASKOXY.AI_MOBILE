@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
+import ImageModal from "../../ImageModal";
 
 const System_LegalCollection = ({ navigation }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -188,6 +189,8 @@ End
               `}
             </Text>
           </View>
+          <ImageModal imageSource={'https://i.ibb.co/knpXx2S/legal-collection-workflow.png'}/>
+
         </SectionCard>
       </View>
     </ScrollView>

@@ -7,7 +7,7 @@ import {
   SafeAreaView 
 } from "react-native";
 import { 
-  FileText,
+  FileText, 
   Users,
   List,
   CheckCircle,
@@ -19,7 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 
 const System_ViewAccountStatus = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
@@ -221,6 +221,7 @@ const System_ViewAccountStatus = () => {
               JIRA: FMS-Closure-567{"\n"}
               Git Repo: git.company.com/FMS/view-status
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/hFGsRgH6/account-status.jpg'}/>
           </Section>
         </View>
       </ScrollView>

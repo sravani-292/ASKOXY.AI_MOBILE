@@ -1,6 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Alert, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import InterestedModal from '../InterestedModal';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import BASE_URL from "../../../../Config"
+import { useFocusEffect } from '@react-navigation/native';
+// import styles from './styles';
+const {height,width}=Dimensions.get('window')
 
 const useCases = [
   {
@@ -102,6 +109,51 @@ const UseCaseCard = ({ title, description, onSystemClick,onBusinessClick }) => (
 const LOSDashboard = ({ navigation }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+    const [alreadyParticipated, setAlreadyParticipated] = useState(false);
+      const [modalVisible, setModalVisible] = useState(false);
+    
+  const userData = useSelector((state) => state.counter);
+
+  const token = userData?.accessToken;
+  const customerId = userData?.userId;
+
+  // Function to check participation
+  useFocusEffect(
+    useCallback(()=>{
+      AlreadyParticipatedfunc()
+    },[])
+  )
+  const AlreadyParticipatedfunc = () => {
+    axios({
+      method: 'post',
+      url: `${BASE_URL}marketing-service/campgin/allOfferesDetailsForAUser`,
+      data: {
+        userId: customerId,
+      },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => {
+        const participated = response?.data?.some(
+          (item) =>
+            item?.askOxyOfers?.trim().toUpperCase() ===
+            'GLMS OPEN SOURCE HUB & JOB STREET'
+        );
+        setAlreadyParticipated(participated);
+      })
+      .catch((error) => {
+        console.log('Error checking participation:', error?.response || error);
+      });
+  }
+
+  useEffect(() => {
+    if (customerId && token) {
+      AlreadyParticipatedfunc();
+    }
+  }, [customerId, token, AlreadyParticipatedfunc]);
+
 // const navigation=useNavigation()
   const handleInterest = useCallback(() => {
     const userId = null; // Simulate localStorage.getItem("userId") - not available in React Native
@@ -178,6 +230,27 @@ const LOSDashboard = ({ navigation }) => {
       {/* Main Content */}
       <ScrollView style={styles.main}>
         <View style={styles.introSection}>
+             {/* Conditionally Render Button */}
+        {alreadyParticipated ? (
+          <View style={[styles.openButton, { backgroundColor: '#ddd' }]}>
+            <Text style={[styles.openButtonText, { color: '#555' }]}>
+              Already Participated
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.openButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.openButtonText}>I'm Interested</Text>
+          </TouchableOpacity>
+        )}
+
+        <InterestedModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          func={()=>AlreadyParticipatedfunc()}
+        />
           <Text style={styles.introTitle}>Loan Origination System (LOS)</Text>
           <Text style={styles.introText}>
             The <Text style={styles.bold}>Loan Origination System (LOS)</Text> is a modern digital platform that simplifies and accelerates the loan process. From the initial loan application to the final disbursement, LOS automates every critical step — including <Text style={styles.bold}>data capture</Text>, <Text style={styles.bold}>credit evaluation</Text>, <Text style={styles.bold}>approval workflows</Text>, <Text style={styles.bold}>document management</Text>, and <Text style={styles.bold}>compliance checks</Text>.
@@ -376,6 +449,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     textAlign: 'center',
+  },
+   openButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 10,
+    width:width*0.4,
+    alignItems: 'center',
+    alignSelf:"flex-end",
+    marginBottom:10
+  },
+  openButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

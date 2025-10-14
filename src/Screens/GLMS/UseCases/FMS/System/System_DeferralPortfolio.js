@@ -8,11 +8,12 @@ import {
   AlertCircle,
   Info,
   ArrowRight,
-  Settings,
+  Settings, 
   TestTube,
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_DeferralPortfolio = () => {
   const Section = ({ title, icon: Icon, iconColor, children }) => (
@@ -216,6 +217,7 @@ const System_DeferralPortfolio = () => {
               <Text style={styles.ownershipLabel}>Git Repo:</Text>
               <Text style={styles.ownershipValue}>git.company.com/batch-deferral</Text>
             </View>
+            <ImageModal imageSource={'https://i.ibb.co/rRLjxCB0/portfolio-wise-defferral.jpg'}/>
           </View>
         </Section>
       </View>

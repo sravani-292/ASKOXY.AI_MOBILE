@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const SettlementsKnockOff = () => {
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.content}>
+      <View style={styles.content}> 
         <Text style={styles.title}>
           Work Flow – Settlements: Knock Off
         </Text>
@@ -82,6 +82,7 @@ const SettlementsKnockOff = () => {
             <Text style={styles.flowchartItem}>5. User: Initiates the knock-off and gets it authorized.</Text>
             <Text style={styles.flowchartItem}>6. User: Optionally checks previous manual knock-offs and authorizes reversals if needed.</Text>
             <Text style={styles.flowchartItem}>7. System: Knock-off is completed successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/SXqgtcGN/KNOCKOFF.jpg'}/>
           </View>
         </View>
       </View>

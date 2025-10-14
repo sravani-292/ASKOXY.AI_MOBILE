@@ -11,8 +11,9 @@ import {
   Settings,
   TestTube,
   Server,
-  User,
+  User, 
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal"
 
 const System_SettlementsKnockOff = () => {
   return (
@@ -249,6 +250,7 @@ const System_SettlementsKnockOff = () => {
             JIRA: WF-KNOCKOFF-01{"\n"}
             Git Repo: /settlements/knockoff
           </Text>
+          <ImageModal imageSource={'https://i.ibb.co/SXqgtcGN/KNOCKOFF.jpg'}/>
         </View>
       </View>
     </ScrollView>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
-
+import ImageModal from '../../ImageModal';
 const System_RiskAnalysis = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -10,7 +10,7 @@ const System_RiskAnalysis = () => {
     userActions: true,
     precondition: true,
     postcondition: true,
-    stp: true,
+    stp: true, 
     alternativeFlows: true,
     exceptionFlows: true,
     activityDiagram: true,
@@ -360,6 +360,7 @@ const System_RiskAnalysis = () => {
               <Text style={styles.listItem}><Text style={styles.bold}>Contact:</Text> Rahul Sharma (PM), Archana Desai (Lead Dev)</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Jira:</Text> RSK-1083</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Repo:</Text> gitlab.com/bankLOS/risk-analysis</Text>
+              <ImageModal imageSource={'https://i.ibb.co/27bX7GGK/15.png'}/>
             </View>
           )}
         </View>

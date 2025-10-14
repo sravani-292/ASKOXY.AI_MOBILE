@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 const FinanceReschedulingDisplay = () => {
   const data = {
     overview: 'The Finance Rescheduling functionality allows the user to modify the Financial Details of the Finance. On the basis of the modification performed the system computes the new repayment schedule. The following transactions can be performed by the rescheduling functionality: Bulk Prepayment, Modification of the Due Date of the finance, Modification of tenure. During the lifetime of the finance deal a customer may come to bank for making a Part/ Bulk Repayment towards the finance deal to reduce the profit to be paid in the future. In case a customer makes a bulk prepayment it will have an impact on the tenure or on installment amount. The bulk prepayment will be allocated towards accrued but not due profit first and then towards outstanding principal.',
@@ -109,6 +109,7 @@ const FinanceReschedulingDisplay = () => {
                 <Text style={styles.detailValue}>{detail.value}</Text>
               </View>
             ))}
+            <ImageModal imageSource={'https://i.ibb.co/ymY8fBs6/29.png'}/>
           </View>
         </View>
       </View>

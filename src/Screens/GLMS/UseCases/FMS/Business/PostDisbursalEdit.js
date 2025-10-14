@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 const PostDisbursalEdit = () => {
   return (
     <ScrollView style={styles.container}>
@@ -236,6 +236,7 @@ const PostDisbursalEdit = () => {
             <Text style={styles.flowchartText}>5. User: Saves the record for modification.</Text>
             <Text style={styles.flowchartText}>6. System: Account Modified.</Text>
           </View>
+          <ImageModal imageSource={'https://i.ibb.co/wrhVtZcm/post-disbursal-edit.jpg'}/>
         </View>
       </View>
     </ScrollView>

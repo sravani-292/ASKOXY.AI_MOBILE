@@ -10,7 +10,7 @@ import {
   FileText,
   Users,
   List,
-  CheckCircle,
+  CheckCircle, 
   AlertCircle,
   Info,
   ArrowRight,
@@ -19,6 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_BulkPrepayment = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
@@ -214,6 +215,7 @@ const System_BulkPrepayment = () => {
               JIRA: FMS-BULK-991{"\n"}
               Git Repo: git.company.com/FMS/bulk-prepayment
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/ymY8fBs6/29.png'}/>
           </Section>
         </View>
       </ScrollView>

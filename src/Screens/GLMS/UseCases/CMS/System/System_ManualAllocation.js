@@ -5,6 +5,9 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  Image,
+  Dimensions
 } from "react-native";
 import {
   FileText,
@@ -19,8 +22,9 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
+  X,
 } from "lucide-react-native";
-
+const {height,width}=Dimensions.get('window')
 const System_ManualAllocation = () => {
   const [expandedSections, setExpandedSections] = useState({
     useCaseName: true,
@@ -39,6 +43,8 @@ const System_ManualAllocation = () => {
     date: true,
     flowchart: true,
   });
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -104,14 +110,24 @@ const System_ManualAllocation = () => {
             </Text>
           </Section>
 
-          <Section title="Preconditions" icon={CheckCircle} sectionKey="preconditions" iconColor="#16a34a">
+          <Section
+            title="Preconditions"
+            icon={CheckCircle}
+            sectionKey="preconditions"
+            iconColor="#16a34a"
+          >
             <View style={styles.list}>
               <Text style={styles.bullet}>• Allocation definitions already exist.</Text>
               <Text style={styles.bullet}>• Delinquent cases are available in the system.</Text>
             </View>
           </Section>
 
-          <Section title="Postconditions" icon={CheckCircle} sectionKey="postconditions" iconColor="#16a34a">
+          <Section
+            title="Postconditions"
+            icon={CheckCircle}
+            sectionKey="postconditions"
+            iconColor="#16a34a"
+          >
             <View style={styles.list}>
               <Text style={styles.bullet}>
                 • Selected delinquent cases are successfully assigned to
@@ -165,7 +181,12 @@ const System_ManualAllocation = () => {
             </View>
           </Section>
 
-          <Section title="Exception Flow(s)" icon={AlertCircle} sectionKey="exceptionFlows" iconColor="#dc2626">
+          <Section
+            title="Exception Flow(s)"
+            icon={AlertCircle}
+            sectionKey="exceptionFlows"
+            iconColor="#dc2626"
+          >
             <View style={styles.list}>
               <Text style={styles.bullet}>
                 • If no delinquent cases match search criteria, user is
@@ -213,33 +234,34 @@ const System_ManualAllocation = () => {
           </Section>
 
           <Section title="Flowchart" icon={List} sectionKey="flowchart">
-            <View style={styles.flowchart}>
-              <Text style={styles.flowchartText}>Start</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Login to System</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Search Delinquent Cases</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Modify Case Details (Optional)</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Select Unit Level & Code</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Assign Cases to Collectors</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Save Allocation</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>End</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={styles.buttonText}>View Flowchart</Text>
+            </TouchableOpacity>
           </Section>
         </View>
       </View>
+
+      {/* Modal with Flowchart Image */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <X size={22} color="#fff" />
+            </TouchableOpacity>
+            <Image
+              source={{ uri: "https://i.ibb.co/hxHsM71w/manual-allocation.png" }}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -331,18 +353,42 @@ const styles = StyleSheet.create({
     minWidth: 150,
     marginRight: 16,
   },
-  flowchart: {
-    backgroundColor: "#f3f4f6",
-    padding: 16,
+  button: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 10,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
+    alignItems: "center",
+    marginTop: 8,
   },
-  flowchartText: {
-    fontSize: 14,
-    color: "#374151",
-    fontFamily: "monospace",
-    lineHeight: 20,
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: "#111827",
+    borderRadius: 12,
+    padding: 10,
+    width: width*0.9,
+    height: height/1.5,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 10,
+  },
+  image: {
+    width: width*0.9,
+    height: height/1.7,
+    borderRadius: 8,
   },
 });
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
+import ImageModal from '../../ImageModal';
 
 const System_CheckLimit = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -396,6 +397,8 @@ End
               <Text style={styles.listItem}>• Proceed to Appraisal and Sanction Stages</Text>
             </View>
           )}
+                                        <ImageModal imageSource={'https://i.ibb.co/279s0FBy/checking-the-eligibility-of-the-customer.png'}/>
+
         </View>
       </View>
     </ScrollView>

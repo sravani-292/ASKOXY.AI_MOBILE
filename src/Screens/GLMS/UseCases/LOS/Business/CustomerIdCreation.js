@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, Dimensions ,Linking} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import ImageModal from '../../ImageModal';
 const CustomerIdCreation = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -19,6 +19,18 @@ const CustomerIdCreation = () => {
     setModalTitle('');
   };
 
+    const openDocument = async (url, title) => {
+      try {
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert('Error', `Cannot open ${title}`);
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to open document');
+      }
+    };
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -26,14 +38,18 @@ const CustomerIdCreation = () => {
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: '#008CBA' }]}
-            onPress={() => openModal('Back End Code placeholder content', 'Back End Code View')}
-          >
+  onPress={() => openDocument(
+              'https://docs.google.com/document/d/1F8aXmDQpwGQ-bKGZpEPBDHrzltPxJ5bM/preview',
+              'Back End Code View'
+            )}          >
             <Text style={styles.buttonText}>View Back End Code</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, { backgroundColor: '#04AA6D' }]}
-            onPress={() => openModal('Front End Code placeholder content', 'Front End Code View')}
-          >
+ onPress={() => openDocument(
+              'https://docs.google.com/document/d/1ixT9000eGGKk7GBjeW6QOEMRsmX5YGqn/preview',
+              'Front End Code View'
+            )}          >
             <Text style={styles.buttonText}>View Front End Code</Text>
           </TouchableOpacity>
         </View>
@@ -250,6 +266,7 @@ Save Customer Details
 Customer ID Created
 `}
           </Text>
+          <ImageModal imageSource={'https://i.ibb.co/7dXKJFyq/customer-id-creation.png'} />
         </View>
       </View>
     </ScrollView>
@@ -370,12 +387,12 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   grid: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     flexWrap: 'wrap',
     paddingLeft: 10,
   },
   gridItem: {
-    width: Dimensions.get('window').width * 0.4,
+    width: Dimensions.get('window').width * 0.8,
     fontSize: 16,
     color: '#4B5563',
     lineHeight: 24,

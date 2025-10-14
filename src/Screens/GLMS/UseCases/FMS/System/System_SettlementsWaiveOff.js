@@ -19,7 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 
 const System_SettlementsWaiveOff = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
@@ -233,6 +233,7 @@ const System_SettlementsWaiveOff = () => {
               JIRA: WF-WAIVEOFF-01{"\n"}
               Git Repo: /fms/settlements/waiveoff
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/KzwZKxyR/settlements-payments.jpg'}/>
           </Section>
         </View>
       </ScrollView>

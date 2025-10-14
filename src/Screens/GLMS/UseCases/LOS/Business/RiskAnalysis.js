@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import ImageModal from '../../ImageModal';
 const RiskAnalysis = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
     actors: true,
     actions: true,
     preconditions: true,
-    postconditions: true,
+    postconditions: true, 
     workflow: true,
     flowchart: true,
   });
@@ -351,6 +351,7 @@ Proceed to Loan Assessment
 End
 `}
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/27bX7GGK/15.png'}/>
           </View>
         )}
       </View>
@@ -428,14 +429,14 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   gridContainer: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     flexWrap: 'wrap',
     paddingLeft: 10,
     marginVertical: 10,
     gap: 10,
   },
   gridColumn: {
-    width: Dimensions.get('window').width * 0.28,
+    width: Dimensions.get('window').width * 0.8,
   },
   gridItem: {
     fontSize: 16,

@@ -5,6 +5,8 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Image,
+  Dimensions
 } from "react-native";
 import {
   FileText,
@@ -20,6 +22,17 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react-native";
+import Ionicons from "react-native-vector-icons/Ionicons"
+import { PinchGestureHandler } from "react-native-gesture-handler";
+import Animated, {
+  useAnimatedGestureHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { Modal } from "react-native-paper";
+
+const {width,height} = Dimensions.get("window")
 
 const System_AllocationHold = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -38,6 +51,23 @@ const System_AllocationHold = () => {
     author: true,
     date: true,
   });
+
+    const [modalVisible, setModalVisible] = useState(false);
+  
+const scale = useSharedValue(1);
+
+  const pinchHandler = useAnimatedGestureHandler({
+    onActive: (event) => {
+      scale.value = event.scale;
+    },
+    onEnd: () => {
+      scale.value = withTiming(1); // Reset zoom after pinch ends
+    },
+  });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -132,12 +162,15 @@ const System_AllocationHold = () => {
                   <Text style={styles.bullet}>• Customer Name/ID</Text>
                   <Text style={styles.bullet}>• Card Number</Text>
                   <Text style={styles.bullet}>• Overdue Position</Text>
-                </View>
-                <View style={styles.column}>
                   <Text style={styles.bullet}>• Financier & Financier Type</Text>
                   <Text style={styles.bullet}>• Rule Unit Code, Unit Level, Product Type/Product</Text>
                   <Text style={styles.bullet}>• Queue and Branch</Text>
                 </View>
+                {/* <View style={styles.column}>
+                  <Text style={styles.bullet}>• Financier & Financier Type</Text>
+                  <Text style={styles.bullet}>• Rule Unit Code, Unit Level, Product Type/Product</Text>
+                  <Text style={styles.bullet}>• Queue and Branch</Text>
+                </View> */}
               </View>
               <Text style={styles.orderedItem}>2. Supervisor reviews the extracted cases.</Text>
               <Text style={styles.orderedItem}>3. Supervisor selects specific cases to be held.</Text>
@@ -195,8 +228,53 @@ const System_AllocationHold = () => {
 
           <Section title="Date" icon={Calendar} sectionKey="date">
             <Text style={styles.text}>2025-05-03</Text>
+               {/* {expandedSections.flowchart && ( */}
+                        <View>
+                         
+          
+                          <TouchableOpacity
+                            onPress={() => setModalVisible(true)}
+                            style={styles.linkButton}
+                          >
+                            <Text style={styles.linkText}>View Image</Text>
+                          </TouchableOpacity>
+                        </View>
+                      {/* )} */}
           </Section>
+
+         
         </View>
+
+          {/* Modal for Image */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType=""
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+         
+          <View style={styles.modalContainer}>
+            
+ <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
+            {/* <PinchGestureHandler onGestureEvent={pinchHandler}> */}
+              <Animated.View style={[styles.imageContainer, animatedStyle]}>
+                <Image
+                  source={{ uri: "https://i.ibb.co/LD6k5ZYn/allocation-hold-for-delinquent-cases.png" }}
+                  style={styles.modalImage}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+            {/* </PinchGestureHandler> */}
+          </View>
+        </View>
+      </Modal>
+
       </View>
     </ScrollView>
   );
@@ -269,6 +347,7 @@ const styles = StyleSheet.create({
     color: "#374151",
     lineHeight: 24,
     marginBottom: 4,
+    marginLeft:20
   },
   orderedList: {
     marginLeft: 8,
@@ -289,6 +368,40 @@ const styles = StyleSheet.create({
     minWidth: 150,
     marginRight: 16,
   },
+ modalBackground: {
+    // flex: 1,
+    // backgroundColor: "#c0c0c0",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "90%",
+    height: "80%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "white",
+    borderRadius: 8,
+    // overflow: "hidden",
+  },
+  imageContainer: { flex: 1 },
+   modalImage: { width:width*0.8, height: height, borderRadius: 8 },
+  closeButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    // marginBottom:30
+  },
+   linkButton: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems:"center",
+    marginTop:15
+  },
+  linkText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });
 
 export default System_AllocationHold;
+

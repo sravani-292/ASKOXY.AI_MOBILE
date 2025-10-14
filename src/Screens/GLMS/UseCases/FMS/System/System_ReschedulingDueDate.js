@@ -19,6 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_ReschedulingDueDate = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
@@ -218,6 +219,7 @@ const System_ReschedulingDueDate = () => {
               JIRA: FMS-DUE-444{"\n"}
               Git Repo: git.company.com/FMS/due-date-change
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/TqBYG6yQ/Finance-Rescheduling-Due-date-change.png'}/>
           </Section>
         </View>
       </ScrollView>

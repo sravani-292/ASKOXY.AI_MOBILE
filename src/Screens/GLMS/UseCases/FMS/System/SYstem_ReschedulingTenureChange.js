@@ -12,7 +12,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 
 const System_ReschedulingTenureChange = () => {
   const Section = ({ title, icon: Icon, iconColor, children }) => (
@@ -215,6 +215,7 @@ const System_ReschedulingTenureChange = () => {
             <Text style={styles.teamText}>
               <Text style={styles.label}>Git Repo:</Text> git.company.com/FMS/tenure-change
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/B2H7yCRk/Work-Flow-Finance-Rescheduling-Tenure-Change.png'}/>
           </View>
         </Section>
       </View>

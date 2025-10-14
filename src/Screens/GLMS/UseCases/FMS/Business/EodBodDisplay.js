@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 const EodBodDisplay = () => {
   const data = {
     overview:
@@ -11,7 +11,7 @@ const EodBodDisplay = () => {
     preconditions: [
       "Date should not be changed in the system automatically when date is changed in general",
     ],
-    postconditions: [],
+    postconditions: [], 
     workflow: {
       eodProcesses: [
         {
@@ -118,6 +118,7 @@ const EodBodDisplay = () => {
             {data.businessRules.map((rule, index) => (
               <Text key={index} style={styles.listItem}>• {rule}</Text>
             ))}
+            <ImageModal imageSource={'https://i.ibb.co/dwhb3S8y/eod-bod.png'}/>
           </View>
         </View>
       </View>

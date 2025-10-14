@@ -10,10 +10,10 @@ import {
   ArrowRight,
   Settings,
   TestTube,
-  Server,
+  Server, 
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal"
 const System_DeferralFinanceWise = () => {
   const Section = ({ title, icon: Icon, iconColor, children }) => (
     <View style={styles.sectionCard}>
@@ -222,6 +222,7 @@ const System_DeferralFinanceWise = () => {
               <Text style={styles.ownershipValue}>git.company.com/finance-deferral</Text>
             </View>
           </View>
+          <ImageModal imageSource={'https://i.ibb.co/SXDC5zTj/32.png'}/>
         </Section>
       </View>
     </ScrollView>

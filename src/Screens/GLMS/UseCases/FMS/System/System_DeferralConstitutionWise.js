@@ -13,6 +13,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_DeferralConstitutionWise = () => {
   const Section = ({ title, icon: Icon, iconColor, children }) => (
@@ -200,7 +201,9 @@ const System_DeferralConstitutionWise = () => {
             <Text style={styles.teamText}><Text style={styles.label}>JIRA:</Text> DEF-CON-008</Text>
             <Text style={styles.teamText}><Text style={styles.label}>Git Repo:</Text> git.company.com/deferral-module</Text>
           </View>
+          <ImageModal imageSource={'https://i.ibb.co/VWZsL214/repayment-deferral.jpg'}/>
         </Section>
+        
       </View>
     </ScrollView>
   );

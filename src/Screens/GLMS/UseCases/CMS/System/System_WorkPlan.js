@@ -7,7 +7,7 @@ import {
   StyleSheet,
 } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-
+import ImageModal from "../../ImageModal";
 const System_WorkPlan = ({ navigation }) => {
   const [expandedSections, setExpandedSections] = useState({
     useCaseName: true,
@@ -436,6 +436,8 @@ Perform Follow-up Actions
 End
 `}
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/Nd8gn6c9/Workplan.png'}/>
+            
           </View>
         )}
       </View>

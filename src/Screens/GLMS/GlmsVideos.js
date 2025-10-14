@@ -177,11 +177,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   playButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#FF0000',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    shadowColor: '#DC2626',
+    shadowColor: '#FF0000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,

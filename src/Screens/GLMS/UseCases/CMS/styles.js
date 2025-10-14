@@ -1,4 +1,8 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet,Dimensions } from 'react-native';
+const {height,width}=Dimensions.get('window')
+
+
+
 
 export default StyleSheet.create({
   container: {
@@ -205,5 +209,20 @@ export default StyleSheet.create({
     fontWeight: '500',
     color: '#1f2937',
     marginBottom: 8,
+  },
+   openButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 10,
+    width:width*0.4,
+    alignItems: 'center',
+    alignSelf:"flex-end",
+    marginBottom:10
+  },
+  openButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

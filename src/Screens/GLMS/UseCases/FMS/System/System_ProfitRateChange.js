@@ -11,7 +11,7 @@ import {
   Users,
   List,
   CheckCircle,
-  AlertCircle,
+  AlertCircle, 
   Info,
   ArrowRight,
   Settings,
@@ -19,7 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 const System_ProfitRateChange = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
     <View style={styles.sectionCard}>
@@ -227,6 +227,7 @@ const System_ProfitRateChange = () => {
               JIRA: FMS-INT-772{"\n"}
               Git Repo: git.company.com/FMS/interest-rate-change
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/zVk0PwQB/Finance-Rescheduling-rate-of-intrest.png'}/>
           </Section>
         </View>
       </ScrollView>

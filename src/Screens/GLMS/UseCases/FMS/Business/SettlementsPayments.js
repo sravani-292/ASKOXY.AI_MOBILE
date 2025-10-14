@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const SettlementsPayments = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>
-          Work Flow – Settlements: Payments
+          Work Flow – Settlements: Payments 
         </Text>
         
         <View style={styles.section}>
@@ -90,6 +90,7 @@ const SettlementsPayments = () => {
             <Text style={styles.flowchartItem}>6. User: Generates advices for Disbursal Payments, Insurance Premium Payments, or Excess Money Payments.</Text>
             <Text style={styles.flowchartItem}>7. User: Sends payment details for authorization.</Text>
             <Text style={styles.flowchartItem}>8. System: Payments are made to the customers successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/KzwZKxyR/settlements-payments.jpg'}/>
           </View>
         </View>
       </View>

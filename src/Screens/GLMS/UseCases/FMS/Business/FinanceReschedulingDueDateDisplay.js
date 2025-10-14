@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 const FinanceReschedulingDueDateDisplay = () => {
   const data = {
     overview: 'The Finance Rescheduling functionality allows the user to modify the Financial Details of the Finance. On the basis of the modification performed the system computes the new repayment schedule. The following transactions can be performed by the rescheduling functionality: Bulk Prepayment, Modification of Profit Rate, Modification of tenure, Modification of Due Date Change. During the lifetime of the finance deal a customer may come to bank & request for Change of Due date of the finance Installment to change the Due date of the Installment which will be paid in the future.',
     actors: ['Customer', 'User', 'Checker'],
-    actions: [
+    actions: [ 
       { role: 'Customer', description: 'Visits the Bank & submits the request for Due Date Change of the Finance Installment.' },
       { role: 'User', description: 'Initiates the process for Generation of New Repayment Schedule due to Due Date Change.' },
       { role: 'Checker', description: 'Verifies the New Repayment schedule & authorizes the same if found correct.' },
@@ -110,6 +110,7 @@ const FinanceReschedulingDueDateDisplay = () => {
                 <Text style={styles.detailValue}>{detail.value}</Text>
               </View>
             ))}
+            <ImageModal imageSource={'https://i.ibb.co/TqBYG6yQ/Finance-Rescheduling-Due-date-change.png'}/>
           </View>
         </View>
       </View>

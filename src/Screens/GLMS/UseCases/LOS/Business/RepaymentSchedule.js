@@ -16,6 +16,7 @@ import {
   ChevronUp,
   AlertCircle,
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const { width } = Dimensions.get('window');
 
@@ -319,6 +320,8 @@ Forward to Bank Officer for further processing
   v
 End`}
                 </Text>
+               <ImageModal imageSource={'https://i.ibb.co/v6GkKVNF/loan-sanction-letter.png'}/>
+
               </View>
             </View>
           )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import ImageModal from '../../ImageModal';
 const CaptureAssetDetails = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
@@ -288,6 +288,8 @@ Proceed to check proposed loan limit
 End
 `}
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/nMntMRSG/caparing-proposed-asset-details.png'}/>
+
           </View>
         )}
       </View>

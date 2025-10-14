@@ -6,7 +6,7 @@ import {
   ScrollView,
   SafeAreaView 
 } from "react-native";
-import { 
+import {  
   FileText,
   Users,
   List,
@@ -19,7 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 const System_DocumentMaster = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
     <View style={styles.sectionCard}>
@@ -215,6 +215,7 @@ const System_DocumentMaster = () => {
               JIRA: DOC-789{"\n"}
               Git Repo: git.company.com/FMS/document-master
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/jk8ywqYL/document-master.png'}/>
           </Section>
         </View>
       </ScrollView>

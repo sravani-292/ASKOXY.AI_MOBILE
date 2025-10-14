@@ -15,6 +15,7 @@ import {
   ChevronUp,
   ClipboardList 
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const WorkPlan = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -113,13 +114,12 @@ const WorkPlan = () => {
                   <Text style={styles.bulletItem}>• Financier Type</Text>
                   <Text style={styles.bulletItem}>• Product</Text>
                   <Text style={styles.bulletItem}>• Amount Overdue</Text>
-                </View>
-                <View style={styles.column}>
                   <Text style={styles.bulletItem}>• Principal Outstanding</Text>
                   <Text style={styles.bulletItem}>• Late Fee</Text>
                   <Text style={styles.bulletItem}>• Installment Overdue</Text>
                   <Text style={styles.bulletItem}>• Remarks</Text>
                 </View>
+               
               </View>
 
               <Text style={styles.numberedItem}>3. Supervisor reviews details, prioritizes cases based on amount overdue, and allocates them to collectors.</Text>
@@ -156,6 +156,8 @@ const WorkPlan = () => {
                 End: Cases Allocated to Collectors
               </Text>
             </View>
+                        <ImageModal imageSource={'https://i.ibb.co/Nd8gn6c9/Workplan.png'}/>
+
           </Section>
         </View>
       </View>

@@ -13,6 +13,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_TerminationForeclosure = () => {
   return (
@@ -274,6 +275,7 @@ const System_TerminationForeclosure = () => {
             JIRA: WF-TERM-FORECLOSE-01{"\n"}
             Git Repo: /finance/termination-module
           </Text>
+          <ImageModal imageSource={'https://i.ibb.co/GjWcDnY/termination-foreclosure.png'}/>
         </View>
       </View>
     </ScrollView>

@@ -12,57 +12,83 @@ import {
   TestTube,
   Server,
   User,
+  Printer,
+  Shield,
+  GitBranch,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const PDC_Printing_Use_Case = () => {
   return (
     <ScrollView style={styles.container}>
-      {/* Heading */}
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>PDC Printing</Text>
+        <View style={styles.headerIcon}>
+          <Printer size={28} color="#ffffff" />
+        </View>
+        <Text style={styles.headerText}>PDC Printing Use Case</Text>
+        <Text style={styles.headerSubtext}>Post-Dated Cheque Processing System</Text>
       </View>
       
       <View style={styles.card}>
         {/* Description */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Info size={18} color="#2563eb" />
+            <View style={[styles.iconContainer, styles.infoIcon]}>
+              <Info size={18} color="#ffffff" />
+            </View>
             <Text style={styles.sectionTitle}>Description</Text>
           </View>
-          <Text style={styles.text}>
-            This use case describes the process of printing Post Dated Cheques
-            (PDCs) once a finance application has been approved and the customer
-            has opted to repay via PDCs. The process includes collecting blank
-            cheques, saving repayment details, and printing cheques with
-            appropriate installment information based on the repayment schedule.
-          </Text>
+          <View style={styles.sectionContent}>
+            <Text style={styles.text}>
+              This use case describes the process of printing Post Dated Cheques
+              (PDCs) once a finance application has been approved and the customer
+              has opted to repay via PDCs. The process includes collecting blank
+              cheques, saving repayment details, and printing cheques with
+              appropriate installment information based on the repayment schedule.
+            </Text>
+          </View>
         </View>
 
         {/* Actors */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Users size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>Actors</Text>
-          </View>
-          <View style={styles.subsection}>
-            <Text style={styles.subtitle}>Customer-facing</Text>
-            <View style={styles.listContainer}>
-              <Text style={styles.bulletPoint}>• Finance Officer</Text>
+            <View style={[styles.iconContainer, styles.userIcon]}>
+              <Users size={18} color="#ffffff" />
             </View>
+            <Text style={styles.sectionTitle}>Actors & Stakeholders</Text>
           </View>
-          <View style={styles.subsection}>
-            <Text style={styles.subtitle}>System roles</Text>
-            <View style={styles.listContainer}>
-              <Text style={styles.bulletPoint}>• Loan Origination System (LOS)</Text>
-              <Text style={styles.bulletPoint}>• PDC Printing Module</Text>
-            </View>
-          </View>
-          <View style={styles.subsection}>
-            <Text style={styles.subtitle}>Software stakeholders</Text>
-            <View style={styles.listContainer}>
-              <Text style={styles.bulletPoint}>• API Developer</Text>
-              <Text style={styles.bulletPoint}>• QA Engineer</Text>
-              <Text style={styles.bulletPoint}>• Infra Team</Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.columns}>
+              <View style={styles.column}>
+                <View style={styles.actorCard}>
+                  <Text style={styles.actorTitle}>Customer-facing</Text>
+                  <View style={styles.actorList}>
+                    <Text style={styles.actorItem}>• Finance Officer</Text>
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.column}>
+                <View style={styles.actorCard}>
+                  <Text style={styles.actorTitle}>System Roles</Text>
+                  <View style={styles.actorList}>
+                    <Text style={styles.actorItem}>• Loan Origination System</Text>
+                    <Text style={styles.actorItem}>• PDC Printing Module</Text>
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.column}>
+                <View style={styles.actorCard}>
+                  <Text style={styles.actorTitle}>Software Team</Text>
+                  <View style={styles.actorList}>
+                    <Text style={styles.actorItem}>• API Developer</Text>
+                    <Text style={styles.actorItem}>• QA Engineer</Text>
+                    <Text style={styles.actorItem}>• Infra Team</Text>
+                  </View>
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -70,129 +96,203 @@ const PDC_Printing_Use_Case = () => {
         {/* User Actions & System Responses */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <List size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>User Actions & System Responses</Text>
+            <View style={[styles.iconContainer, styles.flowIcon]}>
+              <List size={18} color="#ffffff" />
+            </View>
+            <Text style={styles.sectionTitle}>Process Flow</Text>
           </View>
-          <View style={styles.listContainer}>
-            <Text style={styles.numberedPoint}>1. User receives blank PDCs from the customer.</Text>
-            <Text style={styles.numberedPoint}>2. User sets 'PDC' as the repayment mode in the system.</Text>
-            <Text style={styles.numberedPoint}>3. System enables PDC collections section for input.</Text>
-            <Text style={styles.numberedPoint}>4. User enters Application ID to fetch loan details.</Text>
-            <Text style={styles.numberedPoint}>5. System displays due installments and allows selection.</Text>
-            <Text style={styles.numberedPoint}>6. User inserts cheques into the printer.</Text>
-            <Text style={styles.numberedPoint}>7. System prints each cheque with Payee Name, Due Date, and Installment Amount.</Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.processFlow}>
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>1</Text>
+                </View>
+                <Text style={styles.stepText}>User receives blank PDCs from customer</Text>
+              </View>
+              
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>2</Text>
+                </View>
+                <Text style={styles.stepText}>User sets 'PDC' as repayment mode</Text>
+              </View>
+              
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>3</Text>
+                </View>
+                <Text style={styles.stepText}>System enables PDC collections section</Text>
+              </View>
+              
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>4</Text>
+                </View>
+                <Text style={styles.stepText}>User enters Application ID</Text>
+              </View>
+              
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>5</Text>
+                </View>
+                <Text style={styles.stepText}>System displays due installments</Text>
+              </View>
+              
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>6</Text>
+                </View>
+                <Text style={styles.stepText}>User inserts cheques into printer</Text>
+              </View>
+              
+              <View style={styles.processStep}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>7</Text>
+                </View>
+                <Text style={styles.stepText}>System prints cheques with details</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Precondition */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <CheckCircle size={18} color="#16a34a" />
-            <Text style={styles.sectionTitle}>Precondition</Text>
+        {/* Conditions & Flows */}
+        <View style={styles.columns}>
+          <View style={styles.column}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconContainer, styles.successIcon]}>
+                  <CheckCircle size={16} color="#ffffff" />
+                </View>
+                <Text style={styles.sectionTitle}>Precondition</Text>
+              </View>
+              <View style={styles.sectionContent}>
+                <View style={styles.conditionBox}>
+                  <Text style={styles.conditionText}>
+                    Customer must have submitted PDC cheques and selected 'PDC' as repayment mode
+                  </Text>
+                </View>
+              </View>
+            </View>
           </View>
-          <Text style={styles.text}>
-            Customer must have submitted the PDC cheques and selected 'PDC' as
-            the mode of repayment.
-          </Text>
+
+          <View style={styles.column}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconContainer, styles.successIcon]}>
+                  <CheckCircle size={16} color="#ffffff" />
+                </View>
+                <Text style={styles.sectionTitle}>Post Condition</Text>
+              </View>
+              <View style={styles.sectionContent}>
+                <View style={styles.conditionBox}>
+                  <Text style={styles.conditionText}>
+                    PDCs printed with correct details, ready for installment processing
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
         </View>
 
-        {/* Post Condition */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <CheckCircle size={18} color="#16a34a" />
-            <Text style={styles.sectionTitle}>Post Condition</Text>
+        {/* STP & Alternative Flows */}
+        <View style={styles.columns}>
+          <View style={styles.column}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconContainer, styles.primaryIcon]}>
+                  <ArrowRight size={16} color="#ffffff" />
+                </View>
+                <Text style={styles.sectionTitle}>STP Flow</Text>
+              </View>
+              <View style={styles.sectionContent}>
+                <View style={styles.stpBox}>
+                  <Text style={styles.stpText}>
+                    Login → Enter App ID → Insert Cheques → Print → Logout
+                  </Text>
+                </View>
+              </View>
+            </View>
           </View>
-          <Text style={styles.text}>
-            PDCs are printed with the correct details and ready for installment
-            processing.
-          </Text>
-        </View>
 
-        {/* Straight Through Process (STP) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <ArrowRight size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>Straight Through Process (STP)</Text>
-          </View>
-          <Text style={styles.text}>
-            Login → Enter Application ID → Insert Cheques → Print → Logout
-          </Text>
-        </View>
-
-        {/* Alternative Flows */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <ArrowRight size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>Alternative Flows</Text>
-          </View>
-          <View style={styles.listContainer}>
-            <Text style={styles.bulletPoint}>• Reprinting a cheque in case of misprint</Text>
-            <Text style={styles.bulletPoint}>• Printing revised cheques in case of updated financial parameters</Text>
+          <View style={styles.column}>
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconContainer, styles.warningIcon]}>
+                  <GitBranch size={16} color="#ffffff" />
+                </View>
+                <Text style={styles.sectionTitle}>Alternative Flows</Text>
+              </View>
+              <View style={styles.sectionContent}>
+                <View style={styles.flowList}>
+                  <Text style={styles.flowItem}>• Reprint for misprints</Text>
+                  <Text style={styles.flowItem}>• Revised cheques for updates</Text>
+                </View>
+              </View>
+            </View>
           </View>
         </View>
 
         {/* Exception Flows */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <AlertCircle size={18} color="#dc2626" />
+            <View style={[styles.iconContainer, styles.errorIcon]}>
+              <AlertCircle size={18} color="#ffffff" />
+            </View>
             <Text style={styles.sectionTitle}>Exception Flows</Text>
           </View>
-          <View style={styles.listContainer}>
-            <Text style={styles.bulletPoint}>• Printer jam or error</Text>
-            <Text style={styles.bulletPoint}>• Incorrect Application ID entered</Text>
-            <Text style={styles.bulletPoint}>• Missing or invalid cheque paper</Text>
-          </View>
-        </View>
-
-        {/* User Activity Diagram (Flowchart) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <List size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>User Activity Diagram (Flowchart)</Text>
-          </View>
-          <Text style={styles.text}>
-            Start → Receive PDCs → Enter Repayment Info → Enter Application ID →
-            Load Installments → Insert Cheques → Print Cheques → End
-          </Text>
-        </View>
-
-        {/* Parking Lot */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Info size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>Parking Lot</Text>
-          </View>
-          <View style={styles.listContainer}>
-            <Text style={styles.bulletPoint}>• Integration with digital cheque systems</Text>
-            <Text style={styles.bulletPoint}>• Auto-verification of printed data using OCR</Text>
-          </View>
-        </View>
-
-        {/* System Components Involved */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Settings size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>System Components Involved</Text>
-          </View>
-          <View style={styles.subsection}>
-            <Text style={styles.subtitle}>UI</Text>
-            <View style={styles.listContainer}>
-              <Text style={styles.bulletPoint}>• PDC Collections Screen</Text>
-              <Text style={styles.bulletPoint}>• Print Interface</Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.exceptionGrid}>
+              <View style={styles.exceptionCard}>
+                <Text style={styles.exceptionTitle}>Hardware Issues</Text>
+                <Text style={styles.exceptionText}>Printer jam or error</Text>
+              </View>
+              
+              <View style={styles.exceptionCard}>
+                <Text style={styles.exceptionTitle}>Input Errors</Text>
+                <Text style={styles.exceptionText}>Incorrect Application ID</Text>
+              </View>
+              
+              <View style={styles.exceptionCard}>
+                <Text style={styles.exceptionTitle}>Supply Issues</Text>
+                <Text style={styles.exceptionText}>Missing/invalid cheque paper</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.subsection}>
-            <Text style={styles.subtitle}>APIs</Text>
-            <View style={styles.listContainer}>
-              <Text style={styles.bulletPoint}>• Application Lookup</Text>
-              <Text style={styles.bulletPoint}>• Installment Fetch</Text>
+        </View>
+
+        {/* System Components */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.iconContainer, styles.techIcon]}>
+              <Settings size={18} color="#ffffff" />
             </View>
+            <Text style={styles.sectionTitle}>System Components</Text>
           </View>
-          <View style={styles.subsection}>
-            <Text style={styles.subtitle}>DB Tables</Text>
-            <View style={styles.listContainer}>
-              <Text style={styles.bulletPoint}>• RepaymentSchedule</Text>
-              <Text style={styles.bulletPoint}>• ChequePrintLog</Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.componentsGrid}>
+              <View style={styles.componentCard}>
+                <Text style={styles.componentTitle}>UI Components</Text>
+                <View style={styles.componentList}>
+                  <Text style={styles.componentItem}>• PDC Collections Screen</Text>
+                  <Text style={styles.componentItem}>• Print Interface</Text>
+                </View>
+              </View>
+              
+              <View style={styles.componentCard}>
+                <Text style={styles.componentTitle}>APIs</Text>
+                <View style={styles.componentList}>
+                  <Text style={styles.componentItem}>• Application Lookup</Text>
+                  <Text style={styles.componentItem}>• Installment Fetch</Text>
+                </View>
+              </View>
+              
+              <View style={styles.componentCard}>
+                <Text style={styles.componentTitle}>Database</Text>
+                <View style={styles.componentList}>
+                  <Text style={styles.componentItem}>• RepaymentSchedule</Text>
+                  <Text style={styles.componentItem}>• ChequePrintLog</Text>
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -200,42 +300,116 @@ const PDC_Printing_Use_Case = () => {
         {/* Test Scenarios */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <TestTube size={18} color="#2563eb" />
+            <View style={[styles.iconContainer, styles.testIcon]}>
+              <TestTube size={18} color="#ffffff" />
+            </View>
             <Text style={styles.sectionTitle}>Test Scenarios</Text>
           </View>
-          <View style={styles.listContainer}>
-            <Text style={styles.bulletPoint}>• Successful cheque printing</Text>
-            <Text style={styles.bulletPoint}>• Invalid application ID input</Text>
-            <Text style={styles.bulletPoint}>• Printer error simulation</Text>
-            <Text style={styles.bulletPoint}>• Installment schedule update and reprint</Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.testGrid}>
+              <View style={styles.testCard}>
+                <Text style={styles.testText}>✓ Successful printing</Text>
+              </View>
+              <View style={styles.testCard}>
+                <Text style={styles.testText}>✓ Invalid ID handling</Text>
+              </View>
+              <View style={styles.testCard}>
+                <Text style={styles.testText}>✓ Printer errors</Text>
+              </View>
+              <View style={styles.testCard}>
+                <Text style={styles.testText}>✓ Schedule updates</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Infra & Deployment Notes */}
+        {/* Infra & Deployment */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Server size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>Infra & Deployment Notes</Text>
+            <View style={[styles.iconContainer, styles.infraIcon]}>
+              <Server size={18} color="#ffffff" />
+            </View>
+            <Text style={styles.sectionTitle}>Infrastructure & Deployment</Text>
           </View>
-          <View style={styles.listContainer}>
-            <Text style={styles.bulletPoint}>• Requires secure printer connectivity</Text>
-            <Text style={styles.bulletPoint}>• Printer drivers must be pre-installed</Text>
-            <Text style={styles.bulletPoint}>• Rollout in phased manner by region</Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.infraList}>
+              <View style={styles.infraItem}>
+                <Shield size={14} color="#059669" />
+                <Text style={styles.infraText}>Secure printer connectivity</Text>
+              </View>
+              <View style={styles.infraItem}>
+                <Settings size={14} color="#059669" />
+                <Text style={styles.infraText}>Pre-installed printer drivers</Text>
+              </View>
+              <View style={styles.infraItem}>
+                <GitBranch size={14} color="#059669" />
+                <Text style={styles.infraText}>Phased regional rollout</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Dev Team Ownership */}
+        {/* Ownership */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <User size={18} color="#2563eb" />
-            <Text style={styles.sectionTitle}>Dev Team Ownership</Text>
+            <View style={[styles.iconContainer, styles.ownerIcon]}>
+              <User size={18} color="#ffffff" />
+            </View>
+            <Text style={styles.sectionTitle}>Development Ownership</Text>
           </View>
-          <Text style={styles.text}>
-            Squad: Lending Ops Automation{"\n"}
-            Contact: lending-tech-lead@company.com{"\n"}
-            Jira: PDC-PRINT-101{"\n"}
-            Repo: gitlab.com/company/lending/pdc-printing
-          </Text>
+          <View style={styles.sectionContent}>
+            <View style={styles.ownerCard}>
+              <View style={styles.ownerInfo}>
+                <Text style={styles.ownerLabel}>Squad:</Text>
+                <Text style={styles.ownerValue}>Lending Ops Automation</Text>
+              </View>
+              <View style={styles.ownerInfo}>
+                <Text style={styles.ownerLabel}>Contact:</Text>
+                <Text style={styles.ownerValue}>lending-tech-lead@company.com</Text>
+              </View>
+              <View style={styles.ownerInfo}>
+                <Text style={styles.ownerLabel}>Jira:</Text>
+                <Text style={styles.ownerValue}>PDC-PRINT-101</Text>
+              </View>
+              <View style={styles.ownerInfo}>
+                <Text style={styles.ownerLabel}>Repo:</Text>
+                <Text style={styles.ownerValue}>gitlab.com/company/lending/pdc-printing</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Parking Lot */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.iconContainer, styles.parkingIcon]}>
+              <Info size={18} color="#ffffff" />
+            </View>
+            <Text style={styles.sectionTitle}>Future Enhancements</Text>
+          </View>
+          <View style={styles.sectionContent}>
+            <View style={styles.parkingGrid}>
+              <View style={styles.parkingCard}>
+                <Text style={styles.parkingText}>Digital cheque systems</Text>
+              </View>
+              <View style={styles.parkingCard}>
+                <Text style={styles.parkingText}>OCR verification</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Diagram */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.iconContainer, styles.diagramIcon]}>
+              <FileText size={18} color="#ffffff" />
+            </View>
+            <Text style={styles.sectionTitle}>Process Diagram</Text>
+          </View>
+          <View style={styles.sectionContent}>
+            <ImageModal imageSource={'https://i.ibb.co/yngtGw2R/pdc-printing.jpg'}/>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -248,32 +422,49 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#d1d5db",
+    backgroundColor: "#1e40af",
+    padding: 24,
+    alignItems: "center",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  headerIcon: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+    padding: 12,
+    borderRadius: 50,
+    marginBottom: 8,
   },
   headerText: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#1f2937",
+    color: "#ffffff",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  headerSubtext: {
+    fontSize: 14,
+    color: "#dbeafe",
     textAlign: "center",
   },
   card: {
     backgroundColor: "#ffffff",
-    borderRadius: 8,
+    borderRadius: 16,
     margin: 16,
-    padding: 16,
+    marginTop: 0,
+    padding: 20,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowRadius: 8,
+    elevation: 4,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#f1f5f9",
   },
   section: {
     marginBottom: 24,
@@ -281,45 +472,261 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#d1d5db",
-    paddingBottom: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  infoIcon: { backgroundColor: "#0ea5e9" },
+  userIcon: { backgroundColor: "#7c3aed" },
+  flowIcon: { backgroundColor: "#dc2626" },
+  successIcon: { backgroundColor: "#16a34a" },
+  primaryIcon: { backgroundColor: "#2563eb" },
+  warningIcon: { backgroundColor: "#d97706" },
+  errorIcon: { backgroundColor: "#dc2626" },
+  techIcon: { backgroundColor: "#475569" },
+  testIcon: { backgroundColor: "#9333ea" },
+  infraIcon: { backgroundColor: "#059669" },
+  ownerIcon: { backgroundColor: "#c2410c" },
+  parkingIcon: { backgroundColor: "#6b7280" },
+  diagramIcon: { backgroundColor: "#be185d" },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    color: "#1f2937",
-    marginLeft: 8,
+    fontWeight: "700",
+    color: "#1e293b",
   },
-  subsection: {
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#374151",
-    marginBottom: 8,
+  sectionContent: {
+    // Content styles will inherit from parent
   },
   text: {
-    fontSize: 16,
-    color: "#374151",
+    fontSize: 15,
+    color: "#475569",
     lineHeight: 22,
+    textAlign: "justify",
   },
-  listContainer: {
+  columns: {
+    flexDirection: "row",
+    gap: 16,
+    marginBottom: 16,
+  },
+  column: {
+    flex: 1,
+  },
+  // Actors Section
+  actorCard: {
+    backgroundColor: "#f8fafc",
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#7c3aed",
+  },
+  actorTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1e293b",
+    marginBottom: 8,
+  },
+  actorList: {
     paddingLeft: 8,
   },
-  bulletPoint: {
-    fontSize: 16,
-    color: "#374151",
-    lineHeight: 22,
+  actorItem: {
+    fontSize: 13,
+    color: "#475569",
+    lineHeight: 18,
     marginBottom: 4,
   },
-  numberedPoint: {
-    fontSize: 16,
-    color: "#374151",
-    lineHeight: 22,
+  // Process Flow
+  processFlow: {
+    gap: 12,
+  },
+  processStep: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  stepNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#2563eb",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  stepNumberText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  stepText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#475569",
+    lineHeight: 20,
+  },
+  // Conditions
+  conditionBox: {
+    backgroundColor: "#f0fdf4",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#dcfce7",
+  },
+  conditionText: {
+    fontSize: 14,
+    color: "#15803d",
+    lineHeight: 20,
+    textAlign: "center",
+  },
+  // STP
+  stpBox: {
+    backgroundColor: "#dbeafe",
+    padding: 16,
+    borderRadius: 8,
+  },
+  stpText: {
+    fontSize: 13,
+    color: "#1e40af",
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  // Alternative Flows
+  flowList: {
+    gap: 8,
+  },
+  flowItem: {
+    fontSize: 13,
+    color: "#92400e",
+    lineHeight: 18,
+  },
+  // Exceptions
+  exceptionGrid: {
+    gap: 12,
+  },
+  exceptionCard: {
+    backgroundColor: "#fef2f2",
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#dc2626",
+  },
+  exceptionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#dc2626",
+    marginBottom: 4,
+  },
+  exceptionText: {
+    fontSize: 13,
+    color: "#b91c1c",
+  },
+  // System Components
+  componentsGrid: {
+    gap: 12,
+  },
+  componentCard: {
+    backgroundColor: "#f8fafc",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  componentTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1e293b",
     marginBottom: 8,
+  },
+  componentList: {
+    paddingLeft: 8,
+  },
+  componentItem: {
+    fontSize: 13,
+    color: "#475569",
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  // Test Scenarios
+  testGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  testCard: {
+    backgroundColor: "#faf5ff",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#e9d5ff",
+  },
+  testText: {
+    fontSize: 12,
+    color: "#7c3aed",
+    fontWeight: "500",
+  },
+  // Infrastructure
+  infraList: {
+    gap: 12,
+  },
+  infraItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#f0fdf4",
+    padding: 12,
+    borderRadius: 8,
+  },
+  infraText: {
+    fontSize: 14,
+    color: "#065f46",
+    fontWeight: "500",
+  },
+  // Ownership
+  ownerCard: {
+    backgroundColor: "#fffbeb",
+    padding: 16,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: "#c2410c",
+  },
+  ownerInfo: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
+  ownerLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#92400e",
+    width: 80,
+  },
+  ownerValue: {
+    fontSize: 14,
+    color: "#b45309",
+    flex: 1,
+  },
+  // Parking Lot
+  parkingGrid: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  parkingCard: {
+    flex: 1,
+    backgroundColor: "#f1f5f9",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  parkingText: {
+    fontSize: 14,
+    color: "#475569",
+    textAlign: "center",
+    fontStyle: "italic",
   },
 });
 

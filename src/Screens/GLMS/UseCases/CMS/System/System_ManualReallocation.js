@@ -5,6 +5,10 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  Image,
+  Button,
+  Dimensions
 } from "react-native";
 import {
   FileText,
@@ -21,7 +25,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react-native";
-
+const {height,width}=Dimensions.get('window')
 const System_ManualReallocation = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -39,9 +43,18 @@ const System_ManualReallocation = () => {
     infraNotes: true,
     devTeam: true,
   });
+  const [modalVisible, setModalVisible] = useState(false);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const openModal = () => {
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
   };
 
   const Section = ({ title, icon: Icon, children, sectionKey }) => (
@@ -75,6 +88,30 @@ const System_ManualReallocation = () => {
             Allocation of Delinquent Cases - Manual Reallocation
           </Text>
         </View>
+
+        {/* Image Button */}
+        <View style={styles.buttonContainer}>
+          <Button title="View Process Diagram" onPress={openModal} color="#2563eb" />
+        </View>
+
+        {/* Modal for Image */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Image
+                source={{ uri: "https://i.ibb.co/RTzZPnrm/manual-recollection.png" }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+              <Button title="Close" onPress={closeModal} color="#dc2626" />
+            </View>
+          </View>
+        </Modal>
 
         {/* Content Sections */}
         <View style={styles.card}>
@@ -376,6 +413,29 @@ const styles = StyleSheet.create({
     color: "#374151",
     fontFamily: "monospace",
     lineHeight: 20,
+  },
+  buttonContainer: {
+    marginVertical: 16,
+    alignItems: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    width: "90%",
+    height:height/1.5,
+  },
+  modalImage: {
+    width: "100%",
+    height: height/1.75,
+    marginBottom: 16,
   },
 });
 

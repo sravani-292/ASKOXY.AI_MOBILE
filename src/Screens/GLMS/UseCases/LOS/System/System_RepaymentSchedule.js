@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
-
+import ImageModal from '../../ImageModal';
 const System_RepaymentSchedule = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -377,6 +377,7 @@ const System_RepaymentSchedule = () => {
               <Text style={styles.listItem}><Text style={styles.bold}>Contact:</Text> Process Automation Lead</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Git Repo:</Text> /los-core/loan-sanction-module</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Jira Ref:</Text> LOS-2105</Text>
+              <ImageModal imageSource={'https://i.ibb.co/v6GkKVNF/loan-sanction-letter.png'}/>
             </View>
           )}
         </View>

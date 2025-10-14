@@ -20,7 +20,7 @@ import {
   ChevronUp,
   ExternalLink,
 } from 'lucide-react-native';
-
+import ImageModal from '../../ImageModal';
 const { width } = Dimensions.get('window');
 
 const System_CustomerIdCreation = () => {
@@ -483,6 +483,8 @@ End {Proceed to Loan Entry}`}
               ]}
             />
           )}
+                      <ImageModal imageSource={'https://i.ibb.co/7dXKJFyq/customer-id-creation.png'}/>
+
         </View>
       </View>
     </ScrollView>

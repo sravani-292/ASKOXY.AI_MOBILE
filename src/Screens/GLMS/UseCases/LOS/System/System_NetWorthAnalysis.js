@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
-
+import ImageModal from '../../ImageModal';
 const System_NetWorthAnalysis = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -222,6 +222,7 @@ End
 `}
             </Text>
           )}
+          <ImageModal imageSource={'https://i.ibb.co/nsdtW1xZ/work-flow-for-evaluating-the-networth.png'}/>
         </View>
 
         <View style={styles.section}>

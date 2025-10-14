@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
+import ImageModal from "../../ImageModal";
 
 const System_ContractRecord = ({ navigation }) => {
   const [expandedSections, setExpandedSections] = useState({
@@ -201,7 +202,11 @@ Start → Login → Open Customer → Review → Action → Record → Submit �
           <Text style={styles.list}>• Email: collections_dev@bank.com</Text>
           <Text style={styles.list}>• JIRA: COLL-CONTACT-01</Text>
           <Text style={styles.list}>• Repo: /collections/contact-recording</Text>
+          <ImageModal imageSource={'https://i.ibb.co/4RBpJrcr/contact-recording.png'}/>
+
         </SectionCard>
+
+
       </View>
     </ScrollView>
   );

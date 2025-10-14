@@ -5,6 +5,9 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  Dimensions,
+  Image,
 } from "react-native";
 import {
   FileText,
@@ -20,6 +23,9 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react-native";
+import ImageZoom from "react-native-image-pan-zoom";
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 const System_BeginingOfDay = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -38,6 +44,8 @@ const System_BeginingOfDay = () => {
     infraNotes: true,
     devTeam: true,
   });
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -66,199 +74,241 @@ const System_BeginingOfDay = () => {
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Heading */}
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            Beginning of Day (BOD) Process
-          </Text>
+    <>
+      <ScrollView style={styles.container}>
+        <View style={styles.content}>
+          {/* Heading */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Beginning of Day (BOD) Process</Text>
+          </View>
+
+          {/* Content Sections */}
+          <View style={styles.card}>
+            <Section title="Description" icon={Info} sectionKey="description">
+              <Text style={styles.text}>
+                The Beginning of Day (BOD) Process is a daily operation within
+                the Collections Management System designed to retrieve and
+                update delinquent and non-delinquent account data from the
+                backend database. This data is sourced from the Collections
+                Management Application and is essential for the classification
+                and follow-up of delinquent accounts. The BOD process is
+                initiated manually by the user.
+              </Text>
+            </Section>
+
+            <Section title="Actors" icon={Users} sectionKey="actors">
+              <View style={styles.actorsGrid}>
+                <View style={styles.actorCard}>
+                  <Text style={styles.actorTitle}>Business User</Text>
+                  <View style={styles.list}>
+                    <Text style={styles.bullet}>• Collections System Operator</Text>
+                  </View>
+                </View>
+                <View style={styles.actorCard}>
+                  <Text style={styles.actorTitle}>System Roles</Text>
+                  <View style={styles.list}>
+                    <Text style={styles.bullet}>• Collections Management System</Text>
+                  </View>
+                </View>
+                <View style={styles.actorCard}>
+                  <Text style={styles.actorTitle}>Stakeholders</Text>
+                  <View style={styles.list}>
+                    <Text style={styles.bullet}>• Collections Department</Text>
+                    <Text style={styles.bullet}>• Risk Team</Text>
+                    <Text style={styles.bullet}>• Operations</Text>
+                  </View>
+                </View>
+              </View>
+            </Section>
+
+            <Section title="User Actions & System Responses" icon={ChevronRight} sectionKey="userActions">
+              <View style={styles.orderedList}>
+                <Text style={styles.orderedItem}>1. User logs into the Collections Management Application.</Text>
+                <Text style={styles.orderedItem}>2. Navigates to the BOD Process screen.</Text>
+                <Text style={styles.orderedItem}>
+                  3. Selects the Line of Business (e.g., Credit Card, Overdraft,
+                  Finance Loan).
+                </Text>
+                <Text style={styles.orderedItem}>4. Submits request to initiate BOD process.</Text>
+                <Text style={styles.orderedItem}>
+                  5. System retrieves and displays details for each delinquent and
+                  non-delinquent customer, including:
+                </Text>
+                <View style={styles.grid}>
+                  <View style={styles.column}>
+                    <Text style={styles.bullet}>• Total Loan Amount</Text>
+                    <Text style={styles.bullet}>• Outstanding Loan Amount</Text>
+                    <Text style={styles.bullet}>• Customer/Co-applicant/Guarantor Information</Text>
+                  </View>
+                  <View style={styles.column}>
+                    <Text style={styles.bullet}>• Due Date and Due Amount</Text>
+                    <Text style={styles.bullet}>• Customer Contact Details</Text>
+                  </View>
+                </View>
+                <Text style={styles.orderedItem}>
+                  6. User reviews retrieved data and proceeds to delinquency
+                  classification.
+                </Text>
+              </View>
+            </Section>
+
+            <Section title="Precondition" icon={CheckCircle} sectionKey="precondition" iconColor="#16a34a">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>
+                  • Database must contain updated information on delinquent and
+                  non-delinquent accounts.
+                </Text>
+              </View>
+            </Section>
+
+            <Section title="Post Condition" icon={CheckCircle} sectionKey="postCondition" iconColor="#16a34a">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>
+                  • System displays delinquent case details, and user transitions
+                  to the classification process.
+                </Text>
+              </View>
+            </Section>
+
+            <Section title="Straight Through Process (STP)" icon={List} sectionKey="stp">
+              <Text style={styles.text}>
+                Login → Navigate to BOD Process Screen → Select Line of Business
+                → Submit → View Delinquency Data → Proceed to Classification
+              </Text>
+            </Section>
+
+            <Section title="Alternative Flows" icon={ChevronRight} sectionKey="alternativeFlows">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>
+                  • Data retrieval failure due to connectivity or database issues.
+                </Text>
+                <Text style={styles.bullet}>• User initiates BOD for an unsupported Line of Business.</Text>
+              </View>
+            </Section>
+
+            <Section title="Exception Flows" icon={AlertCircle} sectionKey="exceptionFlows" iconColor="#dc2626">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>• Missing data for selected Line of Business.</Text>
+                <Text style={styles.bullet}>• System timeout or failure during fetch.</Text>
+              </View>
+            </Section>
+
+            <Section title="User Activity Diagram (Flowchart)" icon={List} sectionKey="flowchart">
+              <View style={styles.flowchart}>
+                <Text style={styles.flowchartText}>Start</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>Login</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>Open BOD Process Screen</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>Select Line of Business</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>Submit</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>View Customer Details</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>Proceed to Classification</Text>
+                <Text style={styles.flowchartText}>  |</Text>
+                <Text style={styles.flowchartText}>  v</Text>
+                <Text style={styles.flowchartText}>End</Text>
+              </View>
+
+              <View style={{ marginTop: 12 }}>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Text style={styles.modalButtonText}>View Flowchart Image</Text>
+                </TouchableOpacity>
+              </View>
+            </Section>
+
+            <Section title="Parking Lot" icon={Info} sectionKey="parkingLot">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>• Automate BOD process via scheduled batch job.</Text>
+                <Text style={styles.bullet}>
+                  • Dashboard to visualize BOD execution status and exceptions.
+                </Text>
+              </View>
+            </Section>
+
+            <Section title="System Components Involved" icon={Server} sectionKey="systemComponents">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>• UI: BOD Processing Screen</Text>
+                <Text style={styles.bullet}>
+                  • DB Tables: Customer Info, Loan Details, Delinquency Records
+                </Text>
+                <Text style={styles.bullet}>• APIs: Data Fetch API, Classification Trigger</Text>
+                <Text style={styles.bullet}>• Services: BOD Scheduler, Audit Logger</Text>
+              </View>
+            </Section>
+
+            <Section title="Test Scenarios" icon={Code} sectionKey="testScenarios">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>• Run BOD for each Line of Business successfully.</Text>
+                <Text style={styles.bullet}>• Simulate missing data and verify error handling.</Text>
+                <Text style={styles.bullet}>• Confirm UI displays all expected customer details.</Text>
+              </View>
+            </Section>
+
+            <Section title="Infra & Deployment Notes" icon={Server} sectionKey="infraNotes">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>• Ensure BOD fetch job has DB read permissions.</Text>
+                <Text style={styles.bullet}>• System load optimization to handle early-day traffic.</Text>
+              </View>
+            </Section>
+
+            <Section title="Dev Team Ownership" icon={GitBranch} sectionKey="devTeam">
+              <View style={styles.list}>
+                <Text style={styles.bullet}>• Squad: Collections Process Team</Text>
+                <Text style={styles.bullet}>• Contact: Lead Dev - bod_support@bankdomain.com</Text>
+                <Text style={styles.bullet}>• JIRA: COLL-BOD-INIT-01</Text>
+                <Text style={styles.bullet}>• Git Repo: /collections/bod-process</Text>
+              </View>
+            </Section>
+          </View>
         </View>
+      </ScrollView>
 
-        {/* Content Sections */}
-        <View style={styles.card}>
-          <Section title="Description" icon={Info} sectionKey="description">
-            <Text style={styles.text}>
-              The Beginning of Day (BOD) Process is a daily operation within
-              the Collections Management System designed to retrieve and
-              update delinquent and non-delinquent account data from the
-              backend database. This data is sourced from the Collections
-              Management Application and is essential for the classification
-              and follow-up of delinquent accounts. The BOD process is
-              initiated manually by the user.
-            </Text>
-          </Section>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
 
-          <Section title="Actors" icon={Users} sectionKey="actors">
-            <View style={styles.actorsGrid}>
-              <View style={styles.actorCard}>
-                <Text style={styles.actorTitle}>Business User</Text>
-                <View style={styles.list}>
-                  <Text style={styles.bullet}>• Collections System Operator</Text>
-                </View>
-              </View>
-              <View style={styles.actorCard}>
-                <Text style={styles.actorTitle}>System Roles</Text>
-                <View style={styles.list}>
-                  <Text style={styles.bullet}>• Collections Management System</Text>
-                </View>
-              </View>
-              <View style={styles.actorCard}>
-                <Text style={styles.actorTitle}>Stakeholders</Text>
-                <View style={styles.list}>
-                  <Text style={styles.bullet}>• Collections Department</Text>
-                  <Text style={styles.bullet}>• Risk Team</Text>
-                  <Text style={styles.bullet}>• Operations</Text>
-                </View>
-              </View>
-            </View>
-          </Section>
-
-          <Section title="User Actions & System Responses" icon={ChevronRight} sectionKey="userActions">
-            <View style={styles.orderedList}>
-              <Text style={styles.orderedItem}>1. User logs into the Collections Management Application.</Text>
-              <Text style={styles.orderedItem}>2. Navigates to the BOD Process screen.</Text>
-              <Text style={styles.orderedItem}>
-                3. Selects the Line of Business (e.g., Credit Card, Overdraft,
-                Finance Loan).
-              </Text>
-              <Text style={styles.orderedItem}>4. Submits request to initiate BOD process.</Text>
-              <Text style={styles.orderedItem}>
-                5. System retrieves and displays details for each delinquent and
-                non-delinquent customer, including:
-              </Text>
-              <View style={styles.grid}>
-                <View style={styles.column}>
-                  <Text style={styles.bullet}>• Total Loan Amount</Text>
-                  <Text style={styles.bullet}>• Outstanding Loan Amount</Text>
-                  <Text style={styles.bullet}>• Customer/Co-applicant/Guarantor Information</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bullet}>• Due Date and Due Amount</Text>
-                  <Text style={styles.bullet}>• Customer Contact Details</Text>
-                </View>
-              </View>
-              <Text style={styles.orderedItem}>
-                6. User reviews retrieved data and proceeds to delinquency
-                classification.
-              </Text>
-            </View>
-          </Section>
-
-          <Section title="Precondition" icon={CheckCircle} sectionKey="precondition" iconColor="#16a34a">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>
-                • Database must contain updated information on delinquent and
-                non-delinquent accounts.
-              </Text>
-            </View>
-          </Section>
-
-          <Section title="Post Condition" icon={CheckCircle} sectionKey="postCondition" iconColor="#16a34a">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>
-                • System displays delinquent case details, and user transitions
-                to the classification process.
-              </Text>
-            </View>
-          </Section>
-
-          <Section title="Straight Through Process (STP)" icon={List} sectionKey="stp">
-            <Text style={styles.text}>
-              Login → Navigate to BOD Process Screen → Select Line of Business
-              → Submit → View Delinquency Data → Proceed to Classification
-            </Text>
-          </Section>
-
-          <Section title="Alternative Flows" icon={ChevronRight} sectionKey="alternativeFlows">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>
-                • Data retrieval failure due to connectivity or database issues.
-              </Text>
-              <Text style={styles.bullet}>• User initiates BOD for an unsupported Line of Business.</Text>
-            </View>
-          </Section>
-
-          <Section title="Exception Flows" icon={AlertCircle} sectionKey="exceptionFlows" iconColor="#dc2626">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>• Missing data for selected Line of Business.</Text>
-              <Text style={styles.bullet}>• System timeout or failure during fetch.</Text>
-            </View>
-          </Section>
-
-          <Section title="User Activity Diagram (Flowchart)" icon={List} sectionKey="flowchart">
-            <View style={styles.flowchart}>
-              <Text style={styles.flowchartText}>Start</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Login</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Open BOD Process Screen</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Select Line of Business</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Submit</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>View Customer Details</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>Proceed to Classification</Text>
-              <Text style={styles.flowchartText}>  |</Text>
-              <Text style={styles.flowchartText}>  v</Text>
-              <Text style={styles.flowchartText}>End</Text>
-            </View>
-          </Section>
-
-          <Section title="Parking Lot" icon={Info} sectionKey="parkingLot">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>• Automate BOD process via scheduled batch job.</Text>
-              <Text style={styles.bullet}>
-                • Dashboard to visualize BOD execution status and exceptions.
-              </Text>
-            </View>
-          </Section>
-
-          <Section title="System Components Involved" icon={Server} sectionKey="systemComponents">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>• UI: BOD Processing Screen</Text>
-              <Text style={styles.bullet}>
-                • DB Tables: Customer Info, Loan Details, Delinquency Records
-              </Text>
-              <Text style={styles.bullet}>• APIs: Data Fetch API, Classification Trigger</Text>
-              <Text style={styles.bullet}>• Services: BOD Scheduler, Audit Logger</Text>
-            </View>
-          </Section>
-
-          <Section title="Test Scenarios" icon={Code} sectionKey="testScenarios">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>• Run BOD for each Line of Business successfully.</Text>
-              <Text style={styles.bullet}>• Simulate missing data and verify error handling.</Text>
-              <Text style={styles.bullet}>• Confirm UI displays all expected customer details.</Text>
-            </View>
-          </Section>
-
-          <Section title="Infra & Deployment Notes" icon={Server} sectionKey="infraNotes">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>• Ensure BOD fetch job has DB read permissions.</Text>
-              <Text style={styles.bullet}>• System load optimization to handle early-day traffic.</Text>
-            </View>
-          </Section>
-
-          <Section title="Dev Team Ownership" icon={GitBranch} sectionKey="devTeam">
-            <View style={styles.list}>
-              <Text style={styles.bullet}>• Squad: Collections Process Team</Text>
-              <Text style={styles.bullet}>• Contact: Lead Dev - bod_support@bankdomain.com</Text>
-              <Text style={styles.bullet}>• JIRA: COLL-BOD-INIT-01</Text>
-              <Text style={styles.bullet}>• Git Repo: /collections/bod-process</Text>
-            </View>
-          </Section>
+            <ImageZoom
+              cropWidth={screenWidth - 32}
+              cropHeight={screenHeight / 1.7}
+              imageWidth={screenWidth - 32}
+              imageHeight={screenHeight / 1.7}
+              pinchToZoom={true}
+              enableCenterFocus={true}
+            >
+              <Image
+                source={{ uri: "https://i.ibb.co/TyMnqfw/beggaining-of-day-process.png" }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+            </ImageZoom>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </Modal>
+    </>
   );
 };
 
@@ -381,6 +431,51 @@ const styles = StyleSheet.create({
     color: "#374151",
     fontFamily: "monospace",
     lineHeight: 20,
+  },
+  modalButton: {
+    backgroundColor: "#2563eb",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  modalContent: {
+    width: screenWidth - 16,
+    height: screenHeight / 1.5,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalImage: {
+    width: "100%",
+    height: "100%",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "#dc2626",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
   },
 });
 

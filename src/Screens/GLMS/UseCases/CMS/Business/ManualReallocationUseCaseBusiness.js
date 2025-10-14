@@ -5,6 +5,9 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Modal,
+  Image,
+  Dimensions
 } from 'react-native';
 import { 
   Info, 
@@ -14,9 +17,10 @@ import {
   List, 
   ChevronDown, 
   ChevronUp,
-  Repeat 
+  Repeat ,
+  X
 } from 'lucide-react-native';
-
+const {height,width}=Dimensions.get('window')
 const ManualReallocationUseCaseBusiness = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
@@ -27,6 +31,8 @@ const ManualReallocationUseCaseBusiness = () => {
     workflow: true,
     flowchart: true,
   });
+    const [isModalVisible, setIsModalVisible] = useState(false);
+
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -195,8 +201,37 @@ const ManualReallocationUseCaseBusiness = () => {
                 v{'\n'}
                 End
               </Text>
+               <TouchableOpacity
+            style={styles.button}
+            onPress={() => setIsModalVisible(true)}
+          >
+            <Text style={styles.buttonText}>View Flowchart</Text>
+          </TouchableOpacity>
             </View>
           </Section>
+          <Modal
+        visible={isModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              onPress={() => setIsModalVisible(false)}
+              style={styles.closeButton}
+            >
+              <X size={22} color="black" />
+            </TouchableOpacity>
+
+            <Image
+              source={{ uri: "https://i.ibb.co/RTzZPnrm/manual-recollection.png" }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      </Modal>
         </View>
       </View>
     </ScrollView>
@@ -305,6 +340,44 @@ const styles = StyleSheet.create({
     color: '#374151',
     fontFamily: 'monospace',
     lineHeight: 18,
+  },
+   button: {
+    backgroundColor: "#6D28D9",
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: width*0.9,
+    height: height/1.5,
+    backgroundColor: "white",
+    borderRadius: 12,
+    overflow: "hidden",
+    position: "relative",
+  },
+  modalImage: {
+    width: "100%",
+    height: height/1.7,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 5,
   },
 });
 

@@ -19,7 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 
 const System_SettlementsReceipts = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
@@ -45,7 +45,7 @@ const System_SettlementsReceipts = () => {
       <Text style={styles.orderedListText}>{children}</Text>
     </View>
   );
-
+ 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -249,6 +249,7 @@ const System_SettlementsReceipts = () => {
               JIRA: WF-RECEIPTS-01{"\n"}
               Git Repo: /fms/settlements/receipts
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/QSTZzMm/settlement-receipts.jpg'}/>
           </Section>
         </View>
       </ScrollView>

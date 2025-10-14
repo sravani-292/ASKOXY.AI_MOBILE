@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 const RepaymentDeferralFinanceWise = () => {
   return (
     <ScrollView style={styles.container}>
@@ -235,6 +235,7 @@ const RepaymentDeferralFinanceWise = () => {
               9. System: Deferral marked successfully, and customer notified on
               deferral.
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/SXDC5zTj/32.png'}/>
           </View>
         </View>
       </View>

@@ -11,7 +11,7 @@ import {
   Users,
   List,
   CheckCircle,
-  AlertCircle,
+  AlertCircle, 
   Info,
   ArrowRight,
   Settings,
@@ -19,7 +19,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 const System_EODBODDisplay= () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
     <View style={styles.sectionCard}>
@@ -195,6 +195,7 @@ const System_EODBODDisplay= () => {
               JIRA: FMS-12345{"\n"}
               Git Repo: git.company.com/FMS/eod-bod
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/dwhb3S8y/eod-bod.png'}/>
           </Section>
         </View>
       </ScrollView>

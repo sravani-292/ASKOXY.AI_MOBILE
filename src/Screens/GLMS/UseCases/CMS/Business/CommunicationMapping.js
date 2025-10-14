@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Mail 
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const CommunicationMaping = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -152,6 +153,8 @@ const CommunicationMaping = () => {
                 End: Communication Mapping Completed
               </Text>
             </View>
+                        <ImageModal imageSource={'https://i.ibb.co/v6qK9sbF/queue-communication-mapping.png'}/>
+
           </Section>
         </View>
       </View>

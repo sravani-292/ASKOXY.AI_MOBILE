@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 const RepaymentDeferralBatchWise = () => {
   return (
     <ScrollView style={styles.container}>
@@ -191,6 +191,7 @@ const RepaymentDeferralBatchWise = () => {
               7. System: Deferral marked successfully, and Customers are
               notified on the deferral.
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/rRLjxCB0/portfolio-wise-defferral.jpg'}/>
           </View>
         </View>
       </View>

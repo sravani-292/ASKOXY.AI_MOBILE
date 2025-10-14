@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
-
+import ImageModal from '../../ImageModal';
 const System_Saction_CustomerResponse = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -17,7 +17,7 @@ const System_Saction_CustomerResponse = () => {
     parkingLot: true,
     systemComponents: true,
     testScenarios: true,
-    infra: true,
+    infra: true, 
     devTeam: true,
   });
 
@@ -367,6 +367,7 @@ const System_Saction_CustomerResponse = () => {
               <Text style={styles.listItem}><Text style={styles.bold}>Contact:</Text> LOS Module Lead</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Jira:</Text> LOS-1278</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Git Repo:</Text> /los-core/sanction-letter-service</Text>
+              <ImageModal imageSource={'https://i.ibb.co/Q7ZhS8Ft/Usecase13.png'}/>
             </View>
           )}
         </View>

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 const ViewAccountStatusDisplay = () => {
   const data = {
     overview:
@@ -9,7 +9,7 @@ const ViewAccountStatusDisplay = () => {
     actions: "User verifies the Status of the Finance Account.",
     preconditions: ["Existing Finance Account"],
     postconditions: [
-      "Finance Account status viewed",
+      "Finance Account status viewed", 
       "Initiates the further process for closure of Finance Account",
     ],
     workflow: {
@@ -125,6 +125,7 @@ const ViewAccountStatusDisplay = () => {
             {data.workflow.refunds.map((refund, index) => (
               <DetailCard key={index} item={refund} borderColor="#10b981" />
             ))}
+            <ImageModal imageSource={'https://i.ibb.co/hFGsRgH6/account-status.jpg'}/>
           </View>
         </View>
       </View>

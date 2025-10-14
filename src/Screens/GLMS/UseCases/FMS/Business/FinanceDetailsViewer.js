@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const FinanceDetailsViewer = () => {
   return (
@@ -9,7 +9,7 @@ const FinanceDetailsViewer = () => {
         <Text style={styles.title}>
           Work Flow – Finance Details Viewer
         </Text>
-        
+         
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview:</Text>
           <Text style={styles.paragraph}>
@@ -83,6 +83,7 @@ const FinanceDetailsViewer = () => {
             <Text style={styles.flowchartItem}>2. Bank Officer: Navigates to the Finance Query Screen.</Text>
             <Text style={styles.flowchartItem}>3. Bank Officer: Initiates a search using the Finance ID to view customer finance details.</Text>
             <Text style={styles.flowchartItem}>4. System: Displays finance details (e.g., Customer Name, Sanctioned Amount, Tenure) fetched from the Loan Origination System in view mode.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/cKxCvbHW/finance-details.jpg'}/>
           </View>
         </View>
       </View>

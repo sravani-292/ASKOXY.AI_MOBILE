@@ -13,7 +13,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 const System_FinanceViewer = () => {
   return (
     <ScrollView style={styles.container}>
@@ -271,6 +271,7 @@ const System_FinanceViewer = () => {
             JIRA: WF-FINANCE-VIEW-01{"\n"}
             Git Repo: /fms/finance-viewer
           </Text>
+          <ImageModal imageSource={'https://i.ibb.co/cKxCvbHW/finance-details.jpg'}/>
         </View>
       </View>
     </ScrollView>

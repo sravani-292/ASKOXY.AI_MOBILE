@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
-
+import ImageModal from '../../ImageModal';
 const System_CapturingAssetDetails = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -361,6 +361,8 @@ const System_CapturingAssetDetails = () => {
               <Text style={styles.listItem}><Text style={styles.bold}>Product Owner:</Text> Mani - Dev (lead)</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Git Repo:</Text> /los-core/asset-capture</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Jira Reference:</Text> LOS-2153</Text>
+              <ImageModal imageSource={'https://i.ibb.co/nMntMRSG/caparing-proposed-asset-details.png'}/>
+
             </View>
           )}
         </View>

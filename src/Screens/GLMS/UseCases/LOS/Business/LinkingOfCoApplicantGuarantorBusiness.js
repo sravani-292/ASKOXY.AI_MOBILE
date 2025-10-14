@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import ImageModal from '../../ImageModal';
 const LinkingOfCoApplicantGuarantorBusiness = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
@@ -313,6 +313,7 @@ Proceed with Loan Details Capture
 End
 `}
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/Gv11dpRk/linking-of-co-applicant-guranter.png'}/>
           </View>
         )}
       </View>
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   grid: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     flexWrap: 'wrap',
     paddingLeft: 10,
   },

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 // Main Component
 const SettlementsChequeProcessing = () => {
   return (
@@ -103,6 +103,7 @@ const SettlementsChequeProcessing = () => {
             <Text style={styles.flowchartItem}>
               5. System: Receipt/Payment processing is completed successfully.
             </Text>
+            <Image imageSource={'https://i.ibb.co/qMBm3PHz/SETTELEMENTS.jpg'}/>
           </View>
         </View>
       </View>

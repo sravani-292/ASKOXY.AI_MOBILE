@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import {
   FileText,
-  Users,
+  Users, 
   CheckCircle,
   Info,
   ChevronDown,
@@ -17,7 +17,7 @@ import {
   Send,
   Check,
 } from 'lucide-react-native';
-
+import ImageModal from '../../ImageModal';
 const { width } = Dimensions.get('window');
 
 const Sanction_CustomerResponse = () => {
@@ -311,6 +311,7 @@ End
   v
 End`}
                 </Text>
+                <ImageModal imageSource={'https://i.ibb.co/Q7ZhS8Ft/Usecase13.png'}/>
               </View>
             </View>
           )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import ImageModal from '../../ImageModal';
 const CheckLimitBusiness = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
@@ -302,6 +302,8 @@ Proceed to capture Asset & Liabilities details
 End
 `}
             </Text>
+                                          <ImageModal imageSource={'https://i.ibb.co/279s0FBy/checking-the-eligibility-of-the-customer.png'}/>
+
           </View>
         )}
       </View>

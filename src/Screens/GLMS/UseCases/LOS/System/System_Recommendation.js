@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles';
+import ImageModal from '../../ImageModal';
 
 const System_Recommendation = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -371,6 +372,7 @@ const System_Recommendation = () => {
               <Text style={styles.listItem}><Text style={styles.bold}>Usability:</Text> The Loan Origination System (LOS) should have an intuitive and user-friendly interface that allows the Bank Officer to efficiently enter and update recommendations, with clear instructions and validation checks to guide the process.</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Availability:</Text> The system should be available 99.9% of the time, with minimal downtime, and ensure that no data is lost during the recommendation process.</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Auditability:</Text> The system should maintain an audit log of all actions taken by Bank Officers during the recommendation process, including timestamps and user IDs.</Text>
+           <ImageModal imageSource={'https://i.ibb.co/MxRvdwK2/work-flow-for-recommendations.png'}/>
             </View>
           )}
         </View>

@@ -16,7 +16,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react-native";
-import styles from "./Styles";
+import ImageModal from "../../ImageModal";
+// import styles from "./Styles"; 
 
 const System_LoanAssessment = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -233,6 +234,7 @@ const System_LoanAssessment = () => {
             <Text style={styles.orderedListItem}>2. <Text style={styles.bold}>Customer Communication Integration:</Text> Automatically notify the customer via email or SMS once the loan assessment is completed, providing sanction details or additional information if required.</Text>
             <Text style={styles.orderedListItem}>3. <Text style={styles.bold}>Automated Workflow Adjustments:</Text> Automate manual processes, such as adjusting loan amounts based on changing bank policies or re-evaluating when parameters (e.g., rate of interest) change.</Text>
             <Text style={styles.orderedListItem}>4. <Text style={styles.bold}>Integration with Third-party Risk Management Tools:</Text> Incorporate third-party services to assess credit risk or analyze the customer's financial standing for comprehensive assessments.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/SwYCRfLQ/workflow-for-loan-assesment.png'}/>
           </Section>
         </View>
       </View>
@@ -243,3 +245,121 @@ const System_LoanAssessment = () => {
 
 
 export default System_LoanAssessment;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  content: {
+    maxWidth: 800,
+    width: "100%",
+    alignSelf: "center",
+    padding: 16,
+  },
+  header: {
+    marginBottom: 40,
+    borderBottomWidth: 2,
+    borderBottomColor: "#4f46e5",
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    textAlign: "center",
+  },
+  sectionsContainer: {
+    gap: 24,
+  },
+  section: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  sectionTitleText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  text: {
+    fontSize: 14,
+    color: "#4b5563",
+    lineHeight: 20,
+  },
+  bold: {
+    fontWeight: "600",
+  },
+  grid: {
+    gap: 16,
+  },
+  gridItem: {
+    gap: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  listItem: {
+    fontSize: 14,
+    color: "#4b5563",
+    lineHeight: 20,
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#eef2ff",
+    padding: 12,
+  },
+  tableHeaderCell: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#d1d5db",
+    padding: 12,
+  },
+  tableCell: {
+    flex: 1,
+    fontSize: 14,
+    color: "#4b5563",
+  },
+  codeBlock: {
+    backgroundColor: "#eef2ff",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#c7d2fe",
+  },
+  codeText: {
+    fontSize: 12,
+    color: "#374151",
+    fontFamily: "monospace",
+  },
+});

@@ -15,6 +15,7 @@ import {
   ChevronUp,
   ArrowUpCircle 
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const PrioritizeQueue = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -106,12 +107,11 @@ const PrioritizeQueue = () => {
                 <View style={styles.column}>
                   <Text style={styles.bulletItem}>• Strategy</Text>
                   <Text style={styles.bulletItem}>• Financier</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Financier Type (Line of Business)</Text>
+                   <Text style={styles.bulletItem}>• Financier Type (Line of Business)</Text>
                   <Text style={styles.bulletItem}>• Queue Code</Text>
                   <Text style={styles.bulletItem}>• Making Date</Text>
                 </View>
+              
               </View>
 
               <Text style={styles.numberedItem}>4. User defines the execution sequence to set the priority order of the queues.</Text>
@@ -151,6 +151,8 @@ const PrioritizeQueue = () => {
                 End: Queues Prioritized
               </Text>
             </View>
+                        <ImageModal imageSource={'https://i.ibb.co/mFzB0c2X/prioritizing-a-queue.png'}/>
+
           </Section>
         </View>
       </View>

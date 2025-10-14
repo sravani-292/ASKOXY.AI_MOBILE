@@ -13,7 +13,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
-
+import ImageModal from "../../ImageModal";
 const System_SettlementsCheque = () => {
   return (
     <ScrollView style={styles.container}>
@@ -253,6 +253,7 @@ const System_SettlementsCheque = () => {
             JIRA: WF-CHEQUE-SETTLE-01{"\n"}
             Git Repo: /settlements/cheque-processing
           </Text>
+          <ImageModal imageSource={'https://i.ibb.co/qMBm3PHz/SETTELEMENTS.jpg'}/>
         </View>
       </View>
     </ScrollView>

@@ -16,16 +16,13 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import BASE_URL from "../../../../Config";
+import BASE_URL from "../../../Config";
 import axios from "axios";
-import { useSelector } from "react-redux";
+
 const { height, width } = Dimensions.get("window");
 
 const JobDescription = ({ route }) => {
   const jobData = route.params.jobDetails;
-   const user = useSelector((state) => state.counter);
-  const token = user.accessToken;
-  const userId = user.userId
   console.log({ jobData });
   // Modal state
   const [modalVisible, setModalVisible] = useState(false);
@@ -59,15 +56,6 @@ const JobDescription = ({ route }) => {
   };
 
   const handleApply = () => {
-    if(userId === null || userId === undefined || userId === ''){
-      Alert.alert('Error', 'Please login to apply for job',
-        [
-          { text: "Login", onPress: () => navigation.navigate("Login") },
-          { text: "Cancel" },
-        ]
-      );
-      return;
-    }
     setModalVisible(true);
   };
 
@@ -103,14 +91,13 @@ const JobDescription = ({ route }) => {
           type: file.mimeType,
         });
         data.append("fileType", "resume");
-        data.append("userId",userId);
+        data.append("userId", "e00536d6-a7eb-40d9-840c-38acaceb6177");
         data.append("jobId", route.params.jobDetails.id);
         console.log(data._parts);
         axios
           .post(`${BASE_URL}marketing-service/campgin/upload`, data, {
             headers: {
               "Content-Type": "multipart/form-data",
-              "Authorization": `Bearer ${token}`
             },
           })
           .then((response) => {
@@ -153,8 +140,8 @@ const JobDescription = ({ route }) => {
       return;
     }
     if (!formData.resume) {
-        Alert.alert('Error', 'Please upload your resume');
-      // setError((prev) => ({ ...prev, resumeError: "Field is mandatory" }));
+      //   Alert.alert('Error', 'Please upload your resume');
+      setError((prev) => ({ ...prev, resumeError: "Field is mandatory" }));
       return;
     }
 
@@ -170,16 +157,12 @@ const JobDescription = ({ route }) => {
       resumeUrl: formData.documentPath,
       jobDesignation: route.params.jobDetails.jobDesignation,
       companyName: route.params.jobDetails.companyName,
-      userId: userId,
+      userId: "e00536d6-a7eb-40d9-840c-38acaceb6177",
       jobId: route.params.jobDetails.id,
     };
 
     axios
-      .post(`${BASE_URL}marketing-service/campgin/userapplyjob`, data,{
-          headers:{
-            'Authorization':`Bearer ${token}`
-          }
-        })
+      .post(`${BASE_URL}marketing-service/campgin/userapplyjob`, data)
       .then((response) => {
         console.log("Application Success", response.data);
         Alert.alert(
@@ -229,11 +212,7 @@ const JobDescription = ({ route }) => {
   const appliedjobsfunc = () => {
     axios
       .get(
-        `${BASE_URL}marketing-service/campgin/getuserandllusersappliedjobs?userId=${userId}`,{
-          headers:{
-            'Authorization':`Bearer ${token}`
-          }
-        }
+        `${BASE_URL}marketing-service/campgin/getuserandllusersappliedjobs?userId=e00536d6-a7eb-40d9-840c-38acaceb6177`
       )
       .then((response) => {
         console.log("applied jobs", response.data);
@@ -417,7 +396,6 @@ const JobDescription = ({ route }) => {
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter your name"
-                   placeholderTextColor="#7F8C8D"
                   value={formData.name}
                   onChangeText={(text) => {
                     setFormData((prev) => ({ ...prev, name: text }));
@@ -440,7 +418,6 @@ const JobDescription = ({ route }) => {
                 <TextInput
                   style={styles.textInput}
                   placeholder="e.g. 9876543210"
-                   placeholderTextColor="#7F8C8D"
                   keyboardType="numeric"
                   value={formData.mobileNumber}
                   maxLength={10}
@@ -465,7 +442,6 @@ const JobDescription = ({ route }) => {
                 <TextInput
                   style={[styles.textInput, styles.textArea]}
                   placeholder="Write your cover letter here..."
-                   placeholderTextColor="#7F8C8D"
                   multiline
                   numberOfLines={4}
                   value={formData.coverLetter}
@@ -488,7 +464,6 @@ const JobDescription = ({ route }) => {
                 <TextInput
                   style={styles.textInput}
                   placeholder="e.g. 30 days"
-                   placeholderTextColor="#7F8C8D"
                   value={formData.noticePeriod}
                   onChangeText={(text) =>
                     setFormData((prev) => ({ ...prev, noticePeriod: text }))

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-
+import ImageModal from '../../ImageModal';
 const LinkingOfCustomerIdToLoanBusiness = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
     actors: true,
-    actions: true,
+    actions: true, 
     preconditions: true,
     postconditions: true,
     workflow: true,
@@ -267,6 +267,7 @@ Customer ID linked to Loan Product
 End
 `}
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/PsqpSJyK/Linking-of-customer-id-to-loan.png'}/>
           </View>
         )}
       </View>

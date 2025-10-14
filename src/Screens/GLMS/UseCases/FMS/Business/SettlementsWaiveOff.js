@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const SettlementsWaiveOff = () => {
   return (
@@ -78,6 +78,7 @@ const SettlementsWaiveOff = () => {
             <Text style={styles.flowchartItem}>4. User: Enters details (e.g., Agreement Number, Amount to be Waived Off, Remarks).</Text>
             <Text style={styles.flowchartItem}>5. User: Saves the record and sends it for authorization.</Text>
             <Text style={styles.flowchartItem}>6. System: Waive-off is completed successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/KzwZKxyR/settlements-payments.jpg'}/>
           </View>
         </View>
       </View>

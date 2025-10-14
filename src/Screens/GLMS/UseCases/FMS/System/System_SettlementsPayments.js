@@ -12,6 +12,7 @@ import {
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_SettlementsPayments = () => {
   const Section = ({ title, icon: Icon, iconColor, children }) => (
@@ -192,6 +193,7 @@ const System_SettlementsPayments = () => {
             <Text style={styles.teamText}><Text style={styles.label}>Contact:</Text> payments_fms@bankdomain.com</Text>
             <Text style={styles.teamText}><Text style={styles.label}>JIRA:</Text> WF-PAYMENTS-01</Text>
             <Text style={styles.teamText}><Text style={styles.label}>Git Repo:</Text> /fms/settlements/payments</Text>
+            <ImageModal imageSource={'https://i.ibb.co/KzwZKxyR/settlements-payments.jpg'}/>
           </View>
         </Section>
       </View>
@@ -247,7 +249,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: "#2563eb",
-    justifyContent: "center",
+    justifyContent: "center", 
     alignItems: "center",
     marginRight: 12,
     marginTop: 2,

@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import ImageModal from '../../ImageModal';
 
 // Main Component
 const NPAProvision = () => {
-  return (
+  return ( 
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>
@@ -104,6 +105,7 @@ const NPAProvision = () => {
             <Text style={styles.flowchartItem}>4. User: Submits the record.</Text>
             <Text style={[styles.flowchartItem, styles.indented]}>- If any discrepancy, User corrects the details.</Text>
             <Text style={styles.flowchartItem}>5. System: NPA provisioning is completed successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/VYtSg7Nn/NPA-PROVISIONING.jpg'}/>
           </View>
         </View>
       </View>

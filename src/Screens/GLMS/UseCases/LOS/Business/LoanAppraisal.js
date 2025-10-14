@@ -9,12 +9,13 @@ import {
 } from 'react-native';
 import {
   FileText,
-  Users,
+  Users, 
   CheckCircle,
   Info,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const { width } = Dimensions.get('window');
 
@@ -270,6 +271,7 @@ Proceed to Risk Analysis
   v
 End`}
                 </Text>
+                <ImageModal imageSource={'https://i.ibb.co/b5rknXQ6/workflow-for-loan-apparisal.png'}/>
               </View>
             </View>
           )}

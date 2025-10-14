@@ -6,13 +6,14 @@ import {
   List,
   CheckCircle,
   AlertCircle,
-  Info,
+  Info, 
   ArrowRight,
   Settings,
   TestTube,
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const System_SettlementsManualAdvice = () => {
   return (
@@ -249,6 +250,7 @@ const System_SettlementsManualAdvice = () => {
             JIRA: WF-MANUAL-ADV-01{"\n"}
             Git Repo: /settlements/manual-advise
           </Text>
+          <ImageModal imageSource={'https://i.ibb.co/99WM5mx5/manual-advise.jpg'}/>
         </View>
       </View>
     </ScrollView>

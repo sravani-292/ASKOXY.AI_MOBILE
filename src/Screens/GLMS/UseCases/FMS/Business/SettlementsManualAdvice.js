@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const SettlementsManualAdvise = () => {
   return (
@@ -9,7 +9,7 @@ const SettlementsManualAdvise = () => {
         <Text style={styles.title}>
           Work Flow – Settlements: Manual Advise
         </Text>
-        
+ 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview:</Text>
           <Text style={styles.paragraph}>
@@ -74,6 +74,7 @@ const SettlementsManualAdvise = () => {
             <Text style={styles.flowchartItem}>3. User: Selects the business party and Agreement ID, and enters details (e.g., Advice ID, Advice Amount, Currency).</Text>
             <Text style={styles.flowchartItem}>4. System: Creates the due as per the defined process, and payment is made to the customer.</Text>
             <Text style={styles.flowchartItem}>5. System: Manual advice is completed successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/99WM5mx5/manual-advise.jpg'}/>
           </View>
         </View>
       </View>

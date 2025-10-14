@@ -17,6 +17,7 @@ import {
   ChevronUp,
 } from "lucide-react-native";
 import Styles from "./Styles";
+import ImageModal from "../../ImageModal";
 
 const LinkingOfCustomerIdToLoan = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -326,6 +327,7 @@ End`}
             <Text style={styles.listItem}>• POC: Ramesh Nair (Product Owner)</Text>
             <Text style={styles.listItem}>• Jira Link: LOS-1234</Text>
             <Text style={styles.listItem}>• Repo: bitbucket.org/bank/los-core</Text>
+            <ImageModal imageSource={'https://i.ibb.co/PsqpSJyK/Linking-of-customer-id-to-loan.png'} />
           </Section>
         </View>
       </View>
@@ -335,3 +337,121 @@ End`}
 
 
 export default LinkingOfCustomerIdToLoan;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  content: {
+    maxWidth: 800,
+    width: "100%",
+    alignSelf: "center",
+    padding: 16,
+  },
+  header: {
+    marginBottom: 40,
+    borderBottomWidth: 2,
+    borderBottomColor: "#4f46e5",
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+    textAlign: "center",
+  },
+  sectionsContainer: {
+    gap: 24,
+  },
+  section: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  sectionTitleText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+  },
+  text: {
+    fontSize: 14,
+    color: "#4b5563",
+    lineHeight: 20,
+  },
+  bold: {
+    fontWeight: "600",
+  },
+  grid: {
+    gap: 16,
+  },
+  gridItem: {
+    gap: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  listItem: {
+    fontSize: 14,
+    color: "#4b5563",
+    lineHeight: 20,
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  tableHeader: {
+    flexDirection: "row",
+    backgroundColor: "#eef2ff",
+    padding: 12,
+  },
+  tableHeaderCell: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#374151",
+  },
+  tableRow: {
+    flexDirection: "row",
+    borderTopWidth: 1,
+    borderTopColor: "#d1d5db",
+    padding: 12,
+  },
+  tableCell: {
+    flex: 1,
+    fontSize: 14,
+    color: "#4b5563",
+  },
+  codeBlock: {
+    backgroundColor: "#eef2ff",
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#c7d2fe",
+  },
+  codeText: {
+    fontSize: 12,
+    color: "#374151",
+    fontFamily: "monospace",
+  },
+});

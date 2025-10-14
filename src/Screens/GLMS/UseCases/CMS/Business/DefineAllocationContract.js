@@ -5,18 +5,21 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
+  Modal,
+  Dimensions,
+  Image,
 } from 'react-native';
-import { 
-  Info, 
-  Users, 
-  CheckCircle, 
-  ChevronRight, 
-  List, 
-  ChevronDown, 
-  ChevronUp 
+import {
+  Info,
+  Users,
+  CheckCircle,
+  ChevronRight,
+  List,
+  ChevronDown,
+  ChevronUp,
+  ImageIcon,
 } from 'lucide-react-native';
-
-
+const {height,width}=Dimensions.get('window')
 const DefineAllocationContract = () => {
   const [expandedSections, setExpandedSections] = useState({
     overview: true,
@@ -27,6 +30,8 @@ const DefineAllocationContract = () => {
     workflow: true,
     flowchart: true,
   });
+
+  const [modalVisible, setModalVisible] = useState(false);
 
   const toggleSection = (section) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -49,152 +54,207 @@ const DefineAllocationContract = () => {
         )}
       </TouchableOpacity>
       {expandedSections[sectionKey] && (
-        <View style={styles.sectionContent}>
-          {children}
-        </View>
+        <View style={styles.sectionContent}>{children}</View>
       )}
     </View>
   );
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        {/* Header Section */}
-        <View style={styles.header}>
-          <Text style={styles.title}>
-            Define Allocation for Delinquent Customers
-          </Text>
-        </View>
-
-        {/* Content Sections */}
-        <View style={styles.sectionsContainer}>
-          {/* Overview */}
-          <Section title="Overview" icon={Info} sectionKey="overview">
-            <Text style={styles.text}>
-              Allocation is a process where the system assigns the cases of a
-              particular queue to a unit defined in the system. The
-              Collections System allows the user to define new allocation
-              rules and modify existing allocations for the selected strategy.
-              The user can view or modify only those allocation rules which
-              are either defined by them or by their child units.
+    <View style={styles.container}>
+      <ScrollView style={{ flex: 1 }}>
+        <View style={styles.content}>
+          {/* Header Section */}
+          <View style={styles.header}>
+            <Text style={styles.title}>
+              Define Allocation for Delinquent Customers
             </Text>
-          </Section>
+          </View>
 
-          {/* Actors */}
-          <Section title="Actors" icon={Users} sectionKey="actors">
-            <View style={styles.bulletList}>
-              <Text style={styles.bulletItem}>• User</Text>
-            </View>
-          </Section>
-
-          {/* Actions */}
-          <Section title="Actions" icon={ChevronRight} sectionKey="actions">
-            <View style={styles.bulletList}>
-              <Text style={styles.bulletItem}>
-                User segregates the delinquent cases based on criteria such as
-                due amount, default date, and default percentage, modifies the
-                details if needed, and assigns to a Collector.
+          {/* Content Sections */}
+          <View style={styles.sectionsContainer}>
+            {/* Overview */}
+            <Section title="Overview" icon={Info} sectionKey="overview">
+              <Text style={styles.text}>
+                Allocation is a process where the system assigns the cases of a
+                particular queue to a unit defined in the system. The
+                Collections System allows the user to define new allocation
+                rules and modify existing allocations for the selected strategy.
+                The user can view or modify only those allocation rules which
+                are either defined by them or by their child units.
               </Text>
-            </View>
-          </Section>
+            </Section>
 
-          {/* Preconditions */}
-          <Section title="Preconditions" icon={CheckCircle} sectionKey="preconditions">
-            <View style={styles.bulletList}>
-              <Text style={styles.bulletItem}>• Delinquent cases are classified and mapped to the communication templates for auto communication.</Text>
-              <Text style={styles.bulletItem}>• System should allow modifications to existing allocations.</Text>
-            </View>
-          </Section>
-
-          {/* Post Conditions */}
-          <Section title="Post Conditions" icon={CheckCircle} sectionKey="postconditions">
-            <View style={styles.bulletList}>
-              <Text style={styles.bulletItem}>• Delinquent case is assigned to a Collector.</Text>
-            </View>
-          </Section>
-
-          {/* Workflow */}
-          <Section title="Workflow" icon={List} sectionKey="workflow">
-            <View style={styles.numberedList}>
-              <Text style={styles.numberedItem}>1. User defines the rules in allocation and prepares the delinquent case.</Text>
-              <Text style={styles.numberedItem}>2. User maps the delinquent case to the Collector by providing the following details:</Text>
-              
-              <View style={styles.detailsGrid}>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Strategy</Text>
-                  <Text style={styles.bulletItem}>• Financier</Text>
-                  <Text style={styles.bulletItem}>• Financier Type</Text>
-                  <Text style={styles.bulletItem}>• Queue Code</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Rule Code</Text>
-                  <Text style={styles.bulletItem}>• Rule Unit Level</Text>
-                  <Text style={styles.bulletItem}>• Rule Unit Code</Text>
-                  <Text style={styles.bulletItem}>• Unit Level</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Unit Code</Text>
-                  <Text style={styles.bulletItem}>• % Age Allocation</Text>
-                  <Text style={styles.bulletItem}>• Execution Sequence</Text>
-                  <Text style={styles.bulletItem}>• Maker ID</Text>
-                  <Text style={styles.bulletItem}>• Making Date</Text>
-                </View>
+            {/* Actors */}
+            <Section title="Actors" icon={Users} sectionKey="actors">
+              <View style={styles.bulletList}>
+                <Text style={styles.bulletItem}>• User</Text>
               </View>
+            </Section>
 
-              <Text style={styles.numberedItem}>3. User provides the percentage of allocation and specifies the priority.</Text>
-              <Text style={styles.numberedItem}>4. User saves the details in the system for future reference.</Text>
-            </View>
-          </Section>
+            {/* Actions */}
+            <Section title="Actions" icon={ChevronRight} sectionKey="actions">
+              <View style={styles.bulletList}>
+                <Text style={styles.bulletItem}>
+                  User segregates the delinquent cases based on criteria such as
+                  due amount, default date, and default percentage, modifies the
+                  details if needed, and assigns to a Collector.
+                </Text>
+              </View>
+            </Section>
 
-          {/* Flowchart */}
-          <Section title="Flowchart" icon={List} sectionKey="flowchart">
-            <View style={styles.flowchart}>
-              <Text style={styles.flowchartText}>
-                Start{'\n'}
-                |{'\n'}
-                v{'\n'}
-                Delinquent cases classified and mapped to communication templates{'\n'}
-                System allows modifications to existing allocations{'\n'}
-                |{'\n'}
-                v{'\n'}
-                User defines allocation rules based on:{'\n'}
-                - Due Amount{'\n'}
-                - Default Date{'\n'}
-                - Default Percentage{'\n'}
-                |{'\n'}
-                v{'\n'}
-                User maps delinquent case to Collector with details:{'\n'}
-                - Strategy{'\n'}
-                - Financier{'\n'}
-                - Financier Type{'\n'}
-                - Queue Code{'\n'}
-                - Rule Code{'\n'}
-                - Rule Unit Level{'\n'}
-                - Rule Unit Code{'\n'}
-                - Unit Level{'\n'}
-                - Unit Code{'\n'}
-                - % Age Allocation{'\n'}
-                - Execution Sequence{'\n'}
-                - Maker ID{'\n'}
-                - Making Date{'\n'}
-                |{'\n'}
-                v{'\n'}
-                User sets allocation percentage and priority{'\n'}
-                |{'\n'}
-                v{'\n'}
-                User saves details in the system{'\n'}
-                |{'\n'}
-                v{'\n'}
-                Delinquent case assigned to Collector{'\n'}
-                |{'\n'}
-                v{'\n'}
-                End
-              </Text>
-            </View>
-          </Section>
+            {/* Preconditions */}
+            <Section
+              title="Preconditions"
+              icon={CheckCircle}
+              sectionKey="preconditions"
+            >
+              <View style={styles.bulletList}>
+                <Text style={styles.bulletItem}>
+                  • Delinquent cases are classified and mapped to the
+                  communication templates for auto communication.
+                </Text>
+                <Text style={styles.bulletItem}>
+                  • System should allow modifications to existing allocations.
+                </Text>
+              </View>
+            </Section>
+
+            {/* Post Conditions */}
+            <Section
+              title="Post Conditions"
+              icon={CheckCircle}
+              sectionKey="postconditions"
+            >
+              <View style={styles.bulletList}>
+                <Text style={styles.bulletItem}>
+                  • Delinquent case is assigned to a Collector.
+                </Text>
+              </View>
+            </Section>
+
+            {/* Workflow */}
+            <Section title="Workflow" icon={List} sectionKey="workflow">
+              <View style={styles.numberedList}>
+                <Text style={styles.numberedItem}>
+                  1. User defines the rules in allocation and prepares the
+                  delinquent case.
+                </Text>
+                <Text style={styles.numberedItem}>
+                  2. User maps the delinquent case to the Collector by providing
+                  the following details:
+                </Text>
+
+                <View style={styles.detailsGrid}>
+                  <View style={styles.column}>
+                    <Text style={styles.bulletItem}>• Strategy</Text>
+                    <Text style={styles.bulletItem}>• Financier</Text>
+                    <Text style={styles.bulletItem}>• Financier Type</Text>
+                    <Text style={styles.bulletItem}>• Queue Code</Text>
+                  </View>
+                  <View style={styles.column}>
+                    <Text style={styles.bulletItem}>• Rule Code</Text>
+                    <Text style={styles.bulletItem}>• Rule Unit Level</Text>
+                    <Text style={styles.bulletItem}>• Rule Unit Code</Text>
+                    <Text style={styles.bulletItem}>• Unit Level</Text>
+                  </View>
+                  <View style={styles.column}>
+                    <Text style={styles.bulletItem}>• Unit Code</Text>
+                    <Text style={styles.bulletItem}>• % Age Allocation</Text>
+                    <Text style={styles.bulletItem}>• Execution Sequence</Text>
+                    <Text style={styles.bulletItem}>• Maker ID</Text>
+                    <Text style={styles.bulletItem}>• Making Date</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.numberedItem}>
+                  3. User provides the percentage of allocation and specifies the
+                  priority.
+                </Text>
+                <Text style={styles.numberedItem}>
+                  4. User saves the details in the system for future reference.
+                </Text>
+              </View>
+            </Section>
+
+            {/* Flowchart */}
+            <Section title="Flowchart" icon={List} sectionKey="flowchart">
+              <View style={styles.flowchart}>
+                <Text style={styles.flowchartText}>
+                  Start{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  Delinquent cases classified and mapped to communication
+                  templates{'\n'}
+                  System allows modifications to existing allocations{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  User defines allocation rules based on:{'\n'}
+                  - Due Amount{'\n'}
+                  - Default Date{'\n'}
+                  - Default Percentage{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  User maps delinquent case to Collector with details:{'\n'}
+                  - Strategy{'\n'}
+                  - Financier{'\n'}
+                  - Financier Type{'\n'}
+                  - Queue Code{'\n'}
+                  - Rule Code{'\n'}
+                  - Rule Unit Level{'\n'}
+                  - Rule Unit Code{'\n'}
+                  - Unit Level{'\n'}
+                  - Unit Code{'\n'}
+                  - % Age Allocation{'\n'}
+                  - Execution Sequence{'\n'}
+                  - Maker ID{'\n'}
+                  - Making Date{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  User sets allocation percentage and priority{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  User saves details in the system{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  Delinquent case assigned to Collector{'\n'}
+                  |{'\n'}
+                  v{'\n'}
+                  End
+                </Text>
+              </View>
+            </Section>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+
+      {/* 🔘 Button to Show Image */}
+      <TouchableOpacity
+        style={styles.imageButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <ImageIcon size={18} color="white" />
+        <Text style={styles.imageButtonText}>Show Flowchart Image</Text>
+      </TouchableOpacity>
+
+      {/* 🖼️ Modal for Image */}
+      <Modal visible={modalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Image
+              source={{ uri: 'https://i.ibb.co/wN7rSyJh/define.jpg' }}
+              style={styles.modalImage}
+              resizeMode="contain"
+            />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
@@ -300,6 +360,53 @@ const styles = StyleSheet.create({
     color: '#374151',
     fontFamily: 'monospace',
     lineHeight: 18,
+  },
+  imageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2563eb',
+    padding: 14,
+    borderRadius: 8,
+    margin: 16,
+    elevation: 3,
+  },
+  imageButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    width: '90%',
+    height:height/1.5
+  },
+  modalImage: {
+    width: '100%',
+    height: height/1.8,
+    borderRadius: 8,
+  },
+  closeButton: {
+    backgroundColor: '#2563eb',
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: '600',
   },
 });
 

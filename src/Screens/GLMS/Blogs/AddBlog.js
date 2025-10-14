@@ -14,14 +14,10 @@ import {
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import BASE_URL from "../../../../Config"
+import BASE_URL from "../../../Config"
 import axios from "axios";
-import { useSelector } from "react-redux";
 
 export default function AddBlog() {
-   const user = useSelector((state) => state.counter);
-    const token = user.accessToken;
-    const userId = user.userId
   const [blogName, setBlogName] = useState("");
   const [blogName_error, setBlogName_error] = useState(false);
   const [description, setDescription] = useState("");
@@ -136,12 +132,12 @@ const uploadFilesOneByOne = async (files) => {
     });
 
     const response = await fetch(
-      `${BASE_URL}upload-service/upload?id=${userId}&fileType=aadhar`,
+      `${BASE_URL}upload-service/upload?id=45880e62-acaf-4645-a83e-d1c8498e923e&fileType=aadhar`,
       {
         method: "POST",
         body: formData,
         headers: {
-          "Authorization":`Barear ${token}`,
+          "Authorization":`Barear eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxNDk5NmU5My00NmM5LTQ2Y2ItYTVmYi04MDUwYjhhZjE3YWIiLCJpYXQiOjE3NTg1MjAxNjEsImV4cCI6MTc1OTM4NDE2MX0.L7faWpceCr5olu88lb1f-e5WR2QeOni_pSwVAcouRznp0F_-Jd9yTacaP43sDHayXx8hA7J-Zm6SIFHtFTKprg`,
           "Content-Type": "multipart/form-data",
         },
       }
@@ -226,9 +222,7 @@ const handleSubmit = async () => {
    axios({
       url:`${BASE_URL}marketing-service/campgin/addCampaignTypes`,
       method: "patch",
-      headers: { "Content-Type": "application/json" ,
-        Authorization:`Bearer ${token}`
-      },
+      // headers: { "Content-Type": "application/json" },
       data: blogData,
    })
    .then((response)=>{

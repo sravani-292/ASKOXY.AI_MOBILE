@@ -12,13 +12,14 @@ import {
   List,
   CheckCircle,
   AlertCircle,
-  Info,
+  Info, 
   ArrowRight,
   Settings,
   TestTube,
   Server,
   User,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
  
 const System_AccountClosure = () => {
   const Section = ({ title, icon: Icon, iconColor = "#2563eb", children }) => (
@@ -230,6 +231,7 @@ const System_AccountClosure = () => {
               Contact: closure-team@oxy.ai{"\n"}
               JIRA: AC-101
             </Text>
+            <ImageModal imageSource={'https://i.ibb.co/TxX82fBM/workflow-clousre-account-clousre.png'}/>
           </Section>
         </View>
       </ScrollView>

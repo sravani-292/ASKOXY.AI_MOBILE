@@ -91,7 +91,7 @@ const HomeScreen = ({ navigation }) => {
     {
       id: 8,
       title: 'GLMS,BLOGS',
-      subtitle: 'jon street',
+      subtitle: 'job street',
       icon: 'school-outline',
       gradientColors: ['#FF7043', '#FF5722'],
       screenName: 'GLMS',

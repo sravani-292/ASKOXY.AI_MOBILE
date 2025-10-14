@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import * as Icon from '@expo/vector-icons';
 import styles from './Styles'
-
+import ImageModal from '../../ImageModal';
 const System_Terms_Conditions = () => {
   const [expandedSections, setExpandedSections] = useState({
     description: true,
@@ -352,6 +352,8 @@ const System_Terms_Conditions = () => {
               <Text style={styles.listItem}><Text style={styles.bold}>Contact:</Text> Product Owner - LOS Core</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Git Repo:</Text> /los-core/terms-conditions-module</Text>
               <Text style={styles.listItem}><Text style={styles.bold}>Jira Ref:</Text> LOS-2112</Text>
+                                            <ImageModal imageSource={'https://i.ibb.co/wnVWrMG/terms-conditions.png'}/>
+
             </View>
           )}
         </View>

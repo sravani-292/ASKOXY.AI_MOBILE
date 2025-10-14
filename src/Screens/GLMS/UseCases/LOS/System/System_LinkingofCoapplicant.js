@@ -13,9 +13,10 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
-  ChevronDown,
+  ChevronDown, 
   ChevronUp,
 } from "lucide-react-native";
+import ImageModal from "../../ImageModal";
 
 const LinkingOfCoApplicantGuarantor = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -292,6 +293,8 @@ End`}
             <Text style={styles.listItem}>• POC: Ramesh Nair (ramesh.nair@bank.com)</Text>
             <Text style={styles.listItem}>• JIRA: LOS-324</Text>
             <Text style={styles.listItem}>• Git Repo: git.bank.com/los/customer-module</Text>
+                        <ImageModal imageSource={'https://i.ibb.co/Gv11dpRk/linking-of-co-applicant-guranter.png'}/>
+
           </Section>
         </View>
       </View>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
-const SettlementReciepts = () => {
+const SettlementReciepts = () => { 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -111,6 +111,7 @@ const SettlementReciepts = () => {
             <Text style={styles.flowchartItem}>5. System: Processes payments through the Cheque Processing module (Receipt, Deposit, Realization) or cash stages (Receipt, Receipt Deposit).</Text>
             <Text style={styles.flowchartItem}>6. User: Saves payment information and generates a payment voucher.</Text>
             <Text style={styles.flowchartItem}>7. System: Prints the voucher upon saving the receipt record.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/QSTZzMm/settlement-receipts.jpg'}/>
           </View>
         </View>
       </View>

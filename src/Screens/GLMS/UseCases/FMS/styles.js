@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-
+import { StyleSheet ,Dimensions} from 'react-native';
+const {width,height} = Dimensions.get('window');  
 export default StyleSheet.create({
   container: {
     flex: 1,
@@ -149,5 +149,20 @@ export default StyleSheet.create({
   footerText: {
     color: '#fff', 
     fontSize: 12,
+  },
+   openButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderRadius: 10,
+    width:width*0.4,
+    alignItems: 'center',
+    alignSelf:"flex-end",
+    marginBottom:10
+  },
+  openButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

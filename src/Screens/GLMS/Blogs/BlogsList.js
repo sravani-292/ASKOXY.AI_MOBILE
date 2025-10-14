@@ -14,7 +14,7 @@ import React, { useEffect, useCallback, useState } from "react";
 import axios from "axios";
 import BASE_URL from "../../../../Config";
 import { useFocusEffect } from "@react-navigation/native";
-import Ionicons from "react-native-vector-icons/Ionicons"; // Make sure to import your icons
+import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";
 
 const { height, width } = Dimensions.get("window");
@@ -24,9 +24,11 @@ const BlogsList = ({navigation}) => {
   const [filteredBlogs, setFilteredBlogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("desc"); // 'asc' or 'desc'
   const userData = useSelector((state) => state.counter);
- const token = userData?.accessToken;
-  const userId = userData?.userId;
+  const token = userData?.accessToken;
+  const customerId = userData?.userId;
+
   useFocusEffect(
     useCallback(() => {
       fetchblogs();
@@ -34,19 +36,14 @@ const BlogsList = ({navigation}) => {
   );
 
   useEffect(() => {
-    filterBlogs();
-  }, [searchQuery, blogs]);
+    filterAndSortBlogs();
+  }, [searchQuery, blogs, sortOrder]);
 
   function fetchblogs() {
     setLoading(true);
     axios({
       method: "get",
       url: `${BASE_URL}marketing-service/campgin/getAllCampaignDetails`,
-      
-          headers:{
-            'Authorization':`Bearer ${token}`
-          }
-        
     })
       .then((response) => {
         setBlogs(response.data || []);
@@ -60,21 +57,37 @@ const BlogsList = ({navigation}) => {
       });
   }
 
-  const filterBlogs = () => {
-    if (!searchQuery.trim()) {
-      setFilteredBlogs(blogs);
-      return;
+  const filterAndSortBlogs = () => {
+    let filtered = [...blogs];
+
+    // Filter blogs based on search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(blog => {
+        const campaignType = blog.campaignType?.toLowerCase() || "";
+        const campaignTypeAddBy = blog.campaignTypeAddBy?.toLowerCase() || "";
+        
+        return campaignType.includes(query) || campaignTypeAddBy.includes(query);
+      });
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    const filtered = blogs.filter(blog => {
-      const campaignType = blog.campaignType?.toLowerCase() || "";
-      const campaignTypeAddBy = blog.campaignTypeAddBy?.toLowerCase() || "";
+    // Sort blogs by createdAt date
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
       
-      return campaignType.includes(query) || campaignTypeAddBy.includes(query);
+      if (sortOrder === "asc") {
+        return dateA - dateB; // Oldest first
+      } else {
+        return dateB - dateA; // Newest first (default)
+      }
     });
 
     setFilteredBlogs(filtered);
+  };
+
+  const toggleSortOrder = () => {
+    setSortOrder(prevOrder => prevOrder === "asc" ? "desc" : "asc");
   };
 
   const clearSearch = () => {
@@ -120,17 +133,15 @@ const BlogsList = ({navigation}) => {
         )}
 
         <View style={styles.blogContent}>
+          <View style={styles.campaignTypeContainer}>
+            <Text style={styles.campaignType}>{item.campaignType}</Text>
+          </View>
 
-            
-            <View style={styles.campaignTypeContainer}>
-              <Text style={styles.campaignType}>{item.campaignType}</Text>
+          {item.campaignTypeAddBy && (
+            <View style={styles.addByContainer}>
+              <Text style={styles.addByText}>Added by: {item.campaignTypeAddBy}</Text>
             </View>
-
-            {item.campaignTypeAddBy && (
-              <View style={styles.addByContainer}>
-                <Text style={styles.addByText}>Added by: {item.campaignTypeAddBy}</Text>
-              </View>
-            )}
+          )}
 
           <Text style={styles.description}>
             {truncateDescription(item.campaignDescription)}
@@ -145,13 +156,7 @@ const BlogsList = ({navigation}) => {
             </View>
           )}
 
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
+          <View style={styles.footerContainer}>
             <View style={styles.statusContainer}>
               <View
                 style={[
@@ -187,36 +192,29 @@ const BlogsList = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>Blogs & Campaigns</Text>
-        <Text style={styles.headerSubtitle}>
-          {filteredBlogs.length} {filteredBlogs.length === 1 ? "item" : "items"}
-          {searchQuery ? ` (filtered from ${blogs.length})` : ""}
-        </Text>
-      </View> */}
+      {/* Header */}
       <View style={styles.header}>
         <View>
-              <Text style={styles.headerTitle}>Blogs & Campaigns</Text>
-             <Text style={styles.headerSubtitle}>
-          {filteredBlogs.length} {filteredBlogs.length === 1 ? "item" : "items"}
-          {searchQuery ? ` (filtered from ${blogs.length})` : ""}
-        </Text>
+          <Text style={styles.headerTitle}>Blogs & Campaigns</Text>
+          <Text style={styles.headerSubtitle}>
+            {filteredBlogs.length} {filteredBlogs.length === 1 ? "item" : "items"}
+            {searchQuery ? ` (filtered from ${blogs.length})` : ""}
+          </Text>
         </View>
 
-  <TouchableOpacity onPress={() => navigation.navigate("Add Blog")}>
-    <Ionicons name="add-circle-outline" size={28} color="#6C63FF" />
-  </TouchableOpacity>
-</View>
+        <TouchableOpacity onPress={() => navigation.navigate("Add Blog")}>
+          <Ionicons name="add-circle-outline" size={28} color="#6C63FF" />
+        </TouchableOpacity>
+      </View>
 
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      {/* Search and Sort Bar */}
+      <View style={styles.searchSortContainer}>
+        {/* Search Input */}
         <View style={styles.searchInputContainer}>
           <Ionicons name="search" size={20} color="#7F8C8D" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search by campaign type or added by..."
-            placeholderTextColor="#7F8C8D"
             value={searchQuery}
             onChangeText={setSearchQuery}
             returnKeyType="search"
@@ -227,6 +225,18 @@ const BlogsList = ({navigation}) => {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Sort Button */}
+        <TouchableOpacity style={styles.sortButton} onPress={toggleSortOrder}>
+          <Ionicons 
+            name={sortOrder === "asc" ? "arrow-up" : "arrow-down"} 
+            size={20} 
+            color="#6C63FF" 
+          />
+          <Text style={styles.sortButtonText}>
+            {sortOrder === "asc" ? "Oldest" : "Newest"}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {filteredBlogs.length === 0 ? (
@@ -273,21 +283,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FA",
   },
   header: {
-  paddingHorizontal: 20,
-  paddingVertical: 15,
-  backgroundColor: "#FFFFFF",
-  borderBottomWidth: 1,
-  borderBottomColor: "#E5E5E5",
-  elevation: 2,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  flexDirection: "row",          // 👈 added
-  alignItems: "center",          // 👈 added
-  justifyContent: "space-between"// 👈 added
-},
-
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E5E5",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
@@ -298,14 +307,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#7F8C8D",
   },
-  searchContainer: {
+  searchSortContainer: {
     padding: 16,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5E5",
-    // height:40
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   searchInputContainer: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F8F9FA",
@@ -324,28 +336,19 @@ const styles = StyleSheet.create({
   clearButton: {
     padding: 4,
   },
-  actionButtonsContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
-    justifyContent: "space-around",
-  },
-  actionButton: {
+  sortButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F0F0FF",
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#6C63FF",
-    minWidth: 120,
+    minWidth: 100,
     justifyContent: "center",
   },
-  actionButtonText: {
+  sortButtonText: {
     color: "#6C63FF",
     fontSize: 14,
     fontWeight: "600",
@@ -414,6 +417,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#2E7D32",
     fontWeight: "600",
+  },
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   dateText: {
     fontSize: 12,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-
+import ImageModal from '../../ImageModal';
 const QueueCuringUseCase = ({ navigation }) => {
   const [expandedSections, setExpandedSections] = useState({
     useCaseName: true,
@@ -262,6 +262,8 @@ Save Curing Details
 End
 `}
             </Text>
+                        <ImageModal imageSource={'https://i.ibb.co/k2Jf7N5R/queue.jpg'}/>
+
           </View>
         )}
       </View>

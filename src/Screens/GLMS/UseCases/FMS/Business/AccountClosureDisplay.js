@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-
+import ImageModal from "../../ImageModal";
 const AccountClosureDisplay = () => {
   const data = {
     overview:
@@ -10,7 +10,7 @@ const AccountClosureDisplay = () => {
     preconditions: [
       "Existing Finance Account",
       "No due/Refund to the Finance Account",
-    ],
+    ], 
     postconditions: [
       "Finance Account Closed",
       "Customer is notified with the Finance Account status",
@@ -129,6 +129,7 @@ const AccountClosureDisplay = () => {
             {data.workflow.refunds.map((refund, index) => (
               <DetailCard key={index} item={refund} borderColor="#10b981" />
             ))}
+            <ImageModal imageSource={'https://i.ibb.co/TxX82fBM/workflow-clousre-account-clousre.png'}/>
           </View>
         </View>
       </View>

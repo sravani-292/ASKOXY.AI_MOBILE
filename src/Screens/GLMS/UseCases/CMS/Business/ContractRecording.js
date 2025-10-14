@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Phone 
 } from 'lucide-react-native';
+import ImageModal from '../../ImageModal';
 
 const ContractRecording = () => {
   const [expandedSections, setExpandedSections] = useState({
@@ -110,16 +111,12 @@ const ContractRecording = () => {
                   <Text style={styles.bulletItem}>• Collateral details</Text>
                   <Text style={styles.bulletItem}>• Payments details</Text>
                   <Text style={styles.bulletItem}>• Repayment schedule details</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Loan statement details</Text>
+                    <Text style={styles.bulletItem}>• Loan statement details</Text>
                   <Text style={styles.bulletItem}>• Foreclosure details</Text>
                   <Text style={styles.bulletItem}>• Follow-up details</Text>
                   <Text style={styles.bulletItem}>• Allocation history report</Text>
                   <Text style={styles.bulletItem}>• Legal case details</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Expense details</Text>
+                   <Text style={styles.bulletItem}>• Expense details</Text>
                   <Text style={styles.bulletItem}>• Disbursal details</Text>
                   <Text style={styles.bulletItem}>• Deposit details</Text>
                   <Text style={styles.bulletItem}>• Finance details</Text>
@@ -127,6 +124,7 @@ const ContractRecording = () => {
                   <Text style={styles.bulletItem}>• Overdue details</Text>
                   <Text style={styles.bulletItem}>• Account summary details</Text>
                 </View>
+             
               </View>
 
               <Text style={styles.numberedItem}>4. User contacts the customer using curing actions:</Text>
@@ -136,11 +134,10 @@ const ContractRecording = () => {
                   <Text style={styles.bulletItem}>• Letter generation</Text>
                   <Text style={styles.bulletItem}>• SMS sending</Text>
                   <Text style={styles.bulletItem}>• Stat Card</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Tele Calling</Text>
+                    <Text style={styles.bulletItem}>• Tele Calling</Text>
                   <Text style={styles.bulletItem}>• Email</Text>
                 </View>
+              
               </View>
 
               <Text style={styles.numberedItem}>5. User records follow-up details in the system, including:</Text>
@@ -152,14 +149,13 @@ const ContractRecording = () => {
                   <Text style={styles.bulletItem}>• Action type</Text>
                   <Text style={styles.bulletItem}>• Contact mode</Text>
                   <Text style={styles.bulletItem}>• Person contacted</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.bulletItem}>• Place contacted</Text>
+                     <Text style={styles.bulletItem}>• Place contacted</Text>
                   <Text style={styles.bulletItem}>• Next action date and time</Text>
                   <Text style={styles.bulletItem}>• Reminder mode</Text>
                   <Text style={styles.bulletItem}>• Contacted by</Text>
                   <Text style={styles.bulletItem}>• Remarks</Text>
                 </View>
+              
               </View>
 
               <Text style={styles.numberedItem}>6. User saves the details and proceeds with further processes.</Text>
@@ -204,6 +200,7 @@ const ContractRecording = () => {
                 End
               </Text>
             </View>
+            <ImageModal imageSource={'https://i.ibb.co/4RBpJrcr/contact-recording.png'}/>
           </Section>
         </View>
       </View>
@@ -337,4 +334,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ContractRecording;
+export default ContractRecording; 

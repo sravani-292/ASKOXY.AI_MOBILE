@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-
+import ImageModal from '../../ImageModal';
 // Main Component
 const FloatingReview = () => {
   return (
@@ -8,7 +8,7 @@ const FloatingReview = () => {
       <View style={styles.content}>
         <Text style={styles.title}>
           Work Flow – Floating Review Process
-        </Text>
+        </Text> 
         
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Overview:</Text>
@@ -72,6 +72,7 @@ const FloatingReview = () => {
             <Text style={styles.flowchartItem}>5. User: Updates the Floating Rate Reference (FRR) daily and verifies new EMI schedules if the profit rate changes.</Text>
             <Text style={styles.flowchartItem}>6. User: Saves the transaction or cancels to reset.</Text>
             <Text style={styles.flowchartItem}>7. System: Floating Rate Review is completed successfully.</Text>
+            <ImageModal imageSource={'https://i.ibb.co/4RG7VkKk/floating-review-process.jpg'}/>
           </View>
         </View>
       </View>

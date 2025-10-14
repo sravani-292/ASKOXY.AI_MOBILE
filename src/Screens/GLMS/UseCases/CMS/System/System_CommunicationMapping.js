@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
-
+import ImageModal from "../../ImageModal";
 const System_CommunicationMapping = ({ navigation }) => {
   const [expandedSections, setExpandedSections] = useState({
     useCaseName: true,
@@ -206,6 +206,8 @@ End
               `}
             </Text>
           </View>
+                      <ImageModal imageSource={'https://i.ibb.co/v6qK9sbF/queue-communication-mapping.png'}/>
+
         </SectionCard>
       </View>
     </ScrollView>

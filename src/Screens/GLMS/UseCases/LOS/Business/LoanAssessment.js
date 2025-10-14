@@ -9,13 +9,13 @@ import {
 } from 'react-native';
 import {
   FileText,
-  Users,
+  Users, 
   CheckCircle,
   Info,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-
+import ImageModal from '../../ImageModal';
 const { width } = Dimensions.get('window');
 
 const LoanAssessment = () => {
@@ -202,19 +202,14 @@ const LoanAssessment = () => {
                         'Present Income',
                         'Present Value of Security',
                         'Rate of Interest',
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.gridColumn}>
-                    <BulletList
-                      items={[
-                        'Loan Tenure',
+                          'Loan Tenure',
                         'Future Period of Service',
                         'Repayment Capacity',
                         'Assessed Loan Amount',
                       ]}
                     />
                   </View>
+                  
                 </View>
               </View>
             </View>
@@ -288,6 +283,7 @@ Proceed to Terms & Conditions
   v
 End`}
                 </Text>
+                <ImageModal imageSource={'https://i.ibb.co/SwYCRfLQ/workflow-for-loan-assesment.png'}/>
               </View>
             </View>
           )}
