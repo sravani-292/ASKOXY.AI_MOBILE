@@ -16,7 +16,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import BASE_URL from "../../../Config";
+import BASE_URL from "../../../../Config";
 import axios from "axios";
 
 const { height, width } = Dimensions.get("window");

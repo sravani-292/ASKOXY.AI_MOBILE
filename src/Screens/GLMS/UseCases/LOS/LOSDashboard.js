@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import InterestedModal from '../InterestedModal';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import BASE_URL from "../../../../Config"
+import BASE_URL from "../../../../../Config"
 import { useFocusEffect } from '@react-navigation/native';
 // import styles from './styles';
 const {height,width}=Dimensions.get('window')

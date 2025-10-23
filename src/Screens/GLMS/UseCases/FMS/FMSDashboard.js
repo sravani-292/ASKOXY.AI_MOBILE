@@ -9,7 +9,7 @@ import InterestedModal from '../InterestedModal';
 import { useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import axios from 'axios'; 
-import BASE_URL from "../../../../Config"
+import BASE_URL from "../../../../../Config"
 
 const useCases = [
   {

@@ -364,8 +364,8 @@ const formatWord = (word) => {
   return (
     <Stack.Navigator
       linking={linking}
-      // initialRouteName={needsUpdate ? "App Update" : "Payment Test"}
-      initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
+      initialRouteName={needsUpdate ? "App Update" : "SplashScreen"}
+      // initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
       // initialRouteName="Call Assistant"
       screenOptions={{
         headerShown: true,
@@ -739,7 +739,11 @@ const formatWord = (word) => {
       <Stack.Screen name="Add Blog" component={AddBlog} />
       <Stack.Screen name="The Fan of OG" component={OGImageGenerator} />
       <Stack.Screen name="Agent Assistance" component={AllAgentCreations} />
-      <Stack.Screen name="UseCases" component={UseCasesStackScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="UseCases" component={UseCasesStackScreen}  options={({ route }) => ({
+        headerStyle: { backgroundColor: "#3d2a71" },
+        title: route?.params?.dashboard || "UseCases",
+        headerShown: false,
+      })}/>
 
 
 

@@ -14,7 +14,7 @@ import {
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import BASE_URL from "../../../Config"
+import BASE_URL from "../../../../Config"
 import axios from "axios";
 
 export default function AddBlog() {

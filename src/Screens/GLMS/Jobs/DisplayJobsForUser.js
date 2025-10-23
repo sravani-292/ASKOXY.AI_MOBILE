@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-import BASE_URL from "../../../Config"
+import BASE_URL from "../../../../Config"
 import { useFocusEffect } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import Icon from "react-native-vector-icons/Ionicons"

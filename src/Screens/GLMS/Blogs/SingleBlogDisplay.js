@@ -16,7 +16,7 @@ import {
 import React, { useState, useCallback } from "react";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
-import BASE_URL from "../../../Config";
+import BASE_URL from "../../../../Config";
 import { useFocusEffect } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useSelector } from "react-redux";

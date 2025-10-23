@@ -7,7 +7,7 @@ import styles from './styles';
 import InterestedModal from '../InterestedModal';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import BASE_URL from "../../../../Config"
+import BASE_URL from "../../../../../Config"
 
 
 const useCases = [

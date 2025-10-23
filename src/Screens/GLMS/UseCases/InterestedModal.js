@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useSelector } from 'react-redux';
 const { width, height } = Dimensions.get('window');
-import BASE_URL from "../../../Config"
+import BASE_URL from "../../../../Config"
 
 const InterestedModal = ({ visible, onClose, onSubmit,AlreadyParticipatedfunc }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);

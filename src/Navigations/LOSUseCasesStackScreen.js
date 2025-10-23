@@ -116,9 +116,11 @@ import System_ReschedulingTenureChange from '../Screens/GLMS/UseCases/FMS/System
 
 const Stack = createStackNavigator();
 
-const UseCasesStackScreen = () => {
+const UseCasesStackScreen = ({route}) => {
+  console.log({route})
   return (
     <Stack.Navigator
+    initialRouteName={route?.params?.dashboard}
      screenOptions={{
              headerShown: true,
              presentation: "card",

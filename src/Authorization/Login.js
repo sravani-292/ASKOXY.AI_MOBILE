@@ -15,6 +15,7 @@ import {
   useColorScheme,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
 } from "react-native";
 import axios from "axios";
 import { TextInput } from "react-native-paper";
@@ -52,6 +53,11 @@ const Login = () => {
   const isDarkMode = theme === "dark";
   const isLightMode = theme === "light"; 
 
+    // Animation values
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
+  const [scaleAnim] = useState(new Animated.Value(0.9));
+
   // console.log({ BASE_URL });
   const phoneInput = React.createRef();
 
@@ -77,6 +83,28 @@ const Login = () => {
   const [otpError, setOtpError] = useState(false);
   const [otpMessage, setOtpMessage] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+   // Entrance animation
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
  
   useFocusEffect(
     useCallback(() => {
@@ -393,41 +421,51 @@ const Login = () => {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="always">
         <View style={{ backgroundColor: "#fff", flex: 1 }}>
        
-          <View>
-            <View>
-              <Image
-                source={require("../../assets/Images/orange.png")}
-                style={styles.orangeImage}
-              />
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                alignSelf: "flex-end",
-                marginBottom: 100,
-                justifyContent: "space-between",
-              }}
-            >
-              <View style={styles.oxylogoView}>
+            {/* Header Section with Images */}
+            <View style={styles.headerSection}>
+              <View style={styles.decorativeImagesContainer}>
                 <Image
-                  source={require("../../assets/Images/logo1.png")}
-                  style={styles.oxyricelogo}
+                  source={require("../../assets/Images/orange.png")}
+                  style={styles.orangeImage}
                 />
               </View>
-              <View style={styles.greenImageView}>
-                <Image
-                  source={require("../../assets/Images/green.png")}
-                  style={styles.greenImage}
-                />
+              <View style={styles.logoContainer}>
+                <Animated.View
+                  style={[
+                    styles.oxylogoView,
+                    {
+                      opacity: fadeAnim,
+                      transform: [{ scale: scaleAnim }],
+                    },
+                  ]}
+                >
+                  <Image
+                    source={require("../../assets/Images/logo1.png")}
+                    style={styles.oxyricelogo}
+                  />
+                </Animated.View>
+                <View style={styles.greenImageView}>
+                  <Image
+                    source={require("../../assets/Images/green.png")}
+                    style={styles.greenImage}
+                  />
+                </View>
               </View>
             </View>
-          </View>
-
           {/* Login Section */}
-          <View style={styles.logingreenView}>
+           {/* Login Card */}
+            <Animated.View
+              style={[
+                styles.loginCard,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }],
+                },
+              ]}
+            >
 
 
-{otpSent==false?
+{/* {otpSent==false?
              <View style={{ backgroundColor: "white", margin: 20, padding: 10, borderRadius: 10, elevation: 5 }}>
              <View style={{ flexDirection: "row", alignItems: "center" }}>
                <Text style={{ fontSize: 18 }}>⚠️</Text>
@@ -449,8 +487,7 @@ const Login = () => {
                  )}
                </View>
              </View>
-       
-             {/* Toggle Button at Bottom Right */}
+
              <TouchableOpacity
                onPress={() => setIsTelugu(!isTelugu)}
                style={{
@@ -467,74 +504,97 @@ const Login = () => {
                </Text>
              </TouchableOpacity>
            </View>
-             :null}
-            <Text style={styles.loginTxt}>Login</Text>
+             :null} */}
 
-            <View style={styles.authMethodContainer}>
-            <TouchableOpacity
-                style={[
-                  styles.authMethodButton,
-                  authMethod === "sms" && styles.activeAuthMethod,
-                ]}
-                onPress={() => {
-                  setAuthMethod("sms"),
-                    setOtpSent(false),
-                    setWhatsappNumber(""),
-                    setWhatsappNumber_Error(false),
-                    setOtpMessage(false),
-                    setPhoneNumber_Error(false),
-                    setPhoneNumber(""),
-                    setFormData({ ...formData, loading: false, otp: "" });
-                }}
-                // disabled={otpSent}
-              >
-                <Ionicons
-                  name="chatbubble-outline"
-                  size={20}
-                  color={authMethod === "sms" ? "#3d2a71" : "#fff"}
-                />
-                <Text
-                  style={[
-                    styles.authMethodText,
-                    authMethod === "sms" && styles.activeAuthMethodText,
-                  ]}
-                >
-                  SMS
+            {/* Welcome Text */}
+              <View style={styles.welcomeSection}>
+                <Text style={styles.welcomeText}>Welcome Back!</Text>
+                <Text style={styles.subtitleText}>
+                  Login to continue your journey
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.authMethodButton,
-                  authMethod === "whatsapp" && styles.activeAuthMethod,
-                ]}
-                onPress={() => {
-                  setAuthMethod("whatsapp"),
-                    setOtpSent(false),
-                    setWhatsappNumber(""),
-                    setOtpMessage(false),
-                    setWhatsappNumber_Error(false),
-                    setPhoneNumber(""),
-                    setPhoneNumber_Error(false),
-                    setFormData({ ...formData, loading: false, otp: "" });
-                }}
-                // disabled={otpSent}
-              >
-                <Ionicons
-                  name="logo-whatsapp"
-                  size={20}
-                  color={authMethod === "whatsapp" ? "#3d2a71" : "#fff"}
-                />
-                <Text
+              </View>
+
+                          {/* Auth Method Selector */}
+              <View style={styles.authMethodContainer}>
+                <TouchableOpacity
                   style={[
-                    styles.authMethodText,
-                    authMethod === "whatsapp" && styles.activeAuthMethodText,
+                    styles.authMethodButton,
+                    authMethod === "sms" && styles.activeAuthMethod,
                   ]}
+                  onPress={() => {
+                    setAuthMethod("sms");
+                    setOtpSent(false);
+                    setWhatsappNumber("");
+                    setWhatsappNumber_Error(false);
+                    setOtpMessage(false);
+                    setPhoneNumber_Error(false);
+                    setPhoneNumber("");
+                    setFormData({ ...formData, loading: false, otp: "" });
+                  }}
+                  activeOpacity={0.8}
                 >
-                  WhatsApp
-                </Text>
-              </TouchableOpacity>
-             
-            </View>
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      authMethod === "sms" && styles.activeIconContainer,
+                    ]}
+                  >
+                    <Ionicons
+                      name="chatbubble-outline"
+                      size={22}
+                      color={authMethod === "sms" ? "#fff" : "#3d2a71"}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.authMethodText,
+                      authMethod === "sms" && styles.activeAuthMethodText,
+                    ]}
+                  >
+                    SMS
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.authMethodButton,
+                    authMethod === "whatsapp" && styles.activeAuthMethod,
+                  ]}
+                  onPress={() => {
+                    setAuthMethod("whatsapp");
+                    setOtpSent(false);
+                    setWhatsappNumber("");
+                    setOtpMessage(false);
+                    setWhatsappNumber_Error(false);
+                    setPhoneNumber("");
+                    setPhoneNumber_Error(false);
+                    setFormData({ ...formData, loading: false, otp: "" });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      authMethod === "whatsapp" && styles.activeIconContainer,
+                    ]}
+                  >
+                    <Ionicons
+                      name="logo-whatsapp"
+                      size={22}
+                      color={authMethod === "whatsapp" ? "#fff" : "#3d2a71"}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.authMethodText,
+                      authMethod === "whatsapp" && styles.activeAuthMethodText,
+                    ]}
+                  >
+                    WhatsApp
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
             {/* {authMethod === "whatsapp" && otpSent && (
               <Text style={{ textAlign: "center", color: "#fff" }}>
                 OTP send to your whatsapp number
@@ -546,7 +606,7 @@ const Login = () => {
                 <View style={styles.phoneInputContainer}>
                   <PhoneInput
                     placeholder="Whatsapp Number"
-                    placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
+                    placeholderTextColor={isDarkMode ? '#111111ff' : '#555'}
                     ref={phoneInput}
                     containerStyle={[styles.input1, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}
                     textInputStyle={[styles.phonestyle,{ backgroundColor: isDarkMode ? '#fff' : '#fff',color: isDarkMode ? '#000' : '#000' }]}
@@ -737,8 +797,8 @@ const Login = () => {
                 <Text style={styles.linkButtonText}>Register</Text>
               </TouchableOpacity>
             </View>
+            </Animated.View>
           </View>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
@@ -748,71 +808,136 @@ const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
-  orangeImage: {
-    height: 170,
-    width: 170,
-    marginBottom: -55,
+ headerSection: {
+    backgroundColor: "#fff",
   },
-  oxyricelogo: {
-    width: 180,
-    height: 60,
-    marginRight: width / 6,
-    // top:-30
+  decorativeImagesContainer: {
+    position: "relative",
+  },
+  orangeImage: {
+    height: 150,
+    width: 150,
+    marginBottom: -45,
+  },
+  logoContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 80,
   },
   oxylogoView: {
-    height: 1,
+    marginLeft: width * 0.08,
+  },
+  oxyricelogo: {
+    width: 200,
+    height: 70,
+    resizeMode: "contain",
+  },
+  greenImageView: {
+    alignItems: "flex-end",
   },
   greenImage: {
-    height: 120,
-    width: 70,
+    height: 110,
+    width: 65,
   },
-  riceImage: {
-    height: 180,
-    width: 180,
-    alignSelf: "flex-end",
-    marginTop: -95,
+   loginCard: {
+    flex: 1,
+    backgroundColor: "#3d2a71",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    marginTop: -height / 25,
+    paddingTop: 35,
+    paddingHorizontal: 25,
+    paddingBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  welcomeSection: {
+    marginBottom: 30,
+    alignItems: "center",
+  },
+  welcomeText: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: "#fff",
+    marginBottom: 8,
+    letterSpacing: 0.5,
+  },
+  subtitleText: {
+    fontSize: 15,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: "400",
   },
   logingreenView: {
-    flex: 3,
+     flex: 1,
     backgroundColor: "#3d2a71",
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: - height / 11,
-    // height: height/2,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    marginTop: -height / 25,
+    paddingTop: 35,
+    paddingHorizontal: 25,
+    paddingBottom: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
   loginTxt: {
     color: "white",
-    fontWeight: "500",
+    fontWeight: "800",
     fontSize: 25,
-    margin: 10,
+    margin: 20,
     alignSelf: "center",
+    fontSize: 30,
+    // fontStyle: "italic",
   },
   authMethodContainer: {
     flexDirection: "row",
-    marginBottom: 20,
-    justifyContent: "space-evenly",
+    gap: 12,
+    marginBottom: 25,
+    justifyContent: "center",
   },
   authMethodButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     width: width * 0.4,
+    gap: 8,
   },
   activeAuthMethod: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f9b91a",
+    shadowColor: "#f9b91a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  activeIconContainer: {
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   authMethodText: {
-    marginLeft: 8,
-    fontWeight: "600",
-    color: "#fff",
+    fontSize: 15,
+    fontWeight: "700",
+    color: "rgba(255, 255, 255, 0.9)",
   },
   activeAuthMethodText: {
-    color: "#3d2a71",
+    color: "#fff",
   },
   inputContainer: {
     marginBottom: 15,
