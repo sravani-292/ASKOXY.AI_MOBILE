@@ -137,7 +137,7 @@ import BlogsList from "../Screens/GLMS/Blogs/BlogsList";
 import SingleBlogDisplay from "../Screens/GLMS/Blogs/SingleBlogDisplay";
 import AddBlog from "../Screens/GLMS/Blogs/AddBlog";
 import UseCasesStackScreen from "./LOSUseCasesStackScreen";
-
+import UpdateOrderAddressScreen from "../Screens/View/Address/UpdateOrderAddress";
 
 const json = require("../../app.json");
 const LoadingScreen = () => (
@@ -744,7 +744,10 @@ const formatWord = (word) => {
         title: route?.params?.dashboard || "UseCases",
         headerShown: false,
       })}/>
-
+   <Stack.Screen
+        name="Update Order Address"
+        component={UpdateOrderAddressScreen}
+      />
 
 
 

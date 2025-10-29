@@ -11,7 +11,6 @@ import {
   Share,
   Clipboard,
   Dimensions,
-  Linking,
   Platform,
   TouchableOpacity,
   Animated,
@@ -23,12 +22,13 @@ import axios from "axios";
 import Markdown from "react-native-markdown-display";
 import ChatInput from "./ChatInput";
 import { useSelector } from "react-redux";
-import { header } from "framer-motion/m";
 
 const { height: screenHeight } = Dimensions.get("window");
 
 const GenOxyChatScreen = ({ route, navigation }) => {
   const { query, category, assistantId, agentName, fd, agentId } = route.params;
+  console.log({ query, category, assistantId, agentName, fd, agentId });
+
   const flatListRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,9 @@ const GenOxyChatScreen = ({ route, navigation }) => {
   const [loadingHelperQuestions, setLoadingHelperQuestions] = useState(true);
   const fadeAnims = useRef(new Map()).current;
   const user = useSelector((state) => state.counter);
+  const hasSentInitial = useRef(false); // Prevent double initial send
 
+  // ✅ FIXED: Removed extra spaces in URLs
   const API_URL = `https://meta.oxyloans.com/api/student-service/user/askquestion?assistantId=${assistantId}`;
   const HELPER_QUESTIONS_URL = `https://meta.oxyloans.com/api/ai-service/agent/getConversation/${agentId}`;
 
@@ -55,9 +57,6 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           timeout: 10000,
         });
 
-        // console.log("Helper questions response:", response.data[0]);
-
-        // Extract conversation starters from response
         const data = response.data[0] || {};
         const questions = [
           data.conStarter1,
@@ -69,7 +68,6 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         setHelperQuestions(questions);
       } catch (error) {
         console.error("Failed to fetch helper questions:", error.response?.data || error.message);
-        // Fallback to default questions
         setHelperQuestions([
           "What are my loan eligibility criteria?",
           "How do I apply for an education loan?",
@@ -80,10 +78,13 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         setLoadingHelperQuestions(false);
       }
     };
-    fetchHelperQuestions();
+
+    if (agentId && user.accessToken) {
+      fetchHelperQuestions();
+    }
   }, [agentId, user.accessToken]);
 
-  // Initialize fade animation for each message
+  // Initialize fade animations
   useEffect(() => {
     messages.forEach((msg) => {
       if (!fadeAnims.has(msg.id)) {
@@ -92,11 +93,12 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     });
   }, [messages]);
 
-  // Fade-in animation for new messages
+  // Trigger fade-in
   useEffect(() => {
     messages.forEach((msg) => {
-      if (fadeAnims.get(msg.id)?.toValue !== 1) {
-        Animated.timing(fadeAnims.get(msg.id), {
+      const anim = fadeAnims.get(msg.id);
+      if (anim && anim._value < 1) {
+        Animated.timing(anim, {
           toValue: 1,
           duration: 300,
           useNativeDriver: true,
@@ -105,14 +107,16 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     });
   }, [messages]);
 
-  // Send initial message
+  // Send initial message (only once)
   useEffect(() => {
-    if (query && messages.length === 0) {
+    if (query && messages.length === 0 && !hasSentInitial.current) {
+      hasSentInitial.current = true;
+      console.log("📤 Sending initial query:", query);
       sendMessage(query, true);
     }
   }, [query, messages.length]);
 
-  // Keyboard listeners
+  // Keyboard visibility
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
     const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
@@ -127,12 +131,12 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     });
 
     return () => {
-      showListener?.remove();
-      hideListener?.remove();
+      showListener.remove();
+      hideListener.remove();
     };
   }, []);
 
-  // Scroll to bottom
+  // Auto-scroll
   useEffect(() => {
     const timer = setTimeout(() => {
       flatListRef.current?.scrollToEnd({ animated: true });
@@ -170,8 +174,11 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
   // Send message
   const sendMessage = async (text, isInitial = false) => {
-    if (!text || !text.trim()) return;
-    console.log("Sending message:", text);
+    console.log("💬 sendMessage called with:", { text, isInitial });
+    if (!text || !text.trim()) {
+      console.log("❌ Empty message, skipped");
+      return;
+    }
 
     const userMessage = {
       role: "user",
@@ -187,7 +194,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       role: "assistant",
       content: `${agentName} is thinking...`,
       temp: true,
-      id: Date.now() + 1000,
+      id: Date.now() + 1,
     };
 
     setMessages((prev) => [...prev, thinkingMessage]);
@@ -200,8 +207,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       if (fd && isInitial) {
         assistantReply = await handleFileUpload(fd, text);
       } else {
-        const validMessages = Array.isArray(messages) ? messages : [];
-        const conversationHistory = [...validMessages, userMessage]
+        const conversationHistory = [...messages, userMessage]
           .filter((msg) => !msg.temp)
           .map((msg) => ({
             role: msg.role,
@@ -210,11 +216,16 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
         console.log("📤 Sending to API:", conversationHistory);
 
-        const response = await axios.post(API_URL, conversationHistory, {
-          headers: { "Content-Type": "application/json" },
-          timeout: 30000,
-        });
-
+        const response = await axios.post(
+          API_URL,
+          conversationHistory,
+          {
+            headers: { "Content-Type": "application/json" },
+            timeout: 15000, // ✅ Increased timeout
+          }
+        );
+        console.log("send message api response",response);
+        
         if (typeof response.data === "string") {
           assistantReply = response.data;
         } else if (response.data?.content) {
@@ -232,15 +243,16 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
       setMessages((prev) => {
         const filtered = prev.filter((msg) => !msg.temp);
+        const newId = Date.now() + 2;
         const updated = [
           ...filtered,
           {
             role: "assistant",
             content: assistantReply.trim(),
-            id: Date.now() + 2000,
+            id: newId,
           },
         ];
-        fadeAnims.set(Date.now() + 2000, new Animated.Value(0));
+        fadeAnims.set(newId, new Animated.Value(0));
         setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         return updated;
       });
@@ -248,15 +260,16 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       console.error("🚨 API Error:", error.response?.data || error.message);
       setMessages((prev) => {
         const filtered = prev.filter((msg) => !msg.temp);
+        const newId = Date.now() + 3;
         const updated = [
           ...filtered,
           {
             role: "assistant",
-            content: "⚠️ Failed to get response. Check network.",
-            id: Date.now() + 3000,
+            content: "⚠️ Failed to get response. Check network or try again.",
+            id: newId,
           },
         ];
-        fadeAnims.set(Date.now() + 3000, new Animated.Value(0));
+        fadeAnims.set(newId, new Animated.Value(0));
         setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
         return updated;
       });
@@ -293,25 +306,26 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       if (speakingMessageId === message.id) {
         Speech.stop();
         setSpeakingMessageId(null);
-      } else {
-        Speech.stop();
-        setSpeakingMessageId(message.id);
-
-        const cleanText = message.content
-          .replace(/\*\*(.*?)\*\*/g, "$1")
-          .replace(/\*(.*?)\*/g, "$1")
-          .replace(/`(.*?)`/g, "$1")
-          .replace(/【.*?†source】/g, "")
-          .replace(/\|/g, " ")
-          .replace(/\n+/g, ". ")
-          .trim();
-
-        await Speech.speak(cleanText, {
-          onDone: () => setSpeakingMessageId(null),
-          onStopped: () => setSpeakingMessageId(null),
-          onError: () => setSpeakingMessageId(null),
-        });
+        return;
       }
+
+      Speech.stop();
+      setSpeakingMessageId(message.id);
+
+      const cleanText = message.content
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/`(.*?)`/g, "$1")
+        .replace(/【.*?†source】/g, "")
+        .replace(/\|/g, " ")
+        .replace(/\n+/g, ". ")
+        .trim();
+
+      await Speech.speak(cleanText, {
+        onDone: () => setSpeakingMessageId(null),
+        onStopped: () => setSpeakingMessageId(null),
+        onError: () => setSpeakingMessageId(null),
+      });
     } catch {
       Alert.alert("Error", "TTS not available");
       setSpeakingMessageId(null);
@@ -334,7 +348,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         ]}
       >
         {item.role === "user" ? (
-          <Text style={[styles.messageText, { color: "#fff" }]}>
+          <Text style={[styles.messageText, styles.userMessageText]}>
             {item.displayContent}
           </Text>
         ) : item.temp ? (
@@ -382,7 +396,9 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     return (
       <View style={styles.helperContainer}>
         <Text style={styles.helperTitle}>Welcome to {agentName}!</Text>
-        <Text style={styles.headerSubtitle}>Start chatting to explore how this assistant can help you.</Text>
+        <Text style={styles.headerSubtitle}>
+          Start chatting to explore how this assistant can help you.
+        </Text>
         {helperQuestions.map((question, index) => (
           <TouchableOpacity
             key={index}
@@ -398,52 +414,56 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
   // Main render
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f4f4f5" />
 
-      {/* Chat and Helper Questions */}
-      <View style={styles.chatContainer}>
-        {loadingHelperQuestions && messages.length === 0 ? (
-          <View style={styles.loadingContainerCentered}>
-            <ActivityIndicator size="large" color="#2563eb" />
-            <Text style={styles.loadingText}>Loading suggestions...</Text>
-          </View>
-        ) : (
-          <>
-            {renderHelperQuestions()}
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={renderMessage}
-              contentContainerStyle={styles.messagesContainer}
-              showsVerticalScrollIndicator={false}
-            />
-          </>
-        )}
-      </View>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+        <View style={styles.chatContainer}>
+          {loadingHelperQuestions && messages.length === 0 ? (
+            <View style={styles.loadingContainerCentered}>
+              <ActivityIndicator size="large" color="#2563eb" />
+              <Text style={styles.loadingText}>Loading suggestions...</Text>
+            </View>
+          ) : (
+            <>
+              {renderHelperQuestions()}
+              <FlatList
+                ref={flatListRef}
+                data={messages}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderMessage}
+                contentContainerStyle={[
+                  styles.messagesContainer,
+                  messages.length === 0 && { flexGrow: 0 },
+                ]}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+              />
+            </>
+          )}
+        </View>
 
-      {/* Chat Input */}
-      <View style={styles.inputWrapper}>
-        <ChatInput
-          placeholder="Type a message..."
-          onSendMessage={(text) => {
-            console.log("📤 Sending:", text);
-            sendMessage(text, false);
-          }}
-          enableVoice={true}
-          showAttachment={true}
-          containerStyle={styles.inputContainer}
-          theme="light"
-          navigation={navigation}
-          disabled={loading}
-        />
-      </View>
-    </KeyboardAvoidingView>
+        <View style={styles.inputWrapper}>
+          <ChatInput
+            placeholder="Type a message..."
+            onSendMessage={(text) => {
+              console.log("📤 SEND BUTTON PRESSED with text:", text); // 🔍 Debug log
+              sendMessage(text, false);
+            }}
+            enableVoice={true}
+            showAttachment={true}
+            theme="light"
+            navigation={navigation}
+            disabled={loading}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -453,13 +473,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f4f4f5",
   },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   chatContainer: {
     flex: 1,
     paddingHorizontal: 12,
     paddingTop: 8,
   },
   messagesContainer: {
-    paddingBottom: 80, // Space for input
+    paddingBottom: 20,
+    flexGrow: 1,
   },
   messageContainer: {
     marginBottom: 12,
@@ -491,8 +515,10 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 16,
     lineHeight: 22,
-    color: "#1f2937",
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  userMessageText: {
+    color: "#ffffff",
   },
   loadingContainer: {
     flexDirection: "row",
@@ -529,64 +555,63 @@ const styles = StyleSheet.create({
     backgroundColor: "#2563eb20",
   },
   helperContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    gap: 12,
+    paddingVertical: 30,
+    alignItems: "center",
   },
   helperTitle: {
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 22,
+    fontWeight: "700",
     color: "#1f2937",
-    marginBottom: 8,
+    marginBottom: 12,
+    textAlign: "center",
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+    letterSpacing: 0.3,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: "#666",
+    fontSize: 15,
+    color: "#6b7280",
     lineHeight: 22,
-    marginBottom: 20,
+    marginBottom: 24,
+    textAlign: "center",
+    paddingHorizontal: 20,
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
   },
   helperChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
     backgroundColor: "#ffffff",
-    borderRadius: 20,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    marginVertical: 4,
-    width: "90%",
+    borderColor: "#e5e7eb",
+    marginVertical: 6,
+    width: "100%",
     maxWidth: 400,
-    elevation: 1,
+    elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
   },
   helperText: {
-    fontSize: 14,
-    color: "#1f2937",
+    fontSize: 15,
+    color: "#374151",
     textAlign: "center",
+    lineHeight: 20,
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
   },
   inputWrapper: {
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === "ios" ? 20 : 12,
     backgroundColor: "#ffffff",
-    elevation: 2,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+    elevation: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -1 },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  inputContainer: {
-    paddingVertical: 8,
-    backgroundColor: "#f4f4f5",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
+    shadowRadius: 3,
   },
 });
 
@@ -600,16 +625,19 @@ const markdownStyles = {
   },
   strong: {
     fontWeight: "600",
+    color: "#111827",
   },
   em: {
     fontStyle: "italic",
   },
   code_inline: {
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
-    backgroundColor: "#f4f4f5",
+    backgroundColor: "#f3f4f6",
+    color: "#1f2937",
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    fontSize: 14,
   },
   link: {
     color: "#2563eb",

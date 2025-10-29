@@ -277,7 +277,7 @@ TextInput.defaultProps.allowFontScaling = false;
           }}
         > */}
 
-        <NavigationContainer
+  <NavigationContainer
   ref={navigationRef}
   onReady={async () => {
     isNavigationReadyRef.current = true;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, use } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   StyleSheet,
   Text,
@@ -85,6 +86,22 @@ const services = [
   },
 ];
 
+
+// Add this right after your imports and DEFAULT_IMAGE
+const CAMPAIGN_CATEGORY_KEYWORDS = {
+  "Real Estate": ["villa", "urban springs", "sq.yards", "36lakhs", "plot", "property", "real estate"],
+  "Study Abroad": ["study abroad", "education", "abroad"],
+  "CA Services": ["ca services", "chartered accountant"],
+  "Free Rice Samples": ["rice", "gold", "samples", "free container"],
+  "Free AI & Gen AI": ["free ai", "gen ai", "artificial intelligence"],
+  "Cryptocurrency": ["crypto", "bmvcoin", "cryptocurrency"],
+  "Legal Knowledge Hub": ["legal", "law", "legal service"],
+  "My Rotary": ["rotary"],
+  "We are Hiring": ["hiring", "career"],
+  "Manufacturing Services": ["machines", "manufacturing"],
+  // Add more as needed
+};
+
 // Default placeholder image
 const DEFAULT_IMAGE =
   "https://www.askoxy.ai/static/media/askoxylogostatic.3e03c861742645ba9a15.png";
@@ -93,7 +110,7 @@ const { width, height } = Dimensions.get("window");
 const ImageCarousel = ({ images }) => {
   // console.log("campaigns params",route.params);
   const [activeIndex, setActiveIndex] = useState(0);
-  const scrollX = useRef(new Animated.Value(0)).current;  
+  const scrollX = useRef(new Animated.Value(0)).current;
 
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -366,17 +383,18 @@ export default function CampaignScreen({ route, navigation }) {
   const userData = useSelector((state) => state.counter);
 
   useEffect(() => {
-    if (userData == null) {
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-        { text: "Cancel" },
-      ]);
-      return;
-    } else {
-      getCall();
-      getProfile();
-    }
-  }, []);
+  if (userData == null) {
+    Alert.alert("Alert", "Please login to continue", [
+      { text: "OK", onPress: () => navigation.navigate("Login") },
+      { text: "Cancel" },
+    ]);
+    return;
+  }
+
+  getProfile();
+  getCall();
+  loadCampaigns(); // ✅ Call here on mount
+}, [userData, campaignType]); // ✅ Re-run if campaignType changes
 
   const getProfile = async () => {
     axios({
@@ -384,17 +402,15 @@ export default function CampaignScreen({ route, navigation }) {
       url:
         BASE_URL +
         `user-service/customerProfileDetails?customerId=${userData.userId}`,
-
     })
-     
       .then((response) => {
         console.log(response.data);
         setProfileData(response.data);
       })
       .catch((error) => {
         console.log(error.response.data);
-      }); 
-      console.log("getProfile", userData.userId);
+      });
+    console.log("getProfile", userData.userId);
   };
 
   function getCall() {
@@ -434,92 +450,109 @@ export default function CampaignScreen({ route, navigation }) {
   console.log("campaingId", campaignId);
   console.log("campainType", campaignType);
 
-  useEffect(() => {
-    loadCampaigns();
+  //   useFocusEffect(
+  //   useCallback(() => {
+  //     console.log("Screen focused: Running loadCampaigns and fade animation");
 
-    // Fade in animation
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 800,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+  //     // Load campaign data
+  //     loadCampaigns();
 
-  useEffect(() => {
-    if (campaignData.length > 0) {
-      selectCampaign();
-      console.log("Selected campaign ID:", campaignId);
-      console.log("Selected campaign type:", campaignType);
-    }
-  }, [campaignData, campaignId, campaignType]);
+  //     // Run fade-in animation
+  //     Animated.timing(fadeAnim, {
+  //       toValue: 1,
+  //       duration: 800,
+  //       useNativeDriver: true,
+  //     }).start();
 
-  const loadCampaigns = () => {
-    setLoading(true);
+  //     // Optional cleanup (if you need to reset animation when screen unfocuses)
+  //     return () => {
+  //       console.log("Screen unfocused: Cleaning up fade animation");
+  //       fadeAnim.setValue(0);
+  //     };
+  //   }, [fadeAnim]) // include fadeAnim as dependency
+  // );
 
-    // If no specific ID, fetch all and filter as needed
-    axios
-      .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
-      .then((response) => {
-        setLoading(false);
-        // console.log("API Response:", response.data);r
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Screen focused: Running loadCampaigns and fade animation");
+      loadCampaigns();
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }).start();
+      return () => {
+        console.log("Screen unfocused: Cleaning up fade animation");
+        fadeAnim.setValue(0);
+      };
+    }, [])
+  );
 
-        if (!Array.isArray(response.data)) {
-          console.error("Invalid API response format");
-          // Find first matching service from defaults as fallback
-          const defaultService = campaignType
-            ? services.find((s) => s.screen === campaignType) || services[0]
-            : services[0];
-          setCampaignData(defaultService);
-          return;
-        }
+  // useEffect(() => {
+  //   if (campaignData.length > 0) {
+  //     selectCampaign();
+  //     console.log("Selected campaign ID:", campaignId);
+  //     console.log("Selected campaign type:", campaignType);
+  //   }
+  // }, [campaignData, campaignId, campaignType]);
 
-        // Filter only active campaigns
-        const activeCampaigns = response.data.filter(
-          (item) => item.campaignStatus === true
-        );
+ const loadCampaigns = () => {
+  console.log("🔍 [DEBUG] loadCampaigns() called");
+  console.log("🎯 Requested campaignType from navigation:", campaignType);
 
-        // console.log("Active Campaigns:", activeCampaigns);
+  setLoading(true);
+  setError(null);
 
-        if (activeCampaigns.length === 0) {
-          // No active campaigns, use default service
-          const defaultService = campaignType
-            ? services.find((s) => s.screen === campaignType) || services[0]
-            : services[0];
-          setCampaignData(defaultService);
+  axios
+    .get(`${BASE_URL}marketing-service/campgin/getAllCampaignDetails`)
+    .then((response) => {
+      if (!Array.isArray(response.data)) {
+        throw new Error("Invalid API response format");
+      }
 
-          //   console.log({defaultService});
+      const activeCampaigns = response.data.filter(item => item.campaignStatus === true);
+      console.log("✅ Active campaigns count:", activeCampaigns.length);
 
-          return;
-        }
+      let matchedCampaign = null;
 
-        // If specific campaign type requested, try to find it
-        if (campaignType) {
-          const matchingCampaign = activeCampaigns.find(
-            (item) => item.campaignType === campaignType
-          );
-          //   console.log({matchingCampaign});
+      if (campaignType) {
+        const normalizedInput = campaignType.toLowerCase();
+        const keywords = CAMPAIGN_CATEGORY_KEYWORDS[campaignType] || [normalizedInput];
 
-          if (matchingCampaign) {
-            setCampaignData(matchingCampaign);
-          } else {
-            // No matching campaign found in API, check services
-            const matchingService = services.find(
-              (s) => s.screen === campaignType
-            );
-            setCampaignData(matchingService || activeCampaigns[0]);
-          }
+        matchedCampaign = activeCampaigns.find(campaign => {
+          const type = (campaign.campaignType || "").toLowerCase();
+
+          // Check if any keyword appears in the actual campaignType
+          return keywords.some(kw => type.includes(kw));
+        });
+
+        if (matchedCampaign) {
+          console.log("🎉 Matched campaign:", matchedCampaign.campaignType);
         } else {
-          // No specific type requested, just show the first active campaign
-          setCampaignData(activeCampaigns[0]);
+          console.warn(`⚠️ No campaign matched for category: "${campaignType}"`);
+          console.log("📋 Available campaign types:", activeCampaigns.map(c => c.campaignType));
         }
-      })
-      .catch((error) => {
-        console.error("Error fetching campaigns", error);
-        // Fallback to first default service on error
-        setCampaignData(services[0]);
-        setLoading(false);
-      });
-  };
+      }
+
+      // Fallback: use first active campaign if no match
+      const finalCampaign = matchedCampaign || activeCampaigns[0] || null;
+      setCampaignData(finalCampaign);
+
+      if (!finalCampaign) {
+        setError("No active campaigns available");
+      }
+    })
+    .catch((error) => {
+      console.error("❌ Error fetching campaigns:", error);
+      setError("Failed to load campaign data");
+      setCampaignData(null);
+      // Optional: fallback to default service
+      // setCampaignData(services.find(s => s.screen === campaignType) || services[0]);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+};
 
   // Logic to select which campaign to show
   const selectCampaign = () => {
@@ -782,7 +815,7 @@ Thank you!
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity
               style={styles.retryButton}
-              onPress={loadCampaigns}
+              onPress={() => loadCampaigns()}
             >
               <LinearGradient
                 colors={["#3498db", "#2980b9"]}

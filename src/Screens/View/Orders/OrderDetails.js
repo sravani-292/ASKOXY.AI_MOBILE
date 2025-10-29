@@ -26,6 +26,7 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BASE_URL, { userStage } from "../../../../Config";
 import useReorder from "./Reorder";
+import { text } from "framer-motion/m";
 const { width, height } = Dimensions.get("window");
 const OrderDetails = () => {
   const { handleReorder } = useReorder();
@@ -55,21 +56,21 @@ const OrderDetails = () => {
   const [downloading, setDownloading] = useState(false);
   const [downloadedUri, setDownloadedUri] = useState(null);
   // console.log("order id", order_id);
-
-  const emojis = [
+const emojis = [
     { emoji: "😡", label: "Very Bad", color: "#FFB3B3", value: "POOR" },
     { emoji: "😟", label: "Bad", color: "#FFD9B3", value: "BELOWAVERAGE" },
     { emoji: "🙂", label: "Average", color: "#FFFFB3", value: "AVERAGE" },
     { emoji: "😃", label: "Good", color: "#D9FFB3", value: "GOOD" },
     { emoji: "🤩", label: "Excellent", color: "#B3FFB3", value: "EXCELLENT" },
   ];
-
-  const [selectedEmoji, setSelectedEmoji] = useState(null);
+const [selectedEmoji, setSelectedEmoji] = useState(null);
 
   const handleEmojiPress = (index) => {
     setSelectedEmoji(index);
     console.log("Selected emoji:", emojis[index].value);
   };
+
+
   let selectedLabel = "";
   const handleSubmit = () => {
     if (selectedEmoji === null || selectedEmoji === undefined) {
@@ -677,8 +678,9 @@ const OrderDetails = () => {
               }
               style={{
                 flexDirection: "row",
-                alignItems: "center",
-                marginRight: 20,
+                justifyContent:"flex-end",
+                // alignItems: "center",
+                marginLeft:200
               }}
             >
               <FontAwesome name="edit" size={20} color="#ecb01e" />

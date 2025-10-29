@@ -477,7 +477,7 @@ const BharathAgentstore = () => {
               colors={["#8B5CF6"]}
             />
           }
-          ListEmptyComponent={renderEmpty}
+          ListEmptyComponent={()=>renderEmpty()}
           initialNumToRender={10}
           onEndReached={loadMore}
           onEndReachedThreshold={0.1}

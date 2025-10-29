@@ -48,7 +48,13 @@ const UserExchangeOrderDetails = () => {
       setExchangedItems(response.data);
       setError(null);
     } catch (error) {
-      console.error("Error fetching exchanged items:", error);
+      if(error.status == 404){
+        setError("No exchange requests found.");
+        setExchangedItems([]);
+        setLoading(false);
+        return;
+      }
+      console.error("Error fetching exchanged items:", error.response);
       setError("Failed to load exchanged items. Please try again later.");
     } finally {
       setLoading(false);
@@ -127,10 +133,7 @@ const UserExchangeOrderDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F4F6F8" />
-      
-     
-
-      <ScrollView 
+       <ScrollView 
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >

@@ -457,6 +457,7 @@ export default function PaymentDetails({ navigation, route }) {
                 discount: coupenDetails,
                 type: "fixed",
               }}
+              grandTotalAmount={grandTotalAmount}
             />
             <CustomModal
               visible={modalVissible}

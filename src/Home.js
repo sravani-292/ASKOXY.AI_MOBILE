@@ -160,32 +160,76 @@ const HomeScreen = ({ navigation }) => {
       }, [])
     );
 
-  const handleServicePress = (screenName) => {
-    if(screenName === 'OxyLoans') {
-      navigation.navigate('OxyLoans');
-    } else if (screenName === 'NyayaGPTScreen') {
-      navigation.navigate('LEGAL SERVICE');
-    }else if(screenName === 'Study') {
-      navigation.navigate('STUDY ABROAD');
-    }else if(screenName === 'Rice Products') {
-      navigation.navigate("Rice Products", {
-                      screen: "Rice Products",
-                      category: "All CATEGORIES",
-                    }) 
-    }else if(screenName === 'FractionalScreen') {
-      navigation.navigate('Fractional Ownership');  
-    }else if(screenName=== 'GLMS') {
-      navigation.navigate('GLMS Home');
-    }
+  // const handleServicePress = (screenName) => {
+  //   if(screenName === 'OxyLoans') {
+  //     navigation.navigate('OxyLoans');
+  //   } else if (screenName === 'NyayaGPTScreen') {
+  //     navigation.navigate('LEGAL SERVICE');
+  //   }else if(screenName === 'Study') {
+  //     navigation.navigate('STUDY ABROAD');
+  //   }else if(screenName === 'Rice Products') {
+  //     navigation.navigate("Rice Products", {
+  //                     screen: "Rice Products",
+  //                     category: "All CATEGORIES",
+  //                   }) 
+  //   }else if(screenName === 'FractionalScreen') {
+  //     navigation.navigate('Fractional Ownership');  
+  //   }else if(screenName=== 'GLMS') {
+  //     navigation.navigate('GLMS Home');
+  //   }
     
-    else if (screenName && navigation) {
-      navigation.navigate("Campaign", {
-        campaignType: screenName,
-      });
-    } else {
-      console.log('Service pressed:', screenName);
-    }
-  };
+  //   else if (screenName && navigation) {
+  //     navigation.navigate("Campaign", {
+  //       campaignType: screenName,
+  //     });
+  //   } else {
+  //     console.log('Service pressed:', screenName);
+  //   }
+  // };
+
+
+
+  const handleServicePress = (screenName) => {
+  console.log("handleServicePress called with:", screenName);
+
+  if (screenName === 'OxyLoans') {
+    console.log("Navigating to: OxyLoans");
+    navigation.navigate('OxyLoans');
+
+  } else if (screenName === 'NyayaGPTScreen') {
+    console.log("Navigating to: LEGAL SERVICE");
+    navigation.navigate('LEGAL SERVICE');
+
+  } else if (screenName === 'Study') {
+    console.log("Navigating to: STUDY ABROAD");
+    navigation.navigate('STUDY ABROAD');
+
+  } else if (screenName === 'Rice Products') {
+    console.log("Navigating to: Rice Products with category All CATEGORIES");
+    navigation.navigate("Rice Products", {
+      screen: "Rice Products",
+      category: "All CATEGORIES",
+    });
+
+  } else if (screenName === 'FractionalScreen') {
+    console.log("Navigating to: Fractional Ownership");
+    navigation.navigate('Fractional Ownership');
+
+  } else if (screenName === 'GLMS') {
+    console.log("Navigating to: GLMS Home");
+    navigation.navigate('GLMS Home');
+
+  } else if (screenName && navigation) {
+    console.log("Navigating to: Campaign with campaignType =", screenName);
+    navigation.navigate("Campaign", {
+      campaignType: screenName,
+    });
+
+  } else {
+    console.log('Service pressed with unknown screenName:', screenName);
+  }
+};
+
 
  const featuresTop = [
   { label: "Genoxy", icon: require("../assets/chat.png"), color: "#FFD700",radius:"left",screen:"GENOXY" },

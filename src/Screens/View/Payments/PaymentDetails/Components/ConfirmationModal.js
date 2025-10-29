@@ -24,7 +24,8 @@ const ConfirmationModal = ({
   isWalletEnabled,
   onWalletToggle,
   couponApplied,
-  setPaymentStatus
+  setPaymentStatus,
+  grandTotalAmount,
 }) => {
   // console.log("delivery address",deliveryAddress);
   
@@ -49,6 +50,7 @@ const ConfirmationModal = ({
           {renderDetailRow("Subtotal:", `₹${subTotal ? subTotal.toFixed(2) : '0.00'}`)}
           {renderDetailRow("Delivery Fee:", `₹${deliveryFee ? deliveryFee.toFixed(2) : '0.00'}`)}
           {renderDetailRow("Handling Fee:", `₹${handlingFee ? handlingFee.toFixed(2) : '0.00'}`)}
+          {renderDetailRow("Grand Total:", `₹${grandTotalAmount ? grandTotalAmount.toFixed(2) : '0.00'}`)}
 
           {couponApplied && couponApplied.code && (
             renderDetailRow(`Coupon (${couponApplied.code}):`, `-₹${couponApplied.discount ? couponApplied.discount.toFixed(2) : '0.00'}`)

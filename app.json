@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ASKOXY.AI",
-    "slug": "Oxyrice",
+    "slug": "oxyrice",
     "version": "1.0.82",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
@@ -42,23 +42,6 @@
       "versionCode": 71,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
-      // "intentFilters": [
-      //   {
-      //     "action": "VIEW",
-      //     "autoVerify": true,
-      //     "data": [
-      //       {
-      //         "scheme": "https",
-      //         "host": "www.askoxy.ai",
-      //         "pathPrefix": "/"
-      //       }
-      //     ],
-      //     "category": [
-      //       "BROWSABLE",
-      //       "DEFAULT"
-      //     ]
-      //   }
-      // ],
       "config": {
         "branch": {
           "apiKey": "key_test_bEzlort5V0pqEdfqpZNxrcmaFsi34wUH"
@@ -90,18 +73,18 @@
         }
       ],
       [
-      "expo-build-properties",
+        "expo-build-properties",
         {
-      "android": {
-        "compileSdkVersion": 35,
-        "targetSdkVersion": 35
-      }
-    }
-  ]
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
-        "projectId": "ce226648-f9fe-48e4-b9d1-02f76cf9fcee"
+        "projectId": "569a0768-43ff-4767-bee1-191956f289ad"
       }
     }
   }
