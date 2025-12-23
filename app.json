@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "ASKOXY.AI",
-    "slug": "oxyrice",
-    "version": "1.0.82",
+    "slug": "oxyrice_customer",
+    "version": "1.0.83",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "78",
+      "buildNumber": "79",
       "associatedDomains": [
         "applinks:www.askoxy.ai",
         "applinks:askoxy.app.link",
@@ -39,7 +39,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 71,
+      "versionCode": 72,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "config": {
@@ -84,7 +84,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "569a0768-43ff-4767-bee1-191956f289ad"
+        "projectId": "645a2741-2b8d-4f3f-b620-5829dfe49d72"
       }
     }
   }

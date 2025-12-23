@@ -23,15 +23,19 @@ const { width } = Dimensions.get("window");
 
 const BharathAgentstore = () => {
   const [agents, setAgents] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
   const [filteredAgents, setFilteredAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastId, setLastId] = useState(null);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState("list");
+  const [allAgentsLoaded, setAllAgentsLoaded] = useState(false);
 
   const navigation = useNavigation();
 
@@ -46,7 +50,7 @@ const BharathAgentstore = () => {
         setLoadingMore(true);
       }
 
-      let url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=40`;
+      let url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=100`;
       console.log("Fetch URL:", url);
 
       if (afterId) {
@@ -65,32 +69,32 @@ const BharathAgentstore = () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const result = await response.json();
-
+      console.log("agents response",result);
+     
       if (result?.data && Array.isArray(result.data)) {
         const approvedAgents = result.data.filter(
           (agent) => agent.status === "APPROVED"
         );
-     let agentsWithCustom;
-        // ✅ Always prepend custom agents
-        if(!lastId){
-            agentsWithCustom = [...CUSTOM_AGENTS, ...approvedAgents];
-        }
-        else{
-            agentsWithCustom = [ ...approvedAgents];
-        }
-
         const nextCursor = result.lastId || null;
 
         if (append) {
-          setAgents((prev) => [...prev, ...agentsWithCustom]);
+          setAllAgents((prev) => [...prev, ...approvedAgents]);
+          setAgents((prev) => [...prev, ...approvedAgents]);
         } else {
+          const agentsWithCustom = [ ...approvedAgents];
+          setAllAgents(agentsWithCustom);
           setAgents(agentsWithCustom);
         }
 
         setLastId(nextCursor);
+        setHasMore(!!nextCursor);
+        
+        if (!nextCursor) {
+          setAllAgentsLoaded(true);
+        }
         if (result.totalCount !== undefined) setTotalCount(result.totalCount);
 
-        console.log("Approved agents + custom loaded:", agentsWithCustom.length);
+        console.log("Agents loaded:", append ? approvedAgents.length : (CUSTOM_AGENTS.length + approvedAgents.length));
       } else {
         console.log("No data received or invalid format");
         if (!append) setAgents([]);
@@ -126,10 +130,12 @@ const BharathAgentstore = () => {
     "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
   ];
 
-  // 🔹 Helper function
-  const getAgentImage = (name) => {
+  // 🔹 Helper function - Fixed to avoid random images
+  const getAgentImage = (name, agentId) => {
     if (!name) {
-      return DEFAULT_IMAGE[Math.floor(Math.random() * DEFAULT_IMAGE.length)];
+      // Use agentId to ensure consistent image selection
+      const index = agentId ? agentId.length % DEFAULT_IMAGE.length : 0;
+      return DEFAULT_IMAGE[index];
     }
 
     const lowerName = name.toLowerCase();
@@ -146,8 +152,9 @@ const BharathAgentstore = () => {
       }
     }
 
-    // Fallback random image
-    return DEFAULT_IMAGE[Math.floor(Math.random() * DEFAULT_IMAGE.length)];
+    // Fallback consistent image based on agentId
+    const index = agentId ? agentId.length % DEFAULT_IMAGE.length : 0;
+    return DEFAULT_IMAGE[index];
   };
 
   const CUSTOM_AGENTS = [
@@ -163,36 +170,96 @@ const BharathAgentstore = () => {
     },
   ];
 
-  // Fixed: Use useFocusEffect properly
-  useFocusEffect(
-    React.useCallback(() => {
-      console.log("Screen focused, loading agents...");
-      getAgents(null, false);
-    }, [])
-  );
-
-  // Fixed: Ensure filtered agents update correctly
+  // Load agents on mount only
   useEffect(() => {
-    console.log("Filtering agents, total:", agents.length);
-    const filtered = agents.filter((agent) => {
+    console.log("Component mounted, loading agents...");
+    getAgents(null, false);
+  }, []);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Load all agents for search
+  const loadAllAgents = async () => {
+    if (allAgentsLoaded || !hasMore) return;
+    
+    let currentLastId = lastId;
+    let allLoadedAgents = [...allAgents];
+    
+    while (currentLastId && hasMore) {
+      try {
+        const url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=100&after=${currentLastId}`;
+        const response = await fetch(url, {
+          method: "GET",
+          headers: {
+            Accept: "*/*",
+            Authorization: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI4ZjI5MjJkMS0yNmZjLTRlY2ItYWE4ZC00OWM1YjQ4ZDk3NDQiLCJpYXQiOjE3NTM1MjU0MzUsImV4cCI6MTc1NDM4OTQzNX0.TsIcuOPETQVFavDWoqK8Mo_fxbzOHSu_0AM_KfR79RtA0O3bCJ0E2jLpeT0jjTbEvQ4Ub4hapU3-EdxZycNgig",
+          },
+        });
+        
+        if (!response.ok) break;
+        
+        const result = await response.json();
+        const approvedAgents = result.data?.filter(agent => agent.status === "APPROVED") || [];
+        
+        allLoadedAgents = [...allLoadedAgents, ...approvedAgents];
+        currentLastId = result.lastId;
+        
+        if (!currentLastId) break;
+      } catch (error) {
+        console.error("Error loading all agents:", error);
+        break;
+      }
+    }
+    
+    setAllAgents(allLoadedAgents);
+    setAllAgentsLoaded(true);
+  };
+
+  // Enhanced search functionality
+  useEffect(() => {
+    if (!debouncedSearch || debouncedSearch.trim() === '') {
+      setFilteredAgents(agents);
+      return;
+    }
+    
+    // Load all agents if searching and not all loaded
+    if (!allAgentsLoaded && hasMore) {
+      loadAllAgents();
+    }
+    
+    const searchText = debouncedSearch.toLowerCase().trim();
+    const searchSource = allAgentsLoaded ? allAgents : agents;
+    const filtered = searchSource.filter((agent) => {
       const a = agent.assistant || agent;
-      const text =
-        `${a.name} ${a.instructions} ${a.description} ${a.model}`.toLowerCase();
-      return text.includes(search.toLowerCase());
+      const name = String(a.name || '').toLowerCase();
+      const description = String(a.description || a.instructions || '').toLowerCase();
+      
+      return name.includes(searchText) || description.includes(searchText);
     });
+    
     setFilteredAgents(filtered);
-    console.log("Filtered agents:", filtered.length);
-  }, [agents, search]);
+    console.log(`Search '${debouncedSearch}': ${filtered.length} results from ${searchSource.length} total`);
+  }, [agents, allAgents, debouncedSearch, allAgentsLoaded, hasMore]);
 
   const onRefresh = () => {
     setRefreshing(true);
     setLastId(null);
     setSearch("");
+    setAllAgentsLoaded(false);
+    setAllAgents([]);
     getAgents(null, false);
   };
 
   const loadMore = () => {
-    if (lastId && !loadingMore) {
+    if (lastId && !loadingMore && hasMore && !debouncedSearch.trim()) {
+      console.log('Loading more agents...');
       getAgents(lastId, true);
     }
   };
@@ -244,7 +311,7 @@ const BharathAgentstore = () => {
     const rating = agent.rating || 5;
     const isGridMode = viewMode === "grid";
 
-    const agentImage = agent.imageUrl || getAgentImage(agent.name);
+    const agentImage = agent.imageUrl || getAgentImage(agent.name, agent.agentId || agent.id);
 
     return (
       <TouchableOpacity
@@ -255,12 +322,13 @@ const BharathAgentstore = () => {
         onPress={() => goToChat(agent)}
         activeOpacity={0.8}
       >
-        {/* 🔹 Agent Image */}
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: agentImage }}
             style={[isGridMode ? styles.agentImage : styles.listImage]}
             resizeMode="cover"
+            fadeDuration={0}
+            // loadingIndicatorSource={require('../../../assets/placeholder.png')}
           />
         </View>
 
@@ -348,14 +416,14 @@ const BharathAgentstore = () => {
         <Text style={styles.emptyIconText}>🤖</Text>
       </View>
       <Text style={styles.emptyTitle}>
-        {search ? "No matches found" : "No assistants available"}
+        {debouncedSearch ? "No matches found" : "No assistants available"}
       </Text>
       <Text style={styles.emptySubtitle}>
-        {search
+        {debouncedSearch
           ? "Try adjusting your search terms"
           : "Check back later for new assistants"}
       </Text>
-      {!loading && !search && (
+      {!loading && !debouncedSearch && (
         <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -458,11 +526,11 @@ const BharathAgentstore = () => {
         <FlatList
           data={filteredAgents}
           renderItem={renderAgentCard}
-          keyExtractor={(item) =>
-            item.id || item.assistantId || "key-" + Math.random()
+          keyExtractor={(item, index) =>
+            `${item.id || item.assistantId || item.agentId}-${index}`
           }
           numColumns={viewMode === "grid" ? 2 : 1}
-          key={`${viewMode}-${viewMode === "grid" ? 2 : 1}`}
+          key={viewMode}
           contentContainerStyle={[
             styles.listContainer,
             viewMode === "grid" && styles.gridContainer,
@@ -477,37 +545,24 @@ const BharathAgentstore = () => {
               colors={["#8B5CF6"]}
             />
           }
-          ListEmptyComponent={()=>renderEmpty()}
-          initialNumToRender={10}
+          ListEmptyComponent={!loading && filteredAgents.length === 0 ? renderEmpty : null}
           onEndReached={loadMore}
-          onEndReachedThreshold={0.1}
+          onEndReachedThreshold={0.3}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={10}
+          updateCellsBatchingPeriod={100}
+          ListFooterComponent={loadingMore && !debouncedSearch.trim() ? (
+            <View style={styles.footerLoader}>
+              <ActivityIndicator size="small" color="#8B5CF6" />
+              <Text style={styles.footerText}>Loading more agents...</Text>
+            </View>
+          ) : null}
         />
       </View>
 
-      {/* Enhanced Load More Button */}
-      {shouldShowLoadMore && (
-        <View style={styles.loadMoreContainer}>
-          <TouchableOpacity
-            style={[
-              styles.loadMoreButton,
-              loadingMore && styles.loadMoreButtonDisabled,
-            ]}
-            onPress={loadMore}
-            disabled={loadingMore}
-          >
-            {loadingMore ? (
-              <ActivityIndicator size="small" color="#FFF" />
-            ) : (
-              <>
-                <Text style={styles.loadMoreButtonText}>
-                  Load More Assistants
-                </Text>
-                <Text style={styles.loadMoreIcon}>↓</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
+
 
       {/* Reusable FAB Component */}
       <CustomFAB navigation={navigation} />
@@ -628,16 +683,17 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
     position: "relative",
     overflow: "hidden",
-    width: "48%",
   },
   listCard: {
     marginHorizontal: 4,
     width: "100%",
+    minHeight: 200,
   },
   gridCard: {
     flex: 0,
     marginHorizontal: 4,
-    maxWidth: (width - 32) / 2 - 8,
+    width: (width - 48) / 2,
+    minHeight: 280,
   },
   imageContainer: {
     alignItems: "center",
@@ -871,5 +927,18 @@ const styles = StyleSheet.create({
   loadMoreIcon: {
     color: "#FFFFFF",
     fontSize: 14,
+  },
+  footerLoader: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+  },
+  footerText: {
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
   },
 });

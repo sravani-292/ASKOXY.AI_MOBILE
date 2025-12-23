@@ -120,18 +120,18 @@ const KLMFashionsLLM = () => {
   const navigation = useNavigation();
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
+  const [selectedTab, setSelectedTab] = useState(null);
   const [query, setQuery] = useState("");
 
   const handleSend = (selectedQuery) => {
     const finalQuery = selectedQuery || query;
     if (!finalQuery.trim()) return;
 
-    navigation.navigate("GenOxyChatScreen", {
+    navigation.navigate("AssistantChatScreen", {
       query: finalQuery,
-      category: "KLM",
       assistantId: "asst_6Yq2RvPL50n7n7qF9Vnp5uof",
-      categoryType: "KLM Assistant",
-      fd:null,
+      assistantName: "KLM Assistant",
+      fd: null,
     });
 
     setQuery("");
@@ -332,51 +332,12 @@ const KLMFashionsLLM = () => {
           )}
         </ScrollView>
 
-        {/* Input Section */}
-        {/* <View style={styles.inputSection}>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Ask anything about KLM Fashions..."
-                placeholderTextColor="#95a5a6"
-                value={query}
-                onChangeText={setQuery}
-                multiline
-                maxLength={500}
-                returnKeyType="send"
-                onSubmitEditing={() => handleSend()}
-                blurOnSubmit={false}
-              />
-              <TouchableOpacity 
-                style={[
-                  styles.sendButton,
-                  !query.trim() && styles.sendButtonDisabled
-                ]}
-                onPress={() => handleSend()}
-                disabled={!query.trim()}
-                activeOpacity={0.8}
-              >
-                <Ionicons 
-                  name="send" 
-                  size={20} 
-                  color={query.trim() ? '#ffffff' : '#bdc3c7'} 
-                />
-              </TouchableOpacity>
-            </View>
-            
-            {query.length > 0 && (
-              <Text style={styles.characterCount}>
-                {query.length}/500
-              </Text>
-            )}
-          </View>
-        </View> */}
+      
          <ChatInput
           placeholder="Type your query..."
           value={query}
           onChangeText={setQuery}
-          onSendMessage={(message) => handleNavigate(message, selectedTab)}
+          onSendMessage={(message) => handleSend(message, selectedTab)}
           theme="light"
           showAttachment={true}
           enableVoice={true}
@@ -398,7 +359,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Header Styles
   header: {
     backgroundColor: "#ffffff",
     paddingHorizontal: 20,
@@ -456,7 +416,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Content Styles
   scrollView: {
     flex: 1,
     backgroundColor: "#f8f9fa",

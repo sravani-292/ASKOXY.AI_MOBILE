@@ -28,7 +28,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { useFocusEffect, useNavigationState } from "@react-navigation/native";
 import BASE_URL, { userStage } from "../../../../Config";
-import PhoneInput from "react-native-phone-number-input";
+
 
 
 const { height, width } = Dimensions.get("window");
@@ -37,7 +37,7 @@ const ReferFriend = () => {
   const userData = useSelector((state) => state.counter);
   const token = userData.accessToken;
   const customerId = userData.userId;
-  const phoneInput = React.createRef();
+
 
   const [frndNumber, setFrndNumber] = useState("");
   const [error1, setError1] = useState(null);
@@ -69,14 +69,14 @@ Your Referral ID: **${getLastFourDigits(customerId)}**`;
     return input.slice(-4); // Extracts the last 4 characters
   };
 
-  const handleReferNumber = (value) => {
+  const handleReferNumber = (text) => {
     setFrndNumber_error(false);
     setError1(false);
-    try {
-      const callingCode = phoneInput.current.getCallingCode(value);
-      setCode(callingCode);
-      setFrndNumber(value);
-    } catch (error) {}
+    setFrndNumber(text);
+  };
+
+  const handleCountryChange = (country) => {
+    setCode(country.callingCode[0]);
   };
 useFocusEffect(
   useCallback(()=>{
@@ -121,7 +121,7 @@ useFocusEffect(
     if (!frndNumber) {
       setError1("Please enter a phone number.");
       return false;
-    } else if (!phoneInput.current.isValidNumber(frndNumber)) {
+    } else if (frndNumber.length !== 10 || !/^\d+$/.test(frndNumber)) {
       setError1("Invalid phone number. Please check the format.");
       return false;
     }
@@ -179,6 +179,7 @@ useFocusEffect(
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
+
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.container}>
           <View style={styles.referralStats}>
@@ -213,17 +214,17 @@ useFocusEffect(
             Enter your friend's number to open your whatsapp app with a pre-filled message. No numbers are stored or collected.
             </Text>
             <View style={styles.phoneInputWrapper}>
-              <PhoneInput
-                placeholder="Whatsapp Number"
-                containerStyle={styles.input1}
-                textInputStyle={styles.phonestyle}
-                codeTextStyle={styles.phonestyle1}
-                ref={phoneInput}
-                defaultValue={frndNumber}
-                defaultCode="IN"
-                layout="first"
-                onChangeText={handleReferNumber}
-              />
+              <View style={styles.phoneContainer}>
+                <Text style={styles.countryCode}>+{code}</Text>
+                <TextInput
+                  style={styles.phoneTextInput}
+                  placeholder="WhatsApp Number"
+                  keyboardType="phone-pad"
+                  value={frndNumber}
+                  onChangeText={handleReferNumber}
+                  maxLength={10}
+                />
+              </View>
             </View>
             {frndNumber_error == true ? (
               <Text style={{ color: "red", alignSelf: "center" }}>
@@ -367,6 +368,29 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontWeight: '600',
+  },
+  phoneContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    width: width / 1.3,
+    alignSelf: 'center',
+    height: 45,
+    paddingHorizontal: 15,
+  },
+  countryCode: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginRight: 10,
+  },
+  phoneTextInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
   },
 });
 

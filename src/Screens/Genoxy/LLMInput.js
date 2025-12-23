@@ -22,7 +22,7 @@ import { Animated, Vibration } from "react-native";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-const ChatInput = ({
+const LLMInput = ({
   placeholder = "Type your message...",
   onSendMessage,
   onFileUpload,
@@ -212,11 +212,10 @@ const ChatInput = ({
     }
 
     if (navigation) {
-      navigation.setParams({
+      navigation.navigate('AssistantChatScreen', {
         query: finalQuery,
-        category: "General",
-        assistantId: "64564t6464",
-        categoryType: "ChatInput",
+        assistantId: "asst_r72ouwQLn406qEjw9ftYjc85",
+        assistantName: "TiE Assistant",
         fd: fileData,
       });
     }
@@ -517,4 +516,4 @@ const styles = StyleSheet.create({
 
 
 
-export default ChatInput;
+export default LLMInput;

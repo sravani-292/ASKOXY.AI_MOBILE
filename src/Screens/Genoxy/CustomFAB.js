@@ -21,7 +21,7 @@ const CustomFAB = ({ navigation }) => {
               icon: 'plus',
               label: 'Create Agent',
                onPress: () => {
-                navigation.navigate("AI Role Selection");
+                navigation.navigate("Agent Creation");
                 setIsModalVisible(false);
               }
             },

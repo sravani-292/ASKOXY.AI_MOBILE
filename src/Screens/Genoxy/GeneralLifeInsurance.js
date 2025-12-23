@@ -55,12 +55,11 @@ const GeneralLifeInsurance = () => {
         ? "Life Insurance Assistant"
         : "General Insurance Assistant";
 
-    navigation.navigate("GenOxyChatScreen", {
+    navigation.navigate("AssistantChatScreen", {
       query: queryText,
-      category,
       assistantId,
-      categoryType,
-      fd:null,
+      assistantName: categoryType,
+      fd: null,
     });
 
     setUserQuery(""); // reset input

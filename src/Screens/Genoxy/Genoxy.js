@@ -49,7 +49,7 @@ const Genoxy = ({navigation}) => {
 
   // LLM icons data
   const llmIcons = [
-    { id: 1, title: "AI Agent to Earn Money", icon: "chatbubbles", color: "#a78bfa", navigation: "Store" },
+    { id: 1, title: "AI Agent to Earn Money", icon: "chatbubbles", color: "#a78bfa", navigation: "AI Store" },
     { id: 2, title: "AI LLMs", icon: "logo-react", color: "#60a5fa", navigation: "DrawerScreens" },
     { id: 3, title: "Free AI Book", icon: "book", color: "#34d399", navigation: "Before Login" },
     { id: 4, title: "AI Videos", icon: "videocam", color: "#f472b6", navigation: "AI Videos" },

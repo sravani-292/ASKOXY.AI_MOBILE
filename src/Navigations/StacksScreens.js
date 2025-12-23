@@ -90,7 +90,7 @@ import Home from "../Home";
 import NewDashBoard from "../Screens/New_Dashbord/screen/NewDashBoard";
 import WishlistScreen from "../Screens/New_Dashbord/components/Wishlist";
 
-import PaymentTest from "../PaymentTest";
+// import PaymentTest from "../PaymentTest";
 import Chats from "../Screens/Chats/Chat";
 // import Notifications from "../Notifications";
 
@@ -104,6 +104,7 @@ import GenOxyOnboardingScreen from '../../src/Screens/Genoxy/GenOxyOnboardingScr
 import InsuranceLLM from "../Screens/Genoxy/InsuranceLLM";
 import GeneralLifeInsurance from "../Screens/Genoxy/GeneralLifeInsurance";
 import GenOxyChatScreen from "../Screens/Genoxy/GenOxyChatScreen";
+import AssistantChatScreen from "../Screens/Chats/AssistantChatScreen";
 import TiEGPT from "../Screens/Genoxy/TIEGPT";
 import KLMFashionsLLM from "../Screens/Genoxy/KLMFashionsLLM";
 import AiVideosGeneratedMobile from "../Screens/Genoxy/AI_Videos/AIVideos";
@@ -120,12 +121,14 @@ import StoreTabs from "./StoreTabs";
 import ChatScreen from "../Components/ChatPopup";
 import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
 
-import RealtimeMainScreen from "../Screens/AIAgent/VoiceAssistant/screens/RealTimeMainScreen";
+// import RealtimeMainScreen from "../Screens/AIAgent/VoiceAssistant/screens/RealTimeMainScreen";
 import AIRoleSelection from "../Screens/AIAgent/CreateAgent/AIRoleSelection";
 import OGImageGenerator from "../Screens/AIAgent/UserFlow/OGImageGenerator";
 import MyAgents from "../Screens/AIAgent/UserFlow/MyAgent";
-import AgentCreationScreen from '../Screens/AIAgent/AgentCreationScreen';
-import RealTimeMainScreenForCall from "../Screens/AIAgent/EcommerceVoiceAssistant/screens/RealTimeMainScreenForCall";
+import AgentCreationScreen from "../Screens/Genoxy/AgentCreation";
+import AgentPreviewScreen from "../Screens/Genoxy/AgentPreviewScreen";
+// import AgentCreationScreen from '../Screens/AIAgent/NewAgentCreationScreen';
+// import RealTimeMainScreenForCall from "../Screens/AIAgent/EcommerceVoiceAssistant/screens/RealTimeMainScreenForCall";
 
 
 import GlmsHome from "../Screens/GLMS/GlmsHome";
@@ -138,7 +141,8 @@ import SingleBlogDisplay from "../Screens/GLMS/Blogs/SingleBlogDisplay";
 import AddBlog from "../Screens/GLMS/Blogs/AddBlog";
 import UseCasesStackScreen from "./LOSUseCasesStackScreen";
 import UpdateOrderAddressScreen from "../Screens/View/Address/UpdateOrderAddress";
-
+import WalletWithdrawComponent from "../Screens/View/Walletwithdraw/Index";
+import BulkInvite from "../Screens/View/Referral Links/BulkInvite";
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -364,9 +368,9 @@ const formatWord = (word) => {
   return (
     <Stack.Navigator
       linking={linking}
-      initialRouteName={needsUpdate ? "App Update" : "SplashScreen"}
-      // initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
-      // initialRouteName="Call Assistant"
+      // initialRouteName={needsUpdate ? "App Update" : "SplashScreen"}
+      initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
+      // initialRouteName="Bulk Invite"
       screenOptions={{
         headerShown: true,
         presentation: "card",
@@ -385,11 +389,11 @@ const formatWord = (word) => {
         options={{ headerShown: false }}
       />
 
-      <Stack.Screen 
+      {/* <Stack.Screen 
          name="Payment Test"
          component={PaymentTest}
          options={{ headerShown: true }}
-      />
+      /> */}
 
       <Stack.Screen
         name="Chats"
@@ -680,7 +684,7 @@ const formatWord = (word) => {
       <Stack.Screen 
          name="GENOXY"
          component={Genoxy}
-          options={{ headerShown: true, title: "GENOXY" }}
+          options={{ headerShown: true, title: "OXYGPT" }}
       />
         <Stack.Screen
         name="GeneralLifeInsurance"
@@ -692,7 +696,15 @@ const formatWord = (word) => {
       name="GenOxyChatScreen"
       component={GenOxyChatScreen}
        options={({ route }) => ({
-          title: route.params?.agentName || 'GENOXY',})}/>
+     title: route.params?.agentName || 'OXYGPT',})}/>
+    <Stack.Screen
+      name="AssistantChatScreen"
+      component={AssistantChatScreen}
+      options={({ route }) => ({
+        headerShown: true,
+        title: route.params?.assistantName || 'Assistant'
+      })}
+    />
     <Stack.Screen name="DrawerScreens" component={DrawerScreens} options={{ headerShown: false, title: "AI LLMs" }} />
     {/* <Stack.Screen name="Bharat Agent Store" component={BharathAgentstore} options={{ headerShown: true, title: "Bharat Agent Store" }} /> */}
     <Stack.Screen name="AI Videos" component={AiVideosGeneratedMobile} options={{ headerShown: true, title: "AI Videos" }} />
@@ -701,32 +713,28 @@ const formatWord = (word) => {
     <Stack.Screen name="FAQ on LLM Images" component={FaqLLMSlidesMobile} options={{ headerShown: true, title: "FAQ on LLM Images" }} />
     <Stack.Screen name="Before Login" component={BeforeLogin} options={{ headerShown: true, title: "Get Free AI Book" }} />
     <Stack.Screen name="After Login" component={AfterLogin} options={{ headerShown: true, title: "Free AI Book"}}/>
-   
     <Stack.Screen name="Active Agents" component={ActiveAgents} options={{ headerShown: true, title: "Active Agents" }} />
     <Stack.Screen name="Agent Screen" component={AgentScreen} options={{ headerShown: true, title: "Agent Details" }} />
 
     <Stack.Screen name="Agent Creation" component={AgentCreationScreen} options={{ headerShown: true, title: "Agent Creation" }} />
-
+   <Stack.Screen name="Agent Preview" component={AgentPreviewScreen} options={{ headerShown: true, title: "Agent Preview" }} />
     <Stack.Screen name= "Agent Store" component={StoreTabs} options={{ headerShown: false }} />
 
     <Stack.Screen name="Chat With AI" component={ChatScreen} options={{ headerShown: false }} />
 
-    <Stack.Screen name="Voice Assistant" component={RealtimeMainScreen} options={{ headerShown: true, title: "Voice Assistant" }} />
+    {/* <Stack.Screen name="Voice Assistant" component={RealtimeMainScreen} options={{ headerShown: true, title: "Voice Assistant" }} />
 
-    <Stack.Screen name="Call Assistant" component={RealTimeMainScreenForCall} options={{ headerShown: true, title: "Call Assistant" }} />
+    <Stack.Screen name="Call Assistant" component={RealTimeMainScreenForCall} options={{ headerShown: true, title: "Call Assistant" }} /> */}
 
     <Stack.Screen name="AI Role Selection" component={AIRoleSelection} options={{ headerShown: true, title: "Choose Your AI Role" }} />
 
     <Stack.Screen name="Image Creator" component={OGImageGenerator} options={{ headerShown: true, title: "Image Creator" }} />
     
     <Stack.Screen name="My Agents" component={MyAgents} options={{ headerShown: true, title: "My Agents" }} />
-
-
-<Stack.Screen name="GLMS Home" component={GlmsHome} />
+      <Stack.Screen name="GLMS Home" component={GlmsHome} />
       <Stack.Screen name="Videos" component={GlmsVideos} />
       <Stack.Screen name="Find Jobs" component={DisplayJobsForUser} />
       <Stack.Screen name="Job Details" component={JobDescription} />
-
       <Stack.Screen name="My Blogs" component={BlogsList} />
       <Stack.Screen
         name="Blog Details"
@@ -744,14 +752,13 @@ const formatWord = (word) => {
         title: route?.params?.dashboard || "UseCases",
         headerShown: false,
       })}/>
-   <Stack.Screen
+     <Stack.Screen
         name="Update Order Address"
         component={UpdateOrderAddressScreen}
       />
-
-
-
-    </Stack.Navigator>
+    <Stack.Screen name="Wallet Withdraw" component={WalletWithdrawComponent}/>
+    <Stack.Screen name="Bulk Invite" component={BulkInvite}/>
+  </Stack.Navigator>
   );
 }
 

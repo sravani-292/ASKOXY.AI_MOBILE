@@ -25,12 +25,11 @@ const TiEGPT = () => {
     const finalQuery = selectedQuery || query;
     if (!finalQuery.trim()) return;
 
-    navigation.navigate("GenOxyChatScreen", {
+    navigation.navigate("AssistantChatScreen", {
       query: finalQuery,
-      category: "tie",
-      assistantId: "asst_5g20JJbZ88NvcSgNYLMeQTm2",
-      categoryType: "TiE Assistant",
-      fd:null,
+      assistantId: "asst_r72ouwQLn406qEjw9ftYjc85",
+      assistantName: "TiE Assistant",
+      fd: null,
     });
 
     setQuery("");
@@ -121,46 +120,7 @@ const TiEGPT = () => {
           </View>
         </ScrollView>
 
-        {/* Fixed Input Container */}
-        {/* <View style={styles.inputSection}>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                placeholder="Ask your question about TiE Hyderabad..."
-                placeholderTextColor="#95a5a6"
-                value={query}
-                onChangeText={setQuery}
-                multiline
-                maxLength={500}
-                returnKeyType="send"
-                onSubmitEditing={() => handleSend()}
-                blurOnSubmit={false}
-              />
-              <TouchableOpacity 
-                style={[
-                  styles.sendButton, 
-                  !query.trim() && styles.sendButtonDisabled
-                ]} 
-                onPress={() => handleSend()}
-                disabled={!query.trim()}
-                activeOpacity={0.8}
-              >
-                <Icon 
-                  name="send" 
-                  size={20} 
-                  color={query.trim() ? '#ffffff' : '#bdc3c7'} 
-                />
-              </TouchableOpacity>
-            </View>
-            
-            {query.length > 0 && (
-              <Text style={styles.characterCount}>
-                {query.length}/500
-              </Text>
-            )}
-          </View>
-        </View> */}
+        
         <ChatInput
           placeholder="Type your query..."
           value={query}

@@ -18,11 +18,12 @@ import {
 } from "react-native";
 import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import Markdown from "react-native-markdown-display";
 import ChatInput from "./ChatInput";
+import ChatHistoryDrawer from "./ChatHistoryDrawer";
 import { useSelector } from "react-redux";
-
+import BASE_URL, { userStage } from "../../../Config";
 const { height: screenHeight } = Dimensions.get("window");
 
 const GenOxyChatScreen = ({ route, navigation }) => {
@@ -36,15 +37,25 @@ const GenOxyChatScreen = ({ route, navigation }) => {
   const [speakingMessageId, setSpeakingMessageId] = useState(null);
   const [helperQuestions, setHelperQuestions] = useState([]);
   const [loadingHelperQuestions, setLoadingHelperQuestions] = useState(true);
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const [threadId, setThreadId] = useState(null);
+  const [currentChatId, setCurrentChatId] = useState(null);
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
   const fadeAnims = useRef(new Map()).current;
+  const messagesEndRef = useRef(null);
   const user = useSelector((state) => state.counter);
   const hasSentInitial = useRef(false); // Prevent double initial send
+  const userId = user?.userId || user?.id;
 
-  // ✅ FIXED: Removed extra spaces in URLs
-  const API_URL = `https://meta.oxyloans.com/api/student-service/user/askquestion?assistantId=${assistantId}`;
+  // FIXED: Removed extra spaces in URLs
   const HELPER_QUESTIONS_URL = `https://meta.oxyloans.com/api/ai-service/agent/getConversation/${agentId}`;
 
-  // Fetch helper questions
+  const getAuthHeaders = () => {
+    return user?.accessToken
+      ? { Authorization: `Bearer ${user.accessToken}` }
+      : {};
+  };
+
   useEffect(() => {
     const fetchHelperQuestions = async () => {
       try {
@@ -67,7 +78,10 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
         setHelperQuestions(questions);
       } catch (error) {
-        console.error("Failed to fetch helper questions:", error.response?.data || error.message);
+        console.error(
+          "Failed to fetch helper questions:",
+          error.response?.data || error.message
+        );
         setHelperQuestions([
           "What are my loan eligibility criteria?",
           "How do I apply for an education loan?",
@@ -79,10 +93,10 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       }
     };
 
-    if (agentId && user.accessToken) {
+    if (agentId && user?.accessToken) {
       fetchHelperQuestions();
     }
-  }, [agentId, user.accessToken]);
+  }, [agentId, user?.accessToken]);
 
   // Initialize fade animations
   useEffect(() => {
@@ -112,18 +126,34 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     if (query && messages.length === 0 && !hasSentInitial.current) {
       hasSentInitial.current = true;
       console.log("📤 Sending initial query:", query);
+
+      // Add user message first, then send to API
+      const userMessage = {
+        role: "user",
+        content: query.trim(),
+        displayContent: query.trim(),
+        id: Date.now(),
+      };
+      setMessages([userMessage]);
+      fadeAnims.set(userMessage.id, new Animated.Value(0));
+
       sendMessage(query, true);
     }
   }, [query, messages.length]);
 
   // Keyboard visibility
   useEffect(() => {
-    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
 
     const showListener = Keyboard.addListener(showEvent, () => {
       setIsKeyboardVisible(true);
-      setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      setTimeout(
+        () => flatListRef.current?.scrollToEnd({ animated: true }),
+        100
+      );
     });
 
     const hideListener = Keyboard.addListener(hideEvent, () => {
@@ -156,7 +186,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-          timeout: 30000,
+          timeout: 10000,
         }
       );
 
@@ -167,14 +197,207 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       }
       return "I couldn't process the file.";
     } catch (error) {
-      console.error("File upload error:", error.response?.data || error.message);
+      console.error(
+        "File upload error:",
+        error.response?.data || error.message
+      );
       return "File upload failed. Please try again.";
     }
   };
 
+  // API Functions for chat history
+  const postAgentChat = async (agentIdParam, userIdParam, messageHistory) => {
+    const headers = new AxiosHeaders();
+    headers.set("Accept", "application/json");
+    headers.set("Content-Type", "application/json");
+    const auth = getAuthHeaders();
+    if (auth.Authorization) headers.set("Authorization", auth.Authorization);
+
+    const payload = {
+      agentId: agentIdParam,
+      userId: userIdParam,
+      messageHistory,
+    };
+
+    if (threadId) {
+      payload.threadId = threadId;
+    }
+
+    console.log("chat api payload", payload);
+
+    const { data } = await axios.post(
+      `http://65.0.147.157:9040/api/ai-service/agent/agentChat1`,
+      payload,
+      { headers }
+    );
+    return data;
+  };
+
+  const fetchUserHistory = async (userIdParam, agentIdParam) => {
+    console.log("Fetching user history", { userIdParam, agentIdParam });
+
+    const { data } = await axios.get(
+      `${BASE_URL}/ai-service/agent/getUserHistory/${userIdParam}/${agentIdParam}`,
+      { headers: { ...getAuthHeaders() } }
+    );
+    // console.log("Fetched user history", data);
+    return data;
+  };
+
+  const fetchThreadHistory = async (threadIdParam) => {
+    if (
+      !threadIdParam ||
+      threadIdParam.trim() === "" ||
+      String(threadIdParam).toLowerCase() === "null"
+    ) {
+      return null;
+    }
+
+    try {
+      const headers = new AxiosHeaders();
+      headers.set("Accept", "application/json");
+      headers.set("Content-Type", "application/json");
+      const auth = getAuthHeaders();
+      if (auth.Authorization) {
+        headers.set("Authorization", auth.Authorization);
+      }
+
+      const url = `http://65.0.147.157:9040/api/ai-service/agent/getconversations/${threadIdParam}/messages`;
+      console.log("[fetchThreadHistory] Calling URL:", url);
+      const response = await axios.get(url, { headers });
+
+      const data = response.data;
+      console.log("[fetchThreadHistory] Raw response:", data);
+
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        if (Array.isArray(data.data)) {
+          console.log(
+            "[fetchThreadHistory] Returning data.data:",
+            data.data.length,
+            "messages"
+          );
+          return data.data;
+        }
+        if (Array.isArray(data.messages)) {
+          console.log(
+            "[fetchThreadHistory] Returning data.messages:",
+            data.messages.length,
+            "messages"
+          );
+          return data.messages;
+        }
+        if (Array.isArray(data.history)) {
+          console.log(
+            "[fetchThreadHistory] Returning data.history:",
+            data.history.length,
+            "messages"
+          );
+          return data.history;
+        }
+      }
+
+      if (Array.isArray(data)) {
+        console.log(
+          "[fetchThreadHistory] Returning direct array:",
+          data.length,
+          "messages"
+        );
+        return data;
+      }
+      console.log("[fetchThreadHistory] No valid data found, returning null");
+      return null;
+    } catch (error) {
+      console.error("fetchThreadHistory error:", error);
+      return null;
+    }
+  };
+
+  const extractQAFromHistory = (threadMessages) => {
+    if (!Array.isArray(threadMessages)) return [];
+
+    return threadMessages
+      .map((msg, index) => {
+        let content = "";
+
+        // Handle new thread message format
+        if (
+          msg.content &&
+          Array.isArray(msg.content) &&
+          msg.content.length > 0
+        ) {
+          const textContent = msg.content.find((c) => c.type === "text");
+          if (textContent?.text?.value) {
+            content = textContent.text.value;
+          }
+        } else if (typeof msg.content === "string") {
+          content = msg.content;
+        } else if (msg.message) {
+          content = msg.message;
+        }
+
+        return {
+          id: msg.id || Date.now() + index,
+          role: msg.role || (msg.sender === "user" ? "user" : "assistant"),
+          content: content,
+          displayContent: content, // Add displayContent for user messages
+          created_at: msg.created_at || 0,
+        };
+      })
+      .filter((msg) => msg.content.trim())
+      .sort((a, b) => a.created_at - b.created_at); // Sort by timestamp to show user question first
+  };
+
+  const normalizeMessages = (messages) => {
+    if (!Array.isArray(messages)) return [];
+
+    return messages
+      .map((msg, index) => ({
+        id: msg.id || Date.now() + index,
+        role: msg.role || "assistant",
+        content: msg.content || msg.message || "",
+      }))
+      .filter((msg) => msg.content.trim());
+  };
+
+  const openHistoryChat = async (hid) => {
+    console.log("[openHistoryChat] Opening chat:", hid);
+
+    if (!userId) return;
+
+    setCurrentChatId(hid);
+    setThreadId(hid);
+
+    try {
+      const threadMessages = await fetchThreadHistory(hid);
+      console.log("[openHistoryChat] Thread messages:", threadMessages);
+
+      if (Array.isArray(threadMessages) && threadMessages.length > 0) {
+        const messages = extractQAFromHistory(threadMessages);
+        console.log("[openHistoryChat] Extracted messages:", messages);
+        setMessages(messages);
+      } else {
+        console.log("[openHistoryChat] No thread messages found");
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("[openHistoryChat] Error:", err);
+      setMessages([]);
+    }
+
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
   // Send message
-  const sendMessage = async (text, isInitial = false) => {
-    console.log("💬 sendMessage called with:", { text, isInitial });
+
+  const sendMessage = async (text, isInitial = false, assistantId = null) => {
+    console.log("💬 sendMessage called with:", {
+      text,
+      isInitial,
+      assistantId,
+    });
+
     if (!text || !text.trim()) {
       console.log("❌ Empty message, skipped");
       return;
@@ -192,7 +415,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
     const thinkingMessage = {
       role: "assistant",
-      content: `${agentName} is thinking...`,
+      content: `${agentName ? agentName : "OXYGPT"} is thinking...`,
       temp: true,
       id: Date.now() + 1,
     };
@@ -207,37 +430,64 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       if (fd && isInitial) {
         assistantReply = await handleFileUpload(fd, text);
       } else {
-        const conversationHistory = [...messages, userMessage]
-          .filter((msg) => !msg.temp)
-          .map((msg) => ({
-            role: msg.role,
-            content: msg.content,
-          }));
+        // const conversationHistory = [...messages, userMessage]
+        //   .filter((msg) => !msg.temp && msg.role === 'user')
+        //   .map((msg) => ({
+        //     role: msg.role,
+        //     content: msg.content,
+        //   }));
 
-        console.log("📤 Sending to API:", conversationHistory);
-
-        const response = await axios.post(
-          API_URL,
-          conversationHistory,
+        const conversationHistory = [
           {
-            headers: { "Content-Type": "application/json" },
-            timeout: 15000, // ✅ Increased timeout
-          }
+            role: "user",
+            content: userMessage.content,
+          },
+        ];
+
+        console.log("🚀 Calling postAgentChat with:", {
+          agentId,
+          userId,
+          conversationHistory,
+        });
+
+        const response = await postAgentChat(
+          agentId,
+          userId,
+          conversationHistory
         );
-        console.log("send message api response",response);
-        
-        if (typeof response.data === "string") {
-          assistantReply = response.data;
-        } else if (response.data?.content) {
-          assistantReply = response.data.content;
-        } else if (Array.isArray(response.data) && response.data.length > 0) {
-          assistantReply = response.data[response.data.length - 1]?.content || "No response content.";
+
+        console.log("send message api response", response);
+
+        // Update threadId if returned
+        if (response?.thread_id && !threadId) {
+          setThreadId(response.thread_id);
+        } else if (response?.threadId && !threadId) {
+          setThreadId(response.threadId);
+        }
+
+        // Handle agentChat1 API response format
+        if (response?.assistant_reply) {
+          assistantReply = response.assistant_reply;
+        } else if (typeof response === "string") {
+          assistantReply = response;
+        } else if (response?.content) {
+          assistantReply = response.content;
+        } else if (response?.message) {
+          assistantReply = response.message;
         } else {
+          console.warn("Unexpected response format:", response);
           assistantReply = "I couldn't understand the response.";
         }
+
+        // Clean response by removing square bracket citations
+        assistantReply = assistantReply.replace(/【[^】]*】/g, "").trim();
       }
 
-      if (!assistantReply || typeof assistantReply !== "string" || !assistantReply.trim()) {
+      if (
+        !assistantReply ||
+        typeof assistantReply !== "string" ||
+        !assistantReply.trim()
+      ) {
         assistantReply = "Sorry, I couldn't generate a response.";
       }
 
@@ -253,11 +503,18 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           },
         ];
         fadeAnims.set(newId, new Animated.Value(0));
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        setTimeout(
+          () => flatListRef.current?.scrollToEnd({ animated: true }),
+          100
+        );
+        // Trigger history refresh after successful message
+        setHistoryRefreshTrigger((prev) => prev + 1);
         return updated;
       });
     } catch (error) {
-      console.error("🚨 API Error:", error.response?.data || error.message);
+      console.error("🚨 API Error:", error?.message);
+      console.error("Full error:", error); // Log full error object
+
       setMessages((prev) => {
         const filtered = prev.filter((msg) => !msg.temp);
         const newId = Date.now() + 3;
@@ -270,7 +527,10 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           },
         ];
         fadeAnims.set(newId, new Animated.Value(0));
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        setTimeout(
+          () => flatListRef.current?.scrollToEnd({ animated: true }),
+          100
+        );
         return updated;
       });
     } finally {
@@ -337,7 +597,9 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     <Animated.View
       style={[
         styles.messageContainer,
-        item.role === "user" ? styles.userMessageContainer : styles.botMessageContainer,
+        item.role === "user"
+          ? styles.userMessageContainer
+          : styles.botMessageContainer,
         { opacity: fadeAnims.get(item.id) || 1 },
       ]}
     >
@@ -362,10 +624,16 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
         {item.role === "assistant" && !item.temp && (
           <View style={styles.messageActions}>
-            <TouchableOpacity onPress={() => copyMessage(item)} style={styles.actionButton}>
+            <TouchableOpacity
+              onPress={() => copyMessage(item)}
+              style={styles.actionButton}
+            >
               <Ionicons name="copy-outline" size={16} color="#64748b" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => shareMessage(item)} style={styles.actionButton}>
+            <TouchableOpacity
+              onPress={() => shareMessage(item)}
+              style={styles.actionButton}
+            >
               <Ionicons name="share-outline" size={16} color="#64748b" />
             </TouchableOpacity>
             <TouchableOpacity
@@ -376,7 +644,11 @@ const GenOxyChatScreen = ({ route, navigation }) => {
               ]}
             >
               <Ionicons
-                name={speakingMessageId === item.id ? "stop-outline" : "volume-high-outline"}
+                name={
+                  speakingMessageId === item.id
+                    ? "stop-outline"
+                    : "volume-high-outline"
+                }
                 size={16}
                 color={speakingMessageId === item.id ? "#2563eb" : "#64748b"}
               />
@@ -389,7 +661,11 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
   // Render helper questions
   const renderHelperQuestions = () => {
-    if (messages.length > 0 || loadingHelperQuestions || helperQuestions.length === 0) {
+    if (
+      messages.length > 0 ||
+      loadingHelperQuestions ||
+      helperQuestions.length === 0
+    ) {
       return null;
     }
 
@@ -417,6 +693,18 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f4f4f5" />
 
+      {/* Header with menu button */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => setIsDrawerVisible(true)}
+        >
+          <Ionicons name="menu" size={24} color="#374151" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{agentName || "OXYGPT"}</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -442,7 +730,9 @@ const GenOxyChatScreen = ({ route, navigation }) => {
                 ]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                onContentSizeChange={() =>
+                  flatListRef.current?.scrollToEnd({ animated: true })
+                }
               />
             </>
           )}
@@ -452,7 +742,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           <ChatInput
             placeholder="Type a message..."
             onSendMessage={(text) => {
-              console.log("📤 SEND BUTTON PRESSED with text:", text); // 🔍 Debug log
+              console.log("📤 SEND BUTTON PRESSED with text:", text);
               sendMessage(text, false);
             }}
             enableVoice={true}
@@ -463,6 +753,17 @@ const GenOxyChatScreen = ({ route, navigation }) => {
           />
         </View>
       </KeyboardAvoidingView>
+
+      {/* Chat History Drawer */}
+      <ChatHistoryDrawer
+        isVisible={isDrawerVisible}
+        onClose={() => setIsDrawerVisible(false)}
+        userId={userId}
+        agentId={agentId}
+        onHistorySelect={openHistoryChat}
+        currentChatId={currentChatId}
+        refreshTrigger={historyRefreshTrigger}
+      />
     </View>
   );
 };
@@ -472,6 +773,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f4f4f5",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#111827",
+    textAlign: "center",
+    fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
+  },
+  headerSpacer: {
+    width: 40,
   },
   keyboardAvoidingView: {
     flex: 1,
