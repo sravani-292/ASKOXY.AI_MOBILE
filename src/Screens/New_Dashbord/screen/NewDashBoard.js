@@ -264,9 +264,7 @@ export default function NewDashBoard() {
     [headerOpacity]
   );
 
-  // const memoizedSearchBar = useMemo(() => (
-
-  // ), [searchQuery]);
+ 
 
   // Focus effect for screen activation
   useFocusEffect(

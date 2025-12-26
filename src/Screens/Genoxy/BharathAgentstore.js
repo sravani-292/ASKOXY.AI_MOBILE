@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,18 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Modal,
-  ScrollView,
   TextInput,
   StyleSheet,
   Image,
   Dimensions,
   Platform,
 } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import BASE_URL from "../../../Config";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import AIRoleImage from "../AIAgent/CreateAgent/AIRoleImage";
-import CustomFAB from "./CustomFAB"; // Import the new component
+import CustomFAB from "./CustomFAB";
+
 const { width } = Dimensions.get("window");
 
 const BharathAgentstore = () => {
@@ -32,12 +32,51 @@ const BharathAgentstore = () => {
   const [lastId, setLastId] = useState(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [selectedAgent, setSelectedAgent] = useState(null);
   const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState("list");
   const [allAgentsLoaded, setAllAgentsLoaded] = useState(false);
+  const [isLoadingAllAgents, setIsLoadingAllAgents] = useState(false);
 
   const navigation = useNavigation();
+
+  // Image mapping
+  const IMAGE_MAP = {
+    code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
+    finance: "https://media.licdn.com/dms/image/v2/D4D12AQH9ZTLfemnJgA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1730530043865?e=2147483647&v=beta&t=3GgdQbowwhu3jbuft6-XG2_jPZUSLa0XiCRgSz6AqBg",
+    business: "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
+    technology: "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+    og: "https://i.ibb.co/gZjkJyQ8/1a.png",
+    irdai: "https://www.livemint.com/lm-img/img/2024/05/30/600x338/Irdai_health_insurance_1717036677791_1717036677946.png",
+    gst: "https://zetran.com/wp-content/uploads/2025/02/GST-Compliance-and-Fraud-Detection-using-AI.jpg",
+    law: "https://royalsociety.org/-/media/events/2025/9/ai-and-the-law/ai-and-the-law-image.jpg",
+  };
+
+  const DEFAULT_IMAGE = [
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFQjSgjdQbvnhDH7go4ETwAOEu05VpFIAOVg&s",
+    "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
+  ];
+
+  const getAgentImage = (name, agentId) => {
+    if (!name) {
+      const index = agentId ? agentId.length % DEFAULT_IMAGE.length : 0;
+      return DEFAULT_IMAGE[index];
+    }
+
+    const lowerName = name.toLowerCase();
+
+    if (lowerName.includes("og")) {
+      return IMAGE_MAP.og;
+    }
+
+    for (const key in IMAGE_MAP) {
+      if (lowerName.includes(key)) {
+        return IMAGE_MAP[key];
+      }
+    }
+
+    const index = agentId ? agentId.length % DEFAULT_IMAGE.length : 0;
+    return DEFAULT_IMAGE[index];
+  };
 
   // Fetch agents
   const getAgents = async (afterId = null, append = false) => {
@@ -51,7 +90,6 @@ const BharathAgentstore = () => {
       }
 
       let url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=100`;
-      console.log("Fetch URL:", url);
 
       if (afterId) {
         url += `&after=${afterId}`;
@@ -61,16 +99,15 @@ const BharathAgentstore = () => {
         method: "GET",
         headers: {
           Accept: "*/*",
-          Authorization:
-            "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI4ZjI5MjJkMS0yNmZjLTRlY2ItYWE4ZC00OWM1YjQ4ZDk3NDQiLCJpYXQiOjE3NTM1MjU0MzUsImV4cCI6MTc1NDM4OTQzNX0.TsIcuOPETQVFavDWoqK8Mo_fxbzOHSu_0AM_KfR79RtA0O3bCJ0E2jLpeT0jjTbEvQ4Ub4hapU3-EdxZycNgig",
+          Authorization: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI4ZjI5MjJkMS0yNmZjLTRlY2ItYWE4ZC00OWM1YjQ4ZDk3NDQiLCJpYXQiOjE3NTM1MjU0MzUsImV4cCI6MTc1NDM4OTQzNX0.TsIcuOPETQVFavDWoqK8Mo_fxbzOHSu_0AM_KfR79RtA0O3bCJ0E2jLpeT0jjTbEvQ4Ub4hapU3-EdxZycNgig",
         },
       });
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const result = await response.json();
-      console.log("agents response",result);
-     
+      console.log("Fetched agents count:", result.data?.length);
+
       if (result?.data && Array.isArray(result.data)) {
         const approvedAgents = result.data.filter(
           (agent) => agent.status === "APPROVED"
@@ -81,28 +118,36 @@ const BharathAgentstore = () => {
           setAllAgents((prev) => [...prev, ...approvedAgents]);
           setAgents((prev) => [...prev, ...approvedAgents]);
         } else {
-          const agentsWithCustom = [ ...approvedAgents];
-          setAllAgents(agentsWithCustom);
-          setAgents(agentsWithCustom);
+          setAllAgents(approvedAgents);
+          setAgents(approvedAgents);
+          setFilteredAgents(approvedAgents); // Set initial filtered agents
         }
 
         setLastId(nextCursor);
         setHasMore(!!nextCursor);
-        
+
         if (!nextCursor) {
           setAllAgentsLoaded(true);
         }
         if (result.totalCount !== undefined) setTotalCount(result.totalCount);
 
-        console.log("Agents loaded:", append ? approvedAgents.length : (CUSTOM_AGENTS.length + approvedAgents.length));
+        console.log("Agents loaded successfully:", approvedAgents.length);
       } else {
         console.log("No data received or invalid format");
-        if (!append) setAgents([]);
+        if (!append) {
+          setAgents([]);
+          setAllAgents([]);
+          setFilteredAgents([]);
+        }
       }
     } catch (error) {
       console.error("Fetch agents error:", error);
       Alert.alert("Error", "Failed to load assistants.");
-      if (!afterId) setAgents([]);
+      if (!afterId) {
+        setAgents([]);
+        setAllAgents([]);
+        setFilteredAgents([]);
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -110,67 +155,7 @@ const BharathAgentstore = () => {
     }
   };
 
-  // 🔹 Put these at the top of your file (outside the component)
-  const IMAGE_MAP = {
-    code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
-    finance:
-      "https://media.licdn.com/dms/image/v2/D4D12AQH9ZTLfemnJgA/article-cover_image-shrink_720_1280/article-cover_image-shrink_720_1280/0/1730530043865?e=2147483647&v=beta&t=3GgdQbowwhu3jbuft6-XG2_jPZUSLa0XiCRgSz6AqBg",
-    business:
-      "https://media.istockphoto.com/id/1480239160/photo/an-analyst-uses-a-computer-and-dashboard-for-data-business-analysis-and-data-management.jpg?s=612x612&w=0&k=20&c=Zng3q0-BD8rEl0r6ZYZY0fbt2AWO9q_gC8lSrwCIgdk=",
-    technology: "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
-    og: "https://i.ibb.co/gZjkJyQ8/1a.png",
-    irdai:
-      "https://www.livemint.com/lm-img/img/2024/05/30/600x338/Irdai_health_insurance_1717036677791_1717036677946.png",
-    gst: "https://zetran.com/wp-content/uploads/2025/02/GST-Compliance-and-Fraud-Detection-using-AI.jpg",
-    law: "https://royalsociety.org/-/media/events/2025/9/ai-and-the-law/ai-and-the-law-image.jpg",
-  };
-
-  const DEFAULT_IMAGE = [
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFQjSgjdQbvnhDH7go4ETwAOEu05VpFIAOVg&s",
-    "https://www.bluefin.com/wp-content/uploads/2020/08/ai-future.jpg",
-  ];
-
-  // 🔹 Helper function - Fixed to avoid random images
-  const getAgentImage = (name, agentId) => {
-    if (!name) {
-      // Use agentId to ensure consistent image selection
-      const index = agentId ? agentId.length % DEFAULT_IMAGE.length : 0;
-      return DEFAULT_IMAGE[index];
-    }
-
-    const lowerName = name.toLowerCase();
-
-    // Special case: OG Fan Story Predictor
-    if (lowerName.includes("og")) {
-      return IMAGE_MAP.og;
-    }
-
-    // Check for keywords in name
-    for (const key in IMAGE_MAP) {
-      if (lowerName.includes(key)) {
-        return IMAGE_MAP[key];
-      }
-    }
-
-    // Fallback consistent image based on agentId
-    const index = agentId ? agentId.length % DEFAULT_IMAGE.length : 0;
-    return DEFAULT_IMAGE[index];
-  };
-
-  const CUSTOM_AGENTS = [
-    {
-      id: "custom-1",
-      name: "THE FAN OF OG",
-      description: "Create Your OG IMAGE. Just Upload Your Photo",
-      instructions: "Create Your OG IMAGE. Just Upload Your Photo",
-      status: "APPROVED",
-      price: "Free",
-      rating: 5,
-      image: "https://i.ibb.co/h1fpCXzw/fanofog.png", // optional
-    },
-  ];
-
-  // Load agents on mount only
+  // Load agents on mount
   useEffect(() => {
     console.log("Component mounted, loading agents...");
     getAgents(null, false);
@@ -181,20 +166,27 @@ const BharathAgentstore = () => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
     }, 300);
-    
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Load all agents for search
-  const loadAllAgents = async () => {
-    if (allAgentsLoaded || !hasMore) return;
+  // Load all agents for search - wrapped in useCallback to prevent infinite loops
+  const loadAllAgents = useCallback(async () => {
+    if (allAgentsLoaded || isLoadingAllAgents) {
+      console.log("All agents already loaded or loading in progress");
+      return allAgents; // Return existing agents if already loaded
+    }
+
+    console.log("Loading all agents for search...");
+    setIsLoadingAllAgents(true);
     
     let currentLastId = lastId;
     let allLoadedAgents = [...allAgents];
-    
-    while (currentLastId && hasMore) {
-      try {
+
+    try {
+      while (currentLastId) {
         const url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=100&after=${currentLastId}`;
+        console.log(`Fetching batch after ID: ${currentLastId}`);
+        
         const response = await fetch(url, {
           method: "GET",
           headers: {
@@ -202,57 +194,113 @@ const BharathAgentstore = () => {
             Authorization: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI4ZjI5MjJkMS0yNmZjLTRlY2ItYWE4ZC00OWM1YjQ4ZDk3NDQiLCJpYXQiOjE3NTM1MjU0MzUsImV4cCI6MTc1NDM4OTQzNX0.TsIcuOPETQVFavDWoqK8Mo_fxbzOHSu_0AM_KfR79RtA0O3bCJ0E2jLpeT0jjTbEvQ4Ub4hapU3-EdxZycNgig",
           },
         });
-        
-        if (!response.ok) break;
-        
+
+        if (!response.ok) {
+          console.log(`Failed to fetch batch: ${response.status}`);
+          break;
+        }
+
         const result = await response.json();
         const approvedAgents = result.data?.filter(agent => agent.status === "APPROVED") || [];
-        
+
         allLoadedAgents = [...allLoadedAgents, ...approvedAgents];
         currentLastId = result.lastId;
-        
-        if (!currentLastId) break;
-      } catch (error) {
-        console.error("Error loading all agents:", error);
-        break;
-      }
-    }
-    
-    setAllAgents(allLoadedAgents);
-    setAllAgentsLoaded(true);
-  };
 
-  // Enhanced search functionality
-  useEffect(() => {
-    if (!debouncedSearch || debouncedSearch.trim() === '') {
-      setFilteredAgents(agents);
-      return;
-    }
-    
-    // Load all agents if searching and not all loaded
-    if (!allAgentsLoaded && hasMore) {
-      loadAllAgents();
-    }
-    
-    const searchText = debouncedSearch.toLowerCase().trim();
-    const searchSource = allAgentsLoaded ? allAgents : agents;
-    const filtered = searchSource.filter((agent) => {
-      const a = agent.assistant || agent;
-      const name = String(a.name || '').toLowerCase();
-      const description = String(a.description || a.instructions || '').toLowerCase();
+        console.log(`✓ Loaded batch: ${approvedAgents.length} agents, Total: ${allLoadedAgents.length}`);
+        
+        if (!currentLastId) {
+          console.log("No more pages to load");
+          break;
+        }
+      }
+
+      // Update state with all loaded agents
+      setAllAgents(allLoadedAgents);
+      setAllAgentsLoaded(true);
+      setIsLoadingAllAgents(false);
+      console.log(`✅ All agents loaded successfully: ${allLoadedAgents.length} total`);
       
-      return name.includes(searchText) || description.includes(searchText);
-    });
-    
-    setFilteredAgents(filtered);
-    console.log(`Search '${debouncedSearch}': ${filtered.length} results from ${searchSource.length} total`);
-  }, [agents, allAgents, debouncedSearch, allAgentsLoaded, hasMore]);
+      return allLoadedAgents; // Return the complete list
+    } catch (error) {
+      console.error("❌ Error loading all agents:", error);
+      setIsLoadingAllAgents(false);
+      return allLoadedAgents; // Return what we have so far
+    }
+  }, [allAgentsLoaded, isLoadingAllAgents, lastId, allAgents]);
+
+  // Search functionality - Fixed to wait for all agents to load
+  useEffect(() => {
+    const performSearch = async () => {
+      console.log("🔍 Performing search for:", debouncedSearch);
+      
+      // If no search, show current agents
+      if (!debouncedSearch || debouncedSearch.trim() === '') {
+        console.log("No search query, showing all loaded agents:", agents.length);
+        setFilteredAgents(agents);
+        return;
+      }
+
+      // Always try to load all agents when searching
+      let searchSource = agents;
+      
+      if (!allAgentsLoaded && hasMore && !isLoadingAllAgents) {
+        console.log("🔄 Loading all agents for comprehensive search...");
+        const loadedAgents = await loadAllAgents();
+        // Use the freshly loaded agents for search
+        searchSource = loadedAgents && loadedAgents.length > 0 ? loadedAgents : allAgents;
+        console.log(`Using ${searchSource.length} agents for search`);
+      } else if (allAgentsLoaded) {
+        // All agents already loaded, use them
+        searchSource = allAgents;
+        console.log(`Using cached ${searchSource.length} agents for search`);
+      } else {
+        // Fallback to currently loaded agents
+        searchSource = agents;
+        console.log(`Using currently loaded ${searchSource.length} agents for search`);
+      }
+
+      const searchLower = debouncedSearch.toLowerCase().trim();
+
+      const filtered = searchSource.filter((agent) => {
+        const a = agent.assistant || agent;
+        const name = String(a.name || '').toLowerCase();
+        const description = String(a.description || '').toLowerCase();
+        const instructions = String(a.instructions || '').toLowerCase();
+
+        const matches = name.includes(searchLower) ||
+          description.includes(searchLower) ||
+          instructions.includes(searchLower);
+        
+        if (matches) {
+          console.log(`✓ Match found: ${a.name}`);
+        }
+        
+        return matches;
+      });
+
+      setFilteredAgents(filtered);
+      console.log(`✅ Search '${debouncedSearch}': Found ${filtered.length} results from ${searchSource.length} total agents`);
+      
+      // Log first few matches for debugging
+      if (filtered.length > 0) {
+        console.log("First matches:", filtered.slice(0, 3).map(f => (f.assistant || f).name));
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearch, allAgentsLoaded]); // Depend on allAgentsLoaded too
+
+  const handleSearchChange = (text) => {
+    setSearch(text);
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
     setLastId(null);
     setSearch("");
+    setDebouncedSearch("");
     setAllAgentsLoaded(false);
+    setIsLoadingAllAgents(false);
     setAllAgents([]);
     getAgents(null, false);
   };
@@ -273,7 +321,7 @@ const BharathAgentstore = () => {
       return;
     }
 
-    if(assistant.name === "THE FAN OF OG"){
+    if (assistant.name === "THE FAN OF OG") {
       navigation.navigate("Image Creator", {
         assistantId,
         query: "",
@@ -283,19 +331,18 @@ const BharathAgentstore = () => {
         agentId: assistant.agentId
       });
       return;
-    }else{
-    navigation.navigate("GenOxyChatScreen", {
-      assistantId,
-      query: "",
-      category: "Assistant",
-      agentName: assistant.name || "Assistant",
-      fd: null,
-      agentId: assistant.agentId
-    });
-  }
+    } else {
+      navigation.navigate("GenOxyChatScreen", {
+        assistantId,
+        query: "",
+        category: "Assistant",
+        agentName: assistant.name || "Assistant",
+        fd: null,
+        agentId: assistant.agentId
+      });
+    }
   };
 
-  // Truncate description
   const getPreview = (text) => {
     if (!text) return "No description available";
     const clean = text.replace(
@@ -328,11 +375,9 @@ const BharathAgentstore = () => {
             style={[isGridMode ? styles.agentImage : styles.listImage]}
             resizeMode="cover"
             fadeDuration={0}
-            // loadingIndicatorSource={require('../../../assets/placeholder.png')}
           />
         </View>
 
-        {/* Card Header */}
         <View style={styles.cardHeader}>
           <View style={styles.headerInfo}>
             <Text style={styles.agentName} numberOfLines={2}>
@@ -355,12 +400,10 @@ const BharathAgentstore = () => {
           </View>
         </View>
 
-        {/* Description */}
         <Text style={styles.agentPreview} numberOfLines={isGridMode ? 2 : 3}>
           {getPreview(agent.instructions || agent.description)}
         </Text>
 
-        {/* Rating & Button */}
         <View style={styles.cardFooter}>
           <View style={styles.ratingContainer}>
             {[...Array(5)].map((_, i) => (
@@ -383,32 +426,14 @@ const BharathAgentstore = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Corner Accent */}
         <View style={styles.cornerAccent} />
       </TouchableOpacity>
     );
   };
 
-  // Helper functions for dynamic styling
-  const getAvatarColor = (name) => {
-    const colors = [
-      "#8B5CF6",
-      "#EC4899",
-      "#10B981",
-      "#F59E0B",
-      "#3B82F6",
-      "#EF4444",
-      "#8B5A2B",
-    ];
-    const index = name?.charCodeAt(0) % colors.length || 0;
-    return colors[index];
-  };
-
   const getStatusColor = (status) => {
     return status === "active" ? "#10B981" : "#64748B";
   };
-
-  const shouldShowLoadMore = lastId && agents.length > 0;
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -431,34 +456,44 @@ const BharathAgentstore = () => {
     </View>
   );
 
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+     
+      <View style={styles.searchInputWrapper}>
+        <Ionicons name="search" size={20} color="#94A3B8" style={styles.searchIconLeft} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search AI assistants..."
+          placeholderTextColor="#94A3B8"
+          value={search}
+          onChangeText={handleSearchChange}
+          autoCapitalize="none"
+        />
+        {search.length > 0 && (
+          <TouchableOpacity
+            onPress={() => handleSearchChange("")}
+            style={styles.clearButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="close-circle" size={20} color="#94A3B8" />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
   const renderHeader = () => (
     <View style={styles.headerContainer}>
-      {/* Enhanced Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search AI assistants..."
-            placeholderTextColor="#94A3B8"
-            value={search}
-            onChangeText={setSearch}
-            autoCapitalize="none"
-          />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Text style={styles.clearIcon}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+       {/* <TouchableOpacity onPress={() => navigation.navigate("Agent Creation")} style={styles.addButton}>
+        <Text style={{color: '#fff', fontSize: 15, fontWeight: 'bold'}}>Add Agent</Text>
+      </TouchableOpacity> */}
+      {renderSearchBar()}
       <TouchableOpacity
-        onPress={() => navigation.navigate("AI Role Selection")}
+        onPress={() => navigation.navigate("Agent Creation")}
       >
         <AIRoleImage />
       </TouchableOpacity>
 
-      {/* Stats & View Toggle */}
       <View style={styles.statsContainer}>
         <Text style={styles.statsText}>
           {filteredAgents.length} assistant
@@ -503,7 +538,6 @@ const BharathAgentstore = () => {
     </View>
   );
 
-  // Improved loading screen
   if (loading && !refreshing && agents.length === 0) {
     return (
       <View style={styles.loadingContainer}>
@@ -518,10 +552,8 @@ const BharathAgentstore = () => {
 
   return (
     <View style={styles.container}>
-      {/* Enhanced Header */}
       {renderHeader()}
 
-      {/* Enhanced Grid/List */}
       <View style={styles.contentContainer}>
         <FlatList
           data={filteredAgents}
@@ -562,9 +594,6 @@ const BharathAgentstore = () => {
         />
       </View>
 
-
-
-      {/* Reusable FAB Component */}
       <CustomFAB navigation={navigation} />
     </View>
   );
@@ -593,31 +622,28 @@ const styles = StyleSheet.create({
   searchContainer: {
     marginBottom: 16,
   },
-  searchInputContainer: {
+  searchInputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#F8FAFC",
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: "#E2E8F0",
-    paddingHorizontal: 16,
-    height: 50,
+    paddingHorizontal: 12,
+    height: 48,
   },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: 12,
-    opacity: 0.6,
+  searchIconLeft: {
+    marginRight: 8,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
     color: "#1E293B",
-    height: "100%",
+    paddingVertical: 0,
   },
-  clearIcon: {
-    fontSize: 14,
-    color: "#64748B",
+  clearButton: {
     padding: 4,
+    marginLeft: 8,
   },
   statsContainer: {
     flexDirection: "row",
@@ -708,20 +734,6 @@ const styles = StyleSheet.create({
   listImage: {
     width: "100%",
     height: 240,
-  },
-  initialContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  initialText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
   },
   cardHeader: {
     flexDirection: "row",
@@ -897,37 +909,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "500",
   },
-  loadMoreContainer: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-  },
-  loadMoreButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#8B5CF6",
-    paddingVertical: 12,
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: "#8B5CF6",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-  },
-  loadMoreButtonDisabled: {
-    opacity: 0.6,
-  },
-  loadMoreButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "500",
-    marginRight: 6,
-  },
-  loadMoreIcon: {
-    color: "#FFFFFF",
-    fontSize: 14,
-  },
   footerLoader: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -941,4 +922,19 @@ const styles = StyleSheet.create({
     color: '#64748B',
     fontWeight: '500',
   },
+ addButton: {
+  backgroundColor: '#FBBF24', 
+  paddingVertical: 12,
+  paddingHorizontal: 16,
+  borderRadius: 8,
+  width: 120,
+  alignItems: 'center',     
+  justifyContent: 'center',  
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+},
+
 });

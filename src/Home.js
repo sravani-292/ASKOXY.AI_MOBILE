@@ -232,7 +232,7 @@ const HomeScreen = ({ navigation }) => {
 
 
  const featuresTop = [
-  { label: "Genoxy", icon: require("../assets/chat.png"), color: "#FFD700",radius:"left",screen:"GENOXY" },
+  { label: "OXYGPT", icon: require("../assets/chat.png"), color: "#FFD700",radius:"left",screen:"GENOXY" },
   { label:"AI Agents 2 Earn Money", icon: require("../assets/AgentEarn2.png"), color: "#34D399", screen:"AI Store",radius:"right", },
   // { label: "Explore AI LLMs", icon: require("../assets/brain.png"), color: "#A78BFA", screen:"DrawerScreens" },
   // { label: "Blockchain", icon: require("../assets/blockchain.png"), color: "#FACC15",radius:"right", screen:"AI BLOCKCHAIN & IT SERVICES" },

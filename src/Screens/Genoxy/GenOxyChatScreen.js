@@ -886,7 +886,7 @@ const styles = StyleSheet.create({
   },
   helperContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 30,
+    paddingVertical:15,
     alignItems: "center",
   },
   helperTitle: {
@@ -902,14 +902,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#6b7280",
     lineHeight: 22,
-    marginBottom: 24,
+    marginBottom: 18,
     textAlign: "center",
     paddingHorizontal: 20,
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
   },
   helperChip: {
     paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingVertical: 12,
     backgroundColor: "#ffffff",
     borderRadius: 12,
     borderWidth: 1,
@@ -927,7 +927,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#374151",
     textAlign: "center",
-    lineHeight: 20,
+    lineHeight: 18,
     fontFamily: Platform.OS === "ios" ? "System" : "Roboto",
   },
   inputWrapper: {

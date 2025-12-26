@@ -1,9 +1,9 @@
 // AgentPreviewScreen.tsx - FIXED VERSION
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as DocumentPicker from "expo-document-picker";
 // import { router, useLocalSearchParams } from 'expo-router';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import React, { useEffect, useRef, useState } from 'react';
+import { useNavigation, useRoute } from "@react-navigation/native";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,12 +18,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
 import { useSelector } from "react-redux";
 import axios from "axios";
 import BASE_URL from "../../../Config";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 interface AgentData {
   agentName: string;
@@ -45,10 +45,10 @@ const AgentPreviewScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const params = route.params as any;
-  console.log('AgentPreviewScreen navigation:', navigation)
+  console.log("AgentPreviewScreen navigation:", navigation);
   const [agentData, setAgentData] = useState<AgentData | null>(null);
   const [profileData, setProfileData] = useState<any>(null);
-console.log({agentData})
+  console.log({ agentData });
   // Refs for scrolling
   const scrollViewRef = useRef<ScrollView>(null);
   const instructionsCardRef = useRef<View>(null);
@@ -57,7 +57,7 @@ console.log({agentData})
   // Get profile data function
   const getProfile = async () => {
     if (!reduxUserId || !reduxToken) return;
-    
+
     try {
       const response = await axios({
         method: "GET",
@@ -66,71 +66,75 @@ console.log({agentData})
           Authorization: `Bearer ${reduxToken}`,
         },
       });
-      
+
       if (response.status === 200) {
         setProfileData(response.data);
-        console.log('Profile data loaded:', response.data);
+        console.log("Profile data loaded:", response.data);
       }
     } catch (error) {
-      console.error('Error fetching profile data:', error);
+      console.error("Error fetching profile data:", error);
     }
   };
 
   useEffect(() => {
-    // Get profile data on mount
     getProfile();
-    
+
     try {
       if (params?.agentData) {
-        if (typeof params.agentData === 'string') {
+        if (typeof params.agentData === "string") {
           const parsed = JSON.parse(params.agentData);
           setAgentData(parsed);
-          console.log('Parsed agent data:', parsed);
+          console.log("Parsed agent data:", parsed);
         } else {
           // Direct object
           setAgentData(params.agentData);
-          console.log('Direct agent data:', params.agentData);
+          console.log("Direct agent data:", params.agentData);
         }
       }
     } catch (error) {
-      console.error('Failed to parse agentData:', error);
-      Alert.alert('Error', 'Failed to load agent data');
+      console.error("Failed to parse agentData:", error);
+      Alert.alert("Error", "Failed to load agent data");
     }
   }, [params?.agentData, reduxUserId, reduxToken]);
 
-  const agentName = agentData?.agentName || '';
-  const description = agentData?.description || '';
-  const view = agentData?.view || 'Private';
-  
-  const roleResolved = agentData?.roleSelect === 'Other' 
-    ? agentData?.roleOther 
-    : agentData?.roleSelect || '';
-  
-  const goalResolved = agentData?.goalSelect === 'Other' 
-    ? agentData?.goalOther 
-    : agentData?.goalSelect || '';
-  
-  const purposeResolved = agentData?.purposeSelect === 'Other' 
-    ? agentData?.purposeOther 
-    : agentData?.purposeSelect || '';
+  const agentName = agentData?.agentName || "";
+  const description = agentData?.description || "";
+  const view = agentData?.view || "Private";
 
-  const [instructions, setInstructions] = useState<string>('');
-  const [conStarter1, setConStarter1] = useState<string>('');
-  const [conStarter2, setConStarter2] = useState<string>('');
-  
+  const roleResolved =
+    agentData?.roleSelect === "Other"
+      ? agentData?.roleOther
+      : agentData?.roleSelect || "";
+
+  const goalResolved =
+    agentData?.goalSelect === "Other"
+      ? agentData?.goalOther
+      : agentData?.goalSelect || "";
+
+  const purposeResolved =
+    agentData?.purposeSelect === "Other"
+      ? agentData?.purposeOther
+      : agentData?.purposeSelect || "";
+
+  const [instructions, setInstructions] = useState<string>("");
+  const [conStarter1, setConStarter1] = useState<string>("");
+  const [conStarter2, setConStarter2] = useState<string>("");
+
   const [genLoading, setGenLoading] = useState<boolean>(false);
   const [startersLoading, setStartersLoading] = useState<boolean>(false);
   const [publishing, setPublishing] = useState<boolean>(false);
-  
+
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
-  const [editDraft, setEditDraft] = useState<string>('');
-  const [instrCollapsed, setInstrCollapsed] = useState<boolean>(true); // Start with collapsed/hidden
+  const [editDraft, setEditDraft] = useState<string>("");
+  const [instrCollapsed, setInstrCollapsed] = useState<boolean>(true);
 
   // File upload state
   const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
-  const [selectedFiles, setSelectedFiles] = useState<DocumentPicker.DocumentPickerAsset[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<
+    DocumentPicker.DocumentPickerAsset[]
+  >([]);
   const [uploading, setUploading] = useState<boolean>(false);
-  const [assistanceId, setAssistanceId] = useState<string>('');
+  const [assistanceId, setAssistanceId] = useState<string>("");
 
   const instructionsGeneratedRef = useRef<boolean>(false);
   const startersGeneratedRef = useRef<boolean>(false);
@@ -143,7 +147,7 @@ console.log({agentData})
         (x, y) => {
           scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
         },
-        () => console.log('Failed to measure layout')
+        () => console.log("Failed to measure layout")
       );
     }, 300);
   };
@@ -156,7 +160,7 @@ console.log({agentData})
         (x, y) => {
           scrollViewRef.current?.scrollTo({ y: y - 100, animated: true });
         },
-        () => console.log('Failed to measure layout')
+        () => console.log("Failed to measure layout")
       );
     }, 500);
   };
@@ -164,12 +168,19 @@ console.log({agentData})
   // Get auth token
   const getAuthToken = async (): Promise<string | null> => {
     if (reduxToken) {
-      console.log('Using token from Redux');
+      console.log("Using token from Redux");
       return reduxToken;
     }
 
-    console.log('Redux token not found, checking AsyncStorage...');
-    const keys = ['token', 'accessToken', 'authToken', 'jwt', 'jwtToken', 'bearerToken'];
+    console.log("Redux token not found, checking AsyncStorage...");
+    const keys = [
+      "token",
+      "accessToken",
+      "authToken",
+      "jwt",
+      "jwtToken",
+      "bearerToken",
+    ];
     for (const key of keys) {
       try {
         const token = await AsyncStorage.getItem(key);
@@ -181,8 +192,8 @@ console.log({agentData})
         console.error(`Error reading ${key} from AsyncStorage:`, error);
       }
     }
-    
-    console.error('No token found in Redux or AsyncStorage');
+
+    console.error("No token found in Redux or AsyncStorage");
     return null;
   };
 
@@ -193,25 +204,25 @@ console.log({agentData})
     }
 
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      return userId || '';
+      const userId = await AsyncStorage.getItem("userId");
+      return userId || "";
     } catch (error) {
-      console.error('Error reading userId:', error);
-      return '';
+      console.error("Error reading userId:", error);
+      return "";
     }
   };
 
   // Clean instruction text
   const cleanInstructionText = (txt: string): string => {
-    return (txt || '')
-      .replace(/^\uFEFF/, '')
-      .replace(/```[\s\S]*?```/g, '')
-      .replace(/^#{1,6}\s?/gm, '')
-      .replace(/\*+/g, '')
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\r\n?/g, '\n')
-      .replace(/[ \t]*\n[ \t]*/g, '\n')
-      .replace(/\n{3,}/g, '\n\n')
+    return (txt || "")
+      .replace(/^\uFEFF/, "")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/^#{1,6}\s?/gm, "")
+      .replace(/\*+/g, "")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\r\n?/g, "\n")
+      .replace(/[ \t]*\n[ \t]*/g, "\n")
+      .replace(/\n{3,}/g, "\n\n")
       .trim();
   };
 
@@ -219,7 +230,7 @@ console.log({agentData})
   const parseStartersFromText = (raw: string): string[] => {
     const lines = raw
       .split(/\r?\n/)
-      .map((l) => l.replace(/^\s*[-*•\d.)]+\s*/, '').trim())
+      .map((l) => l.replace(/^\s*[-*•\d.)]+\s*/, "").trim())
       .filter(Boolean);
     const uniq: string[] = [];
     for (const l of lines) {
@@ -232,55 +243,64 @@ console.log({agentData})
   // Generate instructions
   const generateInstructions = async (): Promise<void> => {
     if (!description.trim()) {
-      Alert.alert('Error', 'Description is required to generate instructions');
+      Alert.alert("Error", "Description is required to generate instructions");
       return;
     }
 
     const token = await getAuthToken();
     if (!token) {
-      Alert.alert('Error', 'You are not signed in. Please log in and try again.');
+      Alert.alert(
+        "Error",
+        "You are not signed in. Please log in and try again."
+      );
       return;
     }
 
     scrollToInstructions();
-    
+
     setGenLoading(true);
     try {
-      const baseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+      const baseUrl = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
       const params = new URLSearchParams({ description: description.trim() });
       const url = `${baseUrl}/ai-service/agent/classifyInstruct?${params}`;
-      
-      console.log('Fetching instructions from:', url);
+
+      console.log("Fetching instructions from:", url);
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
-      console.log('Instructions response status:', response.status);
+      console.log("Instructions response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Generate instructions error:', response.status, errorText);
+        console.error(
+          "Generate instructions error:",
+          response.status,
+          errorText
+        );
         throw new Error(`Failed: ${response.status} - ${errorText}`);
       }
 
       const text = await response.text();
       const cleaned = cleanInstructionText(text);
-      const seed = cleaned || `Write precise, actionable instructions for an agent called "${agentName}".`;
+      const seed =
+        cleaned ||
+        `Write precise, actionable instructions for an agent called "${agentName}".`;
 
       setInstructions(seed);
       setEditDraft(seed);
       instructionsGeneratedRef.current = true;
-      console.log('Instructions generated successfully');
-      
+      console.log("Instructions generated successfully");
+
       scrollToPublishButton();
     } catch (error: any) {
-      console.error('Generate instructions error:', error);
-      Alert.alert('Error', error.message || 'Failed to generate instructions');
+      console.error("Generate instructions error:", error);
+      Alert.alert("Error", error.message || "Failed to generate instructions");
     } finally {
       setGenLoading(false);
     }
@@ -289,37 +309,40 @@ console.log({agentData})
   // Generate conversation starters
   const generateStarters = async (): Promise<void> => {
     if (!description.trim()) {
-      Alert.alert('Error', 'Description is required to generate starters');
+      Alert.alert("Error", "Description is required to generate starters");
       return;
     }
 
     const token = await getAuthToken();
     if (!token) {
-      Alert.alert('Error', 'You are not signed in. Please log in and try again.');
+      Alert.alert(
+        "Error",
+        "You are not signed in. Please log in and try again."
+      );
       return;
     }
 
     setStartersLoading(true);
     try {
-      const baseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+      const baseUrl = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
       const params = new URLSearchParams({ description: description.trim() });
       const url = `${baseUrl}/ai-service/agent/classifyStartConversation?${params}`;
-      
-      console.log('Fetching starters from:', url);
+
+      console.log("Fetching starters from:", url);
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
-      console.log('Starters response status:', response.status);
+      console.log("Starters response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Generate starters error:', response.status, errorText);
+        console.error("Generate starters error:", response.status, errorText);
         throw new Error(`Failed: ${response.status} - ${errorText}`);
       }
 
@@ -327,17 +350,20 @@ console.log({agentData})
       const prompts = parseStartersFromText(text);
 
       if (!prompts.length) {
-        console.warn('No starters returned from API');
+        console.warn("No starters returned from API");
         return;
       }
 
-      setConStarter1(prompts[0] || '');
-      setConStarter2(prompts[1] || '');
+      setConStarter1(prompts[0] || "");
+      setConStarter2(prompts[1] || "");
       startersGeneratedRef.current = true;
-      console.log('Starters generated successfully');
+      console.log("Starters generated successfully");
     } catch (error: any) {
-      console.error('Generate starters error:', error);
-      Alert.alert('Error', error.message || 'Failed to fetch conversation starters.');
+      console.error("Generate starters error:", error);
+      Alert.alert(
+        "Error",
+        error.message || "Failed to fetch conversation starters."
+      );
     } finally {
       setStartersLoading(false);
     }
@@ -347,40 +373,46 @@ console.log({agentData})
   const pickFiles = async (): Promise<void> => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        type: [
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "application/msword",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ],
         multiple: true,
         copyToCacheDirectory: true,
       });
 
       if (result.canceled) {
-        console.log('File picker cancelled');
+        console.log("File picker cancelled");
         return;
       }
 
       if (result.assets && result.assets.length > 0) {
-        const validFiles = result.assets.filter(file => {
+        const validFiles = result.assets.filter((file) => {
           const sizeInMB = file.size ? file.size / (1024 * 1024) : 0;
           if (sizeInMB > 5) {
-            Alert.alert('File Too Large', `${file.name} exceeds 5MB limit`);
+            Alert.alert("File Too Large", `${file.name} exceeds 5MB limit`);
             return false;
           }
           return true;
         });
-         console.log("into the file upload assets success block", validFiles);
-         
+        console.log("into the file upload assets success block", validFiles);
+
         setSelectedFiles(validFiles);
-        console.log('Files selected:', validFiles.length);
+        console.log("Files selected:", validFiles.length);
       }
     } catch (error) {
-      console.error('Error picking files:', error);
-      Alert.alert('Error', 'Failed to pick files');
+      console.error("Error picking files:", error);
+      Alert.alert("Error", "Failed to pick files");
     }
   };
 
   // Upload files
   const uploadFiles = async (): Promise<void> => {
     if (selectedFiles.length === 0) {
-      Alert.alert('Error', 'Please select at least one file');
+      Alert.alert("Error", "Please select at least one file");
       return;
     }
 
@@ -388,75 +420,88 @@ console.log({agentData})
     const userId = await getUserId();
 
     if (!token) {
-      Alert.alert('Error', 'Authentication token not found');
+      Alert.alert("Error", "Authentication token not found");
       return;
     }
 
     if (!assistanceId) {
-      Alert.alert('Error', 'Assistant ID not found. Please try publishing the agent again.');
+      Alert.alert(
+        "Error",
+        "Assistant ID not found. Please try publishing the agent again."
+      );
       return;
     }
 
     if (!roleResolved) {
-      Alert.alert('Error', 'Role information not found');
+      Alert.alert("Error", "Role information not found");
       return;
     }
 
     setUploading(true);
     try {
-      const baseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+      const baseUrl = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
 
       for (const file of selectedFiles) {
         const formData = new FormData();
-        
+
         // @ts-ignore
-        formData.append('file', {
+        formData.append("file", {
           uri: file.uri,
-          type: file.mimeType || 'application/octet-stream',
+          type: file.mimeType || "application/octet-stream",
           name: file.name,
         });
 
-        const url = `${baseUrl}/ai-service/agent/${encodeURIComponent(assistanceId)}/addAgentFiles?addFileType=${encodeURIComponent(roleResolved)}&userId=${encodeURIComponent(userId)}`;
+        const url = `${baseUrl}/ai-service/agent/${encodeURIComponent(
+          assistanceId
+        )}/addAgentFiles?addFileType=${encodeURIComponent(
+          roleResolved
+        )}&userId=${encodeURIComponent(userId)}&url=${encodeURIComponent(
+          file.uri
+        )} `;
 
-        console.log('Uploading file:', file.name);
-        console.log('Assistant ID:', assistanceId);
-        console.log('Role:', roleResolved);
-        console.log('User ID:', userId);
-        console.log('Upload URL:', url);
+        console.log("Uploading file:", file.name);
+        console.log("Assistant ID:", assistanceId);
+        console.log("Role:", roleResolved);
+        console.log("User ID:", userId);
+        console.log("Upload URL:", url);
 
         const response = await fetch(url, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: formData,
         });
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('Upload error response:', errorText);
-          throw new Error(`Upload failed for ${file.name}: ${response.status} - ${errorText}`);
+          console.error("Upload error response:", errorText);
+          throw new Error(
+            `Upload failed for ${file.name}: ${response.status} - ${errorText}`
+          );
         }
 
-        console.log('File uploaded successfully:', file.name);
+        console.log("File uploaded successfully:", file.name);
       }
 
       Alert.alert(
-        'Success',
-        'Files uploaded successfully! Your agent is queued for approval.',
+        "Success",
+        "Files uploaded successfully! Your agent is queued for approval.",
         [
           {
-            text: 'OK',
-            onPress: () => {
+            text: "OK",
+            onPress: async () => {
+              await AsyncStorage.setItem("resetAgentForm", "true");
+              console.log("Set resetAgentForm flag to true");
               setUploadModalOpen(false);
               navigation.goBack();
-            }
-          }
+            },
+          },
         ]
       );
     } catch (error: any) {
-      console.error('Upload files error:', error);
-      Alert.alert('Error', error.message || 'Failed to upload files');
+      console.error("Upload files error:", error);
+      Alert.alert("Error", error.message || "Failed to upload files");
     } finally {
       setUploading(false);
     }
@@ -468,12 +513,15 @@ console.log({agentData})
     const userId = await getUserId();
 
     if (!token) {
-      Alert.alert('Error', 'You are not signed in. Please log in and try again.');
+      Alert.alert(
+        "Error",
+        "You are not signed in. Please log in and try again."
+      );
       return;
     }
 
     if (!instructions.trim()) {
-      Alert.alert('Error', 'Please generate instructions before publishing.');
+      Alert.alert("Error", "Please generate instructions before publishing.");
       return;
     }
 
@@ -482,66 +530,90 @@ console.log({agentData})
       const body = {
         agentName: agentName.trim(),
         description: description.trim(),
-        roleUser: agentData?.roleSelect === 'Other' ? 'Other' : agentData?.roleSelect,
-        purpose: agentData?.purposeSelect === 'Other' ? 'Other' : agentData?.purposeSelect,
-        goals: agentData?.goalSelect === 'Other' ? 'Other' : agentData?.goalSelect,
-        optionalRole: agentData?.roleSelect === 'Other' ? agentData?.roleOther?.trim() : '',
-        optionalPurpose: agentData?.purposeSelect === 'Other' ? agentData?.purposeOther?.trim() : '',
-        optionalGoal: agentData?.goalSelect === 'Other' ? agentData?.goalOther?.trim() : '',
+        roleUser:
+          agentData?.roleSelect === "Other" ? "Other" : agentData?.roleSelect,
+        purpose:
+          agentData?.purposeSelect === "Other"
+            ? "Other"
+            : agentData?.purposeSelect,
+        goals:
+          agentData?.goalSelect === "Other" ? "Other" : agentData?.goalSelect,
+        optionalRole:
+          agentData?.roleSelect === "Other" ? agentData?.roleOther?.trim() : "",
+        optionalPurpose:
+          agentData?.purposeSelect === "Other"
+            ? agentData?.purposeOther?.trim()
+            : "",
+        optionalGoal:
+          agentData?.goalSelect === "Other" ? agentData?.goalOther?.trim() : "",
         instructions: instructions.slice(0, 7000),
         userId: userId,
         view: view,
         conStarter1: conStarter1.trim(),
         conStarter2: conStarter2.trim(),
-        conStarter3: '',
-        conStarter4: '',
-        BusinessCardId: agentData?.BusinessCardId || '',
+        conStarter3: "",
+        conStarter4: "",
+        BusinessCardId: agentData?.BusinessCardId || "",
       };
 
-      console.log('Publishing agent with data:', { 
-        ...body, 
-        instructions: body.instructions.substring(0, 50) + '...' 
+      console.log("Publishing agent with data:", {
+        ...body,
+        instructions: body.instructions.substring(0, 50) + "...",
       });
 
-      const baseUrl = BASE_URL.endsWith('/') ? BASE_URL.slice(0, -1) : BASE_URL;
+      const baseUrl = BASE_URL.endsWith("/") ? BASE_URL.slice(0, -1) : BASE_URL;
       const url = `${baseUrl}/ai-service/agent/newAgentPublish`;
 
       const response = await fetch(url, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
       });
 
-      console.log('Publish response status:', response.status);
+      console.log("Publish response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Publish error:', response.status, errorText);
+        console.error("Publish error:", response.status, errorText);
         throw new Error(`Publish failed: ${response.status} - ${errorText}`);
       }
 
       const responseData = await response.json();
-      console.log('Publish success:', responseData);
+      console.log("Publish success:", responseData);
+      const newAssistanceId =
+        responseData.assistanceId ||
+        responseData.assistantId ||
+        responseData.id ||
+        "";
 
-      const newAssistanceId = responseData.assistanceId || responseData.assistantId || responseData.id || '';
-      
       if (newAssistanceId) {
         setAssistanceId(newAssistanceId);
-        console.log('Assistant ID:', newAssistanceId);
-        
+        console.log("Assistant ID:", newAssistanceId);
         setSelectedFiles([]);
-        setUploadModalOpen(true);
+        Alert.alert(
+          "Congratulations!",
+          "Your agent has been published successfully.",
+          [
+            {
+              text: "OK",
+              onPress: () => {
+                setUploadModalOpen(true);
+              },
+            },
+          ],
+          { cancelable: false } 
+        );
       } else {
-        Alert.alert('Warning', 'Agent published but no Assistant ID returned');
+        Alert.alert("Warning", "Agent published but no Assistant ID returned");
         // router.back();
         navigation.goBack();
       }
     } catch (error: any) {
-      console.error('Publish agent error:', error);
-      Alert.alert('Error', error.message || 'Publish failed');
+      console.error("Publish agent error:", error);
+      Alert.alert("Error", error.message || "Publish failed");
     } finally {
       setPublishing(false);
     }
@@ -551,25 +623,29 @@ console.log({agentData})
   useEffect(() => {
     if (!agentData) return;
 
-    console.log('AgentPreviewScreen mounted');
-    console.log('Redux token available:', !!reduxToken);
-    console.log('Redux userId:', reduxUserId);
-    
-    const autoGenerate = async () => { 
+    console.log("AgentPreviewScreen mounted");
+    console.log("Redux token available:", !!reduxToken);
+    console.log("Redux userId:", reduxUserId);
+
+    const autoGenerate = async () => {
       try {
-        if (!conStarter1.trim() && !conStarter2.trim() && !startersGeneratedRef.current) {
-          console.log('Auto-generating conversation starters...');
+        if (
+          !conStarter1.trim() &&
+          !conStarter2.trim() &&
+          !startersGeneratedRef.current
+        ) {
+          console.log("Auto-generating conversation starters...");
           await generateStarters();
-          console.log('Conversation starters generation completed');
+          console.log("Conversation starters generation completed");
         }
-        
+
         if (!instructions.trim() && !instructionsGeneratedRef.current) {
-          console.log('Auto-generating instructions...');
+          console.log("Auto-generating instructions...");
           await generateInstructions();
-          console.log('Instructions generation completed');
+          console.log("Instructions generation completed");
         }
       } catch (error) {
-        console.error('Auto-generation error:', error);
+        console.error("Auto-generation error:", error);
       }
     };
 
@@ -578,11 +654,11 @@ console.log({agentData})
 
   const handlePublish = (): void => {
     Alert.alert(
-      'Publish this Agent?',
+      "Publish this Agent?",
       `Name: ${agentName}\nRole: ${roleResolved}\nGoal: ${goalResolved}\nPurpose: ${purposeResolved}\nVisibility: ${view}`,
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Yes, Publish', onPress: publishAgent }
+        { text: "Cancel", style: "cancel" },
+        { text: "Yes, Publish", onPress: publishAgent },
       ]
     );
   };
@@ -590,7 +666,7 @@ console.log({agentData})
   const handleSaveEdit = (): void => {
     setInstructions(editDraft.trim());
     setEditModalOpen(false);
-    Alert.alert('Success', 'Instructions updated successfully!');
+    Alert.alert("Success", "Instructions updated successfully!");
   };
 
   const toggleInstructionsCollapse = (): void => {
@@ -608,9 +684,9 @@ console.log({agentData})
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView 
+      <ScrollView
         ref={scrollViewRef}
-        style={styles.scrollView} 
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={true}
         keyboardShouldPersistTaps="handled"
@@ -621,7 +697,9 @@ console.log({agentData})
             <Text style={styles.headerEmoji}>👁️</Text>
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>Agent Preview</Text>
-              <Text style={styles.headerSubtitle}>Review your agent before publishing</Text>
+              <Text style={styles.headerSubtitle}>
+                Review your agent before publishing
+              </Text>
             </View>
           </View>
         </View>
@@ -629,7 +707,7 @@ console.log({agentData})
         {/* Agent Info Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Agent Details</Text>
-          
+
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Name:</Text>
             <Text style={styles.infoValue}>{agentName}</Text>
@@ -647,7 +725,7 @@ console.log({agentData})
             </View>
             <View style={styles.tag}>
               <Text style={styles.tagText}>
-                {view === 'Public' ? '🌐' : '🔒'} {view}
+                {view === "Public" ? "🌐" : "🔒"} {view}
               </Text>
             </View>
           </View>
@@ -656,7 +734,6 @@ console.log({agentData})
             <Text style={styles.infoLabel}>Description:</Text>
             <Text style={styles.descriptionText}>{description}</Text>
           </View>
-          
         </View>
 
         {/* Conversation Starters Card */}
@@ -682,7 +759,9 @@ console.log({agentData})
           {startersLoading && (
             <View style={styles.generatingBanner}>
               <ActivityIndicator size="small" color="#6D28D9" />
-              <Text style={styles.generatingText}>AI Generating conversation starters...</Text>
+              <Text style={styles.generatingText}>
+                AI Generating conversation starters...
+              </Text>
             </View>
           )}
 
@@ -714,11 +793,7 @@ console.log({agentData})
         </View>
 
         {/* Instructions Card */}
-        <View 
-          ref={instructionsCardRef}
-          style={styles.card}
-          collapsable={false}
-        >
+        <View ref={instructionsCardRef} style={styles.card} collapsable={false}>
           <View style={styles.sectionHeader}>
             <Text style={styles.cardTitle}>Instructions</Text>
             <View style={styles.instructionButtons}>
@@ -727,7 +802,7 @@ console.log({agentData})
                 onPress={toggleInstructionsCollapse}
               >
                 <Text style={styles.actionBtnText}>
-                  {instrCollapsed ? '👁️ Show' : '🙈 Hide'}
+                  {instrCollapsed ? "👁️ Show" : "🙈 Hide"}
                 </Text>
               </TouchableOpacity>
 
@@ -739,11 +814,16 @@ console.log({agentData})
                 }}
                 disabled={!instructions.trim()}
               >
-                <Text style={[styles.actionBtnText, styles.actionBtnEditText]}>Edit</Text>
+                <Text style={[styles.actionBtnText, styles.actionBtnEditText]}>
+                  Edit
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.suggestButton, genLoading && styles.suggestButtonDisabled]}
+                style={[
+                  styles.suggestButton,
+                  genLoading && styles.suggestButtonDisabled,
+                ]}
                 onPress={generateInstructions}
                 disabled={genLoading}
               >
@@ -762,7 +842,9 @@ console.log({agentData})
           {genLoading && (
             <View style={styles.generatingBanner}>
               <ActivityIndicator size="small" color="#6D28D9" />
-              <Text style={styles.generatingText}>AI Generating instructions... Please wait</Text>
+              <Text style={styles.generatingText}>
+                AI Generating instructions... Please wait
+              </Text>
             </View>
           )}
 
@@ -770,19 +852,24 @@ console.log({agentData})
             {genLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#6D28D9" />
-                <Text style={styles.loadingText}>Creating detailed instructions...</Text>
-                <Text style={styles.loadingSubtext}>This may take a few moments</Text>
+                <Text style={styles.loadingText}>
+                  Creating detailed instructions...
+                </Text>
+                <Text style={styles.loadingSubtext}>
+                  This may take a few moments
+                </Text>
               </View>
             ) : (
               <>
                 {instrCollapsed ? (
                   <View>
                     <Text style={styles.instructionsText}>
-                      {instructions.slice(0, 300) || 'Instructions will appear here after generation.'}
-                      {instructions.length > 300 && '...'}
+                      {instructions.slice(0, 300) ||
+                        "Instructions will appear here after generation."}
+                      {instructions.length > 300 && "..."}
                     </Text>
                     {instructions.length > 300 && (
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.viewMoreButton}
                         onPress={() => setInstrCollapsed(false)}
                       >
@@ -791,13 +878,14 @@ console.log({agentData})
                     )}
                   </View>
                 ) : (
-                  <ScrollView 
-                    style={styles.instructionsScroll} 
+                  <ScrollView
+                    style={styles.instructionsScroll}
                     nestedScrollEnabled={true}
                     showsVerticalScrollIndicator={true}
                   >
                     <Text style={styles.instructionsText}>
-                      {instructions || 'Instructions will appear here after generation.'}
+                      {instructions ||
+                        "Instructions will appear here after generation."}
                     </Text>
                   </ScrollView>
                 )}
@@ -807,13 +895,12 @@ console.log({agentData})
         </View>
 
         {/* Publish Button */}
-        <View 
-          ref={publishButtonRef}
-          style={styles.actions}
-          collapsable={false}
-        >
+        <View ref={publishButtonRef} style={styles.actions} collapsable={false}>
           <TouchableOpacity
-            style={[styles.publishButton, (!instructions.trim() || publishing) && styles.buttonDisabled]}
+            style={[
+              styles.publishButton,
+              (!instructions.trim() || publishing) && styles.buttonDisabled,
+            ]}
             onPress={handlePublish}
             disabled={!instructions.trim() || publishing}
           >
@@ -825,10 +912,14 @@ console.log({agentData})
             ) : (
               <>
                 <Text style={styles.publishButtonText}>
-                  {instructions.trim() ? '🚀 Publish Agent' : '⏳ Generating...'}
+                  {instructions.trim()
+                    ? "🚀 Publish Agent"
+                    : "⏳ Generating..."}
                 </Text>
                 {instructions.trim() && (
-                  <Text style={styles.publishButtonSubtext}>Ready to publish your agent</Text>
+                  <Text style={styles.publishButtonSubtext}>
+                    Ready to publish your agent
+                  </Text>
                 )}
               </>
             )}
@@ -849,10 +940,10 @@ console.log({agentData})
         transparent={true}
         onRequestClose={() => setEditModalOpen(false)}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -861,10 +952,10 @@ console.log({agentData})
                 <Text style={styles.modalClose}>✕</Text>
               </TouchableOpacity>
             </View>
-            
+
             <Text style={styles.modalSubtitle}>Max 7000 characters</Text>
-            
-            <ScrollView 
+
+            <ScrollView
               style={styles.modalScrollContainer}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={true}
@@ -881,9 +972,9 @@ console.log({agentData})
                 autoFocus={false}
               />
             </ScrollView>
-            
+
             <Text style={styles.charCounter}>{editDraft.length}/7000</Text>
-            
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={styles.modalCancelButton}
@@ -909,11 +1000,14 @@ console.log({agentData})
         animationType="slide"
         transparent={true}
         onRequestClose={() => {
-          Alert.alert('Upload Required', 'Please upload files to complete agent creation');
+          Alert.alert(
+            "Upload Required",
+            "Please upload files to complete agent creation"
+          );
         }}
       >
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
           <View style={styles.uploadModalContent}>
@@ -921,8 +1015,8 @@ console.log({agentData})
               <Text style={styles.modalTitle}>Upload Profile Documents</Text>
             </View>
 
-            <ScrollView 
-              style={styles.uploadScrollView} 
+            <ScrollView
+              style={styles.uploadScrollView}
               nestedScrollEnabled={true}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={true}
@@ -940,11 +1034,15 @@ console.log({agentData})
 
               {/* File Selection */}
               <View style={styles.uploadSection}>
-                <Text style={styles.uploadLabel}>Upload Supporting Documents *</Text>
+                <Text style={styles.uploadLabel}>
+                  Upload Supporting Documents *
+                </Text>
 
                 <Text style={styles.uploadInstruction}>
-                  Please upload documents that verify your role as a <Text style={styles.boldText}>{roleResolved}</Text>.
-                  {'\n\n'}Examples: ID card, employee badge, business registration, professional certificate, etc.
+                  Please upload documents that verify your role as a{" "}
+                  <Text style={styles.boldText}>{roleResolved}</Text>.{"\n\n"}
+                  Examples: ID card, employee badge, business registration,
+                  professional certificate, etc.
                 </Text>
 
                 <TouchableOpacity
@@ -952,14 +1050,14 @@ console.log({agentData})
                   onPress={pickFiles}
                 >
                   <Text style={styles.pickFilesButtonText}>
-                    {selectedFiles.length > 0 
-                      ? `${selectedFiles.length} file(s) selected` 
-                      : '📎 Select Files'}
+                    {selectedFiles.length > 0
+                      ? `${selectedFiles.length} file(s) selected`
+                      : "📎 Select Files"}
                   </Text>
                 </TouchableOpacity>
 
                 {selectedFiles.length > 0 && (
-                  <ScrollView 
+                  <ScrollView
                     style={styles.filesList}
                     nestedScrollEnabled={true}
                   >
@@ -970,7 +1068,9 @@ console.log({agentData})
                         </Text>
                         <TouchableOpacity
                           onPress={() => {
-                            setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+                            setSelectedFiles((prev) =>
+                              prev.filter((_, i) => i !== index)
+                            );
                           }}
                         >
                           <Text style={styles.removeFileText}>✕</Text>
@@ -990,18 +1090,21 @@ console.log({agentData})
             <View style={styles.uploadFooter}>
               <TouchableOpacity
                 style={styles.skipButton}
-                onPress={() => {
+                onPress={async () => {
+                  await AsyncStorage.setItem("resetAgentForm", "true");
+                  console.log("Set resetAgentForm flag to true (skip)");
                   setUploadModalOpen(false);
                   navigation.goBack();
                 }}
               >
                 <Text style={styles.skipButtonText}>Skip Upload</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[
                   styles.uploadButton,
-                  (selectedFiles.length === 0 || uploading) && styles.buttonDisabled
+                  (selectedFiles.length === 0 || uploading) &&
+                    styles.buttonDisabled,
                 ]}
                 onPress={uploadFiles}
                 disabled={selectedFiles.length === 0 || uploading}
@@ -1012,7 +1115,9 @@ console.log({agentData})
                     <Text style={styles.uploadButtonText}>Uploading...</Text>
                   </View>
                 ) : (
-                  <Text style={styles.uploadButtonText}>Upload Files & Complete</Text>
+                  <Text style={styles.uploadButtonText}>
+                    Upload Files & Complete
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -1026,11 +1131,11 @@ console.log({agentData})
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   centerContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   scrollView: {
     flex: 1,
@@ -1042,22 +1147,22 @@ const styles = StyleSheet.create({
 
   // Header Card
   headerCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 18,
     marginTop: 20,
     marginBottom: 14,
-    shadowColor: '#6D28D9',
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
     elevation: 4,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
   },
   headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 12,
   },
   headerEmoji: {
@@ -1069,34 +1174,34 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '900',
-    color: '#0F172A',
+    fontWeight: "900",
+    color: "#0F172A",
     marginBottom: 6,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: "#64748B",
     lineHeight: 18,
   },
 
   // Card Styles
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 14,
     marginBottom: 14,
-    shadowColor: '#020817',
+    shadowColor: "#020817",
     shadowOffset: { width: 0, height: 14 },
     shadowOpacity: 0.08,
     shadowRadius: 40,
     elevation: 5,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '900',
-    color: '#6D28D9',
+    fontWeight: "900",
+    color: "#6D28D9",
     letterSpacing: 0.2,
     marginBottom: 12,
   },
@@ -1120,23 +1225,23 @@ const styles = StyleSheet.create({
 
   // Tags
   tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginBottom: 12,
   },
   tag: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: "#F3E8FF",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
   },
   tagText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#6D28D9',
+    fontWeight: "600",
+    color: "#6D28D9",
   },
 
   // Description
@@ -1145,9 +1250,9 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
     lineHeight: 21,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     padding: 12,
     borderRadius: 8,
     marginTop: 4,
@@ -1155,43 +1260,43 @@ const styles = StyleSheet.create({
 
   // Section Header
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
     gap: 8,
   },
 
   // Generating Banner
   generatingBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF3C7',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEF3C7",
     padding: 12,
     borderRadius: 8,
     marginBottom: 12,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FDE047',
+    borderColor: "#FDE047",
   },
   generatingText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#92400E',
+    fontWeight: "600",
+    color: "#92400E",
     flex: 1,
   },
 
   // Suggest Button
   suggestButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
-    backgroundColor: '#FFFFFF',
+    borderColor: "#E7E6F3",
+    backgroundColor: "#FFFFFF",
     gap: 6,
   },
   suggestButtonDisabled: {
@@ -1202,8 +1307,8 @@ const styles = StyleSheet.create({
   },
   suggestButtonText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: "800",
+    color: "#0F172A",
   },
 
   // Conversation Starters
@@ -1212,53 +1317,53 @@ const styles = StyleSheet.create({
   },
   starterLabel: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 6,
   },
   starterInput: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
     borderRadius: 10,
     padding: 12,
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
     minHeight: 60,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
 
   // Instructions
   instructionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   actionBtn: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
-    backgroundColor: '#FFFFFF',
+    borderColor: "#E7E6F3",
+    backgroundColor: "#FFFFFF",
   },
   actionBtnEdit: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E7E6F3',
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E7E6F3",
     borderWidth: 1.5,
   },
   actionBtnText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
   },
   actionBtnEditText: {
-    color: '#111827',
+    color: "#111827",
   },
   instructionsBox: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
     borderRadius: 12,
     padding: 14,
     minHeight: 150,
@@ -1266,43 +1371,43 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
     gap: 12,
   },
   loadingText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#64748B',
+    fontWeight: "600",
+    color: "#64748B",
   },
   loadingSubtext: {
     fontSize: 12,
-    color: '#94A3B8',
-    fontStyle: 'italic',
+    color: "#94A3B8",
+    fontStyle: "italic",
   },
   instructionsScroll: {
     maxHeight: 350,
   },
   instructionsText: {
     fontSize: 14,
-    color: '#374151',
+    color: "#374151",
     lineHeight: 21,
   },
   viewMoreButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     paddingVertical: 10,
     paddingHorizontal: 16,
     marginTop: 12,
-    backgroundColor: '#F3E8FF',
+    backgroundColor: "#F3E8FF",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
   },
   viewMoreText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#6D28D9',
+    fontWeight: "700",
+    color: "#6D28D9",
   },
 
   // Actions
@@ -1311,79 +1416,79 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   publishButton: {
-    backgroundColor: '#6D28D9',
+    backgroundColor: "#6D28D9",
     paddingVertical: 16,
     borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#6D28D9',
+    alignItems: "center",
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: "#CBD5E1",
     shadowOpacity: 0,
     elevation: 0,
   },
   publishButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.5,
   },
   publishButtonSubtext: {
-    color: '#E9D5FF',
+    color: "#E9D5FF",
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
     marginTop: 4,
   },
   publishingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   waitingText: {
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 13,
-    color: '#64748B',
+    color: "#64748B",
     marginTop: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
 
   // Modal Styles - FIXED
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '90%',
-    minHeight: '60%',
+    maxHeight: "90%",
+    minHeight: "60%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontWeight: "700",
+    color: "#0F172A",
   },
   modalClose: {
     fontSize: 24,
-    color: '#64748B',
-    fontWeight: '600',
+    color: "#64748B",
+    fontWeight: "600",
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#64748B',
+    color: "#64748B",
     marginBottom: 12,
   },
   modalScrollContainer: {
@@ -1391,24 +1496,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalTextArea: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
     borderRadius: 12,
     padding: 16,
     fontSize: 14,
-    color: '#111827',
+    color: "#111827",
     minHeight: 300,
-    textAlignVertical: 'top',
+    textAlignVertical: "top",
   },
   charCounter: {
     fontSize: 12,
-    color: '#64748B',
-    textAlign: 'right',
+    color: "#64748B",
+    textAlign: "right",
     marginBottom: 16,
   },
   modalButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   modalCancelButton: {
@@ -1416,36 +1521,36 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
+    borderColor: "#D1D5DB",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
   },
   modalCancelButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#374151',
+    fontWeight: "700",
+    color: "#374151",
   },
   modalSaveButton: {
     flex: 1,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#6D28D9',
-    alignItems: 'center',
+    backgroundColor: "#6D28D9",
+    alignItems: "center",
   },
   modalSaveButtonText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 
   // Upload Modal - FIXED
   uploadModalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '90%',
-    minHeight: '60%',
+    maxHeight: "90%",
+    minHeight: "60%",
   },
   uploadScrollView: {
     flex: 1,
@@ -1456,38 +1561,38 @@ const styles = StyleSheet.create({
   },
   uploadLabel: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
+    fontWeight: "700",
+    color: "#111827",
     marginBottom: 10,
   },
   roleDisplayBox: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: "#F3E8FF",
     borderWidth: 2,
-    borderColor: '#6D28D9',
+    borderColor: "#6D28D9",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 8,
   },
   roleDisplayText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#6D28D9',
+    fontWeight: "700",
+    color: "#6D28D9",
   },
   uploadHintSmall: {
     fontSize: 12,
-    color: '#64748B',
-    fontStyle: 'italic',
-    textAlign: 'center',
+    color: "#64748B",
+    fontStyle: "italic",
+    textAlign: "center",
   },
   pickFilesButton: {
     padding: 14,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#6D28D9',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    shadowColor: '#020817',
+    borderColor: "#6D28D9",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    shadowColor: "#020817",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
     shadowRadius: 18,
@@ -1495,45 +1600,45 @@ const styles = StyleSheet.create({
   },
   pickFilesButtonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#6D28D9',
+    fontWeight: "600",
+    color: "#6D28D9",
   },
   filesList: {
     marginTop: 12,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
     borderRadius: 12,
     padding: 10,
     maxHeight: 150,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: "#F9FAFB",
   },
   fileItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E7E6F3',
+    borderColor: "#E7E6F3",
   },
   fileName: {
     fontSize: 13,
-    color: '#111827',
+    color: "#111827",
     flex: 1,
     marginRight: 10,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   removeFileText: {
     fontSize: 18,
-    color: '#EF4444',
-    fontWeight: '700',
+    color: "#EF4444",
+    fontWeight: "700",
   },
   uploadHint: {
     fontSize: 12,
-    color: '#64748B',
+    color: "#64748B",
     marginTop: 8,
     lineHeight: 16,
   },
@@ -1541,45 +1646,45 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E7E6F3',
-    flexDirection: 'row',
+    borderTopColor: "#E7E6F3",
+    flexDirection: "row",
     gap: 12,
   },
   skipButton: {
     flex: 1,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
+    backgroundColor: "#F3F4F6",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: "#D1D5DB",
   },
   skipButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: "600",
+    color: "#374151",
   },
   uploadButton: {
     flex: 2,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#6D28D9',
-    alignItems: 'center',
-    shadowColor: '#6D28D9',
+    backgroundColor: "#6D28D9",
+    alignItems: "center",
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   uploadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
   },
   uploadButtonText: {
     fontSize: 16,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
   uploadInstruction: {
     fontSize: 13,
@@ -1588,8 +1693,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   boldText: {
-    fontWeight: '700',
-    color: '#6D28D9',
+    fontWeight: "700",
+    color: "#6D28D9",
   },
 });
 

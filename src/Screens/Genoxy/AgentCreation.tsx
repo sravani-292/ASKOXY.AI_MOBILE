@@ -1,9 +1,10 @@
-/* eslint-disable no-dupe-keys */
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import axios, { AxiosResponse } from "axios";
+import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,8 +23,9 @@ import {
   Image,
 } from "react-native";
 import { useSelector } from "react-redux";
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from "expo-image-picker";
 import BASE_URL from "../../../Config";
+
 // API Service for profile data
 const handleGetProfileData = async (customerId: string) => {
   try {
@@ -39,7 +41,7 @@ const handleGetProfileData = async (customerId: string) => {
 
 const MIN_DESC = 25;
 const MAX_DESC = 350;
-const BORDER = '#E2E8F0';
+const BORDER = "#E2E8F0";
 
 type ViewType = "Public" | "Private";
 
@@ -50,7 +52,7 @@ interface Option {
 
 interface AgentData {
   agentName: string;
-  creatorName:string;
+  creatorName: string;
   description: string;
   roleSelect: string;
   goalSelect: string;
@@ -62,7 +64,7 @@ interface AgentData {
   instructions: string;
   conStarter1: string;
   conStarter2: string;
-  businessCardId:string
+  businessCardId: string;
 }
 
 type RootStackParamList = {
@@ -223,7 +225,7 @@ const SuggestionPopup: React.FC<{
           <ScrollView style={styles.suggestionTextContainer}>
             <Text style={styles.suggestionText}>{suggestion}</Text>
           </ScrollView>
-          
+
           <View style={styles.suggestionButtons}>
             <TouchableOpacity
               style={[styles.suggestionButton, styles.cancelButton]}
@@ -237,7 +239,6 @@ const SuggestionPopup: React.FC<{
             >
               <Text style={styles.useButtonText}>Use</Text>
             </TouchableOpacity>
-            
           </View>
         </View>
       </View>
@@ -254,36 +255,49 @@ const CardUploadComponent: React.FC<{
   setPurposeOther: (value: string) => void;
   setAgentName: (value: string) => void;
   setDescription: (value: string) => void;
-   setVisible: (value: boolean) => void;        
-  setCardDataForm: (value: any) => void; 
-  setCardId: (id: string | '') => void; 
-  setCreatorName: (name:string)=>void;
+  setVisible: (value: boolean) => void;
+  setCardDataForm: (value: any) => void;
+  setCardId: (id: string | "") => void;
+  setCreatorName: (name: string) => void;
   setBusinessCardDocumentPath: (path: string) => void;
   setBusinessCardId: (id: string) => void;
-}> = ({ setRoleSelect, setGoalSelect, setPurposeSelect, setRoleOther, setGoalOther, setPurposeOther, setAgentName, setDescription,setVisible,setCardDataForm, setCardId,setCreatorName, setBusinessCardDocumentPath, setBusinessCardId }) => {
+}> = ({
+  setRoleSelect,
+  setGoalSelect,
+  setPurposeSelect,
+  setRoleOther,
+  setGoalOther,
+  setPurposeOther,
+  setAgentName,
+  setDescription,
+  setVisible,
+  setCardDataForm,
+  setCardId,
+  setCreatorName,
+  setBusinessCardDocumentPath,
+  setBusinessCardId,
+}) => {
   // Future: Add activeTab state for multiple card types
   // const [activeTab, setActiveTab] = useState<'Occupation' | 'Student' | 'Identity'>('Occupation');
-  const [cardFile, setCardFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [cardFile, setCardFile] = useState<ImagePicker.ImagePickerAsset | null>(
+    null
+  );
   const [uploading, setUploading] = useState(false);
   const userData = useSelector((state: any) => state.counter);
-  const userId = userData?.userId || '';
+  const userId = userData?.userId || "";
   const token = userData?.accessToken;
   const handleFileSelect = () => {
-    Alert.alert(
-      'Select Image',
-      'Choose an option',
-      [
-        { text: 'Camera', onPress: openCamera },
-        { text: 'Gallery', onPress: openGallery },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert("Select Image", "Choose an option", [
+      { text: "Camera", onPress: openCamera },
+      { text: "Gallery", onPress: openGallery },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   const openCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Camera permission is required');
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Camera permission is required");
       return;
     }
 
@@ -291,7 +305,7 @@ const CardUploadComponent: React.FC<{
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
       // aspect: [4, 3],
-      quality: 1
+      quality: 1,
     });
 
     if (!result.canceled) {
@@ -301,8 +315,8 @@ const CardUploadComponent: React.FC<{
 
   const openGallery = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Gallery permission is required');
+    if (status !== "granted") {
+      Alert.alert("Permission needed", "Gallery permission is required");
       return;
     }
 
@@ -321,72 +335,76 @@ const CardUploadComponent: React.FC<{
   const validateAndSetFile = (file: ImagePicker.ImagePickerAsset) => {
     // Validate file size (5MB)
     if (file.fileSize && file.fileSize > 5 * 1024 * 1024) {
-      Alert.alert('Error', 'File size must be less than 5MB');
+      Alert.alert("Error", "File size must be less than 5MB");
       return;
     }
 
     setCardFile(file);
   };
-// helper to map API text to dropdown or "Other"
-const applyDropdownValue = (
-  rawValue: string,
-  options: Option[],
-  setSelect: (value: string) => void,
-  setOther: (value: string) => void
-) => {
-  if (!rawValue) return;
+  // helper to map API text to dropdown or "Other"
+  const applyDropdownValue = (
+    rawValue: string,
+    options: Option[],
+    setSelect: (value: string) => void,
+    setOther: (value: string) => void
+  ) => {
+    if (!rawValue) return;
 
-  const trimmed = rawValue.trim().toLowerCase();
+    const trimmed = rawValue.trim().toLowerCase();
 
-  // try to match by label or value (case-insensitive)
-  const matched = options.find(opt =>
-    opt.label.trim().toLowerCase() === trimmed ||
-    opt.value.trim().toLowerCase() === trimmed
-  );
+    // try to match by label or value (case-insensitive)
+    const matched = options.find(
+      (opt) =>
+        opt.label.trim().toLowerCase() === trimmed ||
+        opt.value.trim().toLowerCase() === trimmed
+    );
 
-  if (matched) {
-    // select actual option
-    setSelect(matched.value);
-    setOther(""); // clear "Other" text
-  } else {
-    // no match → put "Other" and show text below
-    setSelect("Other");
-    setOther(rawValue.trim());
-  }
-};
+    if (matched) {
+      // select actual option
+      setSelect(matched.value);
+      setOther(""); // clear "Other" text
+    } else {
+      // no match → put "Other" and show text below
+      setSelect("Other");
+      setOther(rawValue.trim());
+    }
+  };
 
   const handleUpload = async () => {
     if (!cardFile) return;
-    
+
     if (!userId || !token) {
-      Alert.alert('Error', 'User not found. Please log in again.');
+      Alert.alert("Error", "User not found. Please log in again.");
       return;
     }
-    
+
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append('file', {
+      formData.append("file", {
         uri: cardFile.uri,
-        type: cardFile.mimeType || 'image/jpeg',
-        name: cardFile.fileName || 'card.jpg',
+        type: cardFile.mimeType || "image/jpeg",
+        name: cardFile.fileName || "card.jpg",
         size: cardFile.fileSize || 0,
       } as any);
       const response = await axios.post(
         `${BASE_URL}ai-service/agent/uploadBusinessCard?fileType=kyc&userId=${userId}`,
         // `${BASE_URL}ai-service/agent/updateBusinessCard?fileType=kyc&userId=${userId}`,
         formData,
-       { 
+        {
           headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
         }
-      }
       );
-      
+
       const data = response.data;
-  console.log('Upload response full data:', data.uploadDetails.documentPath);
-    
+      console.log(
+        "Upload response full data:",
+        data.uploadDetails.documentPath
+      );
+
       // Alert.alert(
       //   'Success',
       //   'Card processed successfully! Fields have been auto-filled.',
@@ -395,84 +413,97 @@ const applyDropdownValue = (
       //     { text: 'OK', style: 'default' },
       //   ]
       // );
-setBusinessCardDocumentPath(data.uploadDetails.documentPath || '');
-// safely pull fields from response
-const ai = data.aiData || {};
-const { role, goal, goals, purpose, agentName: apiAgentName, description: apiDescription } = ai;
+      setBusinessCardDocumentPath(data.uploadDetails.documentPath || "");
+      // safely pull fields from response
+      const ai = data.aiData || {};
+      const {
+        role,
+        goal,
+        goals,
+        purpose,
+        agentName: apiAgentName,
+        description: apiDescription,
+      } = ai;
 
-// Role → "I am"
-if (role) {
-  applyDropdownValue(role, ROLE_OPTS, setRoleSelect, setRoleOther);
-}
+      // Role → "I am"
+      if (role) {
+        applyDropdownValue(role, ROLE_OPTS, setRoleSelect, setRoleOther);
+      }
 
-// Goal → "Looking for"
-if (goal || goals) {
-  const goalText = goal || goals;
-  applyDropdownValue(goalText, GOAL_OPTS, setGoalSelect, setGoalOther);
-}
+      // Goal → "Looking for"
+      if (goal || goals) {
+        const goalText = goal || goals;
+        applyDropdownValue(goalText, GOAL_OPTS, setGoalSelect, setGoalOther);
+      }
 
-// Purpose → "To"
-if (purpose) {
-  applyDropdownValue(purpose, PURPOSE_OPTS, setPurposeSelect, setPurposeOther);
-}
+      // Purpose → "To"
+      if (purpose) {
+        applyDropdownValue(
+          purpose,
+          PURPOSE_OPTS,
+          setPurposeSelect,
+          setPurposeOther
+        );
+      }
 
-// Agent Name
-if (apiAgentName) {
-  setAgentName(apiAgentName);
-}
+      // Agent Name
+      if (apiAgentName) {
+        setAgentName(apiAgentName);
+      }
 
-// Description
-if (apiDescription) {
-  setDescription(apiDescription);
-}
-const cardData = data.cardData || {};
-console.log('Extracted Card Data:', cardData);
-if (cardData.id) {
-  setCardId(cardData.id.toString());
-} else {
-  setCardId('');
-}
+      // Description
+      if (apiDescription) {
+        setDescription(apiDescription);
+      }
+      const cardData = data.cardData || {};
+      console.log("Extracted Card Data:", cardData);
+      if (cardData.id) {
+        setCardId(cardData.id.toString());
+      } else {
+        setCardId("");
+      }
 
-// 🔹 Populate the editable form in parent
-setCardDataForm({
-  fullName: cardData.fullName || "",
-  jobTitle: cardData.jobTitle || "",
-  companyName: cardData.companyName || "",
-  email: cardData.email || "",
-  mobileNumber: cardData.phone || "",
-  website: cardData.website || "",
-  address: cardData.address || "",
-});
+      // 🔹 Populate the editable form in parent
+      setCardDataForm({
+        fullName: cardData.fullName || "",
+        jobTitle: cardData.jobTitle || "",
+        companyName: cardData.companyName || "",
+        email: cardData.email || "",
+        mobileNumber: cardData.phone || "",
+        website: cardData.website || "",
+        address: cardData.address || "",
+      });
 
-// 🔹 Open the modal from parent
-setVisible(true);
-
-    
-    } 
-    
-    catch (error: any) {
-      console.log('Upload error:', error);
-      Alert.alert('Failed to upload', error.response.data.message || 'Failed to process card');
+      // 🔹 Open the modal from parent
+      setVisible(true);
+    } catch (error: any) {
+      console.log("Upload error:", error);
+      Alert.alert(
+        "Failed to upload",
+        error.response.data.message || "Failed to process card"
+      );
     } finally {
       setUploading(false);
     }
   };
-  
+
   const showEditOptions = (data: any) => {
-    Alert.alert(
-      'Edit Extracted Data',
-      'Which field would you like to edit?',
-      [
-        { text: 'Role', onPress: () => editField('role', data.role) },
-        { text: 'Goal', onPress: () => editField('goal', data.goal) },
-        { text: 'Purpose', onPress: () => editField('purpose', data.purpose) },
-        { text: 'Agent Name', onPress: () => editField('agentName', data.agentName) },
-        { text: 'Description', onPress: () => editField('description', data.description) },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.alert("Edit Extracted Data", "Which field would you like to edit?", [
+      { text: "Role", onPress: () => editField("role", data.role) },
+      { text: "Goal", onPress: () => editField("goal", data.goal) },
+      { text: "Purpose", onPress: () => editField("purpose", data.purpose) },
+      {
+        text: "Agent Name",
+        onPress: () => editField("agentName", data.agentName),
+      },
+      {
+        text: "Description",
+        onPress: () => editField("description", data.description),
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
-  
+
   const editField = (field: string, currentValue: string) => {
     Alert.prompt(
       `Edit ${field}`,
@@ -480,28 +511,28 @@ setVisible(true);
       (newValue) => {
         if (newValue) {
           switch (field) {
-            case 'role':
-              setRoleSelect('Other');
+            case "role":
+              setRoleSelect("Other");
               setRoleOther(newValue);
               break;
-            case 'goal':
-              setGoalSelect('Other');
+            case "goal":
+              setGoalSelect("Other");
               setGoalOther(newValue);
               break;
-            case 'purpose':
-              setPurposeSelect('Other');
+            case "purpose":
+              setPurposeSelect("Other");
               setPurposeOther(newValue);
               break;
-            case 'agentName':
+            case "agentName":
               setAgentName(newValue);
               break;
-            case 'description':
+            case "description":
               setDescription(newValue);
               break;
           }
         }
       },
-      'plain-text',
+      "plain-text",
       currentValue
     );
   };
@@ -523,21 +554,31 @@ setVisible(true);
             <Text style={cardStyles.subtitle}>AI-Powered Agent Creation</Text>
           </View>
         </View>
-        
+
         {/* Future: Add tab container for multiple card types */}
         {/* <View style={cardStyles.tabContainer}>...</View> */}
       </View>
 
       <View style={cardStyles.content}>
         <Text style={cardStyles.description}>
-          Upload your <Text style={cardStyles.highlight}>business card</Text> and let AI extract all details to create your personalized agent instantly.
+          Upload your <Text style={cardStyles.highlight}>business card</Text>{" "}
+          and let AI extract all details to create your personalized agent
+          instantly.
         </Text>
 
-        <TouchableOpacity style={cardStyles.uploadArea} onPress={handleFileSelect}>
+        <TouchableOpacity
+          style={cardStyles.uploadArea}
+          onPress={handleFileSelect}
+        >
           {cardFile ? (
             <View style={cardStyles.previewContainer}>
-              <Image source={{ uri: cardFile.uri }} style={cardStyles.previewImage} />
-              <Text style={cardStyles.fileName}>✓ {cardFile.fileName?.slice(0, 20)}...</Text>
+              <Image
+                source={{ uri: cardFile.uri }}
+                style={cardStyles.previewImage}
+              />
+              <Text style={cardStyles.fileName}>
+                ✓ {cardFile.fileName?.slice(0, 20)}...
+              </Text>
               <Text style={cardStyles.changeText}>Click to change</Text>
             </View>
           ) : (
@@ -560,19 +601,23 @@ setVisible(true);
               <Text style={cardStyles.removeButtonText}>✕ Remove</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[cardStyles.uploadButton, uploading && cardStyles.uploadButtonDisabled]}
+              style={[
+                cardStyles.uploadButton,
+                uploading && cardStyles.uploadButtonDisabled,
+              ]}
               onPress={handleUpload}
               disabled={uploading}
             >
               <Text style={cardStyles.uploadButtonText}>
-                {uploading ? '⏳ Processing...' : '⚡ Extract & Create Agent'}
+                {uploading ? "⏳ Processing..." : "⚡ Extract & Create Agent"}
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
         <Text style={cardStyles.tip}>
-          <Text style={cardStyles.tipBold}>💡 Pro Tip:</Text> Use a clear, well-lit image for best results
+          <Text style={cardStyles.tipBold}>💡 Pro Tip:</Text> Use a clear,
+          well-lit image for best results
         </Text>
       </View>
 
@@ -598,7 +643,9 @@ const AgentCreationScreen: React.FC = () => {
   const userData = useSelector((state: any) => state.counter);
   const token = userData?.accessToken;
   const customerId = userData?.userId;
-  const [selectedMode, setSelectedMode] = useState<'role' | 'card' | null>(null);
+  const [selectedMode, setSelectedMode] = useState<"role" | "card" | null>(
+    null
+  );
   const [roleSelect, setRoleSelect] = useState("");
   const [goalSelect, setGoalSelect] = useState("");
   const [purposeSelect, setPurposeSelect] = useState("");
@@ -608,37 +655,37 @@ const AgentCreationScreen: React.FC = () => {
   const [agentName, setAgentName] = useState("");
   const [creatorName, setCreatorName] = useState("");
   const [profileData, setProfileData] = useState<any>(null);
-  const[businessCardDocumentPath,setBusinessCardDocumentPath]=useState('')
-  const [businessCardId, setBusinessCardId] = useState('');
+  const [businessCardDocumentPath, setBusinessCardDocumentPath] = useState("");
+  const [businessCardId, setBusinessCardId] = useState("");
   const [description, setDescription] = useState("");
   const [view, setView] = useState<ViewType>("Private");
   const [nameLoading, setNameLoading] = useState(false);
   const [descSuggestLoading, setDescSuggestLoading] = useState(false);
   const [showAgentNameModal, setShowAgentNameModal] = useState(false);
-  const [suggestedAgentName, setSuggestedAgentName] = useState('');
-  const [cardErrors, setCardErrors] = useState<{[key: string]: string}>({});
+  const [suggestedAgentName, setSuggestedAgentName] = useState("");
+  const [cardErrors, setCardErrors] = useState<{ [key: string]: string }>({});
 
   const [showNamePopup, setShowNamePopup] = useState(false);
   const [showDescPopup, setShowDescPopup] = useState(false);
   const [suggestedName, setSuggestedName] = useState("");
   const [suggestedDesc, setSuggestedDesc] = useState("");
-  
+
   // Modal and card data states
   const [visible, setVisible] = useState(false);
   const [cardDataForm, setCardDataForm] = useState({
-    fullName: '',
-    jobTitle: '',
-    companyName: '',
-    email: '',
-    mobileNumber: '',
-    website: '',
-    address: '',
+    fullName: "",
+    jobTitle: "",
+    companyName: "",
+    email: "",
+    mobileNumber: "",
+    website: "",
+    address: "",
     // userId:userData?.userId || '',
     // id : ''
   });
   const [cardDataSaving, setCardDataSaving] = useState(false);
-const userId = customerId || "";
-const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
+  const userId = customerId || "";
+  const [cardId, setCardId] = useState<string | "">(""); // 🔹 add this
 
   const roleResolved = roleSelect === "Other" ? roleOther.trim() : roleSelect;
   const goalResolved = goalSelect === "Other" ? goalOther.trim() : goalSelect;
@@ -648,8 +695,9 @@ const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
   const roleDeb = useDebounced(roleResolved, 700);
   const goalDeb = useDebounced(goalResolved, 700);
   const purposeDeb = useDebounced(purposeResolved, 700);
-
   const descCount = description.trim().length;
+
+  
   const canPreview =
     agentName.trim().length >= 3 &&
     !!roleResolved &&
@@ -734,8 +782,7 @@ const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
       });
 
       const data = response.data;
-      let suggestion =
-        typeof data === "string" ? data : data.description || "";
+      let suggestion = typeof data === "string" ? data : data.description || "";
 
       // Clean up any formatting prefixes
       if (suggestion && typeof suggestion === "string") {
@@ -765,22 +812,62 @@ const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
           const response = await handleGetProfileData(customerId);
           if (response.status === 200) {
             setProfileData(response.data);
-            const fullName = `${response.data.firstName || ''} ${response.data.lastName || ''}`.trim();
+            const fullName = `${response.data.firstName || ""} ${
+              response.data.lastName || ""
+            }`.trim();
             setCreatorName(fullName);
           }
         } catch (error) {
-          console.error('Error fetching profile data:', error);
+          console.error("Error fetching profile data:", error);
         }
       }
     };
-    
+
     fetchProfileData();
   }, [customerId]);
+
+  // Form reset logic when returning from successful agent creation
+  useFocusEffect(
+    useCallback(() => {
+      const checkAndReset = async () => {
+        try {
+          const shouldReset = await AsyncStorage.getItem('resetAgentForm');
+          console.log('AgentCreation: Checking resetAgentForm flag:', shouldReset);
+          
+          if (shouldReset === 'true') {
+            console.log('AgentCreation: Resetting form data...');
+            
+            // Reset all form state variables
+            setAgentName('');
+            setDescription('');
+            setRoleSelect('');
+            setPurposeSelect('');
+            setGoalSelect('');
+            setRoleOther('');
+            setPurposeOther('');
+            setGoalOther('');
+            setView('Private');
+            setBusinessCardId('');
+            setBusinessCardDocumentPath('');
+            setSelectedMode(null);
+            
+            // Clear the flag
+            await AsyncStorage.removeItem('resetAgentForm');
+            console.log('AgentCreation: Form reset completed');
+          }
+        } catch (error) {
+          console.error('AgentCreation: Error checking reset flag:', error);
+        }
+      };
+      
+      checkAndReset();
+    }, [])
+  );
 
   // Auto-suggest name only when all three fields are filled
   useEffect(() => {
     if (!roleDeb || !goalDeb || !purposeDeb) return;
-    if (selectedMode === 'role') {
+    if (selectedMode === "role") {
       suggestAgentName();
     }
   }, [roleDeb, goalDeb, purposeDeb]);
@@ -802,15 +889,15 @@ const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
           imagePath: businessCardDocumentPath || "",
         },
       });
-      console.log("Background update successful",response.data);
-      setAgentName('');
-      setRoleSelect('');
-      setGoalSelect('');
-      setPurposeSelect('');
-      setRoleOther('');
-      setGoalOther('');
-      setPurposeOther('');
-      setDescription('');
+      console.log("Background update successful", response.data);
+      setAgentName("");
+      setRoleSelect("");
+      setGoalSelect("");
+      setPurposeSelect("");
+      setRoleOther("");
+      setGoalOther("");
+      setPurposeOther("");
+      setDescription("");
       // setBusinessCardDocumentPath('');
       // setBusinessCardId('');
     } catch (err) {
@@ -819,18 +906,19 @@ const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
   };
 
   const validateCardData = (data: any) => {
-    const errors: {[key: string]: string} = {};
-    if (!data.fullName?.trim()) errors.fullName = 'Full name is mandatory';
-    if (!data.companyName?.trim()) errors.companyName = 'Company name is mandatory';
-    if (!data.mobileNumber?.trim()) errors.phone = 'Phone is mandatory';
-    if (!data.address?.trim()) errors.address = 'Address is mandatory';
+    const errors: { [key: string]: string } = {};
+    if (!data.fullName?.trim()) errors.fullName = "Full name is mandatory";
+    if (!data.companyName?.trim())
+      errors.companyName = "Company name is mandatory";
+    if (!data.mobileNumber?.trim()) errors.phone = "Phone is mandatory";
+    if (!data.address?.trim()) errors.address = "Address is mandatory";
     return errors;
   };
 
   const handleCardDataSubmit = () => {
     const errors = validateCardData(cardDataForm);
     setCardErrors(errors);
-    
+
     if (Object.keys(errors).length === 0) {
       handleCardDataUpdate();
     }
@@ -842,56 +930,60 @@ const [cardId, setCardId] = useState<string | ''>('');  // 🔹 add this
   };
 
   const handleAgentNameReject = () => {
-    setAgentName('');
+    setAgentName("");
     setShowAgentNameModal(false);
   };
-  
-const handleCardDataUpdate = async () => {
-  if (!token) {
-    Alert.alert("Error", "Authentication token not found");
-    return;
-  }
 
-  setCardDataSaving(true);
-  console.log("Updating card data with:", {
-        ...cardDataForm,
-        userId,
-        id: cardId,
-        imagePath: businessCardDocumentPath || "",
-      },)
-  try {
-    const res: AxiosResponse = await axios({
-      url: `${BASE_URL}ai-service/agent/updateBusinessCardData`,
-      method: "patch",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      data: {
-        ...cardDataForm,
-        userId,
-        id: cardId,
-        imagePath: businessCardDocumentPath || "",
-      },
+  const handleCardDataUpdate = async () => {
+    if (!token) {
+      Alert.alert("Error", "Authentication token not found");
+      return;
+    }
+
+    setCardDataSaving(true);
+    console.log("Updating card data with:", {
+      ...cardDataForm,
+      userId,
+      id: cardId,
+      imagePath: businessCardDocumentPath || "",
     });
-    console.log("Update response:", res.data.id);
-    Alert.alert("Success! Your business card details have been updated successfully."); 
-    // setBusinessCardDocumentPath(res.data.uploadDetails.documentPath || '');   
-    setBusinessCardId(res.data.id || '');
-    setVisible(false);
-    
-    // Show agent name suggestion modal
-    setTimeout(() => {
-      setSuggestedAgentName(agentName || 'AI Agent');
-      setShowAgentNameModal(true);
-    }, 300);
-  } catch (err: any) {
-    console.log("Update error:", err.response || err);
-    Alert.alert("Error", err?.response?.data?.message || "Failed to update card details");
-  } finally {
-    setCardDataSaving(false);
-  }
-};
+    try {
+      const res: AxiosResponse = await axios({
+        url: `${BASE_URL}ai-service/agent/updateBusinessCardData`,
+        method: "patch",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          ...cardDataForm,
+          userId,
+          id: cardId,
+          imagePath: businessCardDocumentPath || "",
+        },
+      });
+      console.log("Update response:", res.data.id);
+      Alert.alert(
+        "Success! Your business card details have been updated successfully."
+      );
+      // setBusinessCardDocumentPath(res.data.uploadDetails.documentPath || '');
+      setBusinessCardId(res.data.id || "");
+      setVisible(false);
 
+      // Show agent name suggestion modal
+      setTimeout(() => {
+        setSuggestedAgentName(agentName || "AI Agent");
+        setShowAgentNameModal(true);
+      }, 300);
+    } catch (err: any) {
+      console.log("Update error:", err.response || err);
+      Alert.alert(
+        "Error",
+        err?.response?.data?.message || "Failed to update card details"
+      );
+    } finally {
+      setCardDataSaving(false);
+    }
+  };
 
   const handlePreview = () => {
     if (!canPreview) {
@@ -912,24 +1004,29 @@ const handleCardDataUpdate = async () => {
       instructions: "",
       conStarter1: "",
       conStarter2: "",
-      BusinessCardId: businessCardId
+      BusinessCardId: businessCardId,
     };
-     console.log("agent data",agentData);
-     
-    (navigation as any).navigate('Agent Preview', { agentData });
+    console.log("agent data", agentData);
+
+    (navigation as any).navigate("Agent Preview", { agentData });
   };
 
   if (!selectedMode) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+        >
           <View style={styles.header}>
             <View style={styles.headerTop}>
               <View style={styles.headerLeft}>
                 <Text style={styles.headerEmoji}>🤖</Text>
                 <View style={styles.headerTextContainer}>
                   <Text style={styles.headerTitle}>Create New Agent</Text>
-                  <Text style={styles.headerSubtitle}>Choose your preferred method</Text>
+                  <Text style={styles.headerSubtitle}>
+                    Choose your preferred method
+                  </Text>
                 </View>
               </View>
             </View>
@@ -938,9 +1035,13 @@ const handleCardDataUpdate = async () => {
           <View style={styles.cardContainer}>
             <TouchableOpacity
               style={styles.modeCard}
-              onPress={() => setSelectedMode('role')}
+              onPress={() => setSelectedMode("role")}
             >
-              <Text style={styles.modeIcon}>💼</Text>
+              {/* <Text style={styles.modeIcon}>💼</Text> */}
+              <Image
+                source={require("../../../assets/Rolebased.jpg")}
+                style={styles.modeImage}
+              />
               <Text style={styles.modeTitle}>Role Based</Text>
               <Text style={styles.modeDescription}>
                 Select your role and create a customized AI agent
@@ -949,9 +1050,13 @@ const handleCardDataUpdate = async () => {
 
             <TouchableOpacity
               style={styles.modeCard}
-              onPress={() => setSelectedMode('card')}
+              onPress={() => setSelectedMode("card")}
             >
-              <Text style={styles.modeIcon}>📇</Text>
+              {/* <Text style={styles.modeIcon}>📇</Text> */}
+              <Image
+                source={require("../../../assets/cardbased.jpg")}
+                style={styles.modeImage}
+              />
               <Text style={styles.modeTitle}>Card Based</Text>
               <Text style={styles.modeDescription}>
                 Upload your business card and let AI do the work
@@ -987,15 +1092,19 @@ const handleCardDataUpdate = async () => {
                   <Text style={styles.backIcon}>←</Text>
                 </TouchableOpacity>
                 <View style={styles.headerLeft}>
-                  <Text style={styles.headerEmoji}>{selectedMode === 'role' ? '💼' : '🪪'}</Text>
+                  <Text style={styles.headerEmoji}>
+                    {selectedMode === "role" ? "💼" : "🪪"}
+                  </Text>
                   <View style={styles.headerTextContainer}>
                     <Text style={styles.headerTitle}>
-                      {selectedMode === 'role' ? 'Role-based AI Agent' : 'Card-based AI Agent'}
+                      {selectedMode === "role"
+                        ? "Role-based AI Agent"
+                        : "Card-based AI Agent"}
                     </Text>
                     <Text style={styles.headerSubtitle}>
-                      {selectedMode === 'role' 
-                        ? 'Choose a role. We auto-apply tone, goals, and defaults.'
-                        : 'Upload your card and let AI extract the details.'}
+                      {selectedMode === "role"
+                        ? "Choose a role. We auto-apply tone, goals, and defaults."
+                        : "Upload your card and let AI extract the details."}
                     </Text>
                   </View>
                 </View>
@@ -1012,34 +1121,38 @@ const handleCardDataUpdate = async () => {
               {/* Switch Options */}
               <View style={styles.switchContainer}>
                 <Text style={styles.switchText}>
-                  {selectedMode === 'role' 
-                    ? 'Want to use your business card instead?' 
-                    : 'Prefer manual entry?'}
+                  {selectedMode === "role"
+                    ? "Want to use your business card instead?"
+                    : "Prefer manual entry?"}
                 </Text>
-                <TouchableOpacity onPress={() => {
-                  // Clear all fields when switching modes
-                  setRoleSelect('');
-                  setGoalSelect('');
-                  setPurposeSelect('');
-                  setRoleOther('');
-                  setGoalOther('');
-                  setPurposeOther('');
-                  setAgentName('');
-                  setCreatorName('');
-                  setDescription('');
-                  setSelectedMode(selectedMode === 'role' ? 'card' : 'role');
-                  setBusinessCardId('')
-                }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // Clear all fields when switching modes
+                    setRoleSelect("");
+                    setGoalSelect("");
+                    setPurposeSelect("");
+                    setRoleOther("");
+                    setGoalOther("");
+                    setPurposeOther("");
+                    setAgentName("");
+                    setCreatorName("");
+                    setDescription("");
+                    setSelectedMode(selectedMode === "role" ? "card" : "role");
+                    setBusinessCardId("");
+                  }}
+                >
                   <Text style={styles.switchLink}>
-                    {selectedMode === 'role' ? 'Switch to Card Based' : 'Switch to Role Based'}
+                    {selectedMode === "role"
+                      ? "Switch to Card Based"
+                      : "Switch to Role Based"}
                   </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-             {/* Card Upload Section - Only for card mode */}
-            {selectedMode === 'card' && (
-              <CardUploadComponent 
+            {/* Card Upload Section - Only for card mode */}
+            {selectedMode === "card" && (
+              <CardUploadComponent
                 setRoleSelect={setRoleSelect}
                 setGoalSelect={setGoalSelect}
                 setPurposeSelect={setPurposeSelect}
@@ -1048,24 +1161,16 @@ const handleCardDataUpdate = async () => {
                 setPurposeOther={setPurposeOther}
                 setAgentName={setAgentName}
                 setDescription={setDescription}
-                setVisible={setVisible}               
-                setCardDataForm={setCardDataForm} 
+                setVisible={setVisible}
+                setCardDataForm={setCardDataForm}
                 setCardId={setCardId}
                 setCreatorName={setCreatorName}
                 setBusinessCardDocumentPath={setBusinessCardDocumentPath}
-                setBusinessCardId={setBusinessCardId} 
+                setBusinessCardId={setBusinessCardId}
               />
             )}
 
-            {/* Note for card mode */}
-            {/* {selectedMode === 'card' && (
-              <View style={styles.noteContainer}>
-                <Text style={styles.noteText}>
-                  <Text style={styles.noteBold}>Note:</Text> Please review the details and make any necessary changes.
-                </Text>
-              </View>
-            )} */}
-
+         
             {/* Role Selection Card */}
             <View style={styles.card}>
               <View style={styles.row}>
@@ -1077,25 +1182,23 @@ const handleCardDataUpdate = async () => {
                     options={ROLE_OPTS}
                     placeholder="Select your role"
                   />
-                {roleSelect === "Other" && (
-  <>
-    <TextInput
-      style={styles.otherInput}
-      value={roleOther}
-      onChangeText={setRoleOther}
-      
-      placeholder="Type your role…"
-      placeholderTextColor="#94A3B8"
-      maxLength={60}
-    />
-    {roleOther.length >= 60 && (
-      <Text style={{ color: 'red', fontSize: 12 }}>
-        Max limit is 60 characters
-      </Text>
-    )}
-  </>
-)}
-
+                  {roleSelect === "Other" && (
+                    <>
+                      <TextInput
+                        style={styles.otherInput}
+                        value={roleOther}
+                        onChangeText={setRoleOther}
+                        placeholder="Type your role…"
+                        placeholderTextColor="#94A3B8"
+                        maxLength={60}
+                      />
+                      {roleOther.length >= 60 && (
+                        <Text style={{ color: "red", fontSize: 12 }}>
+                          Max limit is 60 characters
+                        </Text>
+                      )}
+                    </>
+                  )}
                 </View>
               </View>
 
@@ -1110,23 +1213,25 @@ const handleCardDataUpdate = async () => {
                     options={GOAL_OPTS}
                     placeholder="Select your goal"
                   />
-                 {goalSelect === "Other" && (
-  <>
-    <TextInput
-      style={styles.otherInput}
-      value={goalOther}
-      onChangeText={setGoalOther}
-      placeholder="Type your goal…"
-      placeholderTextColor="#94A3B8"
-      maxLength={60}
-    />
-    {goalOther.length >= 60 && (
-      <Text style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-        Max limit is 60 characters
-      </Text>
-    )}
-  </>
-)}
+                  {goalSelect === "Other" && (
+                    <>
+                      <TextInput
+                        style={styles.otherInput}
+                        value={goalOther}
+                        onChangeText={setGoalOther}
+                        placeholder="Type your goal…"
+                        placeholderTextColor="#94A3B8"
+                        maxLength={60}
+                      />
+                      {goalOther.length >= 60 && (
+                        <Text
+                          style={{ color: "red", fontSize: 12, marginTop: 4 }}
+                        >
+                          Max limit is 60 characters
+                        </Text>
+                      )}
+                    </>
+                  )}
                 </View>
               </View>
 
@@ -1139,35 +1244,36 @@ const handleCardDataUpdate = async () => {
                     options={PURPOSE_OPTS}
                     placeholder="Select purpose"
                   />
-                 {purposeSelect === "Other" && (
-  <>
-    <TextInput
-      style={styles.otherInput}
-      value={purposeOther}
-      onChangeText={setPurposeOther}
-      placeholder="Type your purpose…"
-      placeholderTextColor="#94A3B8"
-      maxLength={60}
-    />
-    {purposeOther.length >= 60 && (
-      <Text style={{ color: 'red', fontSize: 12, marginTop: 4 }}>
-        Max limit is 60 characters
-      </Text>
-    )}
-  </>
-)}
+                  {purposeSelect === "Other" && (
+                    <>
+                      <TextInput
+                        style={styles.otherInput}
+                        value={purposeOther}
+                        onChangeText={setPurposeOther}
+                        placeholder="Type your purpose…"
+                        placeholderTextColor="#94A3B8"
+                        maxLength={60}
+                      />
+                      {purposeOther.length >= 60 && (
+                        <Text
+                          style={{ color: "red", fontSize: 12, marginTop: 4 }}
+                        >
+                          Max limit is 60 characters
+                        </Text>
+                      )}
+                    </>
+                  )}
                 </View>
               </View>
             </View>
 
-{/* Creator Name  */}
- <View style={styles.card}>
+            {/* Creator Name  */}
+            <View style={styles.card}>
               <View style={styles.sectionHeader}>
                 <View>
                   <Text style={styles.sectionTitle}>Creator Name</Text>
                   <Text style={styles.helperText}>Max 25 characters</Text>
                 </View>
-             
               </View>
               <TextInput
                 style={styles.input}
@@ -1317,8 +1423,6 @@ const handleCardDataUpdate = async () => {
               </View>
             </View>
 
-           
-
             {/* Actions */}
             <View style={styles.actions}>
               <TouchableOpacity
@@ -1359,184 +1463,210 @@ const handleCardDataUpdate = async () => {
         onCancel={() => setShowDescPopup(false)}
       />
 
-
-
-       <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={() => {
-        Alert.alert("Hold on", "Please save or cancel your edits first.");
-      }}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.modalWrapper}
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => {
+          Alert.alert("Hold on", "Please save or cancel your edits first.");
+        }}
       >
-        <View style={styles.backdrop} />
-        <View style={styles.modalContainer}>
-          <View style={styles.titleRow}>
-            <Text style={styles.emoji}>💼</Text>
-            <Text style={styles.titleText}>Edit Business Card Details</Text>
-          </View>
-          <Text style={styles.noteText}>Note: Please review the details and make any necessary changes.</Text>
-
-          <ScrollView
-            contentContainerStyle={{ paddingBottom: 20 }}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.row}>
-              <View style={styles.field}>
-                <Text style={styles.label}>Full Name *</Text>
-                <TextInput
-                  value={cardDataForm.fullName}
-                  onChangeText={(text) => {
-                    setCardDataForm((prev) => ({ ...prev, fullName: text }));
-                    if (cardErrors.fullName) {
-                      setCardErrors(prev => ({...prev, fullName: ''}));
-                    }
-                  }}
-                  placeholder="Enter full name"
-                  style={[styles.input, cardErrors.fullName && styles.errorInput]}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {cardErrors.fullName && <Text style={styles.errorText}>{cardErrors.fullName}</Text>}
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Job Title</Text>
-                <TextInput
-                  value={cardDataForm.jobTitle}
-                  onChangeText={(text) =>
-                    setCardDataForm((prev) => ({ ...prev, jobTitle: text }))
-                  }
-                  placeholder="Enter job title"
-                  style={styles.input}
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modalWrapper}
+        >
+          <View style={styles.backdrop} />
+          <View style={styles.modalContainer}>
+            <View style={styles.titleRow}>
+              <Text style={styles.emoji}>💼</Text>
+              <Text style={styles.titleText}>Edit Business Card Details</Text>
             </View>
+            <Text style={styles.noteText}>
+              Note: Please review the details and make any necessary changes.
+            </Text>
 
-            <View style={styles.row}>
-              <View style={styles.field}>
-                <Text style={styles.label}>Company Name *</Text>
-                <TextInput
-                  value={cardDataForm.companyName}
-                  onChangeText={(text) => {
-                    setCardDataForm((prev) => ({ ...prev, companyName: text }));
-                    if (cardErrors.companyName) {
-                      setCardErrors(prev => ({...prev, companyName: ''}));
-                    }
-                  }}
-                  placeholder="Enter company name"
-                  style={[styles.input, cardErrors.companyName && styles.errorInput]}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {cardErrors.companyName && <Text style={styles.errorText}>{cardErrors.companyName}</Text>}
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  value={cardDataForm.email}
-                  onChangeText={(text) =>
-                    setCardDataForm((prev) => ({ ...prev, email: text }))
-                  }
-                  placeholder="Enter email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={styles.field}>
-                <Text style={styles.label}>Phone *</Text>
-                <TextInput
-                  value={cardDataForm.mobileNumber}
-                  onChangeText={(text) => {
-                    setCardDataForm((prev) => ({ ...prev, mobileNumber: text }));
-                    if (cardErrors.phone) {
-                      setCardErrors(prev => ({...prev, phone: ''}));
-                    }
-                  }}
-                  placeholder="Enter phone number"
-                  keyboardType="phone-pad"
-                  style={[styles.input, cardErrors.phone && styles.errorInput]}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {cardErrors.phone && <Text style={styles.errorText}>{cardErrors.phone}</Text>}
-              </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Website</Text>
-                <TextInput
-                  value={cardDataForm.website}
-                  onChangeText={(text) =>
-                    setCardDataForm((prev) => ({ ...prev, website: text }))
-                  }
-                  placeholder="Enter website"
-                  autoCapitalize="none"
-                  style={styles.input}
-                  placeholderTextColor="#9CA3AF"
-                />
-              </View>
-            </View>
-
-            <View style={{ marginTop: 10 }}>
-              <Text style={styles.label}>Address *</Text>
-              <TextInput
-                value={cardDataForm.address}
-                onChangeText={(text) => {
-                  setCardDataForm((prev) => ({ ...prev, address: text }));
-                  if (cardErrors.address) {
-                    setCardErrors(prev => ({...prev, address: ''}));
-                  }
-                }}
-                placeholder="Enter address"
-                style={[styles.input, styles.textArea, cardErrors.address && styles.errorInput]}
-                placeholderTextColor="#9CA3AF"
-                multiline
-              />
-              {cardErrors.address && <Text style={styles.errorText}>{cardErrors.address}</Text>}
-            </View>
-          </ScrollView>
-
-          <View style={styles.buttonRow}>
-            <TouchableOpacity
-              onPress={handleCancel}
-              disabled={cardDataSaving}
-              style={[
-                styles.cancelButton1,
-                cardDataSaving && { opacity: 0.6 },
-              ]}
+            <ScrollView
+              contentContainerStyle={{ paddingBottom: 20 }}
+              keyboardShouldPersistTaps="handled"
             >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              <View style={styles.row}>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Full Name *</Text>
+                  <TextInput
+                    value={cardDataForm.fullName}
+                    onChangeText={(text) => {
+                      setCardDataForm((prev) => ({ ...prev, fullName: text }));
+                      if (cardErrors.fullName) {
+                        setCardErrors((prev) => ({ ...prev, fullName: "" }));
+                      }
+                    }}
+                    placeholder="Enter full name"
+                    style={[
+                      styles.input,
+                      cardErrors.fullName && styles.errorInput,
+                    ]}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                  {cardErrors.fullName && (
+                    <Text style={styles.errorText}>{cardErrors.fullName}</Text>
+                  )}
+                </View>
 
-            <TouchableOpacity
-              onPress={handleCardDataSubmit}
-              disabled={cardDataSaving}
-              style={[
-                styles.saveButton,
-                cardDataSaving && { opacity: 0.7 },
-              ]}
-            >
-              {cardDataSaving ? (
-                <>
-                  <ActivityIndicator size="small" />
-                  <Text style={styles.saveButtonText}>  Submitting...</Text>
-                </>
-              ) : (
-                <Text style={styles.saveButtonText}>Submit</Text>
-              )}
-            </TouchableOpacity>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Job Title</Text>
+                  <TextInput
+                    value={cardDataForm.jobTitle}
+                    onChangeText={(text) =>
+                      setCardDataForm((prev) => ({ ...prev, jobTitle: text }))
+                    }
+                    placeholder="Enter job title"
+                    style={styles.input}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Company Name *</Text>
+                  <TextInput
+                    value={cardDataForm.companyName}
+                    onChangeText={(text) => {
+                      setCardDataForm((prev) => ({
+                        ...prev,
+                        companyName: text,
+                      }));
+                      if (cardErrors.companyName) {
+                        setCardErrors((prev) => ({ ...prev, companyName: "" }));
+                      }
+                    }}
+                    placeholder="Enter company name"
+                    style={[
+                      styles.input,
+                      cardErrors.companyName && styles.errorInput,
+                    ]}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                  {cardErrors.companyName && (
+                    <Text style={styles.errorText}>
+                      {cardErrors.companyName}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    value={cardDataForm.email}
+                    onChangeText={(text) =>
+                      setCardDataForm((prev) => ({ ...prev, email: text }))
+                    }
+                    placeholder="Enter email"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={styles.input}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Phone *</Text>
+                  <TextInput
+                    value={cardDataForm.mobileNumber}
+                    onChangeText={(text) => {
+                      setCardDataForm((prev) => ({
+                        ...prev,
+                        mobileNumber: text,
+                      }));
+                      if (cardErrors.phone) {
+                        setCardErrors((prev) => ({ ...prev, phone: "" }));
+                      }
+                    }}
+                    placeholder="Enter phone number"
+                    keyboardType="phone-pad"
+                    style={[
+                      styles.input,
+                      cardErrors.phone && styles.errorInput,
+                    ]}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                  {cardErrors.phone && (
+                    <Text style={styles.errorText}>{cardErrors.phone}</Text>
+                  )}
+                </View>
+
+                <View style={styles.field}>
+                  <Text style={styles.label}>Website</Text>
+                  <TextInput
+                    value={cardDataForm.website}
+                    onChangeText={(text) =>
+                      setCardDataForm((prev) => ({ ...prev, website: text }))
+                    }
+                    placeholder="Enter website"
+                    autoCapitalize="none"
+                    style={styles.input}
+                    placeholderTextColor="#9CA3AF"
+                  />
+                </View>
+              </View>
+
+              <View style={{ marginTop: 10 }}>
+                <Text style={styles.label}>Address *</Text>
+                <TextInput
+                  value={cardDataForm.address}
+                  onChangeText={(text) => {
+                    setCardDataForm((prev) => ({ ...prev, address: text }));
+                    if (cardErrors.address) {
+                      setCardErrors((prev) => ({ ...prev, address: "" }));
+                    }
+                  }}
+                  placeholder="Enter address"
+                  style={[
+                    styles.input,
+                    styles.textArea,
+                    cardErrors.address && styles.errorInput,
+                  ]}
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                />
+                {cardErrors.address && (
+                  <Text style={styles.errorText}>{cardErrors.address}</Text>
+                )}
+              </View>
+            </ScrollView>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity
+                onPress={handleCancel}
+                disabled={cardDataSaving}
+                style={[
+                  styles.cancelButton1,
+                  cardDataSaving && { opacity: 0.6 },
+                ]}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleCardDataSubmit}
+                disabled={cardDataSaving}
+                style={[styles.saveButton, cardDataSaving && { opacity: 0.7 }]}
+              >
+                {cardDataSaving ? (
+                  <>
+                    <ActivityIndicator size="small" />
+                    <Text style={styles.saveButtonText}> Submitting...</Text>
+                  </>
+                ) : (
+                  <Text style={styles.saveButtonText}>Submit</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Agent Name Suggestion Modal */}
       <Modal
@@ -1549,8 +1679,10 @@ const handleCardDataUpdate = async () => {
           <View style={styles.suggestionCard}>
             <Text style={styles.suggestionTitle}>Suggested Agent Name</Text>
             <Text style={styles.suggestedName}>{suggestedAgentName}</Text>
-            <Text style={styles.suggestionText}>Would you like to use this agent name?</Text>
-            
+            <Text style={styles.suggestionText}>
+              Would you like to use this agent name?
+            </Text>
+
             <View style={styles.suggestionButtons}>
               <TouchableOpacity
                 style={[styles.suggestionButton, styles.useButton]}
@@ -1558,7 +1690,7 @@ const handleCardDataUpdate = async () => {
               >
                 <Text style={styles.useButtonText}>Yes</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={[styles.suggestionButton, styles.cancelButton]}
                 onPress={handleAgentNameReject}
@@ -1950,10 +2082,10 @@ const styles = StyleSheet.create({
   },
   suggestedName: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#6D28D9',
+    fontWeight: "bold",
+    color: "#6D28D9",
     marginVertical: 15,
-    textAlign: 'center',
+    textAlign: "center",
   },
   suggestionButtons: {
     flexDirection: "row",
@@ -2096,11 +2228,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   modeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     padding: 30,
     borderRadius: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -2112,14 +2244,14 @@ const styles = StyleSheet.create({
   },
   modeTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 10,
   },
   modeDescription: {
     fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     lineHeight: 20,
   },
   backButton: {
@@ -2128,98 +2260,103 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: '#6D28D9',
-    fontWeight: 'bold',
+    color: "#6D28D9",
+    fontWeight: "bold",
   },
   switchContainer: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#F8FAFC",
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   switchText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 5,
   },
   switchLink: {
     fontSize: 14,
-    color: '#6D28D9',
-    fontWeight: '600',
+    color: "#6D28D9",
+    fontWeight: "600",
   },
   noteContainer: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: "#FEF3C7",
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
+    borderLeftColor: "#F59E0B",
   },
   noteText: {
     fontSize: 14,
-    color: '#92400E',
+    color: "#92400E",
     lineHeight: 20,
   },
   noteBold: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   modalButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 15,
   },
   modalButton: {
-    backgroundColor: '#6D28D9',
+    backgroundColor: "#6D28D9",
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 8,
   },
   modalButtonSecondary: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
-    borderColor: '#6D28D9',
+    borderColor: "#6D28D9",
   },
   modalButtonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 16,
   },
   modalButtonTextSecondary: {
-    color: '#6D28D9',
-    fontWeight: '600',
+    color: "#6D28D9",
+    fontWeight: "600",
     fontSize: 16,
   },
   errorInput: {
-    borderColor: '#dc3545',
+    borderColor: "#dc3545",
   },
   errorText: {
     fontSize: 12,
-    color: '#dc3545',
+    color: "#dc3545",
     marginTop: 5,
   },
+    modeImage:{
+    width: 190,
+    height: 80,
+    marginBottom: 15,
+  }
 });
 
 const cardStyles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     marginBottom: 16,
-    shadowColor: '#F59E0B',
+    shadowColor: "#F59E0B",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 2,
-    borderColor: '#C4B5FD',
-    overflow: 'hidden',
+    borderColor: "#C4B5FD",
+    overflow: "hidden",
   },
   header: {
-    backgroundColor: '#6D28D9',
+    backgroundColor: "#6D28D9",
     padding: 18,
   },
   titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     marginBottom: 16,
   },
@@ -2227,26 +2364,26 @@ const cardStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   icon: {
     fontSize: 20,
   },
   title: {
     fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
   subtitle: {
     fontSize: 13,
-    color: '#E9D5FF',
-    fontWeight: '600',
+    color: "#E9D5FF",
+    fontWeight: "600",
   },
   tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
     borderRadius: 16,
     padding: 6,
     gap: 8,
@@ -2256,11 +2393,11 @@ const cardStyles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   activeTab: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#EA580C',
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#EA580C",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -2268,40 +2405,40 @@ const cardStyles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
   activeTabText: {
-    color: '#6D28D9',
+    color: "#6D28D9",
   },
   content: {
     padding: 20,
   },
   description: {
     fontSize: 15,
-    color: '#57534E',
+    color: "#57534E",
     lineHeight: 21,
-    textAlign: 'center',
-    fontWeight: '500',
+    textAlign: "center",
+    fontWeight: "500",
     marginBottom: 15,
   },
   highlight: {
-    color: '#6D28D9',
-    fontWeight: '700',
+    color: "#6D28D9",
+    fontWeight: "700",
   },
   uploadArea: {
     borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: '#C4B5FD',
+    borderStyle: "dashed",
+    borderColor: "#C4B5FD",
     borderRadius: 12,
     padding: 16,
-    backgroundColor: '#F3E8FF',
+    backgroundColor: "#F3E8FF",
     marginBottom: 10,
   },
   uploadContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 12,
   },
   uploadIcon: {
@@ -2309,46 +2446,46 @@ const cardStyles = StyleSheet.create({
   },
   uploadTitle: {
     fontSize: 14,
-    fontWeight: '800',
-    color: '#6D28D9',
+    fontWeight: "800",
+    color: "#6D28D9",
     marginBottom: 4,
   },
   uploadSubtitle: {
     fontSize: 10,
-    color: '#5B21B6',
-    backgroundColor: 'rgba(255,255,255,0.7)',
+    color: "#5B21B6",
+    backgroundColor: "rgba(255,255,255,0.7)",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   previewContainer: {
-    alignItems: 'center',
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
+    alignItems: "center",
+    backgroundColor: "#ECFDF5",
+    borderColor: "#10B981",
     borderWidth: 2,
     borderRadius: 12,
     padding: 12,
   },
   previewImage: {
-    width: '100%',
+    width: "100%",
     height: 120,
     borderRadius: 8,
     marginBottom: 8,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   fileName: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#10B981',
+    fontWeight: "700",
+    color: "#10B981",
     marginBottom: 3,
   },
   changeText: {
     fontSize: 10,
-    color: '#059669',
+    color: "#059669",
   },
   actionButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
     marginTop: 10,
   },
@@ -2357,74 +2494,75 @@ const cardStyles = StyleSheet.create({
     padding: 8,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#FCA5A5',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
+    borderColor: "#FCA5A5",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
   },
   removeButtonText: {
-    color: '#DC2626',
-    fontWeight: '700',
+    color: "#DC2626",
+    fontWeight: "700",
     fontSize: 11,
   },
   uploadButton: {
     flex: 3,
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#6D28D9',
-    alignItems: 'center',
+    backgroundColor: "#6D28D9",
+    alignItems: "center",
   },
   uploadButtonDisabled: {
     opacity: 0.7,
   },
   uploadButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: "#FFFFFF",
+    fontWeight: "800",
     fontSize: 11,
   },
   tip: {
     marginTop: 10,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 13,
-    color: '#6D28D9',
+    color: "#6D28D9",
   },
   tipBold: {
-    fontWeight: '700',
+    fontWeight: "700",
   },
   footer: {
-    backgroundColor: '#F3E8FF',
+    backgroundColor: "#F3E8FF",
     padding: 16,
     borderTopWidth: 2,
-    borderTopColor: '#C4B5FD',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderTopColor: "#C4B5FD",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     gap: 12,
-    flexWrap: 'wrap',
+    flexWrap: "wrap",
   },
   badge: {
-    backgroundColor: '#6D28D9',
+    backgroundColor: "#6D28D9",
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 999,
-    shadowColor: '#6D28D9',
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 2,
   },
   badgeGreen: {
-    backgroundColor: '#10B981',
-    shadowColor: '#10B981',
+    backgroundColor: "#10B981",
+    shadowColor: "#10B981",
   },
   badgePurple: {
-    backgroundColor: '#8B5CF6',
-    shadowColor: '#8B5CF6',
+    backgroundColor: "#8B5CF6",
+    shadowColor: "#8B5CF6",
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: "800",
   },
+
 });
 
 export default AgentCreationScreen;
