@@ -4,8 +4,8 @@ import { supabase } from "../../../Config/supabaseClient";
 
 // Utility to check if a position is within a radius
 export const isWithinRadius =async (coord1) => {
-  console.log("coord1", coord1);
-  console.log("centralPosition", centralPosition);
+  // console.log("coord1", coord1);
+  // console.log("centralPosition", centralPosition);
 
   const toRad = (value) => (value * Math.PI) / 180; 
 
@@ -17,8 +17,8 @@ export const isWithinRadius =async (coord1) => {
   const globalMap = {};
   globalRes.data.forEach(({ key, value }) => globalMap[key] = parseFloat(value));
   const maxDistance = globalMap.max_distance_km ?? 25;
-const radius = maxDistance * 1000; // Convert km to meters
-  console.log("Radius in meters:", radius);
+  const radius = maxDistance * 1000; // Convert km to meters
+  // console.log("Radius in meters:", radius);
 
   // Normalize property names for coord2 (handles inconsistent casing)
   const lat2 = centralPosition.Latitude || centralPosition.Latitude;
@@ -48,11 +48,11 @@ const radius = maxDistance * 1000; // Convert km to meters
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   const distance = R * c; // Distance in meters
-  console.log("Calculated Distance (meters):", distance);
+  // console.log("Calculated Distance (meters):", distance);
 
   // Check if the distance is within the radius
   const isWithin = distance <= radius;
-  console.log("Is within radius:", isWithin);
+  // console.log("Is within radius:", isWithin);
 
 
   const distanceInKm = (distance / 1000).toFixed(2); 
@@ -74,8 +74,8 @@ const centralPosition = {
 
 // Function to get coordinates and check if within radius
 export const getCoordinates = async (address) => {
-  console.log("Address:", address);
- console.log("Central Position:", centralPosition);
+//   console.log("Address:", address);
+//  console.log("Central Position:", centralPosition);
 
   const API_KEY = "AIzaSyAM29otTWBIAefQe6mb7f617BbnXTHtN0M";
   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -84,10 +84,10 @@ export const getCoordinates = async (address) => {
 var results;
   try {
 
-    console.log("Making API call to:", url);
+    // console.log("Making API call to:", url);
     
     const response = await axios.get(url);
-    console.log("Coordinates response:", response.data);
+    // console.log("Coordinates response:", response.data);
 
     if (response.data.status === "OK") {
       const location = response.data.results[0].geometry.location;
@@ -97,7 +97,7 @@ var results;
       )
       
     } else {
-      console.error("Error fetching coordinates:", response.data.status);
+      // console.error("Error fetching coordinates:", response.data.status);
       // Alert.alert("Error", "Could not fetch coordinates for the given address.");
       return { status: "error", distance: 0, isWithin: false };
     }

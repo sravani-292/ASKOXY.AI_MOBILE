@@ -13,7 +13,6 @@ import BASE_URL from "../../Config";
 import { Ionicons } from '@expo/vector-icons';
 
 // Screens imports
-import Services from "../Dashboard/Services";
 import Login from "../Authorization/Login";
 import Register from "../Authorization/Register";
 import About from "../Screens/View/PurchaseFlow/About";
@@ -29,7 +28,7 @@ import AddressBook from "../Screens/View/Address/AddressBook";
 import CheckOut from "../Screens/View/PurchaseFlow/CheckOut";
 import Rice from "../Screens/View/ShoppingCart/Rice";
 import MyLocationPage from "../Screens/View/Address/MyLocationPage";
-import SplashScreen from "../Authorization/SplashScreen";
+import EnhancedSplashScreen from "../Authorization/EnhancedSplashScreen";
 import OrderSummary from "../Screens/View/PurchaseFlow/OrderSummary";
 // import PaymentDetails from "../Screens/View/Payments/PaymentScreen";
 import PaymentDetails from "../Screens/View/Payments/PaymentDetails/PaymentScreen";
@@ -45,7 +44,6 @@ import WriteToUs from "../Screens/View/ContactUs/WriteToUs";
 import UserDashboard from "../Screens/View/ShoppingCart/DashboardProduct/UserDashboard";
 import ChatGpt from "../Authorization/NewLogin";
 
-import LinearGradient from "react-native-linear-gradient";
 import { COLORS } from "../../Redux/constants/theme";
 import ReferralHistory from "../Screens/View/Referral Links/ReferralHistory";
 import Main from "../Screens/View/WalletSubscriptions/Main";
@@ -71,7 +69,6 @@ import UniversityGPT from "../Dashboard/ExploreGpts/UniversityGpt";
 import CountriesDisplay from "../Dashboard/StudentX/CountriesDisplay";
 import UniversitiesDisplay from "../Dashboard/StudentX/UniversitiesDisplay";
 import UniversityDetails from "../Dashboard/StudentX/UniversitiesDetails";
-// import ServiceScreen from "../ServiceScreen";
 import ServiceScreen from "../Screens/ServiceScreen";
 import ReferFriend from "../Screens/View/Referral Links/ReferFriend";
 import BarcodeScanner from "../Screens/View/Profile/BarcodeScanner";
@@ -89,13 +86,7 @@ import AccountDeletionScreen from "../Authorization/AccountDeletion";
 import Home from "../Home";
 import NewDashBoard from "../Screens/New_Dashbord/screen/NewDashBoard";
 import WishlistScreen from "../Screens/New_Dashbord/components/Wishlist";
-
-// import PaymentTest from "../PaymentTest";
 import Chats from "../Screens/Chats/Chat";
-// import Notifications from "../Notifications";
-
-import * as Linking from "expo-linking";
-// import ChatScreen from "../Dashboard/LegalChatbot";
 import AboutService from "../Dashboard/AboutUS";
 import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
 import SearchScreen from "../Screens/View/ShoppingCart/Search/SearchScreen"
@@ -121,14 +112,13 @@ import StoreTabs from "./StoreTabs";
 import ChatScreen from "../Components/ChatPopup";
 import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
 
-// import RealtimeMainScreen from "../Screens/AIAgent/VoiceAssistant/screens/RealTimeMainScreen";
+
 import AIRoleSelection from "../Screens/AIAgent/CreateAgent/AIRoleSelection";
 import OGImageGenerator from "../Screens/AIAgent/UserFlow/OGImageGenerator";
 import MyAgents from "../Screens/AIAgent/UserFlow/MyAgent";
 import AgentCreationScreen from "../Screens/Genoxy/AgentCreation";
 import AgentPreviewScreen from "../Screens/Genoxy/AgentPreviewScreen";
-// import AgentCreationScreen from '../Screens/AIAgent/NewAgentCreationScreen';
-// import RealTimeMainScreenForCall from "../Screens/AIAgent/EcommerceVoiceAssistant/screens/RealTimeMainScreenForCall";
+import FreelancerProfile from "../Screens/AIAgent/UserFlow/FreelancerProfile";
 
 
 import GlmsHome from "../Screens/GLMS/GlmsHome";
@@ -143,6 +133,7 @@ import UseCasesStackScreen from "./LOSUseCasesStackScreen";
 import UpdateOrderAddressScreen from "../Screens/View/Address/UpdateOrderAddress";
 import WalletWithdrawComponent from "../Screens/View/Walletwithdraw/Index";
 import BulkInvite from "../Screens/View/Referral Links/BulkInvite";
+import AgentDetails from "../Screens/AIStore/AgentDetails";
 const json = require("../../app.json");
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -159,6 +150,8 @@ const linking = {
       Home: "home",
       Product: "Rice Product/:id",
       OrderSummary: "order-summary/:id",
+      Wallet: "wallet",
+      "bharath-aistore" : "AI Store"
       // Add more routes here as needed
     },
   },
@@ -368,8 +361,8 @@ const formatWord = (word) => {
   return (
     <Stack.Navigator
       linking={linking}
-      // initialRouteName={needsUpdate ? "App Update" : "SplashScreen"}
-      initialRouteName={needsUpdate ? "App Update" : "New DashBoard"}
+      initialRouteName={needsUpdate ? "App Update" : "SplashScreen"}
+      // initialRouteName={needsUpdate ? "App Update" : "Special Offers"}
       // initialRouteName="Bulk Invite"
       screenOptions={{
         headerShown: true,
@@ -415,7 +408,7 @@ const formatWord = (word) => {
 
       <Stack.Screen
         name="SplashScreen"
-        component={SplashScreen}
+        component={EnhancedSplashScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -447,7 +440,7 @@ const formatWord = (word) => {
       <Stack.Screen name="Address Book" component={AddressBook} />
       <Stack.Screen name="MyLocationPage" component={MyLocationPage} />
       <Stack.Screen name="Checkout" component={CheckOut} />
-      <Stack.Screen name="Splash Screen" component={SplashScreen} />
+      {/* <Stack.Screen name="Splash Screen" component={SplashScreen} /> */}
       <Stack.Screen name="Order Summary" component={OrderSummary} />
       <Stack.Screen name="Payment Details" component={PaymentDetails} />
       <Stack.Screen name="Order Details" component={OrderDetails} />
@@ -731,6 +724,8 @@ const formatWord = (word) => {
     <Stack.Screen name="Image Creator" component={OGImageGenerator} options={{ headerShown: true, title: "Image Creator" }} />
     
     <Stack.Screen name="My Agents" component={MyAgents} options={{ headerShown: true, title: "My Agents" }} />
+    <Stack.Screen name="Agent Details" component={AgentDetails} options={{ headerShown: true }} />
+      {/* <Stack.Screen name="Freelancer Profile" component={FreelancerProfile} options={{ headerShown: true, title: "Freelancer Profile" }} /> */}
       <Stack.Screen name="GLMS Home" component={GlmsHome} />
       <Stack.Screen name="Videos" component={GlmsVideos} />
       <Stack.Screen name="Find Jobs" component={DisplayJobsForUser} />
@@ -758,6 +753,7 @@ const formatWord = (word) => {
       />
     <Stack.Screen name="Wallet Withdraw" component={WalletWithdrawComponent}/>
     <Stack.Screen name="Bulk Invite" component={BulkInvite}/>
+    <Stack.Screen name="Freelancer Profile" component={FreelancerProfile} />
   </Stack.Navigator>
   );
 }

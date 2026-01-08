@@ -170,7 +170,7 @@ const[show,setShow]=useState(false)
       
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="always">
         <View style={styles.faqContainer}>
-        <Animated.View style={[
+        {/* <Animated.View style={[
       styles.buttonContainer,
       {
         transform: [{ scale: scaleAnim }],
@@ -180,7 +180,7 @@ const[show,setShow]=useState(false)
         <LinearGradient
           colors={['#4776E6', '#8E54E9']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+          // end={{ x: 1, y: 0 }}
           style={styles.gradientButton}
         >
           <View style={styles.contentContainer}>
@@ -197,7 +197,7 @@ const[show,setShow]=useState(false)
           </View>
         </LinearGradient>
       </TouchableOpacity>
-    </Animated.View>
+    </Animated.View> */}
 
 {hide==true?
     <>

@@ -18,7 +18,6 @@ import {
   import { useFocusEffect } from "@react-navigation/native";
   import BASE_URL from "../../../../Config";
   import * as DocumentPicker from "expo-document-picker";
-  import { FormData } from "formdata-node";
   import Icon from "react-native-vector-icons/Ionicons"
 import LottieView from "lottie-react-native";
   

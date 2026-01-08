@@ -32,7 +32,7 @@ export default function ProfileSettings({ navigation }) {
    const customerId = userData.userId;
 
   // Updated settings menu items with new options
-  const menuItems = 
+const menuItems = 
     [
       { 
         id: 1, 
@@ -54,6 +54,15 @@ export default function ProfileSettings({ navigation }) {
       },
       { 
         id: 3, 
+        icon: require('../../../../assets/Images/freelance-work.png'),
+        type: 'Image',
+        label: 'Freelancer', 
+        showArrow: true,
+        navigation: "Freelancer Profile",
+        gradient: ['#36D1DC', '#5B86E5'] // teal to blue, location-friendly
+      },
+            { 
+        id: 4, 
         icon: 'map-pin', 
         type: 'Feather', 
         label: 'Address', 
@@ -62,7 +71,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#36D1DC', '#5B86E5'] // teal to blue, location-friendly
       },
       { 
-        id: 4, 
+        id: 5, 
         icon: 'user-plus', 
         type: 'Feather', 
         label: 'Invite', 
@@ -71,7 +80,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
       },
       { 
-        id: 5, 
+        id: 6, 
         icon: 'refresh-cw', 
         type: 'Feather', 
         label: 'Referral History',
@@ -80,7 +89,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#00C9FF', '#92FE9D'] 
       },
       { 
-        id: 6, 
+        id: 7, 
         icon: 'hand-coin', 
         type: 'MaterialCommunityIcons', 
         label: 'My Crypto', 
@@ -89,7 +98,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#00B4DB', '#0083B0'] 
       },
       { 
-        id: 7, 
+        id: 8, 
         icon: 'user-plus', 
         type: 'Feather', 
         label: 'Coupons', 
@@ -98,9 +107,9 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#7B61FF', '#4D2CFF'] // inviting purple
       },
 
-      { id: 8, type: 'divider' },
+      { id: 9, type: 'divider' },
       { 
-        id: 9, 
+        id: 10, 
         icon: 'credit-card', 
         type: 'Feather', 
         label: 'Subscription',
@@ -109,7 +118,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#F7971E', '#FFD200'] // gold/yellow hues, finance-friendly
       },
       { 
-        id: 10, 
+        id: 11, 
         icon: 'help-circle', 
         type: 'Feather', 
         label: 'FAQ\'s', 
@@ -118,7 +127,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#36D1DC', '#5B86E5'] // consistent with helpful/support tone
       },
       { 
-        id: 11, 
+        id: 12, 
         icon: 'phone', 
         type: 'Feather', 
         label: 'Contact Us', 
@@ -126,9 +135,9 @@ export default function ProfileSettings({ navigation }) {
         navigation: 'Write To Us',
         gradient: ['#00B4DB', '#0083B0'] // professional blue gradient
       },
-      { id: 12, type: 'divider' },
+      { id: 13, type: 'divider' },
       {
-        id: 13, 
+        id: 14, 
         icon: 'user-x', 
         type: 'Feather', 
         label: 'DeActivate Account', 
@@ -137,7 +146,7 @@ export default function ProfileSettings({ navigation }) {
         gradient: ['#FF4B2B', '#FF416C'] // serious red-pink for account closure
       },
       {
-        id: 14,
+        id: 15,
         icon: 'user-minus',
         type: 'Feather',
         label: 'Delete Account',
@@ -233,7 +242,7 @@ Here's why:
     };
 
     const profile = async () => {
-      console.log("userId",customerId);
+      // console.log("userId",customerId);
       if (userData) {
         try {
           const response = await axios({
@@ -243,9 +252,9 @@ Here's why:
             //   Authorization: `Bearer ${userData.accessToken}`,
             // },
           });
-          console.log("get profile call response",response);
+          // console.log("get profile call response",response);
           setChainId(response.data.multiChainId);
-          console.log(response.data.coinAllocated);
+          // console.log(response.data.coinAllocated);
           setCoin(response.data.coinAllocated);
            CoinsValue(response.data.coinAllocated);
         } catch (error) {
@@ -264,7 +273,7 @@ Here's why:
             "Content-Type": "application/json",
           }
         })
-        console.log("response of description",response.data);
+        // console.log("response of description",response.data);
         const data = response.data
 
        const targetId = `1ee1d800-45e2-4918-ac97-382a298dbf78`
@@ -289,7 +298,7 @@ Here's why:
             },
             }
           )
-          console.log("response of coins",response.data);
+          // console.log("response of coins",response.data);
           setCoinValue(response.data)
         }
         catch (error) {
@@ -299,7 +308,7 @@ Here's why:
     }
 
   const getProfile = async () => {
-    console.log("profile get call response");
+    // console.log("profile get call response");
     setProfileLoader(true);
     try {
       const response = await axios({
@@ -314,7 +323,7 @@ Here's why:
       setProfileLoader(false);
       if (response.status === 200) {
         // setUser(response.data);
-        console.log("response", response.data);
+        // console.log("response", response.data);
         
         setFormData({
           firstName: response.data.firstName,
@@ -365,6 +374,7 @@ Here's why:
         {item.type === 'FontAwesome5' && <FontAwesome5 name={item.icon} size={16} color="#fff" />}
         {item.type === 'MaterialCommunityIcons' && <MaterialCommunityIcons name={item.icon} size={16} color="#fff" />}
         {item.type === 'Feather' && <Feather name={item.icon} size={16} color="#fff" />}
+        {item.type === 'Image' && <Image source={item.icon} style={{width:20,height:19,color:"white",borderRadius:100}}/>}
       </LinearGradient>
     );
   };

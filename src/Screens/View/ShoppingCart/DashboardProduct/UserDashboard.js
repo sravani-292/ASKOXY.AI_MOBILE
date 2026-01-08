@@ -343,13 +343,42 @@ const getAvailableCategoryTypes = () => {
     setFilteredItems(sortItems(items, "weightAsc"));
   };
 
- 
- const handleAddToCart = async (item) => {
-    if (!userData) {
+const handleAddToCart = async (item) => {
+    if (!userData || !customerId) {
       Alert.alert("Alert", "Please login to continue", [
         { text: "Cancel" },
         { text: "OK", onPress: () => navigation.navigate("Login") },
       ]);
+      return;
+    }
+
+    try {
+      const profileResponse = await handleGetProfileData(customerId);
+      const profile = profileResponse.data;
+
+      const { firstName, mobileNumber } = profile || {};
+      const isProfileComplete = !!(firstName && mobileNumber);
+
+      if (!isProfileComplete) {
+        Alert.alert(
+          "Complete Your Profile",
+          "Please fill your profile details to proceed..",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Go to Profile",
+              onPress: () => navigation.navigate("Profile Edit"),
+            },
+          ]
+        );
+        return;
+      }
+    } catch (error) {
+      console.error("Profile validation error:", error);
+      Alert.alert(
+        "Profile Check Failed",
+        "Unable to verify your profile. Please try again or contact support."
+      );
       return;
     }
 
@@ -359,31 +388,27 @@ const getAvailableCategoryTypes = () => {
     };
 
     try {
-      // Add item to cart
-      const response = await handleUserAddorIncrementCart(data,"ADD");
-       Alert.alert(
-    "Success",
-    response.cartResponse?.errorMessage || "Item added to cart",[
-      {
-        text:"ok",
-        onPress:()=>{
-          if (response.comboOffers) {
-    // Show combo modal or handle combo offers
-    console.log("Combo Offers:", response.comboOffers.items);
-    console.log("============")
-            setComboOffersData(response.comboOffers); // Save data
-    setOfferShow(true)
-        console.log("============")
+      const response = await handleUserAddorIncrementCart(data, "ADD");
 
-  }
-        }
-      }
-    ]
-  );
+      Alert.alert(
+        "Success",
+        response.cartResponse?.errorMessage || "Item added to cart",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              if (response.comboOffers) {
+                setComboOffersData(response.comboOffers);
+                setOfferShow(true);
+              }
+            },
+          },
+        ]
+      );
+
       fetchCartItems();
-      console.log("Sreeja",response)
 
-      // Fetch active and eligible offers
+      // Fetch offers
       const [activeRes, eligibleRes] = await Promise.all([
         fetch(`${BASE_URL}cart-service/cart/activeOffers`),
         fetch(`${BASE_URL}cart-service/cart/userEligibleOffer/${customerId}`),
@@ -391,14 +416,10 @@ const getAvailableCategoryTypes = () => {
 
       const activeOffers = await activeRes.json();
       const userEligibleOffers = await eligibleRes.json();
-      // console.log("active offers",activeOffers);
-      // console.log("user eligible offers",userEligibleOffers);
-      
-      // Filter only active offers
       const validActiveOffers = activeOffers.filter((offer) => offer.active);
+
       if (!validActiveOffers.length) return;
 
-      // Extract used offer weights and names
       const usedOfferWeights = userEligibleOffers
         .filter((o) => o.eligible)
         .map((o) => o.weight);
@@ -410,45 +431,35 @@ const getAvailableCategoryTypes = () => {
       const units = item.units;
       let alertShown = false;
 
-      // Check if user has already used an offer for this weight
+      // FIXED: Define hasUsedOfferForWeight BEFORE using it!
       const hasUsedOfferForWeight = usedOfferWeights.includes(itemWeight);
 
-      // 1️⃣ Check for already used offer for the same weight (non-container offers)
+      // Non-container offer reuse check
       if (hasUsedOfferForWeight && itemWeight !== 10 && itemWeight !== 26) {
         const usedOffer = userEligibleOffers.find(
           (o) => o.eligible && o.weight === itemWeight
         );
         if (usedOffer) {
-          // setTimeout(() => {
-          //   Alert.alert(
-          //     "Offer Already Availed",
-          //     `You have already availed the ${usedOffer.offerName} for ${itemWeight}kg.`
-          //   );
-          // }, 1000);
-
           alertShown = true;
         }
       }
 
-      // 2️⃣ Container Offer (10kg or 26kg, only one per user)
-  if (!alertShown && (itemWeight === 10 || itemWeight === 26) && units === "kgs") {        // Check if user has already used a container offer (10kg or 26kg)
+      //  Container Offer (10kg or 26kg)
+      if (
+        !alertShown &&
+        (itemWeight === 10 || itemWeight === 26) &&
+        units === "kgs"
+      ) {
         const hasUsedContainer = userEligibleOffers.some(
-          (uo) =>
-            uo.eligible &&
-            (uo.weight === 10 || uo.weight === 26 )
+          (uo) => uo.eligible && (uo.weight === 10 || uo.weight === 26)
         );
         if (hasUsedContainer) {
-          // setTimeout(() => {
-          //   Alert.alert(
-          //     "Container Offer Already Availed",
-          //     "You have already availed a container offer. Only one container offer (10kg or 26kg) can be used."
-          //   );
-          // }, 1000);
           alertShown = true;
         } else {
           const matchedContainerOffer = validActiveOffers.find(
             (offer) =>
-              offer.minQtyKg === itemWeight && units == "kgs" &&
+              offer.minQtyKg === itemWeight &&
+              units === "kgs" &&
               (offer.minQtyKg === 10 || offer.minQtyKg === 26) &&
               !usedOfferNames.includes(offer.offerName)
           );
@@ -457,8 +468,7 @@ const getAvailableCategoryTypes = () => {
             setTimeout(() => {
               Alert.alert(
                 "Container Offer",
-                `${matchedContainerOffer.offerName} FREE! `
-              //  ` Buy ${matchedContainerOffer.minQtyKg}kg and get a ${matchedContainerOffer.freeItemName} free.`
+                `${matchedContainerOffer.offerName} FREE!`
               );
             }, 1000);
             alertShown = true;
@@ -466,29 +476,28 @@ const getAvailableCategoryTypes = () => {
         }
       }
 
-      // 3️⃣ Special Offer (2+1 for 1kg or 5+2 for 5kg)
+      // Special Offer (1kg or 5kg)
       if (!alertShown && (itemWeight === 1 || itemWeight === 5)) {
         const matchedSpecialOffer = validActiveOffers.find(
           (offer) =>
             offer.minQtyKg === itemWeight &&
             (offer.minQtyKg === 1 || offer.minQtyKg === 5) &&
             !usedOfferNames.includes(offer.offerName) &&
-            offer.freeItemName.toLowerCase() === item.itemName.toLowerCase()
+            offer.freeItemName?.toLowerCase() === item.itemName?.toLowerCase()
         );
 
         if (matchedSpecialOffer) {
-          // console.log("Matched Special Offer:", matchedSpecialOffer);
           setTimeout(() => {
             Alert.alert(
               "Special Offer",
-              `${matchedSpecialOffer.offerName} is active!` 
+              `${matchedSpecialOffer.offerName} is active!`
             );
           }, 1000);
           alertShown = true;
         }
       }
     } catch (error) {
-      console.error("Add to cart error", error);
+      console.error("Add to cart error:", error);
       Alert.alert("Error", "Failed to add item to cart. Please try again.");
     }
   };
@@ -604,7 +613,7 @@ const getAvailableCategoryTypes = () => {
             // console.log("Filtered items:", filtered);
           }
         }
-         console.log("Filtered items: at getAllCategories");
+        //  console.log("Filtered items: at getAllCategories");
          
         setTimeout(() => {
           setLoading(false);

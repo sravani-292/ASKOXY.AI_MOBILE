@@ -638,7 +638,7 @@ useEffect(() => {
       );
     } else {
       const filtered = matchedCategory?.itemsResponseDtoList || [];
-      console.log("Filtered Items: ", filtered);
+      // console.log("Filtered Items: ", filtered);
       setFilteredItems(filtered);
     }
   };

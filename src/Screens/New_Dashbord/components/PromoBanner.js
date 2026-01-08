@@ -588,7 +588,7 @@ const styles = StyleSheet.create({
     right: -20,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
-  cornerDecoration: {
+    cornerDecoration: {
     position: 'absolute',
     bottom: -10,
     left: -10,

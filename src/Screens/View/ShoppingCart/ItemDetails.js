@@ -29,10 +29,9 @@ import {
   handleDecrementorRemovalCart,
 } from "../../../../src/ApiService";
 import OfferModal from "./DashboardProduct/OfferModal";
-
 import { useCart } from "../../../../until/CartCount";
 import BVMCoins from "../Profile/BVMCoins";
-
+import { handleGetProfileData } from "../../../../src/ApiService";
 const { width, height } = Dimensions.get("window");
 
 const ItemDetails = ({ route }) => {
@@ -189,43 +188,68 @@ const ItemDetails = ({ route }) => {
     }
   };
 
-  const handleAddToCart = async (item) => {
-    if (!userData) {
-      Alert.alert("Alert", "Please login to continue", [
-        { text: "Cancel" },
-        { text: "OK", onPress: () => navigation.navigate("Login") },
-      ]);
-      return;
+ 
+
+const handleAddToCart = async (item) => {
+  if (!userData) {
+    Alert.alert("Alert", "Please login to continue", [
+      { text: "Cancel" },
+      { text: "OK", onPress: () => navigation.navigate("Login") },
+    ]);
+    return;
+  }
+
+  setLoadingItems(prev => ({ ...prev, [item.itemId]: true }));
+
+  try {
+    const profileResponse = await handleGetProfileData(customerId);
+    const profile = profileResponse.data;
+
+    const { firstName, mobileNumber } = profile || {};
+    const isProfileComplete = !!(firstName && mobileNumber);
+
+    if (!isProfileComplete) {
+      Alert.alert(
+        "Complete Your Profile",
+        "Please fill your profile details to proceed.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Go to Profile", 
+            onPress: () => navigation.navigate("Profile") 
+          },
+        ]
+      );
+      return; 
     }
 
-    setLoadingItems(prev => ({ ...prev, [item.itemId]: true }));
+    //  4. Add to cart (your existing logic)
+    const data = { customerId, itemId: item.itemId };
+    const response = await handleUserAddorIncrementCart(data, "ADD");
     
-    try {
-      const data = { customerId, itemId: item.itemId };
-      const response = await handleUserAddorIncrementCart(data, "ADD");
-      
-      Alert.alert(
-        "Success",
-        response.cartResponse?.errorMessage || "Item added to cart",
-        [{
-          text: "ok",
-          onPress: () => {
-            if (response.comboOffers) {
-              setComboOffersData(response.comboOffers);
-              setOfferShow(true);
-            }
+    Alert.alert(
+      "Success",
+      response.cartResponse?.errorMessage || "Item added to cart",
+      [{
+        text: "ok",
+        onPress: () => {
+          if (response.comboOffers) {
+            setComboOffersData(response.comboOffers);
+            setOfferShow(true);
           }
-        }]
-      );
-      
-      fetchCartData();
-    } catch (error) {
-      console.error("Add to cart error", error);
-      Alert.alert("Error", "Failed to add item to cart. Please try again.");
-    } finally {
-      setLoadingItems(prev => ({ ...prev, [item.itemId]: false }));
-    }
-  };
+        }
+      }]
+    );
+    
+    fetchCartData(); 
+
+  } catch (error) {
+    console.error("Add to cart error:", error);
+    Alert.alert("Error", "Failed to add item to cart. Please try again.");
+  } finally {
+    setLoadingItems(prev => ({ ...prev, [item.itemId]: false }));
+  }
+};
 
   const handleIncrease = async (item) => {
     setLoadingItems(prev => ({ ...prev, [item.itemId]: true }));

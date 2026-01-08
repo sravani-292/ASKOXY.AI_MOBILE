@@ -24,6 +24,7 @@ import Home from '../Home';
 import { COLORS } from '../../Redux/constants/theme';
 import BharathAgentstore from '../Screens/Genoxy/BharathAgentstore';
 import StoreTabs from './StoreTabs';
+import AIStore from '../Screens/AIStore/AIStore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { scale, verticalScale, scaleFont } from '../utils/scale.js';
 
@@ -32,10 +33,16 @@ const Tab = createBottomTabNavigator();
 const TabArr = [
   { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
   { route: 'Dashboard', label: 'Shop', icon: require('../../assets/BottomTabImages/store.png'), gradient: ['#f093fb', '#f5576c'], component: NewDashBoard },
-  { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
+  { route: 'AI Agent', label: 'AI Agent', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
   { route: 'Wallet', label: 'Wallet', icon: require('../../assets/BottomTabImages/wallet.png'), gradient: ['#4facfe', '#00f2fe'], component: MainWallet },
   { route: 'My Cart', label: 'Cart', icon: require('../../assets/BottomTabImages/cart.png'), gradient: ['#7957c8ff', '#6a0dad'], component: CartScreen },
   { route: 'Profile', label: 'Profile', icon: require('../../assets/BottomTabImages/profile.png'), gradient: ['#6a11cb', '#2575fc'], component: ProfileSettings },
+];
+
+const AIAgentTabs = [
+  { route: 'AI Agent', label: 'AI Agent', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
+  { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/store.png'), gradient: ['#f093fb', '#f5576c'], component: AIStore },
+  { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
 ];
 
 const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => {
@@ -96,11 +103,19 @@ const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => 
 });
 
 const CustomTabBar = React.memo(({ state, descriptors, navigation }) => {
-  const tabData = useMemo(() => state.routes.map((route, index) => {
-    const item = TabArr.find((tab) => tab.route === route.name);
-    const isFocused = state.index === index;
-    return { route, index, item, isFocused, key: route.key };
-  }), [state.routes, state.index]);
+  const focusedRoute = state.routes[state.index].name;
+  const currentTabs = ['AI Agent', 'AI Store'].includes(focusedRoute) ? AIAgentTabs : TabArr;
+  
+  const tabData = useMemo(() => {
+    return currentTabs.map((item) => {
+      const routeIndex = state.routes.findIndex(route => route.name === item.route);
+      if (routeIndex === -1) return null;
+      
+      const route = state.routes[routeIndex];
+      const isFocused = state.index === routeIndex;
+      return { route, index: routeIndex, item, isFocused, key: route.key };
+    }).filter(Boolean);
+  }, [state.routes, state.index, currentTabs]);
 
   const handlePress = useCallback((routeName, routeKey, isFocused) => {
     const event = navigation.emit({ type: 'tabPress', target: routeKey, canPreventDefault: true });
@@ -135,22 +150,37 @@ const Tabs = ({ navigation }) => {
     navigation.navigate('Login');
   }, [navigation]);
 
-  const getScreenOptions = useCallback((item) => ({
-    headerShown: ['Profile', 'Wallet', 'My Cart', 'My Orders','AI Store'].includes(item.route),
-    headerRight: item.route === 'Profile' ? () => (
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={scale(22)} color="#000" />
-      </TouchableOpacity>
-    ) : undefined,
-    headerStyle: { backgroundColor: ['Profile', 'Wallet'].includes(item.route) ? '#fff' : undefined },
-    headerTitleStyle: { color: ['Profile', 'Wallet'].includes(item.route) ? '#000' : undefined },
-  }), [handleLogout]);
+  const getScreenOptions = useCallback((item) => {
+    const getTitleForRoute = (route) => {
+      switch(route) {
+        case 'Profile': return 'Profile';
+        case 'Wallet': return 'Wallet';
+        case 'My Cart': return 'My Cart';
+        case 'My Orders': return 'My Orders';
+        case 'AI Agent': return 'AI Agent';
+        case 'AI Store': return 'Exploring AI Store';
+        default: return route;
+      }
+    };
+    
+    return {
+      headerShown: ['Profile', 'Wallet', 'My Cart', 'My Orders','AI Agent', 'AI Store'].includes(item.route),
+      headerTitle: getTitleForRoute(item.route),
+      headerRight: item.route === 'Profile' ? () => (
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={scale(22)} color="#fff" />
+        </TouchableOpacity>
+      ) : undefined,
+      headerStyle: { backgroundColor: '#3d2a71' },
+      headerTitleStyle: { color: 'white' },
+      headerTintColor: 'white',
+    };
+  }, [handleLogout]);
 
   const tabNavigatorProps = useMemo(() => ({
     initialRouteName: "Landing",
     tabBar: (props) => {
       const focusedRoute = props.state.routes[props.state.index].name;
-      // if (focusedRoute === 'AI Store') return null;
       return <CustomTabBar {...props} />;
     },
     screenOptions: {
@@ -169,6 +199,12 @@ const Tabs = ({ navigation }) => {
           options={getScreenOptions(item)}
         />
       ))}
+      <Tab.Screen
+        key="AI Store"
+        name="AI Store"
+        component={AIStore}
+        options={getScreenOptions({ route: 'AI Store' })}
+      />
     </Tab.Navigator>
   );
 };

@@ -18,7 +18,7 @@ import CountryPicker from 'react-native-country-picker-modal';
 import BASE_URL from '../../../../Config';
 import { useSelector } from 'react-redux';
 
-const ProfileScreen = () => {
+const ProfileScreen = ({navigation}) => {
   // State management
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -254,67 +254,39 @@ const ProfileScreen = () => {
   };
 
   // Submit profile data
-  const handleSubmit = async () => {
-    // Reset all error states
-    // setEmailError(false);
-    // setWhatsappNumberError(false);
-    // setAlternativeNumberError(false);
-    
-    // let hasErrors = false;
-    
-    // // Field validation (email only needs to be validated if provided)
-    // if (email && !validateEmail(email)) {
-    //   setEmailError(true);
-    //   toast.error("Please enter a valid email");
-    //   hasErrors = true;
-    // }
-    
-    // // Alternative number validation - only validate if provided
-    // if (alternativeNumber && !validatePhoneNumber(alternativeNumber)) {
-    //   setAlternativeNumberError(true);
-    //   toast.error("Alternative number must be 10 digits");
-    //   hasErrors = true;
-    // } else if (
-    //   alternativeNumber && 
-    //   (alternativeNumber === mobileNumber || alternativeNumber === whatsappNumber)
-    // ) {
-    //   setAlternativeNumberError(true);
-    //   toast.error("Alternative number must be different from WhatsApp and mobile numbers");
-    //   hasErrors = true;
-    // }
-    
-    // if (hasErrors) {
-    //   return;
-    // }
-// console.log({mobileNumber})
-    if(firstName=="" || firstName==null){
+const handleSubmit = async () => {
+    if (firstName == "" || firstName == null) {
       Alert.alert("First Name is required");
       return;
     }
-    
-    if(mobileNumber=="" || mobileNumber==null){
+
+    if (mobileNumber == "" || mobileNumber == null) {
       Alert.alert("Mobile Number is required");
       return;
     }
-  
-    if(mobileNumber==alternativeNumber){
+
+    if (mobileNumber == alternativeNumber) {
       Alert.alert("Mobile Number and Alternative Number should not be same");
       return;
     }
 
     setIsLoading(true);
-    
+
     const data = {
       userFirstName: firstName,
       userLastName: lastName,
       customerEmail: email,
       customerId: customerId,
       alterMobileNumber: alternativeNumber,
-      whatsappNumber: whatsappVerified ? whatsappNumber : (isSameAsMain ? mobileNumber : whatsappNumber || ""),
+      whatsappNumber: whatsappVerified
+        ? whatsappNumber
+        : isSameAsMain
+        ? mobileNumber
+        : whatsappNumber || "",
       mobileNumber: mobileVerified ? mobileNumber : mobileNumber,
     };
-    
-    try { 
+
+    try {
       const response = await axios.patch(
         BASE_URL + "user-service/profileUpdate",
         data,
@@ -325,24 +297,44 @@ const ProfileScreen = () => {
           },
         }
       );
-      
+
       if (response.data.errorMessage) {
         Alert.alert("Failed", response.data.errorMessage);
-        // toast.error(response.data.errorMessage);
+        return;
+      }
+
+      Alert.alert("Success", "Profile saved successfully");
+      getProfile();
+
+      const addressResponse = await getAllAddresss(customerId);
+      const addresses = addressResponse?.data || [];
+
+      if (!Array.isArray(addresses) || addresses?.length === 0) {
+        Alert.alert(
+          "Add Delivery Address",
+          "Please add a delivery address to proceed with orders.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Add Address",
+              onPress: () => navigation.navigate("New Address Book"),
+            },
+          ]
+        );
       } else {
-        getProfile();
-        Alert.alert("Success", "Profile saved successfully");
-        // toast.success("Profile saved successfully");
+        //  Has addresses → go back to previous screen
+        navigation.goBack();
       }
     } catch (error) {
-      console.error(error.response);
-      Alert.alert("Failed", error.response?.data?.message || "Failed to update profile");
-      // toast.error(error.response?.data?.message || "Failed to update profile");
+      console.error("Profile update error:", error);
+      Alert.alert(
+        "Failed",
+        error.response?.data?.message || "Failed to update profile"
+      );
     } finally {
       setIsLoading(false);
     }
   };
-
   // Handle country selection
   const onSelectCountry = (country) => {
     setCountryCode(country.callingCode[0]);

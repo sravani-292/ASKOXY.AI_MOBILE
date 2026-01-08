@@ -25,8 +25,6 @@ import BASE_URL from "../../../../Config";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import { useSelector } from "react-redux";
-import { a, form } from "framer-motion/m";
-import { customText } from "react-native-paper";
 
 const { width } = Dimensions.get("window");
 

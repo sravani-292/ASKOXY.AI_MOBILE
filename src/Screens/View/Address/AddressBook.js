@@ -19,7 +19,6 @@ import { isWithinRadius, getCoordinates } from "./LocationService";
 import { COLORS } from "../../../../Redux/constants/theme";
 import { supabase } from "../../../Config/supabaseClient";
 
-import { getDistance } from "geolib";
 
 const AddressBook = ({ route }) => {
   const navigation = useNavigation();

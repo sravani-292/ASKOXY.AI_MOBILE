@@ -2,7 +2,7 @@ import { supabase } from "../../../../../Config/supabaseClient";
 
 export const checkEligibilityForActiveZones = async (userLat, userLng) => {
   try {
-    console.log("Fetching active delivery zones...");
+    // console.log("Fetching active delivery zones...");
 
     const { data: zones, error } = await supabase
       .from('delivery_zones')

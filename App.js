@@ -158,11 +158,15 @@ TextInput.defaultProps.allowFontScaling = false;
     'Service Screen', 'Campaign', 'Invite a friend', 'Scan', 'Saved Address',
     'Store Location', 'App Update', 'OxyLoans', 'Offer Letters', 'Study', 'Services',
     'My Exchanged Item Details', 'View BMVcoins History', 'Special Offers', 'New Address Book',
+    'wallet', // Add lowercase wallet for URL matching
   ];
 
   const pathMap = {
     'rice-products': 'Rice Products',
-    'offer': 'OxyLoans',
+    'offer': 'Special Offers',
+    'offers': 'Special Offers',
+    'wallet': 'Wallet',
+    "bharath-aistore" : 'AI Store'
   };
 
 
@@ -188,6 +192,8 @@ TextInput.defaultProps.allowFontScaling = false;
         if("Rice Products" === screen) {
           navigationRef.current?.navigate(screen, { category: "All CATEGORIES",
                   offerId: offerId});
+        }else if("Special Offers" === screen) {
+          navigationRef.current?.navigate(screen, { offerId: offerId });
         }else{
          navigationRef.current?.navigate(screen, { id });
         }
@@ -196,7 +202,14 @@ TextInput.defaultProps.allowFontScaling = false;
       const [screenKey, id] = path.split('/');
       const screenName = pathMap[screenKey];
       if (screenName) {
-        navigationRef.current?.navigate(screenName, { id });
+        console.log('Navigating via pathMap to:', screenName, 'with ID:', id);
+        setTimeout(() => {
+          if(screenName === "Special Offers") {
+            navigationRef.current?.navigate(screenName, { offerId: id });
+          } else {
+            navigationRef.current?.navigate(screenName, { id });
+          }
+        }, 1000);
       } else {
         console.warn('Unmapped screen key:', screenKey);
       }

@@ -17,8 +17,10 @@ import {
   Dimensions,
   TouchableOpacity,
   Platform,
+  BackHandler,
+  Alert,
 } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigationState } from "@react-navigation/native";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -212,6 +214,34 @@ export default function NewDashBoard() {
     }),
     []
   );
+  const currentScreen = useNavigationState(
+    (state) => state.routes[state.index]?.name
+  );
+
+   useFocusEffect(
+      useCallback(() => {
+        const handleBackPress = () => {
+          Alert.alert(
+            "Exit",
+            "Are you sure you want to exit?",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "OK", onPress: () => BackHandler.exitApp() },
+            ],
+            { cancelable: false }
+          );
+          return true;
+        };
+  
+        // ✅ Updated: Save the subscription and call remove() during cleanup
+        const backHandler = BackHandler.addEventListener(
+          "hardwareBackPress",
+          handleBackPress
+        );
+  
+        return () => backHandler.remove(); // ✅ correct way to clean up
+      }, [currentScreen])
+    );
 
   // Scroll to top functionality
   const scrollToTop = useCallback(() => {

@@ -15,7 +15,9 @@ import {
   TouchableOpacity,
   Animated,
   KeyboardAvoidingView,
+  Modal,
 } from "react-native";
+import {TextInput} from "react-native-paper"
 import * as Speech from "expo-speech";
 import { Ionicons } from "@expo/vector-icons";
 import axios, { AxiosHeaders } from "axios";
@@ -28,7 +30,7 @@ const { height: screenHeight } = Dimensions.get("window");
 
 const GenOxyChatScreen = ({ route, navigation }) => {
   const { query, category, assistantId, agentName, fd, agentId } = route.params;
-  console.log({ query, category, assistantId, agentName, fd, agentId });
+  // console.log({ query, category, assistantId, agentName, fd, agentId });
 
   const flatListRef = useRef(null);
   const [messages, setMessages] = useState([]);
@@ -41,6 +43,14 @@ const GenOxyChatScreen = ({ route, navigation }) => {
   const [threadId, setThreadId] = useState(null);
   const [currentChatId, setCurrentChatId] = useState(null);
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0);
+  const [ratingModal, setRatingModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [myComment, setMyComment] = useState('');
+  const [overallAvg, setOverallAvg] = useState(0);
+  const [overallCount, setOverallCount] = useState(0);
+  const [myRating, setMyRating] = useState(null);
+  const [hasRated, setHasRated] = useState(false);
+  const [ratingError, setRatingError] = useState('');
   const fadeAnims = useRef(new Map()).current;
   const messagesEndRef = useRef(null);
   const user = useSelector((state) => state.counter);
@@ -55,6 +65,102 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       ? { Authorization: `Bearer ${user.accessToken}` }
       : {};
   };
+
+  const normalizeOverall = (data) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return { avgUI: 0, count: 0 };
+    }
+    const total = data.reduce((sum, item) => sum + (item.feedbackRating || 0), 0);
+    const avgUI = total / data.length;
+    return { avgUI: Math.round(avgUI * 10) / 10, count: data.length };
+  };
+
+  const normalizeMine = (data, agentIdParam, agentNameParam) => {
+    if (!Array.isArray(data) || data.length === 0) {
+      return { present: false };
+    }
+    const myFeedback = data.find(item => item.agentId === agentIdParam);
+    if (!myFeedback) {
+      return { present: false };
+    }
+    return {
+      present: true,
+      ui: myFeedback.feedbackRating,
+      comment: myFeedback.feedbackComments || ""
+    };
+  };
+
+  const fetchOverallRating = async (agentIdParam) => {
+    const url = `${BASE_URL}ai-service/agent/feedbackByAgentId`;
+    const { data } = await axios.get(url, {
+      headers: { ...getAuthHeaders() },
+      params: { agentId: agentIdParam },
+    });
+    console.log({data})
+    const { avgUI, count } = normalizeOverall(data);
+    setOverallAvg(Number.isFinite(avgUI) ? avgUI : 0);
+    setOverallCount(Number.isFinite(count) ? count : 0);
+  };
+
+  const fetchMyRating = async (userIdParam, agentIdParam, agentNameParam) => {
+    const url = `${BASE_URL}ai-service/agent/feedbackByUserId`;
+    const { data } = await axios.get(url, {
+      headers: { ...getAuthHeaders() },
+      params: { userId: userIdParam, agentId: agentIdParam },
+    });
+    console.log('My rating data:', data);
+    const mine = normalizeMine(data, agentIdParam, agentNameParam);
+    if (!mine.present) {
+      setMyRating(null);
+      setMyComment("");
+      setHasRated(false);
+      return;
+    }
+    setMyRating(mine.ui);
+    setMyComment(mine.comment || "");
+    setHasRated(true);
+  };
+
+  const submitRating = async () => {
+    if (rating === 0) {
+      setRatingError('Please select a rating');
+      return;
+    }
+    setRatingError('');
+    
+    const payload = {
+      agentId,
+      agentName: agentName,
+      feedbackComments: myComment || "",
+      feedbackRating: rating,
+      userId,
+    };
+console.log(payload);
+    try {
+      await axios.post(`${BASE_URL}ai-service/agent/feedback`, payload, {
+        headers: { ...getAuthHeaders() }
+      });
+      
+      Alert.alert("Success", "Rating submitted successfully!");
+      setRatingModal(false);
+      setRating(0);
+      setMyComment("");
+      
+      // Refresh ratings
+      await fetchOverallRating(agentId);
+      await fetchMyRating(userId, agentId, agentName);
+    } catch (error) {
+      console.error("Error submitting rating:", error.response);
+      Alert.alert("Error", "Failed to submit rating. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    if (agentId && userId) {
+      fetchOverallRating(agentId);
+      fetchMyRating(userId, agentId, agentName);
+    }
+  }, [agentId, userId]);
 
   useEffect(() => {
     const fetchHelperQuestions = async () => {
@@ -226,7 +332,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     console.log("chat api payload", payload);
 
     const { data } = await axios.post(
-      `http://65.0.147.157:9040/api/ai-service/agent/agentChat1`,
+      `${BASE_URL}ai-service/agent/agentChat1`,
       payload,
       { headers }
     );
@@ -262,7 +368,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         headers.set("Authorization", auth.Authorization);
       }
 
-      const url = `http://65.0.147.157:9040/api/ai-service/agent/getconversations/${threadIdParam}/messages`;
+      const url = `${BASE_URL}ai-service/agent/getconversations/${threadIdParam}/messages`;
       console.log("[fetchThreadHistory] Calling URL:", url);
       const response = await axios.get(url, { headers });
 
@@ -672,9 +778,23 @@ const GenOxyChatScreen = ({ route, navigation }) => {
     return (
       <View style={styles.helperContainer}>
         <Text style={styles.helperTitle}>Welcome to {agentName}!</Text>
-        <Text style={styles.headerSubtitle}>
-          Start chatting to explore how this assistant can help you.
-        </Text>
+        <Text style={styles.headerSubtitle}>As a Recruiter, I navigate the talent landscape to provide tailored guidance and insightful advice. My role is to support and empower individuals on their career journey, helping them align their skills and aspirations with the perfect opportunities. — for Recruiter, to Talent guidance, aimed at Advising. </Text>
+      
+<View style={styles.ratingRow}>
+  <Text style={styles.ratingText}>
+    <Text style={styles.boldText}>My Rating: </Text>
+    {hasRated ? `${myRating}/5` : "Not rated yet"} | 
+    <Text style={styles.boldText}> Overall: </Text>
+    {overallCount > 0 ? `${overallAvg}/5 (${overallCount} ratings)` : "No ratings yet"}
+  </Text>
+
+  {!hasRated && (
+    <TouchableOpacity style={styles.rateBtn} onPress={() => setRatingModal(true)}>
+      <Text style={styles.rateBtnText}>Rate</Text>
+    </TouchableOpacity>
+  )}
+</View>
+
         {helperQuestions.map((question, index) => (
           <TouchableOpacity
             key={index}
@@ -687,6 +807,9 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       </View>
     );
   };
+
+
+
 
   // Main render
   return (
@@ -707,8 +830,8 @@ const GenOxyChatScreen = ({ route, navigation }) => {
 
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 100}
       >
         <View style={styles.chatContainer}>
           {loadingHelperQuestions && messages.length === 0 ? (
@@ -764,6 +887,45 @@ const GenOxyChatScreen = ({ route, navigation }) => {
         currentChatId={currentChatId}
         refreshTrigger={historyRefreshTrigger}
       />
+      
+      {/* Rating Modal */}
+      <Modal visible={ratingModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.ratingModal}>
+            <Text style={styles.ratingTitle}>Rate this Agent</Text>
+            <View style={styles.starsContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                  <Ionicons 
+                    name={star <= rating ? "star" : "star-outline"} 
+                    size={40} 
+                    color={star <= rating ? "#FFD700" : "#ccc"} 
+                  />
+                </TouchableOpacity>
+              ))}
+            
+            </View>
+            {ratingError ? <Text style={styles.errorText}>{ratingError}</Text> : null}
+              <TextInput 
+                style={styles.commentInput}
+                label="Add a comment (optional)" 
+                multiline 
+                numberOfLines={3} 
+                value={myComment} 
+                mode="flat"
+                onChangeText={(text) => setMyComment(text)} 
+                />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setRatingModal(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.submitButton} onPress={()=>submitRating()}>
+                <Text style={{color:"white"}}>Submit</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -942,6 +1104,98 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+  },
+   boldText: {
+    fontWeight: '700',
+  },
+   ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#333',
+    flex: 1,
+    marginRight: 10,
+  },
+  rateBtn: {
+    backgroundColor: '#5A00A6',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  rateBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  ratingModal: {
+    backgroundColor: '#fff',
+    padding: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    width: '80%',
+  },
+  ratingTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    marginBottom: 30,
+    gap: 10,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    color: '#333',
+    fontWeight: '600',
+  },
+  submitButton: {
+    backgroundColor: '#5A00A6',
+    padding: 12,
+    borderRadius: 8,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 5,
+    textAlign: 'center',
+  },
+  commentInput: {
+    // height: 30,
+    width: Dimensions.get('window').width * 0.7,
+    // borderWidth: 1,
+    // borderColor: '#c0c0c0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginVertical: 15,
+    textAlignVertical: 'top',
+    fontSize: 14,
+    // backgroundColor: '#c0c0c0',
+    color: '#fff',
   },
 });
 

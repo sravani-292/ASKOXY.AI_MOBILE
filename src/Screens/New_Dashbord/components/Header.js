@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import LocationAddress from './LocationAndAddress';
 import CallButton from './Call';
-import VoiceCallModal from '../../AIAgent/EcommerceVoiceAssistant/screens/VoiceCallModal';
+
 
 // Default gradient colors if none are provided
 const defaultGradientColors = ['#F5F5F5', '#FFFFFF'];
@@ -32,16 +32,15 @@ const Header = ({navigation, userData, profileData, headerGradientColors = defau
         //   <Ionicons name="call" size={24} color="#666" />
         // </TouchableOpacity>
        <View style={styles.container}>
-      <TouchableOpacity
+      {/* <TouchableOpacity
         style={styles.button}
         onPress={() => setModalVisible(true)}
       >
          <Ionicons name="call" size={24} color="#fff" />
-      </TouchableOpacity>
-      <VoiceCallModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      />
+      </TouchableOpacity> */}
+
+     <CallButton/>
+
     </View>
       ) : (
         <TouchableOpacity style={styles.profileButton} onPress={()=>{navigation.navigate('Login')}}>

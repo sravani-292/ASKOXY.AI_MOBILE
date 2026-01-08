@@ -26,7 +26,6 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BASE_URL, { userStage } from "../../../../Config";
 import useReorder from "./Reorder";
-import { text } from "framer-motion/m";
 const { width, height } = Dimensions.get("window");
 const OrderDetails = () => {
   const { handleReorder } = useReorder();

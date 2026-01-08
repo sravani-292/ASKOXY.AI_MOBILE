@@ -14,7 +14,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import BASE_URL from "../../../../Config";
-import { create } from "framer-motion/m";
 
 const { height, width } = Dimensions.get("window");
 

@@ -56,15 +56,15 @@ export default function CustomNavigationBar({
   };
 
   return (
-    <Appbar.Header>
+    <Appbar.Header style={{ backgroundColor: '#3d2a71' }}>
       {/* {back ?  */}
 						{/* <Appbar.Action icon="menu" onPress={() =>navigation.dispatch(DrawerActions.toggleDrawer())} /> */}
-						<Appbar.BackAction onPress={navigation.goBack} />
+						<Appbar.BackAction onPress={navigation.goBack} color="white" />
 						 {/* : null} */}
-      <Appbar.Content title={title} />
+      <Appbar.Content title={title} titleStyle={{ color: 'white', fontWeight: 'bold' }} />
       {!back ? (
 							<>
-							<Appbar.Action icon="logout" onPress={() => {
+							<Appbar.Action icon="logout" color="white" onPress={() => {
           // AsyncStorage.removeItem("userData"); 
           // navigation.navigate("Login"); 
           handleLogout()

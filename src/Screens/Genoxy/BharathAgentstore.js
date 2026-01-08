@@ -18,6 +18,7 @@ import BASE_URL from "../../../Config";
 import { useNavigation } from "@react-navigation/native";
 import AIRoleImage from "../AIAgent/CreateAgent/AIRoleImage";
 import CustomFAB from "./CustomFAB";
+import { useSelector } from "react-redux";
 
 const { width } = Dimensions.get("window");
 
@@ -38,7 +39,10 @@ const BharathAgentstore = () => {
   const [isLoadingAllAgents, setIsLoadingAllAgents] = useState(false);
 
   const navigation = useNavigation();
-
+  const userData = useSelector((state) => state.counter);
+  //  //console.log({userData})
+    const token = userData?.accessToken;
+    const userId = userData?.userId;
   // Image mapping
   const IMAGE_MAP = {
     code: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1200&auto=format&fit=crop",
@@ -80,7 +84,7 @@ const BharathAgentstore = () => {
 
   // Fetch agents
   const getAgents = async (afterId = null, append = false) => {
-    console.log("Fetching agents, afterId:", afterId, "append:", append);
+    // //console.log("Fetching agents, afterId:", afterId, "append:", append);
 
     try {
       if (!append) {
@@ -99,14 +103,14 @@ const BharathAgentstore = () => {
         method: "GET",
         headers: {
           Accept: "*/*",
-          Authorization: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI4ZjI5MjJkMS0yNmZjLTRlY2ItYWE4ZC00OWM1YjQ4ZDk3NDQiLCJpYXQiOjE3NTM1MjU0MzUsImV4cCI6MTc1NDM4OTQzNX0.TsIcuOPETQVFavDWoqK8Mo_fxbzOHSu_0AM_KfR79RtA0O3bCJ0E2jLpeT0jjTbEvQ4Ub4hapU3-EdxZycNgig",
+          Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const result = await response.json();
-      console.log("Fetched agents count:", result.data?.length);
+      //console.log("Fetched agents count:", result.data?.length);
 
       if (result?.data && Array.isArray(result.data)) {
         const approvedAgents = result.data.filter(
@@ -131,9 +135,9 @@ const BharathAgentstore = () => {
         }
         if (result.totalCount !== undefined) setTotalCount(result.totalCount);
 
-        console.log("Agents loaded successfully:", approvedAgents.length);
+        //console.log("Agents loaded successfully:", approvedAgents.length);
       } else {
-        console.log("No data received or invalid format");
+        //console.log("No data received or invalid format");
         if (!append) {
           setAgents([]);
           setAllAgents([]);
@@ -157,7 +161,7 @@ const BharathAgentstore = () => {
 
   // Load agents on mount
   useEffect(() => {
-    console.log("Component mounted, loading agents...");
+    //console.log("Component mounted, loading agents...");
     getAgents(null, false);
   }, []);
 
@@ -172,11 +176,11 @@ const BharathAgentstore = () => {
   // Load all agents for search - wrapped in useCallback to prevent infinite loops
   const loadAllAgents = useCallback(async () => {
     if (allAgentsLoaded || isLoadingAllAgents) {
-      console.log("All agents already loaded or loading in progress");
+      //console.log("All agents already loaded or loading in progress");
       return allAgents; // Return existing agents if already loaded
     }
 
-    console.log("Loading all agents for search...");
+    //console.log("Loading all agents for search...");
     setIsLoadingAllAgents(true);
     
     let currentLastId = lastId;
@@ -185,18 +189,18 @@ const BharathAgentstore = () => {
     try {
       while (currentLastId) {
         const url = `${BASE_URL}ai-service/agent/getAllAssistants?limit=100&after=${currentLastId}`;
-        console.log(`Fetching batch after ID: ${currentLastId}`);
+        //console.log(`Fetching batch after ID: ${currentLastId}`);
         
         const response = await fetch(url, {
           method: "GET",
           headers: {
             Accept: "*/*",
-            Authorization: "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI4ZjI5MjJkMS0yNmZjLTRlY2ItYWE4ZC00OWM1YjQ4ZDk3NDQiLCJpYXQiOjE3NTM1MjU0MzUsImV4cCI6MTc1NDM4OTQzNX0.TsIcuOPETQVFavDWoqK8Mo_fxbzOHSu_0AM_KfR79RtA0O3bCJ0E2jLpeT0jjTbEvQ4Ub4hapU3-EdxZycNgig",
+            Authorization: `Bearer ${token}`,
           },
         });
 
         if (!response.ok) {
-          console.log(`Failed to fetch batch: ${response.status}`);
+          //console.log(`Failed to fetch batch: ${response.status}`);
           break;
         }
 
@@ -206,10 +210,10 @@ const BharathAgentstore = () => {
         allLoadedAgents = [...allLoadedAgents, ...approvedAgents];
         currentLastId = result.lastId;
 
-        console.log(`✓ Loaded batch: ${approvedAgents.length} agents, Total: ${allLoadedAgents.length}`);
+        //console.log(`✓ Loaded batch: ${approvedAgents.length} agents, Total: ${allLoadedAgents.length}`);
         
         if (!currentLastId) {
-          console.log("No more pages to load");
+          //console.log("No more pages to load");
           break;
         }
       }
@@ -218,7 +222,7 @@ const BharathAgentstore = () => {
       setAllAgents(allLoadedAgents);
       setAllAgentsLoaded(true);
       setIsLoadingAllAgents(false);
-      console.log(`✅ All agents loaded successfully: ${allLoadedAgents.length} total`);
+      //console.log(`✅ All agents loaded successfully: ${allLoadedAgents.length} total`);
       
       return allLoadedAgents; // Return the complete list
     } catch (error) {
@@ -231,11 +235,11 @@ const BharathAgentstore = () => {
   // Search functionality - Fixed to wait for all agents to load
   useEffect(() => {
     const performSearch = async () => {
-      console.log("🔍 Performing search for:", debouncedSearch);
+      //console.log("🔍 Performing search for:", debouncedSearch);
       
       // If no search, show current agents
       if (!debouncedSearch || debouncedSearch.trim() === '') {
-        console.log("No search query, showing all loaded agents:", agents.length);
+        //console.log("No search query, showing all loaded agents:", agents.length);
         setFilteredAgents(agents);
         return;
       }
@@ -244,19 +248,19 @@ const BharathAgentstore = () => {
       let searchSource = agents;
       
       if (!allAgentsLoaded && hasMore && !isLoadingAllAgents) {
-        console.log("🔄 Loading all agents for comprehensive search...");
+        //console.log("🔄 Loading all agents for comprehensive search...");
         const loadedAgents = await loadAllAgents();
         // Use the freshly loaded agents for search
         searchSource = loadedAgents && loadedAgents.length > 0 ? loadedAgents : allAgents;
-        console.log(`Using ${searchSource.length} agents for search`);
+        //console.log(`Using ${searchSource.length} agents for search`);
       } else if (allAgentsLoaded) {
         // All agents already loaded, use them
         searchSource = allAgents;
-        console.log(`Using cached ${searchSource.length} agents for search`);
+        //console.log(`Using cached ${searchSource.length} agents for search`);
       } else {
         // Fallback to currently loaded agents
         searchSource = agents;
-        console.log(`Using currently loaded ${searchSource.length} agents for search`);
+        //console.log(`Using currently loaded ${searchSource.length} agents for search`);
       }
 
       const searchLower = debouncedSearch.toLowerCase().trim();
@@ -272,18 +276,18 @@ const BharathAgentstore = () => {
           instructions.includes(searchLower);
         
         if (matches) {
-          console.log(`✓ Match found: ${a.name}`);
+          //console.log(`✓ Match found: ${a.name}`);
         }
         
         return matches;
       });
 
       setFilteredAgents(filtered);
-      console.log(`✅ Search '${debouncedSearch}': Found ${filtered.length} results from ${searchSource.length} total agents`);
+      //console.log(`✅ Search '${debouncedSearch}': Found ${filtered.length} results from ${searchSource.length} total agents`);
       
       // Log first few matches for debugging
       if (filtered.length > 0) {
-        console.log("First matches:", filtered.slice(0, 3).map(f => (f.assistant || f).name));
+        //console.log("First matches:", filtered.slice(0, 3).map(f => (f.assistant || f).name));
       }
     };
 
@@ -307,7 +311,7 @@ const BharathAgentstore = () => {
 
   const loadMore = () => {
     if (lastId && !loadingMore && hasMore && !debouncedSearch.trim()) {
-      console.log('Loading more agents...');
+      //console.log('Loading more agents...');
       getAgents(lastId, true);
     }
   };

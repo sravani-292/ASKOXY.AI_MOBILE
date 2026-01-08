@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "ASKOXY.AI",
-    "slug": "oxyrice",
-    "version": "1.0.86",
+    "slug": "oxyrice_customer",
+    "version": "1.0.91",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -15,8 +15,13 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "79",
+      "buildNumber": "80",
       "associatedDomains": [
+        "applinks:www.askoxy.ai",
+        "applinks:askoxy.app.link",
+        "applinks:askoxy-alternate.test-app.link",
+        "applinks:askoxy.test-app.link",
+        "applinks:askoxy-alternate.app.link",
         "applinks:www.askoxy.ai",
         "applinks:askoxy.app.link",
         "applinks:askoxy-alternate.test-app.link",
@@ -39,14 +44,50 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 75,
+      "versionCode": 80,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "config": {
         "branch": {
           "apiKey": "key_test_bEzlort5V0pqEdfqpZNxrcmaFsi34wUH"
         }
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.askoxy.ai"
+            },
+            {
+              "scheme": "https",
+              "host": "askoxy.ai"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "www.askoxy.ai"
+            },
+            {
+              "scheme": "https",
+              "host": "askoxy.ai"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -55,7 +96,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/ce226648-f9fe-48e4-b9d1-02f76cf9fcee"
+      "url": "https://u.expo.dev/5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
     },
     "plugins": [
       "expo-font",
@@ -84,7 +125,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "569a0768-43ff-4767-bee1-191956f289ad"
+        "projectId": "5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
       }
     }
   }

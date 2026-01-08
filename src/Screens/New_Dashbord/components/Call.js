@@ -1,16 +1,50 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Linking, StyleSheet, Modal, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, Linking, StyleSheet, Modal, Platform, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // For call and close icons
-import LinearGradient from 'react-native-linear-gradient'; // For gradient backgrounds
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-
-// CallButton component displays a call icon and toggles a modal with phone numbers+91 81432 71103
-
-const CallButton = ({ phoneNumbers = ['+91 81432 71103', '+91 91105 64106'] }) => {
+const {height,width}=Dimensions.get('window')
+// CallButton component displays a call icon and toggles a modal with phone numbers
+import { useSelector } from 'react-redux';
+const CallButton = () => {
   // State to toggle phone numbers modal visibility
   const [showNumbers, setShowNumbers] = useState(false);
+  const [phoneData, setPhoneData] = useState([]);
+  const [loading, setLoading] = useState(false);
   // Animation value for button press
   const buttonScale = useSharedValue(1);
+    const user = useSelector((state) => state.counter);
+    const userId = user?.userId || user?.id;
+
+  // Fetch phone numbers from API
+  const fetchPhoneNumbers = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`https://meta.oxyloans.com/api/user-service/callerNumberToUserMapping/${userId}`);
+      const data = await response.json();
+      
+      if (data && data.callerNumber) {
+        setPhoneData([{
+          number: data.callerNumber,
+          name: data.callerName || 'Unknown',
+          email: data.email
+        }]);
+      }
+    } catch (error) {
+      console.error('Error fetching phone numbers:', error);
+      // Fallback to default numbers
+      setPhoneData([
+        { number: '8143271103', name: 'Support 1' },
+        { number: '9110564106', name: 'Support 2' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPhoneNumbers();
+  }, [userId]);
 
   // Function to handle phone call
   const makeCall = (phoneNumber) => {
@@ -53,59 +87,76 @@ const CallButton = ({ phoneNumbers = ['+91 81432 71103', '+91 91105 64106'] }) =
           accessibilityHint="Opens a modal to select a phone number to call"
         >
           <LinearGradient
-            colors={['#8B5CF6', '#A78BFA']} // Purple gradient to match BharathAgentstore
+            colors={['#667eea', '#764ba2']}
             style={styles.buttonGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
           >
-            <Ionicons name="call" size={24} color="#fff" />
+            <Ionicons name="call" size={26} color="#fff" />
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
 
       {/* Modal for Phone Numbers */}
       <Modal
-        visible={showNumbers && phoneNumbers.length > 0}
+        visible={showNumbers}
         animationType="fade"
         transparent
         onRequestClose={() => setShowNumbers(false)}
       >
         <View style={styles.modalContainer}>
-          <LinearGradient
-            colors={['#FFFFFF', '#F8FAFC']} // Subtle white-to-light-gray gradient
-            style={styles.modalContent}
-          >
-            {/* Modal Header */}
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Contact Support</Text>
+          <View style={styles.modalContent}>
+            <LinearGradient
+              colors={['#667eea', '#764ba2']}
+              style={styles.modalHeaderGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Text style={styles.modalTitle}>📞 Contact Support</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setShowNumbers(false)}
                 accessibilityLabel="Close phone numbers modal"
                 accessibilityHint="Closes the phone number selection modal"
               >
-                <Ionicons name="close" size={24} color="#2563eb" />
+                <Ionicons name="close" size={24} color="#fff" />
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
 
-            {/* Phone Numbers List */}
-            {phoneNumbers.map((number, index) => (
-              <TouchableOpacity
-                key={`phone-${index}`}
-                style={[
-                  styles.numberItem,
-                  index % 2 === 0 ? styles.numberItemEven : styles.numberItemOdd,
-                ]}
-                onPress={() => {
-                  makeCall(number);
-                  setShowNumbers(false); // Close modal after selection
-                }}
-                accessibilityLabel={`Call ${number}`}
-                accessibilityHint={`Initiates a call to ${number}`}
-              >
-                <Ionicons name="call-outline" size={20} color="#2563eb" style={styles.numberIcon} />
-                <Text style={styles.numberText}>{number}</Text>
-              </TouchableOpacity>
-            ))}
-          </LinearGradient>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#667eea" />
+                <Text style={styles.loadingText}>Loading contacts...</Text>
+              </View>
+            ) : (
+              <View style={styles.contactsList}>
+                {phoneData.map((contact, index) => (
+                  <TouchableOpacity
+                    key={`phone-${index}`}
+                    style={styles.contactCard}
+                    onPress={() => {
+                      makeCall(contact.number);
+                      setShowNumbers(false);
+                    }}
+                    accessibilityLabel={`Call ${contact.name} at ${contact.number}`}
+                    accessibilityHint={`Initiates a call to ${contact.name} at ${contact.number}`}
+                  >
+                    <View style={styles.avatarContainer}>
+                      <Text style={styles.avatarText}>{contact.name.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.contactInfo}>
+                      <Text style={styles.nameText}>{contact.name}</Text>
+                      <Text style={styles.numberText}>📱 {contact.number}</Text>
+                      {contact.email && <Text style={styles.emailText}>✉️ {contact.email}</Text>}
+                    </View>
+                    <View style={styles.callIconContainer}>
+                      <Ionicons name="call" size={20} color="#667eea" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
       </Modal>
     </View>
@@ -120,74 +171,118 @@ const styles = StyleSheet.create({
     marginVertical: 8, // Added spacing for integration in BharathAgentstore header
   },
   button: {
-    borderRadius: 9999, // Fully rounded
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 8, // Enhanced shadow for Android
+    borderRadius: 30,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 12,
   },
   buttonGradient: {
-    padding: 12,
-    borderRadius: 9999,
+    padding: 16,
+    borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 60,
+    minHeight: 60,
   },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Darker semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
   },
   modalContent: {
-    borderRadius: 12,
-    width: 240, // Slightly wider for better readability
-    padding: 16,
+    borderRadius: 20,
+    width: width*0.9,
+    backgroundColor: '#fff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: '#E2E8F0', // Subtle border to match BharathAgentstore
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
+    overflow: 'hidden',
   },
-  modalHeader: {
+  modalHeaderGradient: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1E293B', // Matches BharathAgentstore text color
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
   },
   closeButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
-  numberItem: {
+  contactsList: {
+    padding: 16,
+  },
+  contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    borderRadius: 8, // Rounded corners for list items
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#667eea',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  numberItemEven: {
-    backgroundColor: '#F8FAFC', // Light gray for even items
+  avatarContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#667eea',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
   },
-  numberItemOdd: {
-    backgroundColor: '#FFFFFF', // White for odd items
+  avatarText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '700',
   },
-  numberIcon: {
-    marginRight: 12,
+  callIconContainer: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#e0e7ff',
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  nameText: {
+    color: '#1e293b',
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   numberText: {
-    color: '#2563eb', // Blue text to match BharathAgentstore
-    fontSize: 16,
+    color: '#667eea',
+    fontSize: 15,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  emailText: {
+    color: '#64748b',
+    fontSize: 13,
     fontWeight: '500',
-    flex: 1,
-    textAlign: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    color: '#667eea',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

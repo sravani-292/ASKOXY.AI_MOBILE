@@ -40,7 +40,7 @@ const getFeeFromSlab = (value, slabs, valueKeys, distance = null) => {
 };
 
 export const getFinalDeliveryFee = async (userLat, userLng, cartAmount) => {
-  console.log('Calculating delivery fee for:', { userLat, userLng, cartAmount });
+  // console.log('Calculating delivery fee for:', { userLat, userLng, cartAmount });
   if (!userLat || !userLng) {
     return {
       fee: null,

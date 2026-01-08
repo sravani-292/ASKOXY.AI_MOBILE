@@ -99,6 +99,8 @@ export const usePaymentDetails = (navigation, route) => {
   const [cartToPlace, setCartToPlace] = useState(false);
   const [minOrderToPlace, setMinOrderToPlace] = useState(0);
   const [addressStatus, setAddressStatus] = useState(true);
+  const [pincodeMinValues, setPincodeMinValues] = useState([]);
+  const [currentMinValue, setCurrentMinValue] = useState(499);
 
   // ==================== CART & ITEMS STATE ====================
   const [cartData, setCartData] = useState([]);
@@ -187,6 +189,7 @@ useEffect(() => {
 
 useEffect(() => {
   fetchOrderAddress();
+  fetchPincodeMinValues();
 }, []);
 
 
@@ -392,7 +395,7 @@ useEffect(() => {
   // ==================== PAYMENT HANDLERS ====================
 
   const confirmPayment = () => {
-    console.log({status,addressDetails,addressStatus,selectedTimeSlot,selectedPaymentMode,isChecked,cartToPlace},"....................confirmPayment");
+    // console.log({status,addressDetails,addressStatus,selectedTimeSlot,selectedPaymentMode,isChecked,cartToPlace},"....................confirmPayment");
     
     if(!addressDetails){
         openModal(
@@ -443,6 +446,15 @@ useEffect(() => {
         "info"
       );
       return;
+    }else if(grandTotalAmount < currentMinValue){
+      openModal(
+        "Oops!",
+        `Minimum cart value to place an order is ₹${currentMinValue}`,
+        "OK",
+        "Cancel",
+        "error"
+      );
+      return;
     }else if(!cartToPlace){
       openModal(
         "Oops!",
@@ -480,7 +492,7 @@ useEffect(() => {
     setLoading(true);
     try {
       const response = await handleCustomerCartData(customerId);
-      console.log("cart response11", response.data);
+      // console.log("cart response11", response.data);
 
       response.data.customerCartResponseList.map((item) => {
         if (
@@ -589,23 +601,24 @@ useEffect(() => {
 
       let latitude = 0;
       let longitude = 0;
-      console.log("addressDetails", addressDetails);
+      // console.log("addressDetails", addressDetails);
       
       if((addressDetails?.latitude === 0 && addressDetails?.longitude === 0) || (addressDetails?.latitude===null && addressDetails?.longitude === null) || (addressDetails?.latitude===undefined && addressDetails?.longitude === undefined) || (addressDetails?.latitude === "0" && addressDetails?.longitude === "0") ){
-        console.log("Getting the coordinates.......");
+        // console.log("Getting the coordinates.......");
          const address = addressDetails?.address + "," + addressDetails?.landMark + ","+addressDetails?.area+"," + addressDetails?.pincode;
          const { coord1 } = await getCoordinates(address);
-         console.log("coord1 payments.....", coord1);
+        //  console.log("coord1 payments.....", coord1);
         latitude = coord1.latitude;
         longitude = coord1.longitude;
-        console.log("Latitude:", latitude, "Longitude:", longitude);  
+        // console.log("Latitude:", latitude, "Longitude:", longitude);  
       }else{
-        console.log("Getting the coordinates from the address details.....");
+        // console.log("Getting the coordinates from the address details.....");
         latitude = addressDetails?.latitude;
         longitude = addressDetails?.longitude;
       }
       const { fee, distance, note,handlingFee, grandTotal,walletApplicable,minOrderForWallet,canPlaceOrder,minOrderToPlace,addressStatus } = await getFinalDeliveryFee(latitude,longitude, cartAmount);
-            setDeliveryBoyFee(fee || 0);
+      // console.log({addressStatus})    
+      setDeliveryBoyFee(fee || 0);
             setHandlingFees(handlingFee || 0);
             setDistance(distance || 0); 
             setWalletApplicable(walletApplicable || false);  
@@ -613,13 +626,13 @@ useEffect(() => {
             setMinOrderToPlace(minOrderToPlace || 0);
             setCartToPlace(canPlaceOrder || false);
             setAddressStatus(addressStatus);
-            console.log("Delivery Fee:", fee, "Distance:", distance, "Note:", note, "Handling Fees:", handlingFee, "Grand Total:", grandTotal, "Wallet Applicable:", walletApplicable, "Min Order Value for Wallet:", minOrderForWallet, "Can Place Order:", canPlaceOrder, "Min Order to Place:", minOrderToPlace);
+            // console.log("Delivery Fee:", fee, "Distance:", distance, "Note:", note, "Handling Fees:", handlingFee, "Grand Total:", grandTotal, "Wallet Applicable:", walletApplicable, "Min Order Value for Wallet:", minOrderForWallet, "Can Place Order:", canPlaceOrder, "Min Order to Place:", minOrderToPlace);
             if(!walletApplicable && minOrderForWallet > cartAmount){
               setUseWallet(false);
               setUsedWalletAmount(0);
             }
          const result = await checkEligibilityForActiveZones(latitude,longitude);
-         console.log("result",result);
+        //  console.log("result",result);
          if(result){
             setEligibleTime(result.eligible)
             setEligibleTimeSlot(result.matchedZone.cutofftime)
@@ -642,6 +655,26 @@ useEffect(() => {
     }
   };
 
+  const fetchPincodeMinValues = async () => {
+       axios.get(`${BASE_URL}order-service/getAllUpdatePincodes`,{
+        headers:{
+          Authorization: `Bearer ${token}`,
+        }
+       })
+       .then((response)=>{
+        console.log("pincode min values response",response.data);
+              setPincodeMinValues(response.data);
+       })
+   .catch((error)=>{
+    console.log("Error fetching pincode min values:",error.response);
+   })
+  };
+
+  const getMinValueForPincode = (pincode) => {
+    const pincodeData = pincodeMinValues.find(item => item.pinCode == pincode && item.status === true);
+    return pincodeData ? pincodeData.minimumVale : 499;
+  };
+
   const fetchOrderAddress = async () => {
     try {
       const response = await axios({
@@ -651,11 +684,17 @@ useEffect(() => {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("api response....", response.data[response.data.length - 1]);
+      // console.log("api response....", response.data[response.data.length - 1]);
       setAddressStatus(response.data.length == 0 ? false : true)
       setAddressList(response.data);
       setAddressDetails(response.data[response.data.length - 1]);
-      console.log("address details", response.data[response.data.length - 1]);
+      
+      // Update minimum value based on pincode
+      if (response.data.length > 0) {
+        const lastAddress = response.data[response.data.length - 1];
+        const minValue = getMinValueForPincode(lastAddress.pincode);
+        setCurrentMinValue(minValue);
+      }
       
     } catch (error) {
       console.error("Error fetching order address data:", error.response);
@@ -1388,7 +1427,7 @@ const fetchTimeSlots = async (eligibleTime) => {
 
     if (eligibleTime) {
       // For Android & iOS: start from today
-      console.log("eligibleTime", eligibleTime);
+      // console.log("eligibleTime", eligibleTime);
       
       startingDate = currentDate;
     } else {
@@ -1417,7 +1456,7 @@ const fetchTimeSlots = async (eligibleTime) => {
       };
     });
 
-    console.log("Next seven days:", nextSevenDays);
+    // console.log("Next seven days:", nextSevenDays);
 
     // Filter for available days (where isAvailable === false)
     const availableDays = nextSevenDays
@@ -1427,7 +1466,7 @@ const fetchTimeSlots = async (eligibleTime) => {
       })
       .slice(0, 4); // Get first 4 available days
 
-    console.log("Filtered available days:", availableDays);
+    // console.log("Filtered available days:", availableDays);
 
     // Transform to label/value format
     const transformedDays = availableDays.map((day) => ({
@@ -1436,7 +1475,7 @@ const fetchTimeSlots = async (eligibleTime) => {
       formattedDate: day.formattedDate,
     }));
 
-    console.log("Transformed days:", transformedDays);
+    // console.log("Transformed days:", transformedDays);
     setDays(transformedDays);
 
     // Handle auto-selection for iOS
