@@ -2,7 +2,6 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
   FlatList,
   TouchableOpacity,
   Image,
@@ -11,6 +10,7 @@ import {
   Alert,
   BackHandler
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useEffect, useCallback } from "react";
 import Animated, { FadeInDown, SlideInDown } from "react-native-reanimated";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";

@@ -10,10 +10,10 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
-  SafeAreaView,
   StatusBar,
   TextInput
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { 

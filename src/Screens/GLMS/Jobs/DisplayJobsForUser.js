@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity,
-  Image, Modal, FlatList, SafeAreaView, StatusBar, Dimensions, Alert,ActivityIndicator
+  Image, Modal, FlatList, StatusBar, Dimensions, Alert,ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import BASE_URL from "../../../../Config"

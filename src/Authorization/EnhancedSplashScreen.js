@@ -18,19 +18,56 @@ const EnhancedSplashScreen = ({ navigation }) => {
   const [hasError, setHasError] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  
+  const [greetingData, setGreetingData] = useState(null);
+
   // Get user data from Redux
   const reduxUserId = useSelector(state => state.logged);
 
+  // Fetch festival greeting
   useEffect(() => {
-    checkAuthAndNavigate();
+    const fetchGreeting = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        console.log("Today's date:", today);
+        const response = await fetch(`https://interviews-zadn.onrender.com/api/data/festival_greetings?date=${today}`);
+        const result = await response.json();
+        console.log('Greeting fetch result:', result);
+        if (result.success && result.data.length > 0) {
+          setGreetingData(result.data[0]);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch greeting:', error);
+      }
+    };
+    fetchGreeting();
   }, []);
+
+  useEffect(() => {
+    let timer;
+
+    const startAnimation = () => {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true,
+      }).start(() => {
+        timer = setTimeout(() => checkAuthAndNavigate(), 4000);
+      });
+    };
+
+    if (isGifLoaded && !hasError) {
+      startAnimation();
+    } else if (hasError) {
+      timer = setTimeout(() => checkAuthAndNavigate(), 1000);
+    }
+
+    return () => timer && clearTimeout(timer);
+  }, [isGifLoaded, hasError, fadeAnim]);
 
   const checkAuthAndNavigate = async () => {
     try {
       setIsCheckingAuth(true);
       
-      // Check authentication state
       const authData = await AuthManager.getAuthData();
       const isAuthenticated = authData.isAuthenticated || !!reduxUserId;
       
@@ -41,22 +78,12 @@ const EnhancedSplashScreen = ({ navigation }) => {
         reduxUserId: !!reduxUserId
       });
 
-      // Check for pending deep links
       const pendingDeepLink = await AuthManager.getPendingDeepLink();
       
-      // Wait for GIF animation if loaded
-      if (isGifLoaded && !hasError) {
-        await startAnimation();
-      }
-      
-      // Navigate based on authentication state
       if (isAuthenticated) {
         if (pendingDeepLink) {
           console.log('🎯 Found pending deep link, navigating to Home first');
-          // Navigate to Home first, then handle deep link
           navigation.replace('Home');
-          
-          // Handle pending deep link after navigation
           setTimeout(async () => {
             await DeepLinkManager.handlePostAuthNavigation();
           }, 1000);
@@ -75,54 +102,40 @@ const EnhancedSplashScreen = ({ navigation }) => {
     }
   };
 
-  const startAnimation = () => {
-    return new Promise((resolve) => {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1500,
-        useNativeDriver: true,
-      }).start(() => {
-        setTimeout(resolve, 1000); // Hold for 1 second
-      });
-    });
-  };
-
-  useEffect(() => {
-    if (hasError) {
-      // Quick fallback on error
-      setTimeout(() => {
-        checkAuthAndNavigate();
-      }, 1000);
-    }
-  }, [hasError]);
-
   return (
     <View style={styles.container}>
-      <ActivityIndicator 
-        size="large" 
-        color="#8B5CF6" 
-        style={styles.loadingSpinner} 
-      />
-
-      {!hasError ? (
-        <Animated.Image
-          source={require('../../assets/Diwali_Greetings (1).gif')}
-          style={[styles.logo, { opacity: fadeAnim }]}
-          resizeMode="cover"
-          onLoad={() => setIsGifLoaded(true)}
-          onError={() => {
-            console.warn('GIF failed—using fallback');
-            setHasError(true);
-          }}
-        />
-      ) : (
-        <Image
-          source={require('../../assets/Diwali_Greetings (1).gif')}
-          style={styles.logo}
-          resizeMode="cover"
-        />
-      )}
-    </View>
+          {/* Skip Button (uncomment for dev) */}
+          {/* <TouchableOpacity
+            onPress={() => navigation.replace('Login')}
+            style={styles.skipButton}
+          >
+            <Ionicons name="close" size={36} color="#666" />
+          </TouchableOpacity> */}
+    
+          {/* Always show spinner until resolved */}
+          <ActivityIndicator size="large" color="#8B5CF6" style={styles.loadingSpinner} />
+    
+          {/* Try API media first; fallback to local asset */}
+          {!hasError ? (
+            <Animated.Image
+              source={greetingData?.media_url ? { uri: greetingData.media_url } : require('../../assets/askoxy_V1.gif')}
+              style={[styles.logo, { opacity: fadeAnim }]}
+              resizeMode="cover"
+              onLoad={() => setIsGifLoaded(true)}
+              onError={() => {
+                console.warn('Media failed—using fallback');
+                setHasError(true);
+              }}
+            />
+          ) : (
+            // Fallback: Static image
+            <Image
+              source={require('../../assets/askoxy_V1.gif')}
+              style={styles.logo}
+              resizeMode="cover"
+            />
+          )}
+        </View>
   );
 };
 
@@ -134,8 +147,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: width * 0.9,
-    height: height - 250,
+    width: width * 0.95,
+    height: height - 500,
     marginTop: 20,
   },
   loadingSpinner: {

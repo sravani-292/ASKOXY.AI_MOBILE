@@ -5,13 +5,13 @@ import {
   FlatList,
   ActivityIndicator,
   ScrollView,
-  SafeAreaView,
   RefreshControl,
   Dimensions,
   TouchableOpacity,
   Modal,
   Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useEffect, useState, useCallback } from "react";
 import { getTransferrMobileNumbers } from "../MyCrypto/CoinsTransferrModal";
 import { useSelector } from "react-redux";

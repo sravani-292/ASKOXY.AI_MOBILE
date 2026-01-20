@@ -7,9 +7,9 @@ import {
   Platform,
   ScrollView,
   Text,
-  SafeAreaView,
   I18nManager,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { AnimatedFAB } from 'react-native-paper';
 
 const AgentFAB = () => {

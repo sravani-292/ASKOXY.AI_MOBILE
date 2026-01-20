@@ -7,10 +7,10 @@ import {
   ScrollView,
   Alert,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Dropdown } from "react-native-element-dropdown";
 import { isWithin, getCoordinates } from "./LocationService";
 import { useSelector } from "react-redux";

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
   Pressable,
   StatusBar,
   Linking,
@@ -23,7 +22,6 @@ import {
   MaterialCommunityIcons,
   Feather,
 } from "@expo/vector-icons";
-import Ionicons from "react-native-vector-icons/Ionicons";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { useFocusEffect, useNavigationState } from "@react-navigation/native";

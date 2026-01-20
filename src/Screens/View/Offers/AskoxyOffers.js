@@ -7,7 +7,6 @@ import {
   Image,
   Modal,
   ScrollView,
-  SafeAreaView,
   Dimensions,
 } from "react-native";
 import {

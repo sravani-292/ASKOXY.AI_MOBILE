@@ -12,9 +12,9 @@ import React, {
     StyleSheet,
     TouchableOpacity,
     Dimensions,
-    SafeAreaView,
 ActivityIndicator
   } from "react-native";
+  import { SafeAreaView } from "react-native-safe-area-context";
   import { useNavigation } from "@react-navigation/native";
   // import { Ionicons } from "@expo/vector-icons";
   import axios from "axios";

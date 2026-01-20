@@ -15,8 +15,26 @@ const SplashScreen = ({ navigation }) => {
   // State: Track GIF status
   const [isGifLoaded, setIsGifLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [greetingData, setGreetingData] = useState(null);
   // Anim: Fade-in after load
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Fetch festival greeting
+  useEffect(() => {
+    const fetchGreeting = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const response = await fetch(`https://interviews-zadn.onrender.com/api/data/festival_greetings?date=${today}`);
+        const result = await response.json();
+        if (result.success && result.data.length > 0) {
+          setGreetingData(result.data[0]);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch greeting:', error);
+      }
+    };
+    fetchGreeting();
+  }, []);
 
   useEffect(() => {
     let timer;
@@ -61,22 +79,22 @@ const SplashScreen = ({ navigation }) => {
       {/* Always show spinner until resolved */}
       <ActivityIndicator size="large" color="#8B5CF6" style={styles.loadingSpinner} />
 
-      {/* Try GIF first; fallback to static if error */}
+      {/* Try API media first; fallback to local asset */}
       {!hasError ? (
         <Animated.Image
-          source={require('../../assets/Diwali_Greetings (1).gif')}
+          source={greetingData?.media_url ? { uri: greetingData.media_url } : require('../../assets/askoxy_V1.gif')}
           style={[styles.logo, { opacity: fadeAnim }]}
           resizeMode="cover"
           onLoad={() => setIsGifLoaded(true)}
           onError={() => {
-            console.warn('GIF failed—using fallback');
+            console.warn('Media failed—using fallback');
             setHasError(true);
           }}
         />
       ) : (
-        // Fallback: Static image (add your PNG here; ~50KB)
+        // Fallback: Static image
         <Image
-          source={require('../../assets/Diwali_Greetings (1).gif')} // Create this: screenshot of GIF frame
+          source={require('../../assets/askoxy_V1.gif')}
           style={styles.logo}
           resizeMode="cover"
         />

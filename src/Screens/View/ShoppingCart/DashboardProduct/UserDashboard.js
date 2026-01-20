@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   StyleSheet,
-  SafeAreaView,
   Alert,
   Dimensions,
   Text,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -28,6 +28,7 @@ import {
   handleCustomerCartData,
   handleUserAddorIncrementCart,
   handleDecrementorRemovalCart,
+  handleGetProfileData,
 } from "../../../../ApiService";
 import OfferModal from "./OfferModal";
 import { useCart } from "../../../../../until/CartCount";

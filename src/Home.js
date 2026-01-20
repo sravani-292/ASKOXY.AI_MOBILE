@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect,useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   StatusBar,
@@ -11,10 +10,14 @@ import {
   Platform,
   FlatList,
   Image,
+  BackHandler,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSelector } from 'react-redux';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
+import { useNavigationState } from "@react-navigation/native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import BASE_URL from '../Config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -159,6 +162,35 @@ const HomeScreen = ({ navigation }) => {
         setIsLoading(false);
       }, [])
     );
+
+      const currentScreen = useNavigationState(
+        (state) => state.routes[state.index]?.name
+      );
+
+     useFocusEffect(
+          useCallback(() => {
+            const handleBackPress = () => {
+              Alert.alert(
+                "Exit",
+                "Are you sure you want to exit?",
+                [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "OK", onPress: () => BackHandler.exitApp() },
+                ],
+                { cancelable: false }
+              );
+              return true;
+            };
+      
+            // ✅ Updated: Save the subscription and call remove() during cleanup
+            const backHandler = BackHandler.addEventListener(
+              "hardwareBackPress",
+              handleBackPress
+            );
+      
+            return () => backHandler.remove(); // ✅ correct way to clean up
+          }, [currentScreen])
+        );
 
   // const handleServicePress = (screenName) => {
   //   if(screenName === 'OxyLoans') {

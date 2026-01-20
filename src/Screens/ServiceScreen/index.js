@@ -1,12 +1,12 @@
 // screens/ServiceScreen/index.js
 import React, { act } from "react";
 import {
-  SafeAreaView,
   StatusBar,
   View,
   ScrollView,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import styles from "./styles";
 import Header from "./components/Header";
 import BannerCarousel from "./components/BannerCarousel";

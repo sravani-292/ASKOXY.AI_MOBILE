@@ -8,9 +8,9 @@ import {
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { usePaymentDetails } from "./hooks/usePaymentDetails";
 import { useSelector } from "react-redux";
 import { COLORS } from "../../../../../Redux/constants/theme";

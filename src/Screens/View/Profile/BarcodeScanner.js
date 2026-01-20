@@ -9,11 +9,11 @@ import {
   TouchableOpacity, 
   Modal,
   FlatList,
-  SafeAreaView,
   Alert,
   Dimensions,
   ActivityIndicator
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, Camera } from "expo-camera";
 import { StatusBar } from 'expo-status-bar';
 import axios from 'axios';

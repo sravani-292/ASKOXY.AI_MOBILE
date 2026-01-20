@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View,SafeAreaView,FlatList,TouchableOpacity } from 'react-native'
+import { StyleSheet, Text, View,FlatList,TouchableOpacity } from 'react-native'
 import React from 'react'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import ProductCard from "../../Components/productsDesign/ProductCard"
 import { groceryData } from "../../../Data/GroceryData";
 import Animated, {

@@ -6,12 +6,12 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   FlatList,
   TextInput,
   ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Dropdown } from "react-native-element-dropdown";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";

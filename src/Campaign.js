@@ -9,12 +9,12 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
-  SafeAreaView,
   StatusBar,
   Dimensions,
   Animated,
   Modal,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import UserTypeModal from "./Dashboard/UserTypeModal";

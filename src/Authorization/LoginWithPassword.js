@@ -65,6 +65,7 @@ const Register = () => {
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
 const[loading,setLoading]=useState(false)
 const[secureText,setSecureText]=useState(true)
+const phoneInput = React.useRef(null);
 
   const toggleSecureText=()=>{
     setSecureText(!secureText)
@@ -148,9 +149,8 @@ const[secureText,setSecureText]=useState(true)
     //     return false;
     // }
        console.log({value})
-      const callingCode = phoneInput.getCallingCode(value);
-      console.log({callingCode});
-      setcountryCode(callingCode);
+      const callingCode = phoneInput.current?.getCallingCode();
+
       // setWhatsappNumber(value)
       // console.log(countryCode)
     } catch (error) {
@@ -163,12 +163,12 @@ const[secureText,setSecureText]=useState(true)
     var Number=countryCode+whatsappNumber
 if(authMethod=="whatsapp"){
     if(whatsappNumber=="" || whatsappNumber == null){
-      alert("Please enter Whatsapp Number")
+      Alert.alert("Please enter Whatsapp Number")
       return false
     }
   }else{
     if(phoneNumber=="" || phoneNumber == null){
-      alert("Please enter Mobile Number")
+      Alert.alert("Please enter Mobile Number")
       return false
     }
   }
@@ -292,7 +292,7 @@ if(authMethod=="whatsapp"){
               containerStyle={styles.input1}
               textInputStyle={styles.phonestyle}
               codeTextStyle={styles.phonestyle1}
-              ref={(ref) => (phoneInput = ref)}
+              ref={phoneInput}
               defaultValue={whatsappNumber}
               defaultCode="IN"
               layout="first"              

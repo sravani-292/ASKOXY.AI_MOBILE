@@ -11,9 +11,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import PromoBannerList from './PromoBannerList';
 import useServiceScreenData from '../../ServiceScreen/hooks/useServiceScreenData';
 

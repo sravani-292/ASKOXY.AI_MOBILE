@@ -8,11 +8,11 @@ import {
   ScrollView,
   StyleSheet,
   Dimensions,
-  SafeAreaView,
   Platform,
   StatusBar,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
 const { width, height } = Dimensions.get('window');
 import BASE_URL from "../../../../Config"

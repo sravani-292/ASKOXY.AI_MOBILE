@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View,TouchableOpacity,SafeAreaView,FlatList } from 'react-native'
+import { StyleSheet, Text, View,TouchableOpacity,FlatList } from 'react-native'
 import React from 'react'
 import { useNavigation,useFocusEffect } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 

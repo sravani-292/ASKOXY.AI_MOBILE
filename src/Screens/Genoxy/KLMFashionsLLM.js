@@ -6,12 +6,12 @@ import {
   ScrollView,
   TextInput,
   FlatList,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
   Dimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import {

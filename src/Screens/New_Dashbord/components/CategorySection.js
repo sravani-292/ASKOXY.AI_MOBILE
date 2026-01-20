@@ -352,7 +352,7 @@ const CategorySection = ({
 
     // Step 4: Add to cart
     try {
-      console.log(item, "...........", type);
+      // console.log(item, "...........", type);
       await addToCart(item, type);
     } catch (error) {
       console.error("Error adding to cart:", error);

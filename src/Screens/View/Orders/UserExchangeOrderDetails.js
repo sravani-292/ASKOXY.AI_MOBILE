@@ -6,9 +6,9 @@ import {
   FlatList,
   ActivityIndicator,
   StatusBar,
-  SafeAreaView,
   ScrollView,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useCallback } from "react";
 import BASE_URL from "../../../../Config";
 import { useSelector } from "react-redux";

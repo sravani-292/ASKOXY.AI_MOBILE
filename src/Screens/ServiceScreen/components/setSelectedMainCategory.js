@@ -4,11 +4,11 @@ import {
   Text,
   TouchableOpacity,
   Modal,
-  SafeAreaView,
   ScrollView,
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');

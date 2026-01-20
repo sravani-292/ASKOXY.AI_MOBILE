@@ -8,9 +8,9 @@ import {
   ScrollView,
   Dimensions,
   Alert,
-  SafeAreaView,
   ActivityIndicator
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { useSelector } from "react-redux";
 const { width, height } = Dimensions.get("window");

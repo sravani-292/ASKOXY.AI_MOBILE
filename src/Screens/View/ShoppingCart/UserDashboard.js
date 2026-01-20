@@ -11,7 +11,6 @@ import {
   Alert,
   Pressable,
   ActivityIndicator,
-  SafeAreaView,
   BackHandler,
   RefreshControl,
   Modal,
@@ -27,6 +26,7 @@ import React, {
   useLayoutEffect,
   useRef,
 } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import BASE_URL, { userStage } from "../../../../Config";

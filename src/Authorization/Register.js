@@ -273,7 +273,7 @@ const Register = () => {
         console.log("error", error.response);
         setOtpSent(false);
        
-        Alert.alert("Sorry", error.response.data.message, [
+        Alert.alert("Sorry", error.response.data.error, [
           {
             text: "ok",
             onPress: () => navigation.navigate("Login"),
@@ -556,11 +556,11 @@ const Register = () => {
                 <View style={styles.phoneInputContainer}>
                   <PhoneInput
                     placeholder="Whatsapp Number"
-                    placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
+                    placeholderTextColor="#999"
                     ref={phoneInput}
                     containerStyle={[styles.input1, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}
-                    textInputStyle={[styles.phonestyle,{ backgroundColor: isDarkMode ? '#fff' : '#fff',color: isDarkMode ? '#000' : '#000' }]}
-                    codeTextStyle={[styles.phonestyle1,{ color: isDarkMode ? '#000' : '#fff' }]}
+                    textInputStyle={[styles.phonestyle,{ backgroundColor: '#fff', color: '#000' }]}
+                    codeTextStyle={[styles.phonestyle1,{ color: '#000' }]}
                     // ref={(ref) => (phoneInput = ref)}
                     defaultValue={whatsappNumber}
                     defaultCode="IN"
@@ -574,9 +574,9 @@ const Register = () => {
                                   <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your Mobile number</Text>
                                 )} */}
                 <TextInput
-                  style={[styles.input, otpSent && styles.disabledInput,{ backgroundColor: isDarkMode ? '#333' : '#fff',color: isDarkMode ? '#fff' : '#000' }]}
+                  style={[styles.input, otpSent && styles.disabledInput,{ backgroundColor: '#fff', color: '#000' }]}
                   placeholder="Enter your phone number"
-                  placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
+                  placeholderTextColor="#999"
                   keyboardType="phone-pad"
                   value={phoneNumber}
                   onChangeText={(text) => {
@@ -621,9 +621,9 @@ const Register = () => {
               <View style={styles.inputContainer}>
                 {/* <Text style={styles.inputLabel}>Enter OTP</Text> */}
                 <TextInput
-                  style={[styles.input, { backgroundColor: isDarkMode ? '#333' : '#fff',color: isDarkMode ? '#fff' : '#000' }]}
+                  style={[styles.input, { backgroundColor: '#fff', color: '#000' }]}
                   placeholder="Enter OTP code"
-                  placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
+                  placeholderTextColor="#999"
                   keyboardType="number-pad"
                   autoFocus={true}
                   value={formData.otp}

@@ -6,12 +6,12 @@ import {
   FlatList, 
   Image, 
   TouchableOpacity, 
-  SafeAreaView,
   ActivityIndicator,
   TextInput,
   Dimensions,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import axios from 'axios';
 import BASE_URL from '../Config';

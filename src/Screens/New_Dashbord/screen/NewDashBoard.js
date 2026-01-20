@@ -10,7 +10,6 @@ import {
   ScrollView,
   RefreshControl,
   StatusBar,
-  SafeAreaView,
   View,
   StyleSheet,
   Animated,
@@ -26,6 +25,7 @@ import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import BASE_URL from "../../../../Config";
 import Header from "../components/Header";
@@ -160,17 +160,17 @@ export default function NewDashBoard() {
   });
 
 
-  console.log("selectedMainCategory");
+  // console.log("selectedMainCategory");
   
   // Get current gradient theme based on selected category
   const getCurrentGradientTheme = useCallback(() => {
     const categoryName = selectedCategoryType || "default";
-    console.log("categoryName",categoryName);
+    // console.log("categoryName",categoryName);
     return gradientThemes[categoryName] || gradientThemes["default"];
   }, [selectedCategoryType]);
 
   useEffect(() => {
-    console.log("cart items in dashboard", cart);
+    // console.log("cart items in dashboard", cart);
   }, [customerId]);
 
   // Animate background change when category changes
@@ -322,7 +322,7 @@ export default function NewDashBoard() {
   );
 
   const handleSeeAll = async (category) => {
-    console.log("Navigate to category page:", category.categoryName);
+    // console.log("Navigate to category page:", category.categoryName);
     navigation.navigate("Rice Products", {
       screenName: "Rice Products",
       category: category.categoryName,

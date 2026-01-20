@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity,Linking,
-          Modal, Image,Platform,SafeAreaView, Dimensions,Alert } from 'react-native';
+          Modal, Image,Platform, Dimensions,Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import axios from 'axios';

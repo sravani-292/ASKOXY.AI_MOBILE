@@ -6,11 +6,11 @@ import {
   TextInput,
   ScrollView,
   Dimensions,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   StatusBar,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialIcons";
