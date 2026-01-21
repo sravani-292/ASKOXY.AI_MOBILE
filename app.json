@@ -2,7 +2,7 @@
   "expo": {
     "name": "ASKOXY.AI",
     "slug": "Oxyrice",
-    "version": "1.0.93",
+    "version": "1.0.94",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.oxyrice.customer",
-      "buildNumber": "90",
+      "buildNumber": "91",
       "associatedDomains": [
         "applinks:www.askoxy.ai",
         "applinks:askoxy.app.link",
@@ -44,7 +44,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 82,
+      "versionCode": 83,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "config": {

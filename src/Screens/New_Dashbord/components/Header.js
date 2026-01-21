@@ -39,7 +39,7 @@ const Header = ({navigation, userData, profileData, headerGradientColors = defau
          <Ionicons name="call" size={24} color="#fff" />
       </TouchableOpacity> */}
 
-     <CallButton/>
+     {/* <CallButton/> */}
 
     </View>
       ) : (

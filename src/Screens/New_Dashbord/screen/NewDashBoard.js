@@ -44,6 +44,7 @@ import ChatPopup from "../../../Components/ChatPopup";
 import useChat from "../../../hooks/useChat";
 import { handleTranslateProduct } from "../../../hooks/translateProduct";
 import { useCart } from "../../../../until/CartCount";
+import FloatingCallButton from "../../AIAgent/FloatingCallButton";
 
 const { height: screenHeight } = Dimensions.get("window");
 
@@ -145,7 +146,7 @@ export default function NewDashBoard() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const customerId = userData?.userId;
   const navigation = useNavigation();
-  
+
   const [showChat, setShowChat] = useState(false);
   const [language, setLanguage] = useState("en-US");
   const [botName, setBotName] = useState("ASKOXY_Bot");
@@ -161,7 +162,7 @@ export default function NewDashBoard() {
 
 
   // console.log("selectedMainCategory");
-  
+
   // Get current gradient theme based on selected category
   const getCurrentGradientTheme = useCallback(() => {
     const categoryName = selectedCategoryType || "default";
@@ -218,30 +219,30 @@ export default function NewDashBoard() {
     (state) => state.routes[state.index]?.name
   );
 
-   useFocusEffect(
-      useCallback(() => {
-        const handleBackPress = () => {
-          Alert.alert(
-            "Exit",
-            "Are you sure you want to exit?",
-            [
-              { text: "Cancel", style: "cancel" },
-              { text: "OK", onPress: () => BackHandler.exitApp() },
-            ],
-            { cancelable: false }
-          );
-          return true;
-        };
-  
-        // ✅ Updated: Save the subscription and call remove() during cleanup
-        const backHandler = BackHandler.addEventListener(
-          "hardwareBackPress",
-          handleBackPress
+  useFocusEffect(
+    useCallback(() => {
+      const handleBackPress = () => {
+        Alert.alert(
+          "Exit",
+          "Are you sure you want to exit?",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "OK", onPress: () => BackHandler.exitApp() },
+          ],
+          { cancelable: false }
         );
-  
-        return () => backHandler.remove(); // ✅ correct way to clean up
-      }, [currentScreen])
-    );
+        return true;
+      };
+
+      // ✅ Updated: Save the subscription and call remove() during cleanup
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        handleBackPress
+      );
+
+      return () => backHandler.remove(); // ✅ correct way to clean up
+    }, [currentScreen])
+  );
 
   // Scroll to top functionality
   const scrollToTop = useCallback(() => {
@@ -294,7 +295,7 @@ export default function NewDashBoard() {
     [headerOpacity]
   );
 
- 
+
 
   // Focus effect for screen activation
   useFocusEffect(
@@ -350,20 +351,20 @@ export default function NewDashBoard() {
   }, []);
 
   const transformedCategories = transformCategories(getCategories);
-// console.log("transformedCategories", JSON.stringify(transformedCategories, null, 2));
+  // console.log("transformedCategories", JSON.stringify(transformedCategories, null, 2));
   const currentGradient = getCurrentGradientTheme();
 
   return (
     <SafeAreaView
       style={[
         styles.container,
-        {
-          paddingTop: userData
-            ? 20
-            : Platform.OS === "android"
-            ? StatusBar.currentHeight
-            : 0,
-        },
+        // {
+        //   paddingTop: userData
+        //     ? 20
+        //     : Platform.OS === "android"
+        //       ? StatusBar.currentHeight
+        //       : 0,
+        // },
       ]}
     >
       <StatusBar
@@ -476,6 +477,8 @@ export default function NewDashBoard() {
 
       {/* Order Feedback */}
       {userData && <OrderFeedback />}
+
+      <FloatingCallButton />
 
       <ChatFAB onPress={() => setShowChat(!showChat)} />
       {showChat && (
