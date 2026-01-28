@@ -1,4 +1,3 @@
-// components/CategorySection.js
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
@@ -38,14 +37,13 @@ const CategorySection = ({
 }) => {
   const [categoryLoading, setCategoryLoading] = useState({});
   const [expandedCategories, setExpandedCategories] = useState({});
-  const [selectedWeightFilter, setSelectedWeightFilter] =
-    useState(weightFilter);
+  const [selectedWeightFilter, setSelectedWeightFilter] =useState(weightFilter);
   const [priorityItemsByName, setPriorityItemsByName] = useState([]);
   const [loadingPriorityItems, setLoadingPriorityItems] = useState(true);
   const navigation = useNavigation();
   const ASKOXY_PRIORITY_NAMES = ["askoxy.ai"];
 
-  // Fallback priority items (used if Supabase fails)
+
   const fallbackPriorityItems = [
     "Premium Rice",
     "Organic Wheat",
@@ -294,7 +292,6 @@ const CategorySection = ({
           onSeeAll(category);
         });
       } else {
-        // Default behavior - expand the category
         toggleCategoryExpansion(category.categoryName);
       }
     },
@@ -574,6 +571,7 @@ const CategorySection = ({
                       discount={discount}
                       customerId={customerId}
                       dynamicContent={dynamicContent}
+                      categoryType = {category?.categoryName}
                     />
                   </View>
                 );

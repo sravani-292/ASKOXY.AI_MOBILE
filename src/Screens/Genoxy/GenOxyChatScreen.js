@@ -135,7 +135,7 @@ const GenOxyChatScreen = ({ route, navigation }) => {
       feedbackRating: rating,
       userId,
     };
-console.log(payload);
+    console.log(payload);
     try {
       await axios.post(`${BASE_URL}ai-service/agent/feedback`, payload, {
         headers: { ...getAuthHeaders() }

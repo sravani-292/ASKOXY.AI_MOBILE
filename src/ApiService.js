@@ -273,3 +273,23 @@ catch(error){
   return error
 }
 }
+
+
+export const getAllAddresss = async(customerId)=>{
+  console.log("into the get all address call",customerId);
+    try {
+      const response = await axios({
+        url: BASE_URL + `user-service/getAllAdd?customerId=${customerId}`,
+        method: "GET",
+        // headers: {
+        //   Authorization: `Bearer ${token}`,
+        // },
+      });
+      console.log("All addresss are :", response.data);
+      return response;
+    } catch (error) {
+      console.error("Error fetching order address data:", error);
+       return error;
+    }
+
+}

@@ -26,7 +26,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 import BASE_URL from "../../../../Config";
 import Header from "../components/Header";
 import SearchBar from "../components/SearchBar";
@@ -38,7 +37,6 @@ import { transformCategories } from "../untils/Helpers";
 import OfferModal from "../../View/ShoppingCart/DashboardProduct/OfferModal";
 import OrderFeedback from "../../ServiceScreen/components/OrderFeedback";
 import LoginModal from "../../../Components/LoginModal";
-
 import ChatFAB from "../../../Components/ChatFAB";
 import ChatPopup from "../../../Components/ChatPopup";
 import useChat from "../../../hooks/useChat";
@@ -147,7 +145,6 @@ export default function NewDashBoard() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   
   const navigation = useNavigation();
-
   const [showChat, setShowChat] = useState(false);
   const [language, setLanguage] = useState("en-US");
   const [botName, setBotName] = useState("ASKOXY_Bot");
@@ -236,7 +233,7 @@ export default function NewDashBoard() {
         return true;
       };
 
-      // ✅ Updated: Save the subscription and call remove() during cleanup
+      //  Updated: Save the subscription and call remove() during cleanup
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
         handleBackPress
@@ -262,7 +259,6 @@ export default function NewDashBoard() {
   const handleCategoryChange = useCallback(
     (categoryType) => {
       setSelectedCategoryType(categoryType);
-      // Trigger background animation
       Animated.timing(fadeAnim, {
         toValue: 0.8,
         duration: 100,
@@ -360,13 +356,7 @@ export default function NewDashBoard() {
     <SafeAreaView
       style={[
         styles.container,
-        // {
-        //   paddingTop: userData
-        //     ? 20
-        //     : Platform.OS === "android"
-        //       ? StatusBar.currentHeight
-        //       : 0,
-        // },
+       
       ]}
     >
       <StatusBar

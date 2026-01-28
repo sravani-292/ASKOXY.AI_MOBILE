@@ -563,7 +563,7 @@ const styles = StyleSheet.create({
   },
   jobHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   jobHeaderLeft: { flexDirection: 'row', alignItems: 'flex-start', flex: 1, gap: 12 },
-  companyLogo: { width: 48, height: 48, borderRadius: 8, backgroundColor: '#F3F4F6' },
+  companyLogo: { width: 48, height: 48, borderRadius: 20, backgroundColor: '#F3F4F6' },
   jobInfo: { flex: 1 },
   jobTitle: { fontSize: 16, fontWeight: 'bold', color: '#1F2937', lineHeight: 22 },
   companyName: { fontSize: 14, color: '#3B82F6', fontWeight: '600', marginTop: 2 },

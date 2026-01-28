@@ -484,11 +484,6 @@ const CartScreen = () => {
 
   const handleProfileCheck = async () => {
     try {
-      // if (!customerId) {
-      //   Alert.alert("Error", "Customer ID is not available.");
-      //   return false;
-      // }
-
       const response = await handleGetProfileData(customerId, token);
 
       if (response.status === 200) {
@@ -583,9 +578,7 @@ const CartScreen = () => {
         <Text style={styles.emptyCartText}>Your cart is empty</Text>
         <TouchableOpacity
           style={styles.shopNowButton}
-          onPress={() =>
-            navigation.navigate("Dashboard")
-          }
+          onPress={() => navigation.navigate("Dashboard")}
         >
           <Text style={styles.shopNowButtonText}>Shop Now</Text>
         </TouchableOpacity>
@@ -837,9 +830,7 @@ const CartScreen = () => {
             <View style={styles.actionButtonsContainer}>
               <TouchableOpacity
                 style={styles.addButton}
-                onPress={() =>
-                  navigation.navigate("Dashboard")
-                }
+                onPress={() => navigation.navigate("Dashboard")}
               >
                 <Text style={styles.actionButtonText}>Add More</Text>
               </TouchableOpacity>

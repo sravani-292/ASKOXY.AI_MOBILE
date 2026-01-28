@@ -1,5 +1,5 @@
 import { createStackNavigator } from "@react-navigation/stack";
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import axios from "axios";
 import BASE_URL from "../../Config";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 
 // Screens imports
 import Login from "../Authorization/Login";
@@ -89,9 +89,9 @@ import WishlistScreen from "../Screens/New_Dashbord/components/Wishlist";
 import Chats from "../Screens/Chats/Chat";
 import AboutService from "../Dashboard/AboutUS";
 import OxyCoupens from "../Screens/View/Coupons/OxyCoupens";
-import SearchScreen from "../Screens/View/ShoppingCart/Search/SearchScreen"
+import SearchScreen from "../Screens/View/ShoppingCart/Search/SearchScreen";
 import Genoxy from "../Screens/Genoxy/Genoxy";
-import GenOxyOnboardingScreen from '../../src/Screens/Genoxy/GenOxyOnboardingScreen';
+import GenOxyOnboardingScreen from "../../src/Screens/Genoxy/GenOxyOnboardingScreen";
 import InsuranceLLM from "../Screens/Genoxy/InsuranceLLM";
 import GeneralLifeInsurance from "../Screens/Genoxy/GeneralLifeInsurance";
 import GenOxyChatScreen from "../Screens/Genoxy/GenOxyChatScreen";
@@ -112,14 +112,12 @@ import StoreTabs from "./StoreTabs";
 import ChatScreen from "../Components/ChatPopup";
 import CartScreen from "../Screens/View/ShoppingCart/Cart/CartScreen";
 
-
 import AIRoleSelection from "../Screens/AIAgent/CreateAgent/AIRoleSelection";
 import OGImageGenerator from "../Screens/AIAgent/UserFlow/OGImageGenerator";
 import MyAgents from "../Screens/AIAgent/UserFlow/MyAgent";
 import AgentCreationScreen from "../Screens/Genoxy/AgentCreation";
 import AgentPreviewScreen from "../Screens/Genoxy/AgentPreviewScreen";
 import FreelancerProfile from "../Screens/AIAgent/UserFlow/FreelancerProfile";
-
 
 import GlmsHome from "../Screens/GLMS/GlmsHome";
 import GlmsVideos from "../Screens/GLMS/GlmsVideos";
@@ -134,7 +132,9 @@ import UpdateOrderAddressScreen from "../Screens/View/Address/UpdateOrderAddress
 import WalletWithdrawComponent from "../Screens/View/Walletwithdraw/Index";
 import BulkInvite from "../Screens/View/Referral Links/BulkInvite";
 import AgentDetails from "../Screens/AIStore/AgentDetails";
+import AIStore from "../Screens/AIStore/AIStore";
 const json = require("../../app.json");
+
 const LoadingScreen = () => (
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
     <ActivityIndicator size="large" color={COLORS.services} />
@@ -151,7 +151,7 @@ const linking = {
       Product: "Rice Product/:id",
       OrderSummary: "order-summary/:id",
       Wallet: "wallet",
-      "bharath-aistore" : "AI Store"
+      "bharath-aistore": "AI Store",
       // Add more routes here as needed
     },
   },
@@ -159,7 +159,7 @@ const linking = {
 
 export default function StacksScreens() {
   const Stack = createStackNavigator();
-   const Drawer = createDrawerNavigator();
+  const Drawer = createDrawerNavigator();
   const [platform, setPlatform] = useState("");
   const [updateStatus, setUpdateStatus] = useState(null);
   const [currentVersion, setCurrentVersion] = useState("");
@@ -245,17 +245,17 @@ export default function StacksScreens() {
     return <LoadingScreen />;
   }
 
-  function DrawerScreens() {
+ function DrawerScreens() {
   return (
     <Drawer.Navigator
       screenOptions={{
         headerShown: false,
         drawerStyle: {
-          backgroundColor: '#f8fafc', 
-          width: 300, 
+          backgroundColor: "#f8fafc",
+          width: 300,
           borderTopRightRadius: 20,
           borderBottomRightRadius: 20,
-          shadowColor: '#000',
+          shadowColor: "#000",
           shadowOffset: {
             width: 2,
             height: 0,
@@ -264,40 +264,39 @@ export default function StacksScreens() {
           shadowRadius: 8,
           elevation: 5,
         },
-        drawerActiveTintColor: '#8b5cf6', 
-        drawerInactiveTintColor: '#64748b', 
-        drawerActiveBackgroundColor: '#f3f4f6', 
-        drawerInactiveBackgroundColor: 'transparent',
+        drawerActiveTintColor: "#8b5cf6",
+        drawerInactiveTintColor: "#64748b",
+        drawerActiveBackgroundColor: "#f3e8ff",
+        drawerInactiveBackgroundColor: "transparent",
         drawerItemStyle: {
           marginHorizontal: 12,
           marginVertical: 4,
           borderRadius: 12,
-          paddingVertical: 4,
+          paddingVertical: 8,
+          paddingHorizontal: 8,
         },
         drawerLabelStyle: {
           fontSize: 16,
-          fontWeight: '500',
-          marginLeft: -16, 
+          fontWeight: "600",
+          marginLeft: 3, // Space between icon and text
         },
         drawerContentContainerStyle: {
           paddingTop: 20,
         },
-        // Custom drawer content options
-        drawerType: 'slide', 
-        overlayColor: 'rgba(0, 0, 0, 0.3)', 
+        drawerType: "slide",
+        overlayColor: "rgba(0, 0, 0, 0.3)",
       }}
     >
-      {/* Add GenOxyOnboardingScreen as the first drawer screen */}
       <Drawer.Screen
         name="GenOxyOnboardingScreen"
         component={GenOxyOnboardingScreen}
         options={{
           title: "Chat",
           drawerIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? "chatbubble" : "chatbubble-outline"} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "chatbubble" : "chatbubble-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -308,10 +307,10 @@ export default function StacksScreens() {
         options={{
           title: "Insurance LLM",
           drawerIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? "shield" : "shield-outline"} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "shield" : "shield-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -322,10 +321,10 @@ export default function StacksScreens() {
         options={{
           title: "TiE GPT",
           drawerIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? "cube" : "cube-outline"} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "cube" : "cube-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -336,10 +335,10 @@ export default function StacksScreens() {
         options={{
           title: "KLM Fashions LLM",
           drawerIcon: ({ color, focused }) => (
-            <Ionicons 
-              name={focused ? "shirt" : "shirt-outline"} 
-              size={24} 
-              color={color} 
+            <Ionicons
+              name={focused ? "shirt" : "shirt-outline"}
+              size={24}
+              color={color}
             />
           ),
         }}
@@ -349,15 +348,12 @@ export default function StacksScreens() {
 }
 
   const formatSentence = (text) => {
-  return text
-    .split(' ')
-    .map(formatWord)
-    .join(' ');
-}
+    return text.split(" ").map(formatWord).join(" ");
+  };
 
-const formatWord = (word) => {
-  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-};
+  const formatWord = (word) => {
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  };
   return (
     <Stack.Navigator
       linking={linking}
@@ -377,12 +373,6 @@ const formatWord = (word) => {
         },
       }}
     >
-      <Stack.Screen
-        name="Login"
-        component={Login}
-        options={{ headerShown: false }}
-      />
-
       {/* <Stack.Screen 
          name="Payment Test"
          component={PaymentTest}
@@ -434,7 +424,11 @@ const formatWord = (word) => {
       <Stack.Screen name="Product View" component={ProductView} />
       <Stack.Screen name="Wallet" component={WalletPage} />
       <Stack.Screen name="Subscription" component={Main} />
-      <Stack.Screen name ="Search Screen" component={SearchScreen}  options={{ title: 'Browse Items' }} />
+      <Stack.Screen
+        name="Search Screen"
+        component={SearchScreen}
+        options={{ title: "Browse Items" }}
+      />
 
       <Stack.Screen name="Terms and Conditions" component={About} />
       <Stack.Screen name="Account Deletion" component={AccountDeletionScreen} />
@@ -450,7 +444,7 @@ const formatWord = (word) => {
       <Stack.Screen name="Item Details" component={ItemDetails} />
 
       <Stack.Screen name="My Orders" component={OrderScreen} />
-    
+
       <Stack.Screen name="Refund" component={Refund} />
       <Stack.Screen
         name="Rice Products"
@@ -460,7 +454,7 @@ const formatWord = (word) => {
             ? `${formatSentence(route.params.categoryType)} Products`
             : "Rice Products",
         })}
-        />
+      />
       <Stack.Screen name="Write To Us" component={WriteToUs} />
       <Stack.Screen name="ChatGpt" component={ChatGpt} />
       <Stack.Screen name="Avaliable Offers" component={ComboItemsScreen} />
@@ -567,10 +561,10 @@ const formatWord = (word) => {
         component={UniversityDetails}
         options={{ headerShown: false }}
       />
-      <Stack.Screen 
-      name="CA Services"
-      component={CaServices}
-      options={{ headerShown: true }}
+      <Stack.Screen
+        name="CA Services"
+        component={CaServices}
+        options={{ headerShown: true }}
       />
       <Stack.Screen
         name="Profile Edit"
@@ -673,59 +667,132 @@ const formatWord = (word) => {
         component={WishlistScreen}
         options={{ headerShown: true, title: "My Wishlist" }}
       />
-   <Stack.Screen name="My Cart" component={CartScreen} />
+      <Stack.Screen name="My Cart" component={CartScreen} />
 
-      <Stack.Screen 
-         name="GENOXY"
-         component={Genoxy}
-          options={{ headerShown: true, title: "OXYGPT" }}
+      <Stack.Screen
+        name="GENOXY"
+        component={Genoxy}
+        options={{ headerShown: true, title: "OXYGPT" }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name="GeneralLifeInsurance"
         component={GeneralLifeInsurance}
-       
       />
-    <Stack.Screen name="GenOxyOnboardingScreen" component={GenOxyOnboardingScreen} options={{ headerShown: true, title: "WELCOME GENOXY" }} />
-    <Stack.Screen
-      name="GenOxyChatScreen"
-      component={GenOxyChatScreen}
-       options={({ route }) => ({
-     title: route.params?.agentName || 'OXYGPT',})}/>
-    <Stack.Screen
-      name="AssistantChatScreen"
-      component={AssistantChatScreen}
-      options={({ route }) => ({
-        headerShown: true,
-        title: route.params?.assistantName || 'Assistant'
-      })}
-    />
-    <Stack.Screen name="DrawerScreens" component={DrawerScreens} options={{ headerShown: false, title: "AI LLMs" }} />
-    {/* <Stack.Screen name="Bharat Agent Store" component={BharathAgentstore} options={{ headerShown: true, title: "Bharat Agent Store" }} /> */}
-    <Stack.Screen name="AI Videos" component={AiVideosGeneratedMobile} options={{ headerShown: true, title: "AI Videos" }} />
-    <Stack.Screen name="Our AI Videos" component={OurAIVideosMobile} options={{ headerShown: true, title: "Our AI Videos" }} />
-    <Stack.Screen name="FAQ on LLM" component={FaqLLMMobile} options={{ headerShown: true, title: "FAQ on LLM" }} />
-    <Stack.Screen name="FAQ on LLM Images" component={FaqLLMSlidesMobile} options={{ headerShown: true, title: "FAQ on LLM Images" }} />
-    <Stack.Screen name="Before Login" component={BeforeLogin} options={{ headerShown: true, title: "Get Free AI Book" }} />
-    <Stack.Screen name="After Login" component={AfterLogin} options={{ headerShown: true, title: "Free AI Book"}}/>
-    <Stack.Screen name="Active Agents" component={ActiveAgents} options={{ headerShown: true, title: "Active Agents" }} />
-    <Stack.Screen name="Agent Screen" component={AgentScreen} options={{ headerShown: true, title: "Agent Details" }} />
+      <Stack.Screen
+        name="GenOxyOnboardingScreen"
+        component={GenOxyOnboardingScreen}
+        options={{ headerShown: true, title: "WELCOME GENOXY" }}
+      />
+      <Stack.Screen
+        name="GenOxyChatScreen"
+        component={GenOxyChatScreen}
+        options={({ route }) => ({
+          title: route.params?.agentName || "OXYGPT",
+        })}
+      />
+      <Stack.Screen
+        name="AssistantChatScreen"
+        component={AssistantChatScreen}
+        options={({ route }) => ({
+          headerShown: true,
+          title: route.params?.assistantName || "Assistant",
+        })}
+      />
+      <Stack.Screen
+        name="DrawerScreens"
+        component={DrawerScreens}
+        options={{ headerShown: false, title: "AI LLMs" }}
+      />
+      {/* <Stack.Screen name="Bharat Agent Store" component={BharathAgentstore} options={{ headerShown: true, title: "Bharat Agent Store" }} /> */}
+      <Stack.Screen
+        name="AI Videos"
+        component={AiVideosGeneratedMobile}
+        options={{ headerShown: true, title: "AI Videos" }}
+      />
+      <Stack.Screen
+        name="Our AI Videos"
+        component={OurAIVideosMobile}
+        options={{ headerShown: true, title: "Our AI Videos" }}
+      />
+      <Stack.Screen
+        name="FAQ on LLM"
+        component={FaqLLMMobile}
+        options={{ headerShown: true, title: "FAQ on LLM" }}
+      />
+      <Stack.Screen
+        name="FAQ on LLM Images"
+        component={FaqLLMSlidesMobile}
+        options={{ headerShown: true, title: "FAQ on LLM Images" }}
+      />
+      <Stack.Screen
+        name="Before Login"
+        component={BeforeLogin}
+        options={{ headerShown: true, title: "Get Free AI Book" }}
+      />
+      <Stack.Screen
+        name="After Login"
+        component={AfterLogin}
+        options={{ headerShown: true, title: "Free AI Book" }}
+      />
+      <Stack.Screen
+        name="Active Agents"
+        component={ActiveAgents}
+        options={{ headerShown: true, title: "Active Agents" }}
+      />
+      <Stack.Screen
+        name="Agent Screen"
+        component={AgentScreen}
+        options={{ headerShown: true, title: "Agent Details" }}
+      />
 
-    <Stack.Screen name="Agent Creation" component={AgentCreationScreen} options={{ headerShown: true, title: "Agent Creation" }} />
-   <Stack.Screen name="Agent Preview" component={AgentPreviewScreen} options={{ headerShown: true, title: "Agent Preview" }} />
-    <Stack.Screen name= "Agent Store" component={StoreTabs} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Agent Creation"
+        component={AgentCreationScreen}
+        options={{ headerShown: true, title: "Agent Creation" }}
+      />
+      <Stack.Screen
+        name="Agent Preview"
+        component={AgentPreviewScreen}
+        options={{ headerShown: true, title: "Agent Preview" }}
+      />
+      <Stack.Screen
+        name="Agent Store"
+        component={StoreTabs}
+        options={{ headerShown: false }}
+      />
 
-    <Stack.Screen name="Chat With AI" component={ChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Chat With AI"
+        component={ChatScreen}
+        options={{ headerShown: false }}
+      />
 
-    {/* <Stack.Screen name="Voice Assistant" component={RealtimeMainScreen} options={{ headerShown: true, title: "Voice Assistant" }} />
+      {/* <Stack.Screen name="Voice Assistant" component={RealtimeMainScreen} options={{ headerShown: true, title: "Voice Assistant" }} />
 
     <Stack.Screen name="Call Assistant" component={RealTimeMainScreenForCall} options={{ headerShown: true, title: "Call Assistant" }} /> */}
 
-    <Stack.Screen name="AI Role Selection" component={AIRoleSelection} options={{ headerShown: true, title: "Choose Your AI Role" }} />
+      <Stack.Screen
+        name="AI Role Selection"
+        component={AIRoleSelection}
+        options={{ headerShown: true, title: "Choose Your AI Role" }}
+      />
 
-    <Stack.Screen name="Image Creator" component={OGImageGenerator} options={{ headerShown: true, title: "Image Creator" }} />
-    
-    <Stack.Screen name="My Agents" component={MyAgents} options={{ headerShown: true, title: "My Agents" }} />
-    <Stack.Screen name="Agent Details" component={AgentDetails} options={{ headerShown: true }} />
+      <Stack.Screen
+        name="Image Creator"
+        component={OGImageGenerator}
+        options={{ headerShown: true, title: "Image Creator" }}
+      />
+
+      <Stack.Screen
+        name="My Agents"
+        component={MyAgents}
+        options={{ headerShown: true, title: "My Agents" }}
+      />
+      <Stack.Screen
+        name="Agent Details"
+        component={AgentDetails}
+        options={{ headerShown: true }}
+      />
       {/* <Stack.Screen name="Freelancer Profile" component={FreelancerProfile} options={{ headerShown: true, title: "Freelancer Profile" }} /> */}
       <Stack.Screen name="GLMS Home" component={GlmsHome} />
       <Stack.Screen name="Videos" component={GlmsVideos} />
@@ -743,19 +810,32 @@ const formatWord = (word) => {
       <Stack.Screen name="Add Blog" component={AddBlog} />
       <Stack.Screen name="The Fan of OG" component={OGImageGenerator} />
       <Stack.Screen name="Agent Assistance" component={AllAgentCreations} />
-      <Stack.Screen name="UseCases" component={UseCasesStackScreen}  options={({ route }) => ({
-        headerStyle: { backgroundColor: "#3d2a71" },
-        title: route?.params?.dashboard || "UseCases",
-        headerShown: false,
-      })}/>
-     <Stack.Screen
+      <Stack.Screen
+        name="UseCases"
+        component={UseCasesStackScreen}
+        options={({ route }) => ({
+          headerStyle: { backgroundColor: "#3d2a71" },
+          title: route?.params?.dashboard || "UseCases",
+          headerShown: false,
+        })}
+      />
+      <Stack.Screen
         name="Update Order Address"
         component={UpdateOrderAddressScreen}
       />
-    <Stack.Screen name="Wallet Withdraw" component={WalletWithdrawComponent}/>
-    <Stack.Screen name="Bulk Invite" component={BulkInvite}/>
-    <Stack.Screen name="Freelancer Profile" component={FreelancerProfile} />
-  </Stack.Navigator>
+      <Stack.Screen
+        name="Wallet Withdraw"
+        component={WalletWithdrawComponent}
+      />
+      <Stack.Screen name="Bulk Invite" component={BulkInvite} />
+      <Stack.Screen name="Freelancer Profile" component={FreelancerProfile} />
+      <Stack.Screen name="AI Store" component={AIStore} />
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
   );
 }
 

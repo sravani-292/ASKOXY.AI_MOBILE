@@ -35,7 +35,7 @@ const LendingSystems = () => {
             <Text style={styles.keyUseCases}>• Customer to Loan Mapping: Assign IDs to loans automatically</Text>
             <Text style={styles.keyUseCases}>• Loan Appraisal Workflow: Evaluate & process loans with predefined workflows</Text>
           </View>
-          <TouchableOpacity style={styles.learnMoreButton} onPress={()=>navigation.navigate('UseCases',{dashboard:'LOS Dashbard'})}>
+          <TouchableOpacity style={styles.learnMoreButton} onPress={()=>navigation.navigate('UseCases',{dashboard:'LOS Dashboard'})}>
             <Text style={styles.learnMoreText}>Learn More →</Text>
           </TouchableOpacity>
         </View>

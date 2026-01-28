@@ -47,7 +47,7 @@ export default function CountriesDisplay() {
     setLoading(true);
     axios({
       method: "POST",
-      url: "https://meta.oxyglobal.tech/api/user-service/searchForUniversity?pageIndex=0&pageSize=20",
+      url: "https://meta.oxyloans.com/api/user-service/searchForUniversity?pageIndex=0&pageSize=20",
     })
     .then((response) => {
       console.log("countries response",response.data);

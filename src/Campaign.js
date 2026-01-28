@@ -310,45 +310,26 @@ const SingleCampaignCard = ({
               <TouchableOpacity
                 style={[styles.button, styles.secondaryButton2]}
                 onPress={() => {
-                  // if (AlreadyInterested) {
-                  //   // Direct navigation
+                 
                   navigation.navigate("CA Services");
-                  // } else {
-                  //   // Show confirmation popup
-                  //   Alert.alert(
-                  //     "Please Confirm",
-                  //     "Please click the 'I'm Interested' button.\nSelect your type (Partner, User or Freelancer), then you can view all CA Services.",
-                  //     [
-                  //       { text: "Cancel", style: "cancel" },
-                  //       {
-                  //         text: "OK",
-                  //         onPress: () => {
-                  //           // No auto navigation
-                  //           // Wait for user to click "I'm Interested"
-                  //         },
-                  //       },
-                  //     ],
-                  //     { cancelable: false }
-                  //   );
-                  // }
+                 
                 }}
                 activeOpacity={0.8}
               >
                 <Text style={styles.secondaryButtonText2}>
-                  View All SafeAreaViewervices
+                  View All Services
                 </Text>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* <Text>{campaignType}</Text> */}
           {campaignType == "PRODUCT" && (
             <TouchableOpacity
               style={[styles.button, styles.secondaryButton1]}
               onPress={() => {
                 if (item?.campaignType?.includes("GOLD")) {
                   navigation.navigate("Rice Products", {
-                    category: "GOLD",
+                    categoryType: "GOLD",
                   });
                 }
               }}
@@ -393,8 +374,8 @@ export default function CampaignScreen({ route, navigation }) {
 
   getProfile();
   getCall();
-  loadCampaigns(); // ✅ Call here on mount
-}, [userData, campaignType]); // ✅ Re-run if campaignType changes
+  loadCampaigns(); 
+}, [userData, campaignType]); 
 
   const getProfile = async () => {
     axios({
@@ -442,7 +423,6 @@ export default function CampaignScreen({ route, navigation }) {
       });
   }
 
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // Get specific campaignId or campaignType from route params if available
@@ -450,55 +430,22 @@ export default function CampaignScreen({ route, navigation }) {
   console.log("campaingId", campaignId);
   console.log("campainType", campaignType);
 
-  //   useFocusEffect(
-  //   useCallback(() => {
-  //     console.log("Screen focused: Running loadCampaigns and fade animation");
+ 
 
-  //     // Load campaign data
-  //     loadCampaigns();
+useEffect(() => {
+  console.log("CampaignScreen mounted - loading data once");
+  loadCampaigns();
+  Animated.timing(fadeAnim, {
+    toValue: 1,
+    duration: 800,
+    useNativeDriver: true,
+  }).start();
+}, []); 
 
-  //     // Run fade-in animation
-  //     Animated.timing(fadeAnim, {
-  //       toValue: 1,
-  //       duration: 800,
-  //       useNativeDriver: true,
-  //     }).start();
-
-  //     // Optional cleanup (if you need to reset animation when screen unfocuses)
-  //     return () => {
-  //       console.log("Screen unfocused: Cleaning up fade animation");
-  //       fadeAnim.setValue(0);
-  //     };
-  //   }, [fadeAnim]) // include fadeAnim as dependency
-  // );
-
-  useFocusEffect(
-    useCallback(() => {
-      console.log("Screen focused: Running loadCampaigns and fade animation");
-      loadCampaigns();
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }).start();
-      return () => {
-        console.log("Screen unfocused: Cleaning up fade animation");
-        fadeAnim.setValue(0);
-      };
-    }, [])
-  );
-
-  // useEffect(() => {
-  //   if (campaignData.length > 0) {
-  //     selectCampaign();
-  //     console.log("Selected campaign ID:", campaignId);
-  //     console.log("Selected campaign type:", campaignType);
-  //   }
-  // }, [campaignData, campaignId, campaignType]);
-
+ 
  const loadCampaigns = () => {
-  console.log("🔍 [DEBUG] loadCampaigns() called");
-  console.log("🎯 Requested campaignType from navigation:", campaignType);
+  console.log(" [DEBUG] loadCampaigns() called");
+  console.log(" Requested campaignType from navigation:", campaignType);
 
   setLoading(true);
   setError(null);
@@ -590,14 +537,12 @@ export default function CampaignScreen({ route, navigation }) {
     } else if (campaignData.length > 0) {
       setCurrentCampaign(campaignData[0]);
     } else {
-      // No campaigns found, fall back to default service
       setCurrentCampaign(services[0]);
     }
   };
 
   // Extract image URLs from campaign data
   const getImages = (item) => {
-    // For campaign items with imageUrls array from API
     if (
       item.imageUrls &&
       Array.isArray(item.imageUrls) &&
@@ -613,7 +558,6 @@ export default function CampaignScreen({ route, navigation }) {
 
     // For service items with single image
     if (item.image) {
-      // If it's a require'd asset
       if (typeof item.image === "number") {
         return [DEFAULT_IMAGE]; // We can't display require'd images directly, use default
       } else {

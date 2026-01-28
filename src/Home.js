@@ -182,42 +182,14 @@ const HomeScreen = ({ navigation }) => {
               return true;
             };
       
-            // ✅ Updated: Save the subscription and call remove() during cleanup
             const backHandler = BackHandler.addEventListener(
               "hardwareBackPress",
               handleBackPress
             );
       
-            return () => backHandler.remove(); // ✅ correct way to clean up
+            return () => backHandler.remove(); 
           }, [currentScreen])
         );
-
-  // const handleServicePress = (screenName) => {
-  //   if(screenName === 'OxyLoans') {
-  //     navigation.navigate('OxyLoans');
-  //   } else if (screenName === 'NyayaGPTScreen') {
-  //     navigation.navigate('LEGAL SERVICE');
-  //   }else if(screenName === 'Study') {
-  //     navigation.navigate('STUDY ABROAD');
-  //   }else if(screenName === 'Rice Products') {
-  //     navigation.navigate("Rice Products", {
-  //                     screen: "Rice Products",
-  //                     category: "All CATEGORIES",
-  //                   }) 
-  //   }else if(screenName === 'FractionalScreen') {
-  //     navigation.navigate('Fractional Ownership');  
-  //   }else if(screenName=== 'GLMS') {
-  //     navigation.navigate('GLMS Home');
-  //   }
-    
-  //   else if (screenName && navigation) {
-  //     navigation.navigate("Campaign", {
-  //       campaignType: screenName,
-  //     });
-  //   } else {
-  //     console.log('Service pressed:', screenName);
-  //   }
-  // };
 
 
 

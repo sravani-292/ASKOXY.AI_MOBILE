@@ -1,4 +1,4 @@
-// ✅ MOBILE (React Native) - WishlistButton.js
+
 import React, { useState, useEffect } from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,16 +8,26 @@ import { LinearGradient } from "expo-linear-gradient";
 const WishlistButton = ({ product }) => {
   const [inWishlist, setInWishlist] = useState(false);
 
+  const PRODUCT_KEY = product.itemId; 
+
   useEffect(() => {
     const checkWishlist = async () => {
-      const stored = await AsyncStorage.getItem("WISHLIST");
-      const wishlist = stored ? JSON.parse(stored) : [];
-      const exists = wishlist.some((item) => item.itemId === product.itemId);
-      setInWishlist(exists);
-    //   console.log({wishlist});
+      try {
+        const stored = await AsyncStorage.getItem("WISHLIST");
+        const wishlist = stored ? JSON.parse(stored) : [];
+
+        const exists = wishlist.some(
+          item => item.itemId === PRODUCT_KEY
+        );
+
+        setInWishlist(exists);
+      } catch (e) {
+        console.error("Wishlist read error", e);
+      }
     };
+
     checkWishlist();
-  }, [product.id]);
+  }, [PRODUCT_KEY]);
 
   const toggleWishlist = async () => {
     try {
@@ -25,63 +35,60 @@ const WishlistButton = ({ product }) => {
       let wishlist = stored ? JSON.parse(stored) : [];
 
       if (inWishlist) {
-        wishlist = wishlist.filter((item) => item.id !== product.id);
+        wishlist = wishlist.filter(
+          item => item.itemId !== PRODUCT_KEY
+        );
       } else {
-        wishlist.push(product);
+        // avoid duplicates
+        if (!wishlist.some(item => item.itemId === PRODUCT_KEY)) {
+          wishlist.push(product);
+        }
       }
 
       await AsyncStorage.setItem("WISHLIST", JSON.stringify(wishlist));
-      setInWishlist(!inWishlist);
+      setInWishlist(prev => !prev);
     } catch (err) {
       console.error("Wishlist error", err);
     }
   };
 
   return (
-    // <TouchableOpacity onPress={toggleWishlist}>
-    //   <Ionicons
-    //     name={inWishlist ? "heart" : "heart-outline"}
-    //     size={24}
-    //     color={inWishlist ? "red" : "gray"}
-    //   />
-    // </TouchableOpacity>
-    <TouchableOpacity 
-                style={styles.favoriteButton}
-                activeOpacity={0.7}
-                onPress={toggleWishlist}
-              >
-                <LinearGradient
-                  colors={['#ffffff', '#faf5ff']}
-                  style={styles.favoriteGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Ionicons 
-                  name={inWishlist ? "heart" : "heart-outline"}
-                  color={inWishlist ? "#6032cbff" : "#8B5CF6"}
-                  size={16} />
-                </LinearGradient>
-              </TouchableOpacity>
+    <TouchableOpacity
+      style={styles.favoriteButton}
+      activeOpacity={0.7}
+      onPress={toggleWishlist}
+    >
+      <LinearGradient
+        colors={["#ffffff", "#faf5ff"]}
+        style={styles.favoriteGradient}
+      >
+        <Ionicons
+          name={inWishlist ? "heart" : "heart-outline"}
+          color={inWishlist ? "#6032cbff" : "#8B5CF6"}
+          size={16}
+        />
+      </LinearGradient>
+    </TouchableOpacity>
   );
 };
 
 export default WishlistButton;
 
 const styles = StyleSheet.create({
-   favoriteButton: {
-    position: 'absolute',
+  favoriteButton: {
+    position: "absolute",
     top: 8,
     right: 8,
     width: 28,
     height: 28,
     borderRadius: 14,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
-  
   favoriteGradient: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
+

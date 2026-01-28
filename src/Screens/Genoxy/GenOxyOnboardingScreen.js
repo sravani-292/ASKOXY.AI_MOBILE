@@ -212,16 +212,7 @@ const GenoxyMobileScreen = ({ navigation }) => {
               employee.
             </Text>
 
-            {/* <TouchableOpacity style={styles.exploreButton} activeOpacity={0.8}>
-              <LinearGradient
-                colors={["#8b5cf6", "#a855f7"]}
-                style={styles.exploreButtonGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.exploreButtonText}>Explore AI LLMs</Text>
-              </LinearGradient>
-            </TouchableOpacity> */}
+           
 
             <Text style={styles.selectText}>
               Select an AI LLM and let's get started
@@ -321,7 +312,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  // Content Styles
   content: {
     flex: 1,
   },
@@ -396,14 +386,13 @@ const styles = StyleSheet.create({
     color: "#8b5cf6",
   },
 
-  // Categories
   categoriesContainer: {
     marginBottom: 30,
   },
 
   categoryRow: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     marginBottom: 15,
   },
   categoryIconText:{

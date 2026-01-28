@@ -17,7 +17,8 @@ import {
 import { useNavigation, useRoute } from "@react-navigation/native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/Ionicons";
-import * as FileSystem from "expo-file-system";
+// import * as FileSystem from "expo-file-system";
+import {File,Directory,Paths} from 'expo-file-system';
 import * as Sharing from "expo-sharing";
 import { useSelector } from "react-redux";
 import Checkbox from "expo-checkbox";
@@ -115,6 +116,8 @@ const [selectedEmoji, setSelectedEmoji] = useState(null);
       });
   };
 
+
+
   function deliveryBoyDetailsfunc() {
     let data = {
       orderId: order_id,
@@ -122,7 +125,6 @@ const [selectedEmoji, setSelectedEmoji] = useState(null);
     };
     axios({
       method: "post",
-
       url: BASE_URL + `order-service/deliveryBoyAssigneData`,
       data: data,
       headers: {
@@ -141,14 +143,14 @@ const [selectedEmoji, setSelectedEmoji] = useState(null);
   getOrderDetails();
     feedbackGet();
     deliveryBoyDetailsfunc();
-     const checkIfDownloaded = async () => {
+    const checkIfDownloaded = async () => {
     const storedUri = await AsyncStorage.getItem("downloadedInvoiceUri");
-    if (storedUri) {
-      const fileInfo = await FileSystem.getInfoAsync(storedUri);
-      if (fileInfo.exists) {
-        setDownloadedUri(storedUri);
-      }
-    }
+   if (storedUri) {
+  const file = new File(storedUri);
+  if (file.exists) {
+    setDownloadedUri(storedUri);
+  }
+}
   };
 
   checkIfDownloaded();
@@ -338,28 +340,32 @@ const [selectedEmoji, setSelectedEmoji] = useState(null);
   };
 
   const handleDownload = async (invoice) => {
-    if (!invoice) {
-      Alert.alert("Invalid invoice link");
-      return;
-    }
+  if (!invoice) {
+    Alert.alert("Invalid invoice link");
+    return;
+  }
 
-    try {
-      setDownloading(true);
-      const fileUri = FileSystem.documentDirectory + "invoice.pdf";
+  try {
+    setDownloading(true);
 
-      const downloadRes = await FileSystem.downloadAsync(invoice, fileUri);
-      console.log("Finished downloading to ", downloadRes.uri);
+    // Create a File instance for the destination
+    const destinationFile = new File(Paths.document, "invoice.pdf");
 
-      setDownloadedUri(downloadRes.uri);
-        await AsyncStorage.setItem("downloadedInvoiceUri", downloadRes.uri);
-      Alert.alert("Download completed");
-    } catch (error) {
-      console.error("Download error:", error);
-      Alert.alert("Error", "Failed to download invoice.");
-    } finally {
-      setDownloading(false);
-    }
-  };
+    // Download the file
+    const downloadedFile = await File.downloadFileAsync(invoice, destinationFile);
+
+    console.log("Finished downloading to ", downloadedFile.uri);
+
+    setDownloadedUri(downloadedFile.uri);
+    await AsyncStorage.setItem("downloadedInvoiceUri", downloadedFile.uri);
+    Alert.alert("Invoice Download completed");
+  } catch (error) {
+    console.error("Download error:", error);
+    Alert.alert("Error", "Failed to download invoice.");
+  } finally {
+    setDownloading(false);
+  }
+};
 
   const openInvoice = async () => {
     if (downloadedUri && (await Sharing.isAvailableAsync())) {

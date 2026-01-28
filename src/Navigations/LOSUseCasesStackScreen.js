@@ -134,7 +134,6 @@ const UseCasesStackScreen = ({route}) => {
            }}
     >
        
-        
       <Stack.Screen
         name="LOS Dashboard"
         component={LOSDashboard}

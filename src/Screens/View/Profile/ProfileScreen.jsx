@@ -17,9 +17,8 @@ import axios from 'axios';
 import CountryPicker from 'react-native-country-picker-modal';
 import BASE_URL from '../../../../Config';
 import { useSelector } from 'react-redux';
-
+import { getAllAddresss } from "../../../ApiService";
 const ProfileScreen = ({navigation}) => {
-  // State management
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');

@@ -1,4 +1,3 @@
-// ✅ MOBILE (React Native) - WishlistScreen.js
 import React, { useEffect, useState } from "react";
 import { View, Text, FlatList, Image, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";

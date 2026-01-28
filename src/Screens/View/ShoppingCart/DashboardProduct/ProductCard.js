@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   View,
   Text,
@@ -7,31 +7,32 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
-  Dimensions
-} from 'react-native';
+  Dimensions,
+} from "react-native";
 import { MaterialIcons, FontAwesome, FontAwesome6 } from "@expo/vector-icons";
-import { LinearGradient } from 'expo-linear-gradient';
-import BVMCoins from '../../Profile/BVMCoins';
-const {width,height} = Dimensions.get('window');
+import { LinearGradient } from "expo-linear-gradient";
+import BVMCoins from "../../Profile/BVMCoins";
+const { width, height } = Dimensions.get("window");
 
-const ProductCard = ({ 
-  item, 
-  navigation, 
-  cartItems, 
-  loadingItems, 
-  removalLoading, 
-  handleAdd, 
-  handleIncrease, 
+const ProductCard = ({
+  item,
+  navigation,
+  cartItems,
+  loadingItems,
+  removalLoading,
+  handleAdd,
+  handleIncrease,
   handleDecrease,
   handleGoldItemPress,
   isCategoryTypeGold,
   imageErrors,
   category,
   categoryType,
-  dynamicContent
+  dynamicContent,
 }) => {
-  
   // Get appropriate icon for item
+  console.log("categoryType", categoryType);
+
   const getItemIcon = (item) => {
     const itemNameLower = item.itemName.toLowerCase();
 
@@ -57,11 +58,18 @@ const ProductCard = ({
   };
 
   const [modalVisible, setModalVisible] = React.useState(false);
-  
+
   return (
     <View style={styles.itemContainer}>
       <TouchableOpacity
-        onPress={() => navigation.navigate("Item Details", { item:item, category:category, categoryType:categoryType,offerId: item.weight })}
+        onPress={() =>
+          navigation.navigate("Item Details", {
+            item: item,
+            category: category,
+            categoryType: categoryType,
+            offerId: item.weight,
+          })
+        }
       >
         <View style={styles.itemImageContainer}>
           {item.itemMrp > item.itemPrice && (
@@ -93,159 +101,178 @@ const ProductCard = ({
               resizeMode="contain"
             />
           )}
+          {categoryType == "GOLD" && item.quantity == 0 && (
+            <>
+            {console.log("rendering sold out badge")
+            }
+            <View style={styles.soldOutBadge}>
+              <Text style={styles.soldOutText}>SOLD OUT</Text>
+            </View>
+            </>
+          )}
         </View>
       </TouchableOpacity>
       <View style={styles.priceContainer}>
-          <Text style={styles.itemPrice}>₹{item.itemPrice}</Text>
-          {item.itemMrp > item.itemPrice && (
-            <Text style={styles.itemMRP}>₹{item.itemMrp}</Text>
-          )}
-        </View>
+        <Text style={styles.itemPrice}>₹{item.itemPrice}</Text>
+        {item.itemMrp > item.itemPrice && (
+          <Text style={styles.itemMRP}>₹{item.itemMrp}</Text>
+        )}
+      </View>
 
-         <View style={styles.priceContainer}>
-          <Text style={styles.itemWeight}>
-            Weight: {item.weight}{" "}
-            {item.weight === 1 ? item.units.replace(/s$/, "") : item.units}
-          </Text>
-          </View>
+      <View style={styles.priceContainer}>
+        <Text style={styles.itemWeight}>
+          Weight: {item.weight}{" "}
+          {item.weight === 1 ? item.units.replace(/s$/, "") : item.units}
+        </Text>
+      </View>
 
       {/* <View style={styles.itemDetailsContainer}> */}
-        <View style={styles.itemInfoContainer}>
-            <Text style={styles.itemName} numberOfLines={2}>
-              {item.itemName}
-            </Text>
-        </View>
-
-        <View style={styles.bmvCoinsContainer}>
-              <LinearGradient
-                 colors={['#f3e8ff', '#e9d5ff']}
-                style={styles.bmvCoinsBadge}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.bmvCoinsText}>You will get  {item.bmvCoins} BMVCOINS</Text>
-              
-            <TouchableOpacity
-              style={styles.cartButton}
-              onPress={()=>setModalVisible(true)}
-              activeOpacity={0.7}
-            >
-              <FontAwesome6 name="circle-info" color="#6b21a8" size={20} containerStyle={styles.icon} />
-            </TouchableOpacity>
-            </LinearGradient>
-            </View>
-        
-
-        <View style={styles.buttonContainer}>
-          {item.quantity === 0 ? (
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: "#D3D3D3" }]}
-              disabled={true}
-            >
-              <Text style={styles.addButtonText}>Out of Stock</Text>
-            </TouchableOpacity>
-          ) : cartItems[item.itemId] ? (
-            <View style={styles.quantityContainer}>
-              <TouchableOpacity
-                onPress={() => handleDecrease(item)}
-                disabled={
-                  loadingItems[item.itemId] || removalLoading[item.itemId]
-                }
-                style={[
-                  styles.quantityButton,
-                  {
-                    backgroundColor:
-                      loadingItems[item.itemId] || removalLoading[item.itemId]
-                        ? "#CBD5E0"
-                        : "#f87171",
-                  },
-                ]}
-              >
-                <Text style={styles.quantityButtonText}>-</Text>
-              </TouchableOpacity>
-
-              <View style={styles.quantityTextContainer}>
-                {loadingItems[item.itemId] || removalLoading[item.itemId] ? (
-                  <ActivityIndicator size="small" color="#6b21a8" />
-                ) : (
-                  <Text style={styles.quantityText}>
-                    {cartItems[item.itemId]}
-                  </Text>
-                )}
-              </View>
-
-              <TouchableOpacity
-                onPress={() => handleIncrease(item)}
-                disabled={
-                  loadingItems[item.itemId] ||
-                  removalLoading[item.itemId] ||
-                  cartItems[item.itemId] >= item.quantity
-                }
-                style={[
-                  styles.quantityButton,
-                  loadingItems[item.itemId] ||
-                  removalLoading[item.itemId] ||
-                  cartItems[item.itemId] >= item.quantity
-                    ? {
-                        backgroundColor: "#CBD5E0",
-                      }
-                    : {
-                        backgroundColor: "#6b21a8",
-                      },
-                ]}
-              >
-                <Text style={styles.quantityButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={() => handleAdd(item)}
-              disabled={loadingItems[item.itemId]}
-              style={styles.addButton}
-            >
-              {loadingItems[item.itemId] ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Text style={styles.addButtonText}>Add to Cart</Text>
-              )}
-            </TouchableOpacity>
-          )}
-          {isCategoryTypeGold && (
-            <TouchableOpacity onPress={() => handleGoldItemPress(item.itemId)}>
-              <Text style={{ textAlign: "center" }}>View Details</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        <BVMCoins modalVisible={modalVisible} onCloseModal={()=>{setModalVisible(false)}} content={dynamicContent}/>
+      <View style={styles.itemInfoContainer}>
+        <Text style={styles.itemName} numberOfLines={2}>
+          {item.itemName}
+        </Text>
       </View>
+
+      <View style={styles.bmvCoinsContainer}>
+        <LinearGradient
+          colors={["#f3e8ff", "#e9d5ff"]}
+          style={styles.bmvCoinsBadge}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Text style={styles.bmvCoinsText}>
+            You will get {item.bmvCoins} BMVCOINS
+          </Text>
+
+          <TouchableOpacity
+            style={styles.cartButton}
+            onPress={() => setModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <FontAwesome6
+              name="circle-info"
+              color="#6b21a8"
+              size={20}
+              containerStyle={styles.icon}
+            />
+          </TouchableOpacity>
+        </LinearGradient>
+      </View>
+
+      <View style={styles.buttonContainer}>
+        {item.quantity === 0 ? (
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: "#D3D3D3" }]}
+            disabled={true}
+          >
+            <Text style={styles.addButtonText}>Out of Stock</Text>
+          </TouchableOpacity>
+        ) : cartItems[item.itemId] ? (
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity
+              onPress={() => handleDecrease(item)}
+              disabled={
+                loadingItems[item.itemId] || removalLoading[item.itemId]
+              }
+              style={[
+                styles.quantityButton,
+                {
+                  backgroundColor:
+                    loadingItems[item.itemId] || removalLoading[item.itemId]
+                      ? "#CBD5E0"
+                      : "#f87171",
+                },
+              ]}
+            >
+              <Text style={styles.quantityButtonText}>-</Text>
+            </TouchableOpacity>
+
+            <View style={styles.quantityTextContainer}>
+              {loadingItems[item.itemId] || removalLoading[item.itemId] ? (
+                <ActivityIndicator size="small" color="#6b21a8" />
+              ) : (
+                <Text style={styles.quantityText}>
+                  {cartItems[item.itemId]}
+                </Text>
+              )}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => handleIncrease(item)}
+              disabled={
+                loadingItems[item.itemId] ||
+                removalLoading[item.itemId] ||
+                cartItems[item.itemId] >= item.quantity
+              }
+              style={[
+                styles.quantityButton,
+                loadingItems[item.itemId] ||
+                removalLoading[item.itemId] ||
+                cartItems[item.itemId] >= item.quantity
+                  ? {
+                      backgroundColor: "#CBD5E0",
+                    }
+                  : {
+                      backgroundColor: "#6b21a8",
+                    },
+              ]}
+            >
+              <Text style={styles.quantityButtonText}>+</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={() => handleAdd(item)}
+            disabled={loadingItems[item.itemId]}
+            style={styles.addButton}
+          >
+            {loadingItems[item.itemId] ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.addButtonText}>Add to Cart</Text>
+            )}
+          </TouchableOpacity>
+        )}
+        {isCategoryTypeGold && (
+          <TouchableOpacity onPress={() => handleGoldItemPress(item.itemId)}>
+            <Text style={{ textAlign: "center" }}></Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      <BVMCoins
+        modalVisible={modalVisible}
+        onCloseModal={() => {
+          setModalVisible(false);
+        }}
+        content={dynamicContent}
+      />
+    </View>
     // </View>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   itemContainer: {
     width: width * 0.31,
     backgroundColor: "#fff",
     borderRadius: 12,
-    minHeight: 340, 
+    minHeight: 340,
     marginTop: 8,
     marginBottom: 8,
     marginRight: 8,
-    padding: 8, 
-    paddingBottom: 12, 
+    padding: 8,
+    paddingBottom: 12,
   },
   itemImageContainer: {
     width: "100%",
-    height: 120, 
+    height: 120,
     position: "relative",
     backgroundColor: "#f9fafb",
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
     borderRadius: 8,
-    marginBottom: 8, 
+    marginBottom: 8,
   },
   discountBadge: {
     position: "absolute",
@@ -283,7 +310,7 @@ const styles = StyleSheet.create({
   },
   itemInfoContainer: {
     marginBottom: 8,
-    minHeight: 36, 
+    minHeight: 36,
   },
   itemName: {
     fontSize: 11,
@@ -304,7 +331,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     minHeight: 20,
     width: "100%",
-    flexWrap: "wrap", 
+    flexWrap: "wrap",
   },
   itemPrice: {
     fontSize: 14,
@@ -318,31 +345,31 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   bmvCoinsContainer: {
-    marginBottom: 8, 
-    width: "100%", 
+    marginBottom: 8,
+    width: "100%",
   },
   bmvCoinsBadge: {
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
   },
   bmvCoinsText: {
     fontSize: 9,
-    fontWeight: '600',
-    color: '#6b21a8',
+    fontWeight: "600",
+    color: "#6b21a8",
     opacity: 0.9,
-    flex: 1, 
+    flex: 1,
     marginRight: 4,
     lineHeight: 12,
   },
   buttonContainer: {
-    minHeight: 36, 
+    minHeight: 36,
     justifyContent: "center",
     width: "100%",
-    marginTop: 'auto', 
+    marginTop: "auto",
   },
   addButton: {
     backgroundColor: "#6b21a8",
@@ -391,8 +418,23 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   icon: {
-    marginLeft: 2,
-  },
+    marginLeft: 2,
+  },
+  soldOutBadge: {
+    position: "absolute",
+    top: 50,
+    left: 15,
+    backgroundColor: "#d32f2f",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius:10
+    // transform: [{ rotate: "-45deg" }],
+  },
+  soldOutText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
 });
 
 export default ProductCard;

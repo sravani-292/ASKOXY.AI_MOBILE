@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Image,
   TextInput,
+  Share,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -19,37 +20,36 @@ import { useSelector } from "react-redux";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.85;
 
-const AIStore = ({navigation}) => {
+const AIStore = ({ navigation }) => {
   const [stores, setStores] = useState([]);
   const [filteredStores, setFilteredStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeStoreCount, setActiveStoreCount] = useState(0);
   const [searchText, setSearchText] = useState("");
+  const userData = useSelector((state) => state.counter);
+  const token = userData?.accessToken;
+  const userId = userData?.userId;
 
 
-   const userData = useSelector((state) => state.counter);
-  //  console.log({userData})
-    const token = userData?.accessToken;
-    const userId = userData?.userId;
+
   const getStores = async () => {
-   
-    axios.get(
-        `${BASE_URL}ai-service/agent/getAiStoreAllAgents`,{headers:{
-          Authorization:`Bearer ${token}`
-        }}
-      )
+    axios
+      .get(`${BASE_URL}ai-service/agent/getAiStoreAllAgents`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => {
-        // console.log("Store data:", res.data);
         setLoading(false);
         const allStores = res.data || [];
-        
-        // Filter stores: ACTIVE status and has agents
-        const filteredStores = allStores.filter(store => 
-          store.aiStoreStatus === "ACTIVE" && 
-          store.agentDetailsOnAdUser && 
-          store.agentDetailsOnAdUser.length > 0
+
+        const filteredStores = allStores.filter(
+          (store) =>
+            store.aiStoreStatus === "ACTIVE" &&
+            store.agentDetailsOnAdUser &&
+            store.agentDetailsOnAdUser.length > 0
         );
-        
+
         setStores(filteredStores);
         setFilteredStores(filteredStores);
         setActiveStoreCount(filteredStores.length);
@@ -58,15 +58,40 @@ const AIStore = ({navigation}) => {
         setLoading(false);
         console.log("Error fetching stores:", err.response);
       });
-   
   };
+
+
+
+  const handleShareStore = async (store) => {
+  try {
+    const title = store.storeName || "Check out this AI Store!";
+    const description = store.description || "Explore amazing AI agents on AskOxy.";
+    const message = `${title}\n\n${description}\n\nJoin me on AskOxy!`;
+
+    const result = await Share.share({
+      message: message,
+      title: title,
+      // url: 'https://askoxy.ai', // optional deep link
+    });
+
+    if (result.action === Share.sharedAction) {
+      console.log('Store shared successfully');
+    } else if (result.action === Share.dismissedAction) {
+      console.log('Share dismissed');
+    }
+  } catch (error) {
+    console.error('Error sharing store:', error.message);
+    Alert.alert('Error', 'Failed to share. Please try again.');
+  }
+};
+
 
   const handleSearch = (text) => {
     setSearchText(text);
     if (text === "") {
       setFilteredStores(stores);
     } else {
-      const filtered = stores.filter(store =>
+      const filtered = stores.filter((store) =>
         store.storeName.toLowerCase().includes(text.toLowerCase())
       );
       setFilteredStores(filtered);
@@ -85,7 +110,7 @@ const AIStore = ({navigation}) => {
     );
   }
 
-    function footer() {
+  function footer() {
     return (
       <View style={{ alignSelf: "center" }}>
         <Text>No More Stores Found </Text>
@@ -96,9 +121,16 @@ const AIStore = ({navigation}) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore curated collections of AI Agents created by our community.</Text>
+        <Text style={styles.headerTitle}>
+          Explore curated collections of AI Agents created by our community.
+        </Text>
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+          <Ionicons
+            name="search"
+            size={20}
+            color="#64748b"
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search stores..."
@@ -107,70 +139,59 @@ const AIStore = ({navigation}) => {
             placeholderTextColor={"#808080"}
           />
         </View>
-        
       </View>
-              <Text style={styles.activeCount}>Active Stores: {activeStoreCount}</Text>
+      <Text style={styles.activeCount}>Active Stores: {activeStoreCount}</Text>
 
       <FlatList
-      // horizontal
-      data={filteredStores}
-      keyExtractor={(item) => item.storeId}
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.list}
-      renderItem={({ item }) => {
-        const initials = item.storeName
-          ?.split(" ")
-          .map((w) => w[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase();
+        data={filteredStores}
+        keyExtractor={(item) => item.storeId}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.list}
+        renderItem={({ item }) => {
+          const initials = item.storeName
+            ?.split(" ")
+            .map((w) => w[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
 
-        const agentCount = item.agentDetailsOnAdUser?.length || 0;
+          const agentCount = item.agentDetailsOnAdUser?.length || 0;
 
-        const gradientColors = item.isCompanyStore
-          ? ["#c084fc", "#9333ea"]
-          : ["#fbbf24", "#d97706"];
+          const gradientColors = item.isCompanyStore
+            ? ["#c084fc", "#9333ea"]
+            : ["#fbbf24", "#d97706"];
 
-        return (
-          <View style={styles.card}>
-            {/* Top Section */}
-            <LinearGradient colors={gradientColors} style={styles.gradient}>
-              {item.aiStoreStatus === "ACTIVE" && (
-                <View style={styles.featuredBadge}>
-                  <Text style={styles.featuredText}>Featured</Text>
-                </View>
-              )}
+          return (
+            <View style={styles.card}>
+              <LinearGradient colors={gradientColors} style={styles.gradient}>
+                {item.aiStoreStatus === "ACTIVE" && (
+                  <View style={styles.featuredBadge}>
+                    <Text style={styles.featuredText}>Featured</Text>
+                  </View>
+                )}
 
-              {item.storeImageUrl ? (
-                <Image
-                  source={{ uri: item.storeImageUrl }}
-                  style={styles.image}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Text style={styles.initials}>{initials}</Text>
-              )}
-            </LinearGradient>
-
-            {/* Content */}
-            <View style={styles.content}>
-              <Text style={styles.title}>{item.storeName}</Text>
-              <Text style={styles.description} numberOfLines={3}>
-                {item.description}
-              </Text>
-
-              {/* Bottom Row */}
-              <View style={styles.row}>
-                <View style={styles.agentBadge}>
-                  <Ionicons
-                    name="sparkles"
-                    size={14}
-                    color="#6d28d9"
+                {item.storeImageUrl ? (
+                  <Image
+                    source={{ uri: item.storeImageUrl }}
+                    style={styles.image}
+                    resizeMode="cover"
                   />
-                  <Text style={styles.agentText}>
-                    {agentCount} Agents
-                  </Text>
-                </View>
+                ) : (
+                  <Text style={styles.initials}>{initials}</Text>
+                )}
+              </LinearGradient>
+
+              <View style={styles.content}>
+                <Text style={styles.title}>{item.storeName}</Text>
+                <Text style={styles.description} numberOfLines={3}>
+                  {item.description}
+                </Text>
+
+                <View style={styles.row}>
+                  <View style={styles.agentBadge}>
+                    <Ionicons name="sparkles" size={14} color="#6d28d9" />
+                    <Text style={styles.agentText}>{agentCount} Agents</Text>
+                  </View>
 
                 {/*<TouchableOpacity style={styles.shareBtn}>
                   <Ionicons
@@ -181,18 +202,25 @@ const AIStore = ({navigation}) => {
                 </TouchableOpacity>*/}
               </View>
 
-              {/* CTA */}
-              <TouchableOpacity style={styles.exploreBtn} onPress={()=>navigation.navigate('Agent Details',{storeId:item.storeId,storeName:item.storeName,storeDescription:item.description})}>
-                <Text style={styles.exploreText}>Explore Agent</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.exploreBtn}
+                  onPress={() =>
+                    navigation.navigate("Agent Details", {
+                      storeId: item.storeId,
+                      storeName: item.storeName,
+                      storeDescription: item.description,
+                    })
+                  }
+                >
+                  <Text style={styles.exploreText}>Explore Agent</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        );
-      }}
- ListFooterComponent={footer}
-                ListFooterComponentStyle={styles.footerStyle}
-
-    />
+          );
+        }}
+        ListFooterComponent={footer}
+        ListFooterComponentStyle={styles.footerStyle}
+      />
     </View>
   );
 };
@@ -215,7 +243,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#0f172a",
     marginBottom: 4,
-    textAlign:"center"
+    textAlign: "center",
   },
   activeCount: {
     fontSize: 14,
@@ -257,8 +285,8 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginRight: 16,
     elevation: 6,
-    alignSelf:"center",
-    marginBottom:15,
+    alignSelf: "center",
+    marginBottom: 15,
     shadowColor: "#000",
   },
 
@@ -358,8 +386,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     fontSize: 15,
   },
-    footerStyle: {
+  footerStyle: {
     marginTop: 80,
   },
 });
-

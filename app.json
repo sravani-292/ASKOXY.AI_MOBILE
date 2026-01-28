@@ -2,7 +2,7 @@
   "expo": {
     "name": "ASKOXY.AI",
     "slug": "oxyrice_customer",
-    "version": "1.0.95",
+    "version": "1.0.85",
     "scheme": "askoxy.ai",
     "orientation": "portrait",
     "icon": "./assets/SVG/askoxy.png",
@@ -17,11 +17,6 @@
       "bundleIdentifier": "com.oxyrice.customer",
       "buildNumber": "92",
       "associatedDomains": [
-        "applinks:www.askoxy.ai",
-        "applinks:askoxy.app.link",
-        "applinks:askoxy-alternate.test-app.link",
-        "applinks:askoxy.test-app.link",
-        "applinks:askoxy-alternate.app.link",
         "applinks:www.askoxy.ai",
         "applinks:askoxy.app.link",
         "applinks:askoxy-alternate.test-app.link",
@@ -44,7 +39,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.oxyrice.oxyrice_customer",
-      "versionCode": 84,
+      "versionCode": 85,
       "googleServicesFile": "./assets/keys/google-services.json",
       "permissions": [],
       "config": {
@@ -69,32 +64,13 @@
             "BROWSABLE",
             "DEFAULT"
           ]
-        },
-        {
-          "action": "VIEW",
-          "data": [
-            {
-              "scheme": "https",
-              "host": "www.askoxy.ai"
-            },
-            {
-              "scheme": "https",
-              "host": "askoxy.ai"
-            }
-          ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
         }
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/5a84fd6f-6ba0-45a1-92c2-dfd6caa52e85"
     },

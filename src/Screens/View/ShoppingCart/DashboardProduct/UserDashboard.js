@@ -6,11 +6,7 @@ import {
   SafeAreaView,
   Alert,
   Dimensions,
-  Text,
-  Animated,
-  ScrollView,
-  TouchableOpacity,
-  Image,
+ 
 } from "react-native";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -37,9 +33,7 @@ const { width } = Dimensions.get("window");
 const UserDashboard = () => {
 
   const route = useRoute();
-  
   // console.log("route params", route.params);
-
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
@@ -67,7 +61,7 @@ const UserDashboard = () => {
   const [imageErrors, setImageErrors] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState(null);
-const[offerShow,setOfferShow]=useState(false)
+  const [offerShow,setOfferShow]=useState(false)
   const [comboOffersData, setComboOffersData] = useState([]);
   const [dynamicContent, setDynamicContent] = useState();
 
@@ -118,9 +112,12 @@ const[offerShow,setOfferShow]=useState(false)
 
   useFocusEffect(
     useCallback(() => {
+      if (userData) {
+        fetchCartItems();
+      }
       console.log("UserDashboard focused", selectedCategory, selectedCategoryType);
-     
     }, [userData])
+    
   );
 
   useEffect(() => {
@@ -292,7 +289,7 @@ const getAvailableCategoryTypes = () => {
 
   let categories = [...matchedGroup.categories];
 
-  // ✅ Search for "Combo Offer" instead of "Combo Rice"
+  // Search for "Combo Offer" instead of "Combo Rice"
   const comboIndex = categories.findIndex((cat) =>
   ["combo offers", "combo rice"].includes(cat.categoryName?.trim().toLowerCase())
 );
@@ -920,36 +917,7 @@ const filterByCategory = (categoryName) => {
         resetFilters={resetFilters}
         applyFilters={applyFilters}
       />
-      {/* <View style={styles.categoryTypesContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          ref={categoryTypeScrollViewRef}
-          contentContainerStyle={styles.categoryTypesScrollContainer}
-        >
-          {getAvailableCategoryTypes().map((categoryType) => (
-            <TouchableOpacity
-              key={categoryType}
-              onPress={() => handleCategoryTypeChange(categoryType)}
-              style={[
-                styles.categoryTypeButton,
-                selectedCategoryType === categoryType &&
-                  styles.selectedCategoryTypeButton,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.categoryTypeText,
-                  selectedCategoryType === categoryType &&
-                    styles.selectedCategoryTypeText,
-                ]}
-              >
-                {categoryType}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View> */}
+      
       <View style={styles.rowContainer}>
         <View style={{width:width*0.2,alignSelf:"flex-start"}}>
         <SidebarComponent

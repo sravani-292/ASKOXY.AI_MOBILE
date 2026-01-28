@@ -12,7 +12,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Enhanced gradient themes for different categories
 const categoryGradientThemes = {
   'RICE': {
     containerGradient: ['#FF9A9E', '#FECFEF'],
@@ -20,9 +19,9 @@ const categoryGradientThemes = {
     inactiveColor: '#FFE5E5',
   },
   'Grocery': {
-    containerGradient: ['#E6E6FA', '#D8BFD8'], // Lavender → Thistle
-    activeGradient: ['#9370DB', '#BA55D3'],    // Medium Purple → Orchid
-    inactiveColor: '#F3E5F5',                  // Light lavender-pink
+    containerGradient: ['#E6E6FA', '#D8BFD8'], 
+    activeGradient: ['#9370DB', '#BA55D3'],    
+    inactiveColor: '#F3E5F5',                
   },
   'GOLD': {
     containerGradient: ['#FFB74D', '#FFF3E0'],
@@ -60,12 +59,10 @@ const CategoryTabs = ({
   onTabPress = () => {}, 
   setIsLoading = () => {} 
 }) => {
-  // Always call hooks first, before any conditional logic
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   console.log("categories.....CategoryTabs.......",categories);
   
-  // Get current theme based on active tab
   const getCurrentTheme = () => {
     const theme = categoryGradientThemes[activeTab] || categoryGradientThemes['default'];
     return theme;
@@ -111,7 +108,6 @@ const CategoryTabs = ({
   }
 
   const CategoryButton = ({ category, isActive }) => {
-    // Safety check for category object
     if (!category) {
       return null;
     }
