@@ -172,13 +172,13 @@ const AIStore = ({navigation}) => {
                   </Text>
                 </View>
 
-                <TouchableOpacity style={styles.shareBtn}>
+                {/*<TouchableOpacity style={styles.shareBtn}>
                   <Ionicons
                     name="share-social-outline"
                     size={18}
                     color="#475569"
                   />
-                </TouchableOpacity>
+                </TouchableOpacity>*/}
               </View>
 
               {/* CTA */}

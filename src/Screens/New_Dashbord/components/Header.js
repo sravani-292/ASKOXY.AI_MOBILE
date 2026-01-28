@@ -21,11 +21,12 @@ const Header = ({navigation, userData, profileData, headerGradientColors = defau
       <View style={styles.locationContainer}>
         <Ionicons name="location" size={20} color="#FF6B35" />
         <View style={styles.locationText}>
+          {console.log("userData..............",userData)}
           <Text style={styles.deliveryText}>
             Delivery {!profileData === null && `to ${profileData.firstName} ${profileData.lastName}`}
           </Text>
           <LocationAddress customerId={userData?.userId} token={userData?.accessToken}/>
-        </View>
+       </View>
       </View>
       {userData ? (
         // <TouchableOpacity style={styles.profileButton} onPress={()=>{navigation.navigate('Profile')}}>
@@ -44,7 +45,7 @@ const Header = ({navigation, userData, profileData, headerGradientColors = defau
     </View>
       ) : (
         <TouchableOpacity style={styles.profileButton} onPress={()=>{navigation.navigate('Login')}}>
-          <Ionicons name="person" size={24} color="#666" />
+          <Ionicons name="log-in" size={24} color="#666" />
         </TouchableOpacity>
       )}
     </View>

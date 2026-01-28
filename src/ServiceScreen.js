@@ -162,7 +162,7 @@ const ServiceScreen = () => {
 
   useEffect(() => {
     if (userData) {
-      registerAndSaveTokenToSupabase(userData.userId); // Will save with actual userId
+      registerAndSaveTokenToSupabase(userData?.userId || ""); // Will save with actual userId
     }
   }, [userData]);
 

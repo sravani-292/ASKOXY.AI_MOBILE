@@ -4,6 +4,9 @@
 import { AuthManager } from '../utils/AuthManager';
 import { DeepLinkManager } from '../utils/DeepLinkManager';
 import { useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
+
+const navigation = useNavigation();
 
 // In your Login component, after successful authentication:
 const handleSuccessfulLogin = async (accessToken, userId, userData) => {

@@ -26,7 +26,7 @@ const NewDashBoard = () => {
   const [apiData, setApiData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filteredData, setFilteredData] = useState([]);
-
+    console.log("srvice screen");
   // Memoize categories to prevent recreation
   const categories = useMemo(() => [
     { name: 'All', icon: '🛒' },

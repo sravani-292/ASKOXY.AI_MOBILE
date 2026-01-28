@@ -166,6 +166,31 @@ export class DeepLinkManager {
 
       console.log(`🔗 Handling deep link to: ${screenName}`, params);
 
+      // Special handling for Item Details with itemId
+      if (screenName === 'Item Details' && params.itemId && params.needsFetch) {
+        try {
+          const itemData = await this.fetchItemById(params.itemId);
+          if (itemData) {
+            // Remove the needsFetch flag and add the item data
+            const { needsFetch, itemId, ...otherParams } = params;
+            const navigationParams = {
+              ...otherParams,
+              item: itemData
+            };
+            
+            console.log(`✅ Navigating to ${screenName} with fetched item data`);
+            this.navigationRef.current.navigate(screenName, navigationParams);
+            return true;
+          } else {
+            console.error('Failed to fetch item data for itemId:', params.itemId);
+            return false;
+          }
+        } catch (error) {
+          console.error('Error fetching item data:', error);
+          return false;
+        }
+      }
+
       // Check if screen requires authentication
       if (this.requiresAuth(screenName)) {
         const authState = await this.getAuthState();
@@ -260,6 +285,7 @@ export class DeepLinkManager {
       const urlToScreenMap = {
         'rice-products': 'Rice Products',
         'product': 'Rice Product Detail',
+        'item': 'Item Details',
         'order': 'Order Details',
         'wallet': 'Wallet',
         'profile': 'Profile Edit',
@@ -282,8 +308,13 @@ export class DeepLinkManager {
         if (urlToScreenMap[firstSegment]) {
           screenName = urlToScreenMap[firstSegment];
           
-          // Add ID parameter if present
-          if (pathSegments[1]) {
+          // Handle special cases for Item Details
+          if (firstSegment === 'item' && pathSegments[1]) {
+            screenParams.itemId = pathSegments[1];
+            screenParams.needsFetch = true; // Flag to indicate data needs to be fetched
+          }
+          // Add ID parameter if present for other screens
+          else if (pathSegments[1]) {
             screenParams.id = pathSegments[1];
           }
         } else {
@@ -308,6 +339,28 @@ export class DeepLinkManager {
         params: {},
         originalUrl: url
       };
+    }
+  }
+
+  // Fetch item data by itemId
+  static async fetchItemById(itemId) {
+    try {
+      console.log('🔍 Fetching item data for itemId:', itemId);
+      
+      // Replace with your actual API endpoint
+      const response = await fetch(`https://meta.oxyloans.com/api/product-service/getItemById?itemId=${itemId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const itemData = await response.json();
+      console.log('✅ Item data fetched successfully:', itemData);
+      
+      return itemData;
+    } catch (error) {
+      console.error('❌ Error fetching item data:', error);
+      return null;
     }
   }
 

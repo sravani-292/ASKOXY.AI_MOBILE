@@ -3,6 +3,7 @@ import {
   View,
   FlatList,
   StyleSheet,
+  SafeAreaView,
   Alert,
   Dimensions,
   Text,
@@ -11,7 +12,6 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
@@ -28,7 +28,6 @@ import {
   handleCustomerCartData,
   handleUserAddorIncrementCart,
   handleDecrementorRemovalCart,
-  handleGetProfileData,
 } from "../../../../ApiService";
 import OfferModal from "./OfferModal";
 import { useCart } from "../../../../../until/CartCount";
@@ -130,8 +129,42 @@ const[offerShow,setOfferShow]=useState(false)
       }
       getAllCategories();
       handleDescripion();
+      
+      // Handle deep link parameters
+      if (route.params?.weight) {
+        const weightNum = Math.floor(parseFloat(route.params.weight));
+        setSelectedWeightFilter(weightNum);
+        console.log('Setting weight filter from URL:', weightNum);
+      }
+      
+      // Check if itemId is passed from deep link
+      if (route.params?.itemId) {
+        handleItemIdNavigation(route.params.itemId);
+      }
   }, [route.params,userData]);
  
+  // Handle automatic navigation to Item Details when itemId is provided
+  const handleItemIdNavigation = async (itemId) => {
+    try {
+      console.log('Fetching item data for itemId:', itemId);
+      const response = await fetch(`https://meta.oxyloans.com/api/product-service/getItemById?itemId=${itemId}`);
+      
+      if (response.ok) {
+        const itemData = await response.json();
+        console.log('Item data fetched successfully, navigating to Item Details');
+        
+        // Navigate to Item Details with the fetched item data
+        setTimeout(() => {
+          navigation.navigate('Item Details', { item: itemData });
+        }, 1000); // Small delay to ensure categories are loaded
+      } else {
+        console.error('Failed to fetch item data for itemId:', itemId);
+      }
+    } catch (error) {
+      console.error('Error fetching item data:', error);
+    }
+  };
+
    const handleDescripion = useCallback(async() => {
         try{
             const response = await axios({
@@ -539,92 +572,102 @@ const handleAddToCart = async (item) => {
   // Get all categories
   const getAllCategories = async () => {
     setLoading(true);
-    await axios
-      .get(`${BASE_URL}product-service/showGroupItemsForCustomrs`)
-      .then((response) => {
-        setCategories(response.data);
+    try {
+      const response = await axios.get(`${BASE_URL}product-service/showGroupItemsForCustomrs`);
+      setCategories(response.data);
 
-        const categoryType = selectedCategoryType;
+      const categoryType = selectedCategoryType;
 
-        const items = response.data
-          .filter(
-            (group) =>
-              group.categoryType?.toLowerCase() === categoryType?.toLowerCase()
-          )
-          .flatMap(
-            (group) =>
-              group.categories?.flatMap(
-                (cat) => cat.itemsResponseDtoList || []
-              ) || []
-          );
+      const items = response.data
+        .filter(
+          (group) =>
+            group.categoryType?.toLowerCase() === categoryType?.toLowerCase()
+        )
+        .flatMap(
+          (group) =>
+            group.categories?.flatMap(
+              (cat) => cat.itemsResponseDtoList || []
+            ) || []
+        );
 
-        setAllItems(items);
+      setAllItems(items);
 
-        if (route.params.category && route.params.category !== "All CATEGORIES") {
-          console.log("Function started.....", route.params.category);
+      if (route.params.category && route.params.category !== "All CATEGORIES") {
+        console.log("Function started.....", route.params.category);
 
-          const weight = route.params.offerId;
-          const finalWeightFilter =
-            selectedWeightFilter === weight ? null : weight;
+        const weight = route.params.offerId || route.params.weight;
+        const finalWeightFilter = weight ? Math.floor(parseFloat(weight)) : null;
 
+        if (finalWeightFilter) {
           setSelectedWeightFilter(finalWeightFilter);
-           
-          console.log("Selected weight filter:", weight);
-          
-          let itemsToFilter = [];
+        }
+         
+        console.log("Selected weight filter:", finalWeightFilter);
+        
+        let itemsToFilter = [];
 
-          if (selectedCategory === "All CATEGORIES") {
-            itemsToFilter = items;
-          } else {
-            itemsToFilter = response.data
-              .flatMap((group) => group.categories || [])
-              .filter(
-                (cat) =>
-                  cat.categoryName?.trim().toLowerCase() ===
-                  route.params.category.trim().toLowerCase()
-              )
-              .flatMap((cat) => cat.itemsResponseDtoList || []);
-          }
+        if (selectedCategory === "All CATEGORIES") {
+          itemsToFilter = items;
+        } else {
+          itemsToFilter = response.data
+            .flatMap((group) => group.categories || [])
+            .filter(
+              (cat) =>
+                cat.categoryName?.trim().toLowerCase() ===
+                route.params.category.trim().toLowerCase()
+            )
+            .flatMap((cat) => cat.itemsResponseDtoList || []);
+        }
 
+        if (finalWeightFilter) {
+          setFilteredItems(applyFiltersAndSort(itemsToFilter, finalWeightFilter));
+        } else {
           setFilteredItems(itemsToFilter);
-          console.log("Filtered items:route.params.category");
+        }
+        console.log("Filtered items:route.params.category");
+        
+      } 
+      else if (route.params?.weight) {
+        // Handle weight parameter from deep link
+        const weightNum = Math.floor(parseFloat(route.params.weight));
+        setSelectedWeightFilter(weightNum);
+        setFilteredItems(applyFiltersAndSort(items, weightNum));
+        console.log("Applied weight filter from deep link:", weightNum);
+      }
+      else {
+        if (selectedCategory === "All CATEGORIES") {
+          const weight = route.params.offerId || route.params.weight;
+          const finalWeightFilter = weight ? Math.floor(parseFloat(weight)) : null;
           
-        } 
-        else {
-          if (selectedCategory === "All CATEGORIES") {
-            const weight = route.params.offerId;
-          const finalWeightFilter =
-            selectedWeightFilter === weight ? null : weight;
-          if( weight) {
-             setSelectedWeightFilter(finalWeightFilter);
+          if (finalWeightFilter) {
+            setSelectedWeightFilter(finalWeightFilter);
             setFilteredItems(applyFiltersAndSort(items, finalWeightFilter));
-          }else{
+          } else {
             setFilteredItems(sortItems(items, "weightAsc"));
           }
-          } else {
-            const filtered = response.data
-              .filter(
-                (cat) =>
-                  cat.categoryName?.trim().toLowerCase() ===
-                  selectedCategory?.trim().toLowerCase()
-              )
-              .flatMap((cat) => cat.itemsResponseDtoList || []);
+        } else {
+          const filtered = response.data
+            .filter(
+              (cat) =>
+                cat.categoryName?.trim().toLowerCase() ===
+                selectedCategory?.trim().toLowerCase()
+            )
+            .flatMap((cat) => cat.itemsResponseDtoList || []);
 
-            setFilteredItems(sortItems(filtered, "weightAsc"));
-            // console.log("Filtered items:", filtered);
-          }
+          setFilteredItems(sortItems(filtered, "weightAsc"));
+          // console.log("Filtered items:", filtered);
         }
-        //  console.log("Filtered items: at getAllCategories");
-         
-        setTimeout(() => {
-          setLoading(false);
-        }, 1000);
-      })
-      .catch((error) => {
-        console.error("Error fetching categories:", error);
+      }
+      //  console.log("Filtered items: at getAllCategories");
+       
+      setTimeout(() => {
         setLoading(false);
-        Alert.alert("Error", "Failed to fetch categories. Please try again.");
-      });
+      }, 1000);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setLoading(false);
+      // Don't show alert, just log the error
+    }
   };
 
   // Filter by category
@@ -853,7 +896,6 @@ const filterByCategory = (categoryName) => {
         isCategoryTypeRice={isCategoryTypeRice}
         arrangeCategories={arrangeCategories} // <-- Add this line
       /> */}
-
         <ProductHeader
         searchText={searchText}
         setSearchText={setSearchText}

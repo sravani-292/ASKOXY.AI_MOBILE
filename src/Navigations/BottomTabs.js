@@ -31,7 +31,7 @@ import { scale, verticalScale, scaleFont } from '../utils/scale.js';
 const Tab = createBottomTabNavigator();
 
 const TabArr = [
-  { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
+  // { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
   { route: 'Dashboard', label: 'Shop', icon: require('../../assets/BottomTabImages/store.png'), gradient: ['#f093fb', '#f5576c'], component: NewDashBoard },
   { route: 'AI Agent', label: 'AI Agent', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
   { route: 'Wallet', label: 'Wallet', icon: require('../../assets/BottomTabImages/wallet.png'), gradient: ['#4facfe', '#00f2fe'], component: MainWallet },
@@ -42,7 +42,7 @@ const TabArr = [
 const AIAgentTabs = [
   { route: 'AI Agent', label: 'AI Agent', icon: require('../../assets/BottomTabImages/storefront.png'), gradient: ['#ff7e5f', '#feb47b'], component: BharathAgentstore },
   { route: 'AI Store', label: 'AI Store', icon: require('../../assets/BottomTabImages/store.png'), gradient: ['#f093fb', '#f5576c'], component: AIStore },
-  { route: 'Landing', label: 'Home', icon: require('../../assets/BottomTabImages/landing.png'), gradient: ['#667eea', '#764ba2'], component: Home },
+  { route: 'Dashboard', label: 'Home', icon: require('../../assets/BottomTabImages/store.png'), gradient: ['#667eea', '#764ba2'], component: Home },
 ];
 
 const AnimatedTabButton = React.memo(({ item, onPress, accessibilityState }) => {
@@ -178,7 +178,7 @@ const Tabs = ({ navigation }) => {
   }, [handleLogout]);
 
   const tabNavigatorProps = useMemo(() => ({
-    initialRouteName: "Landing",
+    initialRouteName: "Dashboard",
     tabBar: (props) => {
       const focusedRoute = props.state.routes[props.state.index].name;
       return <CustomTabBar {...props} />;

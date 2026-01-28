@@ -22,7 +22,7 @@ const CategorySection = ({
   removeFromCart,
   getItemInCart,
   calculateDiscount,
-  customerId,
+  customerId = null,
   cartData,
   loading = false,
   isLoading,
@@ -56,7 +56,7 @@ const CategorySection = ({
     "Fresh Fruits",
     "Whole Wheat Flour",
   ];
-
+  
   // Fetch priority items from Supabase
   const fetchPriorityItems = useCallback(async () => {
     try {

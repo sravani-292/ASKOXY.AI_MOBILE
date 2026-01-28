@@ -7,7 +7,7 @@ import formatUnit from '../../../../until/unitsChange';
 import BVMCoins from '../../View/Profile/BVMCoins';
 import WishlistButton from './WishlistButton';
 
-const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, customerId, dynamicContent }) => {
+const ProductCard = ({ item, onAddToCart, cartItem, onDecrement, discount, customerId = null, dynamicContent }) => {
   const [loading, setLoading] = useState(false);
   const [actionType, setActionType] = useState(''); // 'add', 'increment', 'decrement'
   const [modalVisible, setModalVisible] = useState(false);

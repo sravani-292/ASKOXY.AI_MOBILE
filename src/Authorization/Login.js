@@ -23,6 +23,7 @@ import { StatusBar } from "expo-status-bar";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import PhoneInput from "react-native-phone-number-input";
+import {SafeAreaView} from "react-native-safe-area-context";
 import {
   useNavigation,
   useFocusEffect,
@@ -51,9 +52,9 @@ const Login = () => {
   const [isTelugu, setIsTelugu] = useState(true);
   const theme = useColorScheme();
   const isDarkMode = theme === "dark";
-  const isLightMode = theme === "light"; 
+  const isLightMode = theme === "light";
 
-    // Animation values
+  // Animation values
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
   const [scaleAnim] = useState(new Animated.Value(0.9));
@@ -64,7 +65,7 @@ const Login = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const [mobileOtpSession, setMobileOtpSession] = useState();
-  const [saltSession, setSaltSession] = useState(""); 
+  const [saltSession, setSaltSession] = useState("");
   const [otpGeneratedTime, setOtpGeneratedTime] = useState("");
   const [message, setMessage] = useState(false);
   const [authMethod, setAuthMethod] = useState("sms");
@@ -84,7 +85,7 @@ const Login = () => {
   const [otpMessage, setOtpMessage] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
-   // Entrance animation
+  // Entrance animation
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -105,7 +106,7 @@ const Login = () => {
       }),
     ]).start();
   }, []);
- 
+
   useFocusEffect(
     useCallback(() => {
       const checkLoginData = async () => {
@@ -157,17 +158,17 @@ const Login = () => {
         );
         return true;
       };
-  
+
       // ✅ Updated: Save the subscription and call remove() during cleanup
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
         handleBackPress
       );
-  
+
       return () => backHandler.remove(); // ✅ correct way to clean up
     }, [currentScreen])
   );
-  
+
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener("keyboardDidShow", () => setIsKeyboardOpen(true));
@@ -175,7 +176,7 @@ const Login = () => {
       setIsKeyboardOpen(false);
       if (!otpSent) {
         // handleSendOtp()
-      }else{
+      } else {
         // handleVerifyOtp()
       }
     });
@@ -199,7 +200,7 @@ const Login = () => {
         setWhatsappNumber_Error(true);
         return false;
       }
-      if (!whatsappNumber) { 
+      if (!whatsappNumber) {
         setError1("Please enter a phone number.");
         return false;
       } else if (!phoneInput.current.isValidNumber(whatsappNumber)) {
@@ -220,17 +221,17 @@ const Login = () => {
     data =
       authMethod === "whatsapp"
         ? {
-            countryCode: "+" + countryCode,
-            whatsappNumber,
-            userType: "Login",
-            registrationType: "whatsapp",
-          }
+          countryCode: "+" + countryCode,
+          whatsappNumber,
+          userType: "Login",
+          registrationType: "whatsapp",
+        }
         : {
-            countryCode: "+91",
-            mobileNumber: phoneNumber,
-            userType: "Login",
-            registrationType: "sms",
-          };
+          countryCode: "+91",
+          mobileNumber: phoneNumber,
+          userType: "Login",
+          registrationType: "sms",
+        };
     console.log({ data });
     console.log("Before API call, loading:", formData.loading);
     setFormData(prev => ({ ...prev, loading: true }));
@@ -275,12 +276,12 @@ const Login = () => {
             onPress: () => navigation.navigate("RegisterScreen"),
           },
         ]);
-       
+
       });
   };
 
   const handleVerifyOtp = () => {
-    if(!otpSent){
+    if (!otpSent) {
       return
     }
     if (formData.otp == "" || formData.otp == null) {
@@ -336,7 +337,7 @@ const Login = () => {
         setFormData({ ...formData, loading: false, otp: "" });
         setOtpError(false);
         if (response.data.primaryType == "CUSTOMER") {
-         
+
           if (response.data.accessToken != null) {
             setOtpSent(false);
             dispatch(AccessToken(response.data));
@@ -344,7 +345,7 @@ const Login = () => {
               "userData",
               JSON.stringify(response.data)
             );
-            
+
 
             if (
               response.data.userStatus == "ACTIVE" ||
@@ -377,10 +378,10 @@ const Login = () => {
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
-        
-        console.log("login error",error.response.status);
-        console.log("login error",error.response);
-        
+
+        console.log("login error", error.response.status);
+        console.log("login error", error.response);
+
         if (error.response.status == 409) {
           Alert.alert("Failed", error.response.data.message);
         }
@@ -413,14 +414,15 @@ const Login = () => {
   };
 
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDarkMode ? '#000' : '#fff' }}>
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#fff" }}
-      behavior="padding"
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="always">
-        <View style={{ backgroundColor: "#fff", flex: 1 }}>
-       
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: "#fff" }}
+        behavior="padding"
+      >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="always">
+          <View style={{ backgroundColor: "#fff", flex: 1 }}>
+
             {/* Header Section with Images */}
             <View style={styles.headerSection}>
               <View style={styles.decorativeImagesContainer}>
@@ -452,8 +454,8 @@ const Login = () => {
                 </View>
               </View>
             </View>
-          {/* Login Section */}
-           {/* Login Card */}
+            {/* Login Section */}
+            {/* Login Card */}
             <Animated.View
               style={[
                 styles.loginCard,
@@ -465,7 +467,7 @@ const Login = () => {
             >
 
 
-{/* {otpSent==false?
+              {/* {otpSent==false?
              <View style={{ backgroundColor: "white", margin: 20, padding: 10, borderRadius: 10, elevation: 5 }}>
              <View style={{ flexDirection: "row", alignItems: "center" }}>
                <Text style={{ fontSize: 18 }}>⚠️</Text>
@@ -506,7 +508,7 @@ const Login = () => {
            </View>
              :null} */}
 
-            {/* Welcome Text */}
+              {/* Welcome Text */}
               <View style={styles.welcomeSection}>
                 <Text style={styles.welcomeText}>Welcome Back!</Text>
                 <Text style={styles.subtitleText}>
@@ -514,7 +516,7 @@ const Login = () => {
                 </Text>
               </View>
 
-                          {/* Auth Method Selector */}
+              {/* Auth Method Selector */}
               <View style={styles.authMethodContainer}>
                 <TouchableOpacity
                   style={[
@@ -595,150 +597,152 @@ const Login = () => {
                 </TouchableOpacity>
               </View>
 
-            {/* {authMethod === "whatsapp" && otpSent && (
+              {/* {authMethod === "whatsapp" && otpSent && (
               <Text style={{ textAlign: "center", color: "#fff" }}>
                 OTP send to your whatsapp number
               </Text>
             )} */}
-            {/* Phone Number Input */}
-            <View style={styles.inputContainer}>
-              {authMethod === "whatsapp" ? (
-                <View style={styles.phoneInputContainer}>
-                  <PhoneInput
-                    placeholder="Whatsapp Number"
-                    placeholderTextColor={isDarkMode ? '#111111ff' : '#555'}
-                    ref={phoneInput}
-                    containerStyle={[styles.input1, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}
-                    textInputStyle={[styles.phonestyle,{ backgroundColor: isDarkMode ? '#fff' : '#fff',color: isDarkMode ? '#000' : '#000' }]}
-                    codeTextStyle={[styles.phonestyle1,{ color: isDarkMode ? '#000' : '#fff' }]}
-                    // ref={(ref) => (phoneInput = ref)}
-                    defaultValue={whatsappNumber}
-                    defaultCode="IN"
-                    layout="first"
-                    onChangeText={handlePhoneNumberChange}
-                    onSubmitEditing={() => {
-                      Keyboard.dismiss(); // Dismiss keyboard first
-                      setTimeout(() => handleSendOtp(), 50); // Delay to ensure keyboard is fully dismissed
-                    }}
-                  />
-                </View>
-              ) : (
-                <>
-                  {/* {authMethod === "sms" && otpSent && (
+              {/* Phone Number Input */}
+              <View style={styles.inputContainer}>
+                {authMethod === "whatsapp" ? (
+                  <View style={styles.phoneInputContainer}>
+                    <PhoneInput
+                      placeholder="Whatsapp Number"
+                      placeholderTextColor={isDarkMode ? '#fff' : '#555'}
+                      ref={phoneInput}
+                      flagButtonStyle={{ backgroundColor: isDarkMode ? '#fff' : '#fff',color:isDarkMode ? '#fff' : '#000' }}
+                      containerStyle={[styles.input1, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}
+                      textInputStyle={[styles.phonestyle, { backgroundColor: isDarkMode ? '#fff' : '#fff', color: isDarkMode ? '#000' : '#000' }]}
+                      codeTextStyle={[styles.phonestyle1, { color: isDarkMode ? '#000' : '#fff' }]}
+                      // ref={(ref) => (phoneInput = ref)}
+                      defaultValue={whatsappNumber}
+                      defaultCode="IN"
+                      layout="first"
+                      withDarkTheme={isDarkMode}
+                      onChangeText={handlePhoneNumberChange}
+                      onSubmitEditing={() => {
+                        Keyboard.dismiss(); // Dismiss keyboard first
+                        setTimeout(() => handleSendOtp(), 50); // Delay to ensure keyboard is fully dismissed
+                      }}
+                    />
+                  </View>
+                ) : (
+                  <>
+                    {/* {authMethod === "sms" && otpSent && (
                     <Text style={{ textAlign: "center", color: "#fff" }}>
                       OTP send to your Mobile number
                     </Text>
                   )} */}
+                    <TextInput
+                      style={[styles.input, otpSent && styles.disabledInput, { backgroundColor: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000' }]}
+                      placeholder="Enter your phone number"
+                      placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
+                      keyboardType="number-pad"
+                      value={phoneNumber}
+                      onChangeText={(text) => {
+                        setPhoneNumber(text.replace(/[ \-.,]/g, "")),
+                          setPhoneNumber_Error(false),
+                          setValidError(false);
+                      }}
+                      // editable={!otpSent}
+                      maxLength={10}
+                      onSubmitEditing={handleSendOtp}
+                    />
+                  </>
+                )}
+              </View>
+
+              {whatsappNumber_Error && (
+                <Text style={{ color: "red", alignSelf: "center" }}>
+                  Please enter the whatsapp number
+                </Text>
+              )}
+
+              {phoneNumber_Error && (
+                <Text style={{ color: "red", alignSelf: "center" }}>
+                  Please enter the Mobile number
+                </Text>
+              )}
+              {validError && (
+                <Text style={{ color: "red", alignSelf: "center" }}>
+                  Invalid Mobile Number
+                </Text>
+              )}
+
+              {error1 && (
+                <Text
+                  style={{ color: "red", marginBottom: 10, alignSelf: "center" }}
+                >
+                  {error1}
+                </Text>
+              )}
+
+              {otpMessage && (
+                <Text
+                  style={{
+                    textTransform: "uppercase",
+                    color: "white",
+                    alignSelf: "center",
+                    marginBottom: 5,
+                  }}
+                >
+                  Otp sent to {authMethod}
+                </Text>
+              )}
+              {errorMessage && (
+                <Text style={{ color: "red", alignSelf: "center" }}>
+                  Please enter numbers only. Special characters are not allowed.
+                </Text>
+              )}
+
+              {/* OTP Input (shown only after OTP is sent) */}
+              {otpSent && (
+                <View style={styles.inputContainer}>
                   <TextInput
-                    style={[styles.input, otpSent && styles.disabledInput,{ backgroundColor: isDarkMode ? '#333' : '#fff',color: isDarkMode ? '#fff' : '#000' }]}
-                    placeholder="Enter your phone number"
+                    style={[styles.input, { backgroundColor: isDarkMode ? '#333' : '#fff', color: isDarkMode ? '#fff' : '#000' }]}
+                    placeholder="Enter OTP code"
                     placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
                     keyboardType="number-pad"
-                    value={phoneNumber}
-                    onChangeText={(text) => {
-                      setPhoneNumber(text.replace(/[ \-.,]/g, "")),
-                        setPhoneNumber_Error(false),
-                        setValidError(false);
+                    value={formData.otp}
+                    onChangeText={(numeric) => {
+                      setFormData({
+                        ...formData,
+                        otp: numeric,
+                        validOtpError: false,
+                      }),
+                        setOtpError(false),
+                        setOtpMessage(false);
                     }}
-                    // editable={!otpSent}
-                    maxLength={10}
-                    onSubmitEditing={handleSendOtp}
+                    maxLength={authMethod === "whatsapp" ? 4 : 6}
+                    onSubmitEditing={() => handleVerifyOtp()}
                   />
-                </>
+                </View>
               )}
-            </View>
 
-            {whatsappNumber_Error && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
-                Please enter the whatsapp number
-              </Text>
-            )}
+              {otpError && (
+                <Text style={{ color: "red", alignSelf: "center", width: width * 0.35 }}>
+                  Please enter OTP
+                </Text>
+              )}
+              {formData.validOtpError && (
+                <Text style={{ color: "red", alignSelf: "center" }}>
+                  Invalid OTP
+                </Text>
+              )}
 
-            {phoneNumber_Error && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
-                Please enter the Mobile number
-              </Text>
-            )}
-            {validError && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
-                Invalid Mobile Number
-              </Text>
-            )}
-
-            {error1 && (
-              <Text
-                style={{ color: "red", marginBottom: 10, alignSelf: "center" }}
+              <TouchableOpacity
+                style={styles.resendButton}
+                onPress={() => handleSendOtp()}
+                disabled={loading}
               >
-                {error1}
-              </Text>
-            )}
+                <Text style={styles.resendText}>Resend OTP</Text>
+              </TouchableOpacity>
 
-            {otpMessage && (
-              <Text
-                style={{
-                  textTransform: "uppercase",
-                  color: "white",
-                  alignSelf: "center",
-                  marginBottom: 5,
-                }}
-              >
-                Otp sent to {authMethod}
-              </Text>
-            )}
-            {errorMessage && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
-                Please enter numbers only. Special characters are not allowed.
-              </Text>
-            )}
-
-            {/* OTP Input (shown only after OTP is sent) */}
-            {otpSent && (
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[styles.input, { backgroundColor: isDarkMode ? '#333' : '#fff',color: isDarkMode ? '#fff' : '#000' }]}
-                  placeholder="Enter OTP code"
-                  placeholderTextColor={isDarkMode ? '#aaa' : '#555'}
-                  keyboardType="number-pad"
-                  value={formData.otp}
-                  onChangeText={(numeric) => {
-                    setFormData({
-                      ...formData,
-                      otp: numeric,
-                      validOtpError: false,
-                    }),
-                      setOtpError(false),
-                      setOtpMessage(false);
-                  }}
-                  maxLength={authMethod === "whatsapp" ? 4 : 6}
-                  onSubmitEditing={()=>handleVerifyOtp()}
-                />
-              </View>
-            )}
-
-            {otpError && (
-              <Text style={{ color: "red", alignSelf: "center",width:width*0.35 }}>
-                Please enter OTP
-              </Text>
-            )}
-            {formData.validOtpError && (
-              <Text style={{ color: "red", alignSelf: "center" }}>
-                Invalid OTP
-              </Text>
-            )}
-
-            <TouchableOpacity
-              style={styles.resendButton}
-              onPress={() => handleSendOtp()}
-              disabled={loading}
-            >
-              <Text style={styles.resendText}>Resend OTP</Text>
-            </TouchableOpacity>
-
-            {/* Action Buttons */}
-            <View style={styles.buttonContainer}>
-              {!otpSent ? (
-                <>
-                  <TouchableOpacity
+              {/* Action Buttons */}
+              <View style={styles.buttonContainer}>
+                {!otpSent ? (
+                  <>
+                    <TouchableOpacity
                       style={styles.submitButton}
                       onPress={() => {
                         // Dismiss the keyboard
@@ -758,57 +762,58 @@ const Login = () => {
                       )}
                     </TouchableOpacity>
 
-                </>
-              ) : (
-                <View style={styles.otpButtonsContainer}>
-                  <TouchableOpacity
-                    style={styles.verifyButton}
-                    onPress={() => handleVerifyOtp()}
-                    disabled={loading}
-                  >
-                    {formData.loading ? (
-                      <ActivityIndicator color="#fff" />
-                    ) : (
-                      <Text style={styles.submitText}>Verify OTP</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
+                  </>
+                ) : (
+                  <View style={styles.otpButtonsContainer}>
+                    <TouchableOpacity
+                      style={styles.verifyButton}
+                      onPress={() => handleVerifyOtp()}
+                      disabled={loading}
+                    >
+                      {formData.loading ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.submitText}>Verify OTP</Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
 
-            <TouchableOpacity
-              style={styles.emailbtn}
-              onPress={() => navigation.navigate("LoginWithPassword")}
-            >
-              <MaterialCommunityIcons name="email" size={30} />
-            </TouchableOpacity>
-            {/* Register Link */}
-            <View style={styles.linkContainer}>
-              <Text style={styles.linkText}>Don't have an account? </Text>
               <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate("RegisterScreen"),
-                    setOtpSent(false),
-                    setWhatsappNumber(""),
-                    setPhoneNumber_Error(false),
-                    setFormData({ ...formData, loading: false, otp: "" });
-                }}
+                style={styles.emailbtn}
+                onPress={() => navigation.navigate("LoginWithPassword")}
               >
-                <Text style={styles.linkButtonText}>Register</Text>
+                <MaterialCommunityIcons name="email" size={30} />
               </TouchableOpacity>
-            </View>
+              {/* Register Link */}
+              <View style={styles.linkContainer}>
+                <Text style={styles.linkText}>Don't have an account? </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.navigate("RegisterScreen"),
+                      setOtpSent(false),
+                      setWhatsappNumber(""),
+                      setPhoneNumber_Error(false),
+                      setFormData({ ...formData, loading: false, otp: "" });
+                  }}
+                >
+                  <Text style={styles.linkButtonText}>Register</Text>
+                </TouchableOpacity>
+              </View>
             </Animated.View>
           </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
+    </SafeAreaView>
   );
 };
 
 export default Login;
 
 const styles = StyleSheet.create({
- headerSection: {
+  headerSection: {
     backgroundColor: "#fff",
   },
   decorativeImagesContainer: {
@@ -840,7 +845,7 @@ const styles = StyleSheet.create({
     height: 110,
     width: 65,
   },
-   loginCard: {
+  loginCard: {
     flex: 1,
     backgroundColor: "#3d2a71",
     borderTopLeftRadius: 40,
@@ -872,7 +877,7 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
   logingreenView: {
-     flex: 1,
+    flex: 1,
     backgroundColor: "#3d2a71",
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,

@@ -780,7 +780,7 @@ console.log(payload);
         <Text style={styles.helperTitle}>Welcome to {agentName}!</Text>
         <Text style={styles.headerSubtitle}>As a Recruiter, I navigate the talent landscape to provide tailored guidance and insightful advice. My role is to support and empower individuals on their career journey, helping them align their skills and aspirations with the perfect opportunities. — for Recruiter, to Talent guidance, aimed at Advising. </Text>
       
-<View style={styles.ratingRow}>
+{/* <View style={styles.ratingRow}>
   <Text style={styles.ratingText}>
     <Text style={styles.boldText}>My Rating: </Text>
     {hasRated ? `${myRating}/5` : "Not rated yet"} | 
@@ -793,7 +793,7 @@ console.log(payload);
       <Text style={styles.rateBtnText}>Rate</Text>
     </TouchableOpacity>
   )}
-</View>
+</View> */}
 
         {helperQuestions.map((question, index) => (
           <TouchableOpacity

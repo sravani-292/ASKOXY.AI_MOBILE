@@ -10,6 +10,7 @@ import {
 import { useSelector } from 'react-redux';
 import { AuthManager } from '../utils/AuthManager';
 import { DeepLinkManager } from '../utils/DeepLinkManager';
+import LottieView from 'lottie-react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -91,12 +92,13 @@ const EnhancedSplashScreen = ({ navigation }) => {
           navigation.replace('Home');
         }
       } else {
-        navigation.replace('Login');
+        console.log("not authenticated");
+        navigation.replace('New DashBoard');
       }
       
     } catch (error) {
       console.error('Error in auth check:', error);
-      navigation.replace('Login');
+      navigation.replace('New DashBoard');
     } finally {
       setIsCheckingAuth(false);
     }
@@ -118,7 +120,7 @@ const EnhancedSplashScreen = ({ navigation }) => {
           {/* Try API media first; fallback to local asset */}
           {!hasError ? (
             <Animated.Image
-              source={greetingData?.media_url ? { uri: greetingData.media_url } : require('../../assets/askoxy_V1.gif')}
+              source={greetingData?.media_url ? { uri: greetingData.media_url } : null}
               style={[styles.logo, { opacity: fadeAnim }]}
               resizeMode="cover"
               onLoad={() => setIsGifLoaded(true)}
@@ -129,11 +131,21 @@ const EnhancedSplashScreen = ({ navigation }) => {
             />
           ) : (
             // Fallback: Static image
-            <Image
-              source={require('../../assets/askoxy_V1.gif')}
-              style={styles.logo}
-              resizeMode="cover"
-            />
+            // <Image
+            //   source={require('../../assets/askoxy_V1.gif')}
+            //   style={styles.logo}
+            //   resizeMode="cover"
+            // />
+            <View>
+              <LottieView 
+                source={require('../../assets/AnimationLoading.json')}
+                style={styles.logo}
+                resizeMode="cover"
+                autoPlay
+                loop
+                onAnimationFinish={() => setIsGifLoaded(true)}
+              />
+            </View>
           )}
         </View>
   );

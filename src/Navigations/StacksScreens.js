@@ -363,6 +363,7 @@ const formatWord = (word) => {
       linking={linking}
       initialRouteName={needsUpdate ? "App Update" : "SplashScreen"}
       // initialRouteName={needsUpdate ? "App Update" : "Special Offers"}
+      // initialRouteName="New DashBoard"
       // initialRouteName="Bulk Invite"
       screenOptions={{
         headerShown: true,

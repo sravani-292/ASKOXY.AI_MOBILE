@@ -53,8 +53,8 @@ const Register = () => {
   const isLightMode = theme === "light";
 
   console.log({ BASE_URL });
-    const phoneInput = React.createRef();
-  
+  const phoneInput = React.createRef();
+
   const [showOtp, setShowOtp] = useState(false);
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -75,13 +75,13 @@ const Register = () => {
   const [countryPickerVisible, setCountryPickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [otpError, setOtpError] = useState(false);
-    const [error1, setError1] = useState(null);
-  const[otpMessage,setOtpMessage]=useState(false)
+  const [error1, setError1] = useState(null);
+  const [otpMessage, setOtpMessage] = useState(false)
   const [isChecked, setIsChecked] = useState(false);
-  const[referCode,setReferCode]=useState(null);
-  const[referEmptyError,setReferEmptyError]=useState(false)
+  const [referCode, setReferCode] = useState(null);
+  const [referEmptyError, setReferEmptyError] = useState(false)
 
-  
+
 
   // Handle OTP verification
   // const handleVerifyOTP = () => {
@@ -105,11 +105,11 @@ const Register = () => {
       setIsKeyboardOpen(false);
       if (!otpSent) {
         handleSendOtp()
-      } else{
-        if(formData.otp.length!==0){
-        handleVerifyOtp()
+      } else {
+        if (formData.otp.length !== 0) {
+          handleVerifyOtp()
         }
-      } 
+      }
     });
 
     return () => {
@@ -167,17 +167,17 @@ const Register = () => {
         );
         return true;
       };
-  
+
       // ✅ Updated: Save the subscription and call remove() during cleanup
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
         handleBackPress
       );
-  
+
       return () => backHandler.remove(); // ✅ correct way to clean up
     }, [currentScreen])
   );
-  
+
 
   const getVersion = async () => {
     try {
@@ -225,35 +225,35 @@ const Register = () => {
         return false;
       }
     }
-    
+
     let data;
     data =
       authMethod === "whatsapp"
         ? {
-            countryCode: "+" + countryCode,
-            whatsappNumber,
-            userType: "Register",
-            registrationType: "whatsapp",
-            referrerIdForMobile: referCode
-          }
+          countryCode: "+" + countryCode,
+          whatsappNumber,
+          userType: "Register",
+          registrationType: "whatsapp",
+          referrerIdForMobile: referCode
+        }
         : {
-            countryCode: "+91",
-            mobileNumber: phoneNumber,
-            userType: "Register",
-            registrationType: "sms",
-            referrerIdForMobile: referCode
-          };
+          countryCode: "+91",
+          mobileNumber: phoneNumber,
+          userType: "Register",
+          registrationType: "sms",
+          referrerIdForMobile: referCode
+        };
     console.log({ data });
     setFormData({ ...formData, loading: true });
     axios({
       method: "post",
       url:
-       BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+        BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
       data: data,
     })
       .then((response) => {
         console.log("response", response.data);
-       
+
         if (response.data.mobileOtpSession) {
           setMessage(true);
           setMobileOtpSession(response.data.mobileOtpSession);
@@ -272,7 +272,7 @@ const Register = () => {
       .catch((error) => {
         console.log("error", error.response);
         setOtpSent(false);
-       
+
         Alert.alert("Sorry", error.response.data.error, [
           {
             text: "ok",
@@ -307,13 +307,13 @@ const Register = () => {
       }
     }
 
-    if(referCode!=null){
-      if(referCode.length>4){
-       setReferEmptyError(true)
-       return false
+    if (referCode != null) {
+      if (referCode.length > 4) {
+        setReferEmptyError(true)
+        return false
       }
-   }
-   
+    }
+
     //  setLoading(true);
     setFormData({ ...formData, loading: true });
     let data;
@@ -350,14 +350,14 @@ const Register = () => {
     axios({
       method: "post",
       url:
-         BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
+        BASE_URL + `user-service/registerwithMobileAndWhatsappNumber`,
       data: data,
     })
       .then(async (response) => {
         console.log("response", response.data.userStatus);
-       
+
         if (response.data.primaryType == "CUSTOMER") {
-          setFormData({ ...formData, loading: false, otp: "", otp_error: false,validOtpError: false });
+          setFormData({ ...formData, loading: false, otp: "", otp_error: false, validOtpError: false });
           if (response.data.accessToken != null) {
             setOtpSent(false);
             dispatch(AccessToken(response.data));
@@ -396,7 +396,7 @@ const Register = () => {
       })
       .catch((error) => {
         setFormData({ ...formData, loading: false });
-        
+
         console.log(error.response);
         if (error.response.status == 409) {
           Alert.alert("Failed", error.response.data.message);
@@ -417,15 +417,15 @@ const Register = () => {
 
     try {
       setWhatsappNumber(value);
-    
+
       console.log({ value });
       const callingCode = phoneInput.getCallingCode(value);
       console.log(callingCode);
       setcountryCode(callingCode);
-      
+
       const isValid = /^[0-9]*$/.test(value);
       if (isValid) {
-        setErrorMessage(""); 
+        setErrorMessage("");
         setWhatsappNumber(value);
       } else {
         setErrorMessage(true);
@@ -433,7 +433,7 @@ const Register = () => {
       }
       // console.log(countryCode)
     } catch (error) {
-      
+
     }
   };
 
@@ -477,7 +477,7 @@ const Register = () => {
 
           {/* Login Section */}
           <View style={styles.logingreenView}>
-          
+
             <Text style={styles.loginTxt}>Register</Text>
 
             <View style={styles.authMethodContainer}>
@@ -492,12 +492,12 @@ const Register = () => {
                     setWhatsappNumber(""),
                     setWhatsappNumber_Error(false),
                     setError1("")
-                    setPhoneNumber(""),
+                  setPhoneNumber(""),
                     setPhoneNumber_Error(false),
                     setOtpMessage(false)
-                    setFormData({ ...formData, loading: false, otp: "" });
+                  setFormData({ ...formData, loading: false, otp: "" });
                 }}
-                // disabled={otpSent}
+              // disabled={otpSent}
               >
                 <Ionicons
                   name="logo-whatsapp"
@@ -524,12 +524,12 @@ const Register = () => {
                     setWhatsappNumber(""),
                     setWhatsappNumber_Error(false),
                     setError1("")
-                    setPhoneNumber_Error(false),
+                  setPhoneNumber_Error(false),
                     setPhoneNumber(""),
                     setOtpMessage(false)
-                    setFormData({ ...formData, loading: false, otp: "" });
+                  setFormData({ ...formData, loading: false, otp: "" });
                 }}
-                // disabled={otpSent}
+              // disabled={otpSent}
               >
                 <Ionicons
                   name="chatbubble-outline"
@@ -546,7 +546,7 @@ const Register = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-               {/* {(authMethod === 'whatsapp'&& otpSent)&&(
+            {/* {(authMethod === 'whatsapp'&& otpSent)&&(
                             <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your whatsapp number</Text>
                           )} */}
             {/* Phone Number Input */}
@@ -559,8 +559,8 @@ const Register = () => {
                     placeholderTextColor="#999"
                     ref={phoneInput}
                     containerStyle={[styles.input1, { backgroundColor: isDarkMode ? '#fff' : '#fff' }]}
-                    textInputStyle={[styles.phonestyle,{ backgroundColor: '#fff', color: '#000' }]}
-                    codeTextStyle={[styles.phonestyle1,{ color: '#000' }]}
+                    textInputStyle={[styles.phonestyle, { backgroundColor: '#fff', color: '#000' }]}
+                    codeTextStyle={[styles.phonestyle1, { color: '#000' }]}
                     // ref={(ref) => (phoneInput = ref)}
                     defaultValue={whatsappNumber}
                     defaultCode="IN"
@@ -570,23 +570,23 @@ const Register = () => {
                 </View>
               ) : (
                 <>
-                 {/* {(authMethod === 'sms'&& otpSent)&&(
+                  {/* {(authMethod === 'sms'&& otpSent)&&(
                                   <Text style={{textAlign:"center",color:"#fff"}}>OTP send to your Mobile number</Text>
                                 )} */}
-                <TextInput
-                  style={[styles.input, otpSent && styles.disabledInput,{ backgroundColor: '#fff', color: '#000' }]}
-                  placeholder="Enter your phone number"
-                  placeholderTextColor="#999"
-                  keyboardType="phone-pad"
-                  value={phoneNumber}
-                  onChangeText={(text) => {
-                    setPhoneNumber(text.replace(/[ \-.,]/g, "")),
-                      setPhoneNumber_Error(false),
-                      setValidError(false);
-                  }}
-                  editable={!otpSent}
-                  maxLength={10}
-                />
+                  <TextInput
+                    style={[styles.input, otpSent && styles.disabledInput, { backgroundColor: '#fff', color: '#000' }]}
+                    placeholder="Enter your phone number"
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    value={phoneNumber}
+                    onChangeText={(text) => {
+                      setPhoneNumber(text.replace(/[ \-.,]/g, "")),
+                        setPhoneNumber_Error(false),
+                        setValidError(false);
+                    }}
+                    editable={!otpSent}
+                    maxLength={10}
+                  />
                 </>
               )}
             </View>
@@ -607,8 +607,8 @@ const Register = () => {
                 Invalid Mobile Number
               </Text>
             )}
-            {error1 && <Text style={{color: 'red',marginBottom: 10,alignSelf:"center"}}>{error1}</Text>}
-{otpMessage&&<Text style={{textTransform:"uppercase",color:"white",alignSelf:"center",marginBottom:5}}>Otp sent to {authMethod}</Text>}
+            {error1 && <Text style={{ color: 'red', marginBottom: 10, alignSelf: "center" }}>{error1}</Text>}
+            {otpMessage && <Text style={{ textTransform: "uppercase", color: "white", alignSelf: "center", marginBottom: 5 }}>Otp sent to {authMethod}</Text>}
 
             {errorMessage && (
               <Text style={{ color: "red", alignSelf: "center" }}>
@@ -627,13 +627,13 @@ const Register = () => {
                   keyboardType="number-pad"
                   autoFocus={true}
                   value={formData.otp}
-                  onSubmitEditing={()=>handleVerifyOtp()}
+                  onSubmitEditing={() => handleVerifyOtp()}
                   onChangeText={(numeric) => {
                     setFormData({
                       ...formData,
                       otp: numeric,
                       validOtpError: false,
-                      otp_error:false
+                      otp_error: false
                     }),
                       setOtpError(false),
                       setOtpMessage(false)
@@ -644,17 +644,17 @@ const Register = () => {
             )}
 
             {formData.otp_error && (
-              <Text style={{ color: "red", alignSelf: "center",width:100 }}>
+              <Text style={{ color: "red", alignSelf: "center", width: 100 }}>
                 Please enter OTP
               </Text>
             )}
             {formData.validOtpError && (
-              <Text style={{ color: "red", alignSelf: "center",width:100 }}>
+              <Text style={{ color: "red", alignSelf: "center", width: 100 }}>
                 Invalid OTP
               </Text>
             )}
 
-            
+
             <TouchableOpacity
               style={styles.resendButton}
               onPress={() => handleSendOtp()}
@@ -664,34 +664,34 @@ const Register = () => {
             </TouchableOpacity>
 
             <View style={styles.checkboxContainer}>
-        {/* <Checkbox
+              {/* <Checkbox
           status={isChecked ? "checked" : "unchecked"}
           onPress={() => setIsChecked(!isChecked)}
           color={isChecked ? "#007bff" : "#fff"}
           backgroundColor={isChecked ? "#007bff" : "#fff"}
         />
         <Text style={styles.checkboxLabel}>Referred </Text> */}
-      </View>
-<View>
-      {/* {isChecked && ( */}
-      {otpSent && (
-        <>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter Referred Code(optional)"
-            value={referCode}
-            onChangeText={(text) => {
-              setReferCode(text);
-              setReferEmptyError(""); // Clear error when typing
-            }}
-          />
-          {referEmptyError ? <Text style={styles.error}>{referEmptyError}</Text> : null}
-        </>
-      )}
-      {/* )} */}
+            </View>
+            <View>
+              {/* {isChecked && ( */}
+              {otpSent && (
+                <>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter Referred Code(optional)"
+                    value={referCode}
+                    onChangeText={(text) => {
+                      setReferCode(text);
+                      setReferEmptyError(""); // Clear error when typing
+                    }}
+                  />
+                  {referEmptyError ? <Text style={styles.error}>{referEmptyError}</Text> : null}
+                </>
+              )}
+              {/* )} */}
 
-    
-    </View>
+
+            </View>
 
 
             {/* Action Buttons */}

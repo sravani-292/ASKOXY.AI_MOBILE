@@ -63,7 +63,7 @@ const CategoryTabs = ({
   // Always call hooks first, before any conditional logic
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  console.log("categories",categories);
+  console.log("categories.....CategoryTabs.......",categories);
   
   // Get current theme based on active tab
   const getCurrentTheme = () => {

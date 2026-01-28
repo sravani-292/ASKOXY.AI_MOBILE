@@ -127,6 +127,7 @@ const useServiceScreenData = () => {
       });
   };
 
+  
    const addToCart =async (itemId, comboId,type) => {
     const key = `${comboId}-${itemId}`;
     console.log("itemId", itemId,"comboId",comboId,"type",type);
@@ -303,7 +304,7 @@ console.log("response data", response.comboOffers);
 
 const getRiceCategories = async () => {
   setLoading(true);
-
+  console.log("getRiceCategories................");
   const priorityRules = await getActivePriorityRules("RICE");
 
   axios
@@ -389,9 +390,9 @@ const getRiceCategories = async () => {
 
         filteredCategories[riceCategoryIndex] = riceCategory;
       }
-
+      console.log("Filtered Categories:", filteredCategories);
       setGetCategories(filteredCategories);
-      // console.log("Filtered Categories:", filteredCategories);
+      
 
       if (filteredCategories[0]) {
         setSelectedMainCategory(filteredCategories[0]);
@@ -557,6 +558,7 @@ const getRiceCategories = async () => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log("useFocusEffect................");
       checkLoginData();
       getAllCampaign();
       getRiceCategories();

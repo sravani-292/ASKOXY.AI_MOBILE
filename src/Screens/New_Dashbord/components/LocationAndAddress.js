@@ -15,12 +15,13 @@ const LocationAddress = ({customerId,token}) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log("customerId", customerId);
     if(customerId){
       fetchOrderAddress();
     }else{
     getLocationAndAddress();
     }
-  }, [customerId]);
+  }, []);
 
   const getLocationAndAddress = async () => {
     try {
@@ -40,6 +41,7 @@ const LocationAddress = ({customerId,token}) => {
       Geocoder.from(location.coords.latitude, location.coords.longitude)
         .then(json => {
           const formattedAddress = json.results[0].formatted_address;
+          console.log("formattedAddress", formattedAddress);
           setAddress(formattedAddress);
           setLoading(false);
         })

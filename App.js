@@ -115,6 +115,9 @@ TextInput.defaultProps.allowFontScaling = false;
     'Product View',
     'Invite a friend',
     'Rice Products',
+    'Item Details',
+    'AI Store',
+    'AI Agent'
     // Add more screen names as needed
   ];
 
@@ -158,7 +161,7 @@ TextInput.defaultProps.allowFontScaling = false;
     'Service Screen', 'Campaign', 'Invite a friend', 'Scan', 'Saved Address',
     'Store Location', 'App Update', 'OxyLoans', 'Offer Letters', 'Study', 'Services',
     'My Exchanged Item Details', 'View BMVcoins History', 'Special Offers', 'New Address Book',
-    'wallet', // Add lowercase wallet for URL matching
+    'wallet', 
   ];
 
   const pathMap = {
@@ -166,7 +169,14 @@ TextInput.defaultProps.allowFontScaling = false;
     'offer': 'Special Offers',
     'offers': 'Special Offers',
     'wallet': 'Wallet',
-    "bharath-aistore" : 'AI Store'
+    'main/wallet': 'Wallet',
+    'item': 'Item Details',
+    'itemsdisplay': 'Item Details',
+    'main/itemsdisplay': 'Item Details',
+    "bharath-aistore" : 'AI Agent',
+    "all-ai-stores":"AI Store",
+    "user-dashboard": 'Rice Products',
+    "main/dashboard/products": 'Rice Products'
   };
 
 
@@ -177,44 +187,138 @@ TextInput.defaultProps.allowFontScaling = false;
     console.log('🔗 Dynamic link opened:', url);
     console.log('Parsed path:', path, 'Query:', queryParams);
 
-    const cleanedUrl = url.replace('askoxy.ai://', '');
-    const [encodedScreen, idFromPath] = cleanedUrl.split('/');
-    const screen = decodeURIComponent(encodedScreen);
+    const cleanedUrl = url.replace('askoxy.ai://', '').replace('https://www.askoxy.ai/', '').replace('https://askoxy.ai/', '');
+    
+    // Split URL and query parameters properly
+    const [pathPart, queryPart] = cleanedUrl.split('?');
+    const pathSegments = pathPart.split('/');
+    
+    // Parse query parameters manually if not already parsed
+    let finalQueryParams = queryParams || {};
+    if (queryPart && Object.keys(finalQueryParams).length === 0) {
+      queryPart.split('&').forEach(param => {
+        const [key, value] = param.split('=');
+        if (key && value) {
+          finalQueryParams[key] = decodeURIComponent(value);
+        }
+      });
+    }
+    
+    // Handle multi-level paths like main/wallet or main/dashboard/products
+    let screenKey, id;
+    if (pathSegments.length >= 3 && pathSegments[0] === 'main' && pathSegments[1] === 'dashboard' && pathSegments[2] === 'products') {
+      screenKey = 'main/dashboard/products';
+    } else if (pathSegments.length >= 3 && pathSegments[0] === 'main' && pathSegments[1] === 'itemsdisplay') {
+      screenKey = 'main/itemsdisplay';
+      id = pathSegments[2];
+    } else if (pathSegments.length >= 2) {
+      if (pathSegments[0] === 'main' && pathSegments[1] === 'wallet') {
+        screenKey = 'main/wallet';
+      } else if (pathSegments[0] === 'itemsdisplay') {
+        screenKey = 'itemsdisplay';
+        id = pathSegments[1];
+      } else {
+        screenKey = pathSegments[0];
+        id = pathSegments[1];
+      }
+    } else {
+      screenKey = pathSegments[0];
+      id = finalQueryParams?.id;
+    }
 
-    const id = queryParams.id || idFromPath;
+    console.log('Detected screenKey:', screenKey, 'pathSegments:', pathSegments, 'queryParams:', finalQueryParams);
 
-    if (screen && validScreens.includes(screen)) {
-      setTimeout(() => {
-        setScreenName(screen);
-        console.log('Navigating to screen:', screen, 'with ID:', id);
-        const offerId = id.split('?')[0]; // Extracting offerId if present
-        console.log('Offer ID from deep link:', offerId);
-        if("Rice Products" === screen) {
-          navigationRef.current?.navigate(screen, { category: "All CATEGORIES",
-                  offerId: offerId});
-        }else if("Special Offers" === screen) {
-          navigationRef.current?.navigate(screen, { offerId: offerId });
-        }else{
-         navigationRef.current?.navigate(screen, { id });
+    const screenName = pathMap[screenKey];
+    
+    if (screenName) {
+      console.log('Navigating via pathMap to:', screenName, 'with ID:', id);
+      setTimeout(async () => {
+        if(screenName === "Special Offers") {
+          navigationRef.current?.navigate(screenName, { offerId: id });
+        } else if(screenName === "Rice Products" && (id || finalQueryParams?.weight || finalQueryParams?.type)) {
+          // Handle deep link to UserDashboard with itemId, weight, or type
+          const params = {
+            category: "All CATEGORIES",
+            categoryType: finalQueryParams?.type || "RICE"
+          };
+          
+          if (id) {
+            params.itemId = id;
+          }
+          
+          if (finalQueryParams?.weight) {
+            const weightNum = Math.floor(parseFloat(finalQueryParams.weight));
+            params.weight = weightNum;
+          }
+          
+          console.log('Navigating to UserDashboard with params:', params);
+          navigationRef.current?.navigate(screenName, params);
+        } else if(screenName === "Rice Products" && id) {
+          // Fetch item data and navigate directly to Item Details
+          try {
+            console.log('Fetching item data for ID:', id);
+            const response = await fetch(`https://meta.oxyloans.com/api/product-service/getItemById?itemId=${id}`);
+            if (response.ok) {
+              const itemData = await response.json();
+              console.log('Item data fetched successfully');
+              navigationRef.current?.navigate('Item Details', { item: itemData });
+            } else {
+              console.error('Failed to fetch item data');
+              navigationRef.current?.navigate('Rice Products');
+            }
+          } catch (error) {
+            console.error('Error fetching item data:', error);
+            navigationRef.current?.navigate('Rice Products');
+          }
+        } else if(screenName === "Item Details" && id) {
+          // Navigate directly to ItemDetails with itemId
+          console.log('Navigating to ItemDetails with itemId:', id);
+          navigationRef.current?.navigate(screenName, { itemId: id });
+        } else {
+          navigationRef.current?.navigate(screenName, id ? { id } : {});
         }
       }, 1000);
-    } else if (path) {
-      const [screenKey, id] = path.split('/');
-      const screenName = pathMap[screenKey];
-      if (screenName) {
-        console.log('Navigating via pathMap to:', screenName, 'with ID:', id);
+    } else {
+      // Fallback to original logic
+      const [encodedScreen, idFromPath] = cleanedUrl.split('/');
+      const screen = decodeURIComponent(encodedScreen);
+      const fallbackId = queryParams?.id || idFromPath;
+        console.log('Navigating to screen:', screen, 'with ID:', fallbackId);
+
+      if (screen && validScreens.includes(screen)) {
         setTimeout(() => {
-          if(screenName === "Special Offers") {
-            navigationRef.current?.navigate(screenName, { offerId: id });
+          setScreenName(screen);
+          console.log('Navigating to screen:', screen, 'with ID:', fallbackId);
+          const offerId = fallbackId?.split('?')[0];
+          console.log('Offer ID from deep link:', offerId);
+          if("Rice Products" === screen) {
+            const params = { category: "All CATEGORIES", categoryType: "RICE" };
+            
+            // Check for itemId or weight in the URL
+            if (queryParams?.itemId) {
+              params.itemId = queryParams.itemId;
+            }
+            if (queryParams?.weight) {
+              const weightNum = Math.floor(parseFloat(queryParams.weight));
+              params.weight = weightNum;
+            }
+            if (queryParams?.type) {
+              params.categoryType = queryParams.type;
+            }
+            if (offerId) {
+              params.offerId = offerId;
+            }
+            
+            navigationRef.current?.navigate(screen, params);
+          } else if("Special Offers" === screen) {
+            navigationRef.current?.navigate(screen, { offerId: offerId });
           } else {
-            navigationRef.current?.navigate(screenName, { id });
+            navigationRef.current?.navigate(screen, { id: fallbackId });
           }
         }, 1000);
       } else {
-        console.warn('Unmapped screen key:', screenKey);
+        console.warn('No valid screen detected in deep link.');
       }
-    } else {
-      console.warn('No valid screen detected in deep link.');
     }
   };
 
@@ -242,6 +346,7 @@ TextInput.defaultProps.allowFontScaling = false;
 
   const checkInitialLink = async () => {
     const url = await Linking.getInitialURL();
+    console.log('Checking initial URL:', url);
     if (url) {
       console.log('🔗 Initial URL:', url);
       if (url.includes('page.link')) {

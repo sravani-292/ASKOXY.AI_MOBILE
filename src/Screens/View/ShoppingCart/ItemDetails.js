@@ -35,7 +35,12 @@ import { handleGetProfileData } from "../../../../src/ApiService";
 const { width, height } = Dimensions.get("window");
 
 const ItemDetails = ({ route }) => {
-  const { item } = route?.params;
+  const { item: routeItem, itemId: routeItemId } = route?.params;
+  const itemId = routeItemId || routeItem?.itemId;
+  const isFromDeepLink = !!routeItemId;
+  
+  const [item, setItem] = useState(routeItem || {});
+  const [loading, setLoading] = useState(false);
   const {setCartCount} = useCart();
   const navigation = useNavigation();
   const userData = useSelector((state) => state.counter);
@@ -62,40 +67,73 @@ const ItemDetails = ({ route }) => {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <>
-        {          route.params?.categoryType?(
         <TouchableOpacity 
-          onPress={() => navigation.navigate("Rice Products", { 
-            screen: route.params?.category, 
-            categoryType: route.params?.categoryType,
-            category: route.params?.category
-          })} 
+          onPress={() => navigation.goBack()} 
           style={{ marginLeft: 10 }}
         >
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
-            style={{ marginLeft: 10 }}
-          >
-            <Icon name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-        )}
-          
-        </>
       ),
     });
   }, [navigation]);
 
   // Initial data fetching
   useEffect(() => {
-    fetchCartData();
-    if (item?.itemId) {
-      getImages(item?.itemId);
+    if (itemId) {
+      fetchItemDetails();
     }
-    handleDescripion()
-  }, []);
+    fetchCartData();
+    handleDescripion();
+  }, [itemId]);
+
+  const fetchItemDetails = async () => {
+    if (!itemId) return;
+    
+    setLoading(true);
+    try {
+      const response = await axios.get(`${BASE_URL}product-service/getItemId/${itemId}`);
+      const apiData = response.data;
+      console.log("Fetched item details:", apiData);
+      if (isFromDeepLink) {
+        // For deep links, use only API data
+        const itemData = {
+          ...apiData,
+          itemImage: apiData.image,
+          itemMrp: apiData.itemMrpPrice,
+          itemPrice: apiData.itemPrice,
+          itemName: apiData.itemName,
+          weight: apiData.weight,
+          units: apiData.units,
+          quantity: apiData.quantity,
+          itemId: apiData.itemId
+        };
+        setItem(itemData);
+      } else {
+        // For normal navigation, merge API data with route data
+        const mergedItem = {
+          ...routeItem,
+          ...apiData,
+          itemImage: apiData.image || routeItem?.itemImage,
+          itemMrp: apiData.itemMrpPrice || routeItem?.itemMrp,
+          itemPrice: apiData.itemPrice || routeItem?.itemPrice,
+          itemName: apiData.itemName || routeItem?.itemName,
+          weight: apiData.weight || routeItem?.weight,
+          units: apiData.units || routeItem?.units,
+          quantity: apiData.quantity || routeItem?.quantity,
+          itemId: apiData.itemId || routeItem?.itemId
+        };
+        setItem(mergedItem);
+      }
+      
+      if (apiData.itemId) {
+        getImages(apiData.itemId);
+      }
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
      const handleDescripion = useCallback(async() => {
         try{
@@ -295,6 +333,15 @@ const handleAddToCart = async (item) => {
     );
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#6200ea" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Loading item details...</Text>
+      </View>
+    );
+  }
+
   const renderPriceSection = () => (
     <>
     <View >
@@ -308,14 +355,10 @@ const handleAddToCart = async (item) => {
             </Text>
           </View>
         </View>
-        <Text style={styles.currentPrice}>₹{item.itemPrice}</Text>
-        
-
         </>
       )}
-
+      <Text style={styles.currentPrice}>₹{item.itemPrice}</Text>
     </View>
-    
     </>
   );
 
@@ -438,6 +481,7 @@ const renderQuantityControls = () => {
 
           </View>
 
+          {/* {!isFromDeepLink && ( */}
            <View style={styles.bmvCoinsContainer}>
               <LinearGradient
                 colors={['#8B5CF6', '#7C3AED']}
@@ -445,7 +489,7 @@ const renderQuantityControls = () => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.bmvCoinsText}>You will get {item.bmvCoins} BMVCOINS</Text>
+                <Text style={styles.bmvCoinsText}>You will get {item.itemPrice} BMVCOINS</Text>
               
             <TouchableOpacity
               style={styles.cartButton}
@@ -456,12 +500,13 @@ const renderQuantityControls = () => {
             </TouchableOpacity>
             </LinearGradient>
             </View>
+          {/* )} */}
           
           {/* Weight */}
          
           
           {/* Description */}
-          {item.itemDescription && (
+          {!isFromDeepLink && item.itemDescription && (
             <View style={styles.descriptionContainer}>
               <Text style={styles.sectionTitle}>Description</Text>
               <Text style={styles.descriptionText}>{item.itemDescription}</Text>

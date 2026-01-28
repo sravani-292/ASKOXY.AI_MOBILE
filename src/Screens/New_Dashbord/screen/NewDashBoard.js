@@ -141,10 +141,11 @@ export default function NewDashBoard() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isScrolling, setIsScrolling] = useState(false);
+  const [customerId, setCustomerId] = useState(null);
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const customerId = userData?.userId;
+  
   const navigation = useNavigation();
 
   const [showChat, setShowChat] = useState(false);
@@ -160,6 +161,11 @@ export default function NewDashBoard() {
     botName,
   });
 
+  useEffect(() => {
+    if (userData) {
+      setCustomerId(userData?.userId || null);
+    }
+  }, [userData]);
 
   // console.log("selectedMainCategory");
 
@@ -169,10 +175,6 @@ export default function NewDashBoard() {
     // console.log("categoryName",categoryName);
     return gradientThemes[categoryName] || gradientThemes["default"];
   }, [selectedCategoryType]);
-
-  useEffect(() => {
-    // console.log("cart items in dashboard", cart);
-  }, [customerId]);
 
   // Animate background change when category changes
   useEffect(() => {
@@ -478,9 +480,10 @@ export default function NewDashBoard() {
       {/* Order Feedback */}
       {userData && <OrderFeedback />}
 
-      <FloatingCallButton />
+      {userData && <FloatingCallButton />}
 
-      <ChatFAB onPress={() => setShowChat(!showChat)} />
+      {userData && <ChatFAB onPress={() => setShowChat(!showChat)} />}
+        
       {showChat && (
         <ChatPopup
           onSend={handleUserMessage}

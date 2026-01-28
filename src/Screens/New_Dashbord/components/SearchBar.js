@@ -5,7 +5,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 
 const SearchBar = ({ searchQuery, setSearchQuery, navigation, countValue }) => {
   const safeCount = typeof countValue === "number" ? countValue : 0;
-
   return (
     <View style={styles.header}>
       {/* Search Bar Section */}
